@@ -11,7 +11,7 @@ export default async function PricesPage() {
 
   const { data: reports } = await supabase
     .from('price_reports')
-    .select('id, commodity, category, price, unit, market_name, state, reported_at, profiles(first_name, last_name)')
+    .select('id, commodity, category, price, unit, market_name, state, reported_at')
     .order('reported_at', { ascending: false })
     .limit(100)
 
