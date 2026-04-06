@@ -19,7 +19,7 @@ export default function About() {
         </a>
         <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
           <a href="/about" style={{ fontSize: 13, fontWeight: 600, color: '#22c55e', textDecoration: 'none' }}>About</a>
-          <a href="/#waitlist" style={{ fontSize: 13, fontWeight: 600, color: '#22c55e', background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 100, padding: '6px 16px', textDecoration: 'none' }}>
+          <a href="/" style={{ fontSize: 13, fontWeight: 600, color: '#22c55e', background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 100, padding: '6px 16px', textDecoration: 'none' }}>
             Join Waitlist
           </a>
         </div>
@@ -153,7 +153,7 @@ export default function About() {
       <div style={{ textAlign: 'center', padding: '80px 24px 100px' }}>
         <h2 style={{ fontSize: 'clamp(26px, 3.5vw, 42px)', fontWeight: 900, letterSpacing: -1.5, color: '#f0fdf4', marginBottom: 14, lineHeight: 1.1 }}>Want to be part of this?</h2>
         <p style={{ fontSize: 16, color: '#bbf7d0', marginBottom: 32 }}>Join the waitlist. We&apos;re saving a spot for you.</p>
-        <a href="/#waitlist" style={{ display: 'inline-block', padding: '16px 36px', fontSize: 15, fontWeight: 700, color: '#030a05', background: 'linear-gradient(135deg, #22c55e, #16a34a)', borderRadius: 12, textDecoration: 'none', boxShadow: '0 4px 20px rgba(34,197,94,0.3)' }}>
+        <a href="/" style={{ display: 'inline-block', padding: '16px 36px', fontSize: 15, fontWeight: 700, color: '#030a05', background: 'linear-gradient(135deg, #22c55e, #16a34a)', borderRadius: 12, textDecoration: 'none', boxShadow: '0 4px 20px rgba(34,197,94,0.3)' }}>
           Join the Waitlist →
         </a>
       </div>
