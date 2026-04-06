@@ -1,6 +1,35 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import SignOutButton from './signout-button'
+
+const MODULES = [
+  {
+    title: 'Connections',
+    description: 'Find and connect with students, researchers, farmers and agripreneurs across Africa.',
+    icon: '🤝',
+  },
+  {
+    title: 'Opportunities',
+    description: 'Grants, fellowships, jobs, and partnerships in the agricultural sector.',
+    icon: '🌱',
+  },
+  {
+    title: 'Price Tracker',
+    description: 'Real-time commodity prices from markets across Nigeria.',
+    icon: '📊',
+  },
+  {
+    title: 'Marketplace',
+    description: 'Buy, sell and trade agricultural products, inputs and equipment.',
+    icon: '🛒',
+  },
+  {
+    title: 'Research Board',
+    description: 'Share findings, collaborate on studies, and access agricultural research.',
+    icon: '🔬',
+  },
+]
 
 export default async function Dashboard() {
   const supabase = await createClient()
@@ -8,43 +37,84 @@ export default async function Dashboard() {
 
   if (!user) redirect('/login')
 
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('first_name, role')
+    .eq('id', user.id)
+    .single()
+
+  const firstName = profile?.first_name || user.email?.split('@')[0] || 'there'
+  const profileComplete = !!(profile?.first_name && profile?.role)
+
   return (
-    <main style={{ fontFamily: "'Inter', system-ui, sans-serif", background: '#060d09', color: '#f0fdf4', minHeight: '100vh' }}>
-      <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 40px', borderBottom: '1px solid rgba(34,197,94,0.08)' }}>
-        <a href="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
-          <div style={{ width: 34, height: 34, background: 'linear-gradient(135deg, #16a34a, #22c55e)', borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17 }}>🌾</div>
-          <span style={{ fontSize: 17, fontWeight: 800, color: '#f0fdf4', letterSpacing: '-0.3px' }}>Agro<span style={{ color: '#22c55e' }}>Yield</span></span>
-        </a>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-          <span style={{ fontSize: 13, color: '#6ee7b7' }}>{user.email}</span>
-          <SignOutButton />
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-100">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">🌾</span>
+            <span className="font-bold text-green-700 text-lg">AgroYield Network</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/profile"
+              className="text-sm text-gray-600 hover:text-green-700 font-medium"
+            >
+              My Profile
+            </Link>
+            <SignOutButton />
+          </div>
         </div>
-      </nav>
+      </header>
 
-      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '80px 24px' }}>
-        <div style={{ marginBottom: 48 }}>
-          <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#22c55e', marginBottom: 12 }}>Welcome back</p>
-          <h1 style={{ fontSize: 'clamp(28px, 4vw, 44px)', fontWeight: 900, color: '#f0fdf4', letterSpacing: -1.5, marginBottom: 12 }}>Your Dashboard</h1>
-          <p style={{ fontSize: 16, color: '#bbf7d0' }}>The full platform is being built. Here&apos;s what&apos;s coming.</p>
+      <main className="max-w-6xl mx-auto px-4 py-10">
+        {/* Welcome */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">
+            Welcome, {firstName} 👋
+          </h1>
+          <p className="text-gray-500 mt-1">
+            Your dashboard — the platform is being built. Stay tuned.
+          </p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
-          {[
-            { icon: '🤝', name: 'Connections', desc: 'Connect with researchers, farmers, and agripreneurs across Africa.' },
-            { icon: '🎯', name: 'Opportunities', desc: 'Grants, events, and mentorship — all in one place.' },
-            { icon: '📊', name: 'Price Tracker', desc: 'Live commodity prices across Nigerian markets.' },
-            { icon: '🛒', name: 'Marketplace', desc: 'Buy and sell produce, equipment, and agri-inputs.' },
-            { icon: '📚', name: 'Research Board', desc: 'Publish papers and join open collaborations.' },
-          ].map(module => (
-            <div key={module.name} style={{ background: '#0c1c11', border: '1px solid #1c3825', borderRadius: 20, padding: 28 }}>
-              <div style={{ fontSize: 28, marginBottom: 16 }}>{module.icon}</div>
-              <h3 style={{ fontSize: 17, fontWeight: 800, color: '#f0fdf4', marginBottom: 8 }}>{module.name}</h3>
-              <p style={{ fontSize: 14, color: '#bbf7d0', lineHeight: 1.65, marginBottom: 16 }}>{module.desc}</p>
-              <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#22c55e', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.15)', borderRadius: 100, padding: '4px 12px' }}>Coming soon</span>
+        {/* Profile completion banner */}
+        {!profileComplete && (
+          <div className="mb-8 bg-amber-50 border border-amber-200 rounded-xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <p className="font-semibold text-amber-800">Complete your profile</p>
+              <p className="text-sm text-amber-700 mt-0.5">
+                Let the community know who you are and what you're working on.
+              </p>
+            </div>
+            <Link
+              href="/profile"
+              className="inline-block bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors whitespace-nowrap"
+            >
+              Set up profile →
+            </Link>
+          </div>
+        )}
+
+        {/* Module cards */}
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {MODULES.map(module => (
+            <div
+              key={module.title}
+              className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6"
+            >
+              <div className="text-3xl mb-3">{module.icon}</div>
+              <div className="flex items-center gap-2 mb-2">
+                <h3 className="font-semibold text-gray-900">{module.title}</h3>
+                <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">
+                  Coming soon
+                </span>
+              </div>
+              <p className="text-sm text-gray-500">{module.description}</p>
             </div>
           ))}
         </div>
-      </div>
-    </main>
+      </main>
+    </div>
   )
 }
