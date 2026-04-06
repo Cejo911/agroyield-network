@@ -23,7 +23,6 @@ type PriceReport = {
   market_name: string | null
   state: string | null
   reported_at: string
-  profiles: { first_name: string | null; last_name: string | null } | null
 }
 
 export default function PricesClient({ reports }: { reports: PriceReport[] }) {
@@ -39,13 +38,17 @@ export default function PricesClient({ reports }: { reports: PriceReport[] }) {
 
     const matchesCategory =
       categoryFilter === 'All' ||
-      r.category?.toLowerCase() === categoryFilter.toLowerCase()
+      (r.category ?? '').toLowerCase() === categoryFilter.toLowerCase()
 
     return matchesSearch && matchesCategory
   })
 
   const formatPrice = (price: number) =>
-    new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 }).format(price)
+    new Intl.NumberFormat('en-NG', {
+      style: 'currency',
+      currency: 'NGN',
+      maximumFractionDigits: 0,
+    }).format(price)
 
   const timeAgo = (dateStr: string) => {
     const diff = Date.now() - new Date(dateStr).getTime()
@@ -57,9 +60,13 @@ export default function PricesClient({ reports }: { reports: PriceReport[] }) {
     return new Date(dateStr).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
   }
 
+  const getCategoryColour = (category: string | null): string => {
+    if (!category) return 'bg-gray-100 text-gray-600'
+    return CATEGORY_COLOURS[category] ?? 'bg-gray-100 text-gray-600'
+  }
+
   return (
     <div>
-      {/* Filters */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-8 space-y-4">
         <input
           type="text"
@@ -98,15 +105,12 @@ export default function PricesClient({ reports }: { reports: PriceReport[] }) {
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map(report => (
-            <div
-              key={report.id}
-              className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5"
-            >
+            <div key={report.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
               <div className="flex items-start justify-between mb-3">
                 <div>
                   <h3 className="font-semibold text-gray-900 text-lg">{report.commodity}</h3>
                   {report.category && (
-                    <span className={`inline-block text-xs px-2 py-0.5 rounded-full font-medium capitalize mt-1 ${CATEGORY_COLOURS[report.category] ?? 'bg-gray-100 text-gray-600'}`}>
+                    <span className={`inline-block text-xs px-2 py-0.5 rounded-full font-medium capitalize mt-1 ${getCategoryColour(report.category)}`}>
                       {report.category}
                     </span>
                   )}
@@ -120,11 +124,8 @@ export default function PricesClient({ reports }: { reports: PriceReport[] }) {
                 {report.market_name && <p>🏪 {report.market_name}</p>}
                 {report.state && <p>📍 {report.state}</p>}
               </div>
-              <div className="mt-3 pt-3 border-t border-gray-50 flex items-center justify-between text-xs text-gray-400">
-                <span>
-                  Reported by {report.profiles?.first_name ?? 'Member'}
-                </span>
-                <span>{timeAgo(report.reported_at)}</span>
+              <div className="mt-3 pt-3 border-t border-gray-50 text-right">
+                <span className="text-xs text-gray-400">{timeAgo(report.reported_at)}</span>
               </div>
             </div>
           ))}
