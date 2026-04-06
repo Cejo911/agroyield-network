@@ -75,8 +75,8 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
 
       if (!res.ok) throw new Error(data.error || 'Failed to save profile')
 
-      setMessage({ type: 'success', text: 'Profile saved successfully!' })
-      router.refresh()
+setMessage({ type: 'success', text: 'Profile saved successfully! Redirecting...' })
+      setTimeout(() => router.push('/dashboard'), 1500)
     } catch (err: unknown) {
       setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Something went wrong' })
     } finally {
