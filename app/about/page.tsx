@@ -19,6 +19,7 @@ export default function About() {
         </a>
         <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
           <a href="/about" style={{ fontSize: 13, fontWeight: 600, color: '#22c55e', textDecoration: 'none' }}>About</a>
+          <a href="/contact" style={{ fontSize: 13, fontWeight: 600, color: '#bbf7d0', textDecoration: 'none' }}>Contact</a>
           <a href="/" style={{ fontSize: 13, fontWeight: 600, color: '#22c55e', background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 100, padding: '6px 16px', textDecoration: 'none' }}>
             Join Waitlist
           </a>
