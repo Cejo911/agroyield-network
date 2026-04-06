@@ -131,21 +131,13 @@ export default function About() {
           Our advisors bring decades of experience across agri-research, rural finance, agritech entrepreneurship, and food policy across Africa.
         </p>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
-          {advisors.map(advisor => (
-            <div key={advisor.name} style={{ background: '#0c1c11', border: '1px solid #1c3825', borderRadius: 18, padding: '28px 28px 24px', display: 'flex', gap: 16, alignItems: 'flex-start' }}>
-              <div style={{ flexShrink: 0, width: 48, height: 48, background: '#0f2318', border: '1px solid #1c3825', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>{advisor.flag}</div>
-              <div>
-                <p style={{ fontSize: 15, fontWeight: 700, color: '#f0fdf4', marginBottom: 4 }}>{advisor.name}</p>
-                <p style={{ fontSize: 13, color: '#6ee7b7', lineHeight: 1.5 }}>{advisor.role}</p>
-              </div>
-            </div>
-          ))}
+        <div style={{ background: '#0c1c11', border: '1px solid #1c3825', borderRadius: 20, padding: '56px 40px', textAlign: 'center' }}>
+          <div style={{ fontSize: 40, marginBottom: 20 }}>🌿</div>
+          <h3 style={{ fontSize: 22, fontWeight: 800, color: '#f0fdf4', letterSpacing: -0.5, marginBottom: 12 }}>Advisory board to be revealed soon</h3>
+          <p style={{ fontSize: 15, color: '#bbf7d0', maxWidth: 440, margin: '0 auto', lineHeight: 1.75 }}>
+            We are assembling a world-class group of advisors from across Africa&apos;s agricultural, research, and investment communities. Stay tuned.
+          </p>
         </div>
-
-        <p style={{ fontSize: 13, color: '#4b7a5c', marginTop: 32, textAlign: 'center' }}>
-          Advisor details are placeholders — replace with real names and roles before launch.
-        </p>
       </section>
 
       <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, #1c3825, transparent)', margin: '0 40px' }} />
