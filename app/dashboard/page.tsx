@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import SignOutButton from './signout-button
 
 export default async function Dashboard() {
   const supabase = await createClient()
@@ -16,11 +17,7 @@ export default async function Dashboard() {
         </a>
         <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
           <span style={{ fontSize: 13, color: '#6ee7b7' }}>{user.email}</span>
-          <form action="/auth/signout" method="post">
-            <button type="submit" style={{ fontSize: 13, fontWeight: 600, color: '#ef4444', background: 'transparent', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 100, padding: '6px 16px', cursor: 'pointer', fontFamily: 'inherit' }}>
-              Sign out
-            </button>
-          </form>
+          <SignOutButton />
         </div>
       </nav>
 
