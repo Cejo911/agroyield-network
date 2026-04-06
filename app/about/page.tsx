@@ -63,7 +63,7 @@ export default function About() {
             <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#22c55e', marginBottom: 12 }}>Our Vision</p>
             <h2 style={{ fontSize: 26, fontWeight: 800, color: '#f0fdf4', lineHeight: 1.2, letterSpacing: -0.5, marginBottom: 16 }}>An Africa that feeds itself — and the world.</h2>
             <p style={{ fontSize: 15, color: '#bbf7d0', lineHeight: 1.75 }}>
-              By 2030, we envision AgroYield Network as the default professional home for one million agricultural minds across Africa — the place where careers are built, research reaches farmers, grants are discovered, and the next generation of agripreneurs finds its footing.
+              By 2030, we envision AgroYield Network as the default professional home for Ten million agricultural minds across Africa — the place where careers are built, research reaches farmers, grants are discovered, and the next generation of agripreneurs finds its footing.
             </p>
           </div>
         </div>
@@ -73,7 +73,7 @@ export default function About() {
           {[
             { value: '54', label: 'African countries we aim to serve' },
             { value: '5', label: 'Platform modules at launch' },
-            { value: '1M+', label: 'Target members by 2030' },
+            { value: '10M+', label: 'Target members by 2030' },
             { value: '2026', label: 'Year we launch' },
           ].map(stat => (
             <div key={stat.label} style={{ background: '#0c1c11', padding: '36px 32px', textAlign: 'center' }}>
