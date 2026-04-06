@@ -1,5 +1,59 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+
+function Countdown() {
+  const LAUNCH = new Date('2026-07-05T00:00:00')
+
+  const calc = () => {
+    const diff = LAUNCH.getTime() - Date.now()
+    if (diff <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 }
+    return {
+      days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+      hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+      minutes: Math.floor((diff / (1000 * 60)) % 60),
+      seconds: Math.floor((diff / 1000) % 60),
+    }
+  }
+
+  const [time, setTime] = useState(calc)
+
+  useEffect(() => {
+    const id = setInterval(() => setTime(calc()), 1000)
+    return () => clearInterval(id)
+  }, [])
+
+  const pad = (n: number) => String(n).padStart(2, '0')
+
+  const units = [
+    { label: 'Days', value: time.days, raw: true },
+    { label: 'Hours', value: time.hours, raw: false },
+    { label: 'Minutes', value: time.minutes, raw: false },
+    { label: 'Seconds', value: time.seconds, raw: false },
+  ]
+
+  return (
+    <div style={{ margin: '0 auto 44px', textAlign: 'center' }}>
+      <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#4b7a5c', marginBottom: 18 }}>
+        Platform launches in
+      </p>
+      <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+        {units.map(({ label, value, raw }) => (
+          <div key={label} style={{ background: '#0c1c11', border: '1px solid #1c3825', borderRadius: 16, padding: '18px 22px', minWidth: 76, textAlign: 'center' }}>
+            <div style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 900, color: '#22c55e', letterSpacing: -1, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
+              {raw ? String(value) : pad(value)}
+            </div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: '#4b7a5c', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 8 }}>
+              {label}
+            </div>
+          </div>
+        ))}
+      </div>
+      <p style={{ fontSize: 13, color: '#4b7a5c', marginTop: 14 }}>
+        Launching <strong style={{ color: '#6ee7b7' }}>5 July 2026</strong> — join the waitlist to get early access
+      </p>
+    </div>
+  )
+}
 
 function WaitlistForm({ id }: { id: string }) {
   const [email, setEmail] = useState('')
@@ -97,7 +151,6 @@ const modules = [
 export default function Home() {
   return (
     <main id="top" style={{ fontFamily: "'Inter', system-ui, sans-serif", background: '#060d09', color: '#f0fdf4', minHeight: '100vh', lineHeight: 1.6 }}>
-
       {/* NAV */}
       <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 40px', background: 'rgba(6,13,9,0.85)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(34,197,94,0.08)' }}>
         <a href="#top" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
@@ -117,30 +170,29 @@ export default function Home() {
       <section id="top-section" style={{ position: 'relative', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '120px 24px 80px', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(34,197,94,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(34,197,94,0.04) 1px, transparent 1px)', backgroundSize: '64px 64px', maskImage: 'radial-gradient(ellipse 80% 60% at 50% 40%, black 40%, transparent 100%)', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', top: '20%', left: '50%', transform: 'translateX(-50%)', width: 700, height: 500, background: 'radial-gradient(ellipse at center, rgba(34,197,94,0.13) 0%, rgba(34,197,94,0.04) 50%, transparent 70%)', pointerEvents: 'none' }} />
-
         <div style={{ position: 'relative', zIndex: 1, maxWidth: 780 }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 12, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#22c55e', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 100, padding: '7px 16px', marginBottom: 36 }}>
             <span style={{ width: 7, height: 7, background: '#22c55e', borderRadius: '50%', display: 'inline-block' }} />
             Now Building — Join the Founding Members
           </div>
-
           <h1 style={{ fontSize: 'clamp(40px, 6.5vw, 76px)', fontWeight: 900, lineHeight: 1.05, letterSpacing: -2, color: '#f0fdf4', marginBottom: 24 }}>
             Agriculture is a<br />
             <span style={{ background: 'linear-gradient(90deg, #22c55e, #4ade80)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Business.</span><br />
             Build Yours.
           </h1>
-
           <p style={{ fontSize: 'clamp(17px, 2vw, 20px)', color: '#bbf7d0', maxWidth: 580, margin: '0 auto 48px', lineHeight: 1.65 }}>
             AgroYield Network is Nigeria&apos;s first digital platform connecting students,
             researchers, farmers, agripreneurs, and institutions — grants, mentorship,
             markets, and research, all in one place.
           </p>
 
+          {/* COUNTDOWN */}
+          <Countdown />
+
           <div id="waitlist">
             <WaitlistForm id="hero" />
             <p style={{ fontSize: 13, color: '#4b7a5c' }}>Free forever for founding members &nbsp;·&nbsp; No spam, ever.</p>
           </div>
-
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 40, flexWrap: 'wrap' }}>
             <span style={{ fontSize: 13, fontWeight: 600, color: '#6ee7b7' }}>🇳🇬 Built for Nigeria</span>
             <span style={{ width: 4, height: 4, background: '#4b7a5c', borderRadius: '50%', display: 'inline-block' }} />
@@ -199,7 +251,6 @@ export default function Home() {
           ))}
         </div>
       </footer>
-
     </main>
   )
 }
