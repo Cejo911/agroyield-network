@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import SignOutButton from './signout-button
+import SignOutButton from './signout-button'
 
 export default async function Dashboard() {
   const supabase = await createClient()
@@ -30,17 +30,17 @@ export default async function Dashboard() {
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
           {[
-            { icon: '🤝', name: 'Connections', desc: 'Connect with researchers, farmers, and agripreneurs across Africa.', status: 'Coming soon' },
-            { icon: '🎯', name: 'Opportunities', desc: 'Grants, events, and mentorship — all in one place.', status: 'Coming soon' },
-            { icon: '📊', name: 'Price Tracker', desc: 'Live commodity prices across Nigerian markets.', status: 'Coming soon' },
-            { icon: '🛒', name: 'Marketplace', desc: 'Buy and sell produce, equipment, and agri-inputs.', status: 'Coming soon' },
-            { icon: '📚', name: 'Research Board', desc: 'Publish papers and join open collaborations.', status: 'Coming soon' },
+            { icon: '🤝', name: 'Connections', desc: 'Connect with researchers, farmers, and agripreneurs across Africa.' },
+            { icon: '🎯', name: 'Opportunities', desc: 'Grants, events, and mentorship — all in one place.' },
+            { icon: '📊', name: 'Price Tracker', desc: 'Live commodity prices across Nigerian markets.' },
+            { icon: '🛒', name: 'Marketplace', desc: 'Buy and sell produce, equipment, and agri-inputs.' },
+            { icon: '📚', name: 'Research Board', desc: 'Publish papers and join open collaborations.' },
           ].map(module => (
             <div key={module.name} style={{ background: '#0c1c11', border: '1px solid #1c3825', borderRadius: 20, padding: 28 }}>
               <div style={{ fontSize: 28, marginBottom: 16 }}>{module.icon}</div>
               <h3 style={{ fontSize: 17, fontWeight: 800, color: '#f0fdf4', marginBottom: 8 }}>{module.name}</h3>
               <p style={{ fontSize: 14, color: '#bbf7d0', lineHeight: 1.65, marginBottom: 16 }}>{module.desc}</p>
-              <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#22c55e', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.15)', borderRadius: 100, padding: '4px 12px' }}>{module.status}</span>
+              <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#22c55e', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.15)', borderRadius: 100, padding: '4px 12px' }}>Coming soon</span>
             </div>
           ))}
         </div>
