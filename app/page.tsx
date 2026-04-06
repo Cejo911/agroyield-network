@@ -1,6 +1,5 @@
 'use client'
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 
 function WaitlistForm({ id }: { id: string }) {
   const [email, setEmail] = useState('')
@@ -13,16 +12,17 @@ function WaitlistForm({ id }: { id: string }) {
     if (!email) return
     setLoading(true)
     setError(false)
-    const supabase = createClient()
-    const { error: err } = await supabase
-      .from('waitlist_signups')
-      .insert([{ email, source: 'waitlist_page' }])
-    if (err && err.code !== '23505') {
+    try {
+      const res = await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      if (!res.ok) throw new Error('Failed')
+      setSubmitted(true)
+    } catch {
       setError(true)
-      setLoading(false)
-      return
     }
-    setSubmitted(true)
     setLoading(false)
   }
 
@@ -31,7 +31,7 @@ function WaitlistForm({ id }: { id: string }) {
       <div style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 14, padding: '24px 32px', maxWidth: 420, margin: '0 auto', textAlign: 'center' }}>
         <div style={{ fontSize: 36, marginBottom: 12 }}>🌱</div>
         <h3 style={{ color: '#4ade80', fontWeight: 700, fontSize: 18, marginBottom: 8 }}>You&apos;re on the list!</h3>
-        <p style={{ color: '#bbf7d0', fontSize: 14 }}>We&apos;ll reach out as soon as AgroYield Network opens its doors. Tell a friend — the more we grow, the faster we launch.</p>
+        <p style={{ color: '#bbf7d0', fontSize: 14 }}>Check your inbox — we&apos;ve sent you a confirmation. Tell a friend who&apos;s in agriculture!</p>
       </div>
     )
   }
@@ -192,8 +192,10 @@ export default function Home() {
       <footer style={{ borderTop: '1px solid #1c3825', padding: '28px 40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, position: 'relative', zIndex: 1 }}>
         <p style={{ fontSize: 13, color: '#4b7a5c' }}>© 2026 AgroYield Network. All rights reserved.</p>
         <div style={{ display: 'flex', gap: 24 }}>
-          {['Contact', 'Privacy', 'Twitter / X', 'LinkedIn'].map(link => (
-            <a key={link} href={link === 'Contact' ? 'mailto:hello@agroyield.africa' : '#'} style={{ fontSize: 13, color: '#4b7a5c', textDecoration: 'none' }}>{link}</a>
+          {['Contact', 'Privacy', 'About', 'Twitter / X', 'LinkedIn'].map(link => (
+            <a key={link}
+              href={link === 'Contact' ? '/contact' : link === 'About' ? '/about' : '#'}
+              style={{ fontSize: 13, color: '#4b7a5c', textDecoration: 'none' }}>{link}</a>
           ))}
         </div>
       </footer>
