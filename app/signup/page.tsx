@@ -31,6 +31,7 @@ export default function SignUp() {
       email: form.email,
       password: form.password,
       options: {
+        emailRedirectTo: 'https://agroyield.africa/auth/callback',
         data: {
           first_name: form.firstName,
           last_name: form.lastName,
