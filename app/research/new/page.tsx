@@ -1,11 +1,9 @@
 'use client'
-
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
+import AppNav from '@/app/components/AppNav'
 
 const TYPES = ['finding', 'question', 'dataset', 'review', 'collaboration']
-
 const TAGS = [
   'Crop Science', 'Livestock', 'Agritech', 'Soil Health', 'Irrigation',
   'Food Processing', 'Agricultural Finance', 'Climate & Sustainability',
@@ -16,7 +14,6 @@ export default function NewResearchPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
-
   const [form, setForm] = useState({
     title: '',
     type: '',
@@ -37,17 +34,14 @@ export default function NewResearchPage() {
     e.preventDefault()
     setLoading(true)
     setMessage(null)
-
     try {
       const res = await fetch('/api/research', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       })
-
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to post')
-
       setMessage({ type: 'success', text: 'Posted successfully! Redirecting...' })
       setTimeout(() => router.push('/research'), 1500)
     } catch (err: unknown) {
@@ -62,27 +56,14 @@ export default function NewResearchPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-100">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">🌾</span>
-            <span className="font-bold text-green-700 text-lg">AgroYield Network</span>
-          </div>
-          <Link href="/research" className="text-sm text-gray-600 hover:text-green-700 font-medium">
-            Back to Research Board
-          </Link>
-        </div>
-      </header>
-
+      <AppNav />
       <main className="max-w-2xl mx-auto px-4 py-10">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Post Research</h1>
           <p className="text-gray-500 mt-1">Share your findings, questions or datasets with the network.</p>
         </div>
-
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Title <span className="text-red-500">*</span>
@@ -96,7 +77,6 @@ export default function NewResearchPage() {
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Type <span className="text-red-500">*</span>
@@ -118,7 +98,6 @@ export default function NewResearchPage() {
                 ))}
               </div>
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Content <span className="text-red-500">*</span>
@@ -132,7 +111,6 @@ export default function NewResearchPage() {
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Topics</label>
               <div className="flex flex-wrap gap-2">
@@ -152,7 +130,6 @@ export default function NewResearchPage() {
                 ))}
               </div>
             </div>
-
             {message && (
               <div className={`rounded-lg px-4 py-3 text-sm ${
                 message.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
@@ -160,7 +137,6 @@ export default function NewResearchPage() {
                 {message.text}
               </div>
             )}
-
             <button
               type="submit"
               disabled={loading || !form.title || !form.type || !form.content}
