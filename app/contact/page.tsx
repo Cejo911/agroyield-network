@@ -12,22 +12,24 @@ export default function Contact() {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!form.name || !form.email || !form.message) return
-    setLoading(true)
-    setError(false)
-    const supabase = createClient()
-    const { error: err } = await supabase
-      .from('contact_messages')
-      .insert([{ name: form.name, email: form.email, subject: form.subject, message: form.message }])
-    if (err) {
-      setError(true)
-      setLoading(false)
-      return
-    }
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault()
+  if (!form.name || !form.email || !form.message) return
+  setLoading(true)
+  setError(false)
+  try {
+    const res = await fetch('/api/contact', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(form),
+    })
+    if (!res.ok) throw new Error('Failed')
     setSubmitted(true)
-    setLoading(false)
+  } catch {
+    setError(true)
+  }
+  setLoading(false)
+
   }
 
   const inputStyle = {
