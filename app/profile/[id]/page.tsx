@@ -2,11 +2,17 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 
-export default async function PublicProfilePage({ params }: { params: Promise<{ id: string }> }) {
+export default async function PublicProfilePage({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
   const { id } = await params
 
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
   if (!user) redirect('/login')
 
@@ -31,7 +37,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
           </div>
           <div className="flex items-center gap-4">
             <Link href="/directory" className="text-sm text-gray-600 hover:text-green-700 font-medium">
-              ← Directory
+              Back to Directory
             </Link>
             <Link href="/dashboard" className="text-sm text-gray-600 hover:text-green-700 font-medium">
               Dashboard
@@ -42,6 +48,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
 
       <main className="max-w-2xl mx-auto px-4 py-10">
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
+
           {/* Avatar + name */}
           <div className="flex items-center gap-5 mb-6">
             <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold text-2xl">
@@ -62,10 +69,16 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
           {/* Details */}
           <div className="space-y-4 text-sm text-gray-600">
             {profile.institution && (
-              <p>🏛 <span className="font-medium">{profile.institution}</span></p>
+              <p>
+                <span className="mr-1">🏛</span>
+                <span className="font-medium">{profile.institution}</span>
+              </p>
             )}
             {profile.location && (
-              <p>📍 <span className="font-medium">{profile.location}</span></p>
+              <p>
+                <span className="mr-1">📍</span>
+                <span className="font-medium">{profile.location}</span>
+              </p>
             )}
             {profile.bio && (
               <div>
@@ -100,7 +113,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
                   rel="noopener noreferrer"
                   className="text-sm bg-blue-50 text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-100 transition-colors"
                 >
-                  LinkedIn →
+                  LinkedIn
                 </a>
               )}
               {profile.twitter && (
@@ -110,7 +123,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
                   rel="noopener noreferrer"
                   className="text-sm bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
                 >
-                  Twitter / X →
+                  Twitter / X
                 </a>
               )}
               {profile.website && (
@@ -120,7 +133,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
                   rel="noopener noreferrer"
                   className="text-sm bg-green-50 text-green-700 px-4 py-2 rounded-lg hover:bg-green-100 transition-colors"
                 >
-                  Website →
+                  Website
                 </a>
               )}
             </div>
@@ -137,6 +150,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
               </Link>
             </div>
           )}
+
         </div>
       </main>
     </div>
