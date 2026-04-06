@@ -107,34 +107,34 @@ export default async function PublicProfilePage({
           {(profile.linkedin || profile.twitter || profile.website) && (
             <div className="mt-6 pt-6 border-t border-gray-100 flex flex-wrap gap-3">
               {profile.linkedin && (
-                
+                <Link
                   href={profile.linkedin}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm bg-blue-50 text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-100 transition-colors"
                 >
                   LinkedIn
-                </a>
+                </Link>
               )}
               {profile.twitter && (
-                
+                <Link
                   href={profile.twitter}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
                 >
                   Twitter / X
-                </a>
+                </Link>
               )}
               {profile.website && (
-                
+                <Link
                   href={profile.website}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm bg-green-50 text-green-700 px-4 py-2 rounded-lg hover:bg-green-100 transition-colors"
                 >
                   Website
-                </a>
+                </Link>
               )}
             </div>
           )}
