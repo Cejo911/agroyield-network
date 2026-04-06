@@ -20,11 +20,14 @@ export async function POST(request: Request) {
     .from('waitlist_signups')
     .insert([{ email, source: 'waitlist_page' }])
 
-  if (dbError && dbError.code !== '23505') {
+  const isDuplicate = dbError?.code === '23505'
+
+  if (dbError && !isDuplicate) {
     return NextResponse.json({ error: 'Database error' }, { status: 500 })
   }
 
   try {
+    // Confirmation to the subscriber
     await resend.emails.send({
       from: 'AgroYield Network <noreply@agroyield.africa>',
       to: email,
@@ -74,8 +77,55 @@ export async function POST(request: Request) {
 </body>
 </html>`
     })
+
+    // Admin notification to hello@agroyield.africa
+    if (!isDuplicate) {
+      await resend.emails.send({
+        from: 'AgroYield Network <noreply@agroyield.africa>',
+        to: 'hello@agroyield.africa',
+        subject: `🌱 New waitlist signup — ${email}`,
+        html: `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;background:#060d09;font-family:'Helvetica Neue',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#060d09;padding:40px 0;">
+    <tr><td align="center">
+      <table width="560" cellpadding="0" cellspacing="0" style="background:#0c1c11;border:1px solid #1c3825;border-radius:16px;overflow:hidden;max-width:560px;">
+        <tr>
+          <td style="padding:36px 48px;border-bottom:1px solid #1c3825;">
+            <span style="font-size:18px;font-weight:800;color:#f0fdf4;">🌾 AgroYield — New Waitlist Signup</span>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:40px 48px;">
+            <p style="font-size:28px;margin:0 0 24px;font-weight:900;color:#f0fdf4;letter-spacing:-1px;">Someone just joined 🌱</p>
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#0f2318;border:1px solid #1c3825;border-radius:12px;margin:0 0 32px;">
+              <tr>
+                <td style="padding:24px 28px;">
+                  <p style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#22c55e;margin:0 0 14px;">Signup Details</p>
+                  <p style="font-size:14px;color:#6ee7b7;margin:0 0 8px;"><strong style="color:#f0fdf4;">Email:</strong> <a href="mailto:${email}" style="color:#22c55e;text-decoration:none;">${email}</a></p>
+                  <p style="font-size:14px;color:#6ee7b7;margin:0 0 8px;"><strong style="color:#f0fdf4;">Source:</strong> waitlist_page</p>
+                  <p style="font-size:14px;color:#6ee7b7;margin:0;"><strong style="color:#f0fdf4;">Time:</strong> ${new Date().toLocaleString('en-GB', { timeZone: 'Africa/Lagos', dateStyle: 'full', timeStyle: 'short' })}</p>
+                </td>
+              </tr>
+            </table>
+            <p style="font-size:14px;color:#bbf7d0;line-height:1.75;margin:0;">Check the full waitlist in your <a href="https://supabase.com" style="color:#22c55e;text-decoration:none;">Supabase dashboard</a> under the <strong style="color:#f0fdf4;">waitlist_signups</strong> table.</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:24px 48px;border-top:1px solid #1c3825;">
+            <p style="font-size:12px;color:#4b7a5c;margin:0;">Sent automatically from agroyield.africa</p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`
+      })
+    }
   } catch (e) {
-    console.error('Email send error:', e)
+    console.error('Email error:', e)
   }
 
   return NextResponse.json({ success: true })
