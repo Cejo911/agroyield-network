@@ -11,15 +11,46 @@ export default function About() {
   return (
     <main style={{ fontFamily: "'Inter', system-ui, sans-serif", background: '#060d09', color: '#f0fdf4', minHeight: '100vh', lineHeight: 1.6 }}>
 
+      {/* RESPONSIVE STYLES */}
+      <style>{`
+        .agy-nav { padding: 20px 40px; }
+        .agy-nav-links { display: flex; align-items: center; gap: 20px; }
+        .agy-section-lg { padding: 100px 24px; }
+        .agy-section-hero { padding-top: 160px; padding-bottom: 100px; padding-left: 24px; padding-right: 24px; }
+        .agy-section-cta { padding: 80px 24px 100px; }
+        .agy-footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; padding: 28px 40px; }
+        .agy-footer-links { display: flex; gap: 24px; flex-wrap: wrap; }
+        .agy-timeline-item { display: flex; gap: 32px; }
+        .agy-timeline-year { flex-shrink: 0; width: 64px; }
+
+        @media (max-width: 768px) {
+          .agy-nav { padding: 16px 20px; }
+          .agy-nav-links { gap: 10px; }
+          .agy-section-lg { padding: 60px 16px; }
+          .agy-section-hero { padding-top: 120px; padding-bottom: 60px; padding-left: 16px; padding-right: 16px; }
+          .agy-section-cta { padding: 60px 16px 80px; }
+          .agy-footer { flex-direction: column; align-items: flex-start; padding: 24px 20px; }
+          .agy-footer-links { gap: 16px; }
+          .agy-timeline-item { flex-direction: column; gap: 12px; }
+          .agy-timeline-year { width: auto; }
+          .agy-timeline-line { display: none !important; }
+        }
+
+        @media (max-width: 480px) {
+          .agy-nav-contact { display: none; }
+          .agy-footer-links { gap: 12px; }
+        }
+      `}</style>
+
       {/* NAV */}
-      <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 40px', background: 'rgba(6,13,9,0.85)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(34,197,94,0.08)' }}>
+      <nav className="agy-nav" style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(6,13,9,0.85)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(34,197,94,0.08)' }}>
         <a href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
           <div style={{ width: 34, height: 34, background: 'linear-gradient(135deg, #16a34a, #22c55e)', borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17 }}>🌾</div>
           <span style={{ fontSize: 17, fontWeight: 800, color: '#f0fdf4', letterSpacing: '-0.3px' }}>Agro<span style={{ color: '#22c55e' }}>Yield</span></span>
         </a>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+        <div className="agy-nav-links">
           <a href="/about" style={{ fontSize: 13, fontWeight: 600, color: '#22c55e', textDecoration: 'none' }}>About</a>
-          <a href="/contact" style={{ fontSize: 13, fontWeight: 600, color: '#bbf7d0', textDecoration: 'none' }}>Contact</a>
+          <a href="/contact" className="agy-nav-contact" style={{ fontSize: 13, fontWeight: 600, color: '#bbf7d0', textDecoration: 'none' }}>Contact</a>
           <a href="/" style={{ fontSize: 13, fontWeight: 600, color: '#22c55e', background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 100, padding: '6px 16px', textDecoration: 'none' }}>
             Join Waitlist
           </a>
@@ -27,7 +58,7 @@ export default function About() {
       </nav>
 
       {/* HERO */}
-      <section style={{ position: 'relative', paddingTop: 160, paddingBottom: 100, paddingLeft: 24, paddingRight: 24, textAlign: 'center', overflow: 'hidden' }}>
+      <section className="agy-section-hero" style={{ position: 'relative', textAlign: 'center', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(34,197,94,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(34,197,94,0.04) 1px, transparent 1px)', backgroundSize: '64px 64px', maskImage: 'radial-gradient(ellipse 70% 60% at 50% 30%, black 40%, transparent 100%)', pointerEvents: 'none' }} />
         <div style={{ position: 'relative', zIndex: 1, maxWidth: 700, margin: '0 auto' }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 12, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#22c55e', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 100, padding: '7px 16px', marginBottom: 36 }}>
@@ -44,10 +75,10 @@ export default function About() {
         </div>
       </section>
 
-      <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, #1c3825, transparent)', margin: '0 40px' }} />
+      <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, #1c3825, transparent)', margin: '0 24px' }} />
 
       {/* MISSION & VISION */}
-      <section style={{ maxWidth: 1100, margin: '0 auto', padding: '100px 24px' }}>
+      <section className="agy-section-lg" style={{ maxWidth: 1100, margin: '0 auto' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24 }}>
           <div style={{ background: '#0c1c11', border: '1px solid #1c3825', borderRadius: 24, padding: '48px 40px' }}>
             <div style={{ width: 52, height: 52, background: 'linear-gradient(135deg, #16a34a22, #22c55e22)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, marginBottom: 28 }}>🎯</div>
@@ -57,13 +88,12 @@ export default function About() {
               We are building the infrastructure that agriculture&apos;s brightest minds have always needed but never had — a single platform where knowledge flows freely, opportunities are visible to everyone, and collaboration happens across borders without friction.
             </p>
           </div>
-
           <div style={{ background: '#0c1c11', border: '1px solid #1c3825', borderRadius: 24, padding: '48px 40px' }}>
             <div style={{ width: 52, height: 52, background: 'linear-gradient(135deg, #16a34a22, #22c55e22)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, marginBottom: 28 }}>🌍</div>
             <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#22c55e', marginBottom: 12 }}>Our Vision</p>
             <h2 style={{ fontSize: 26, fontWeight: 800, color: '#f0fdf4', lineHeight: 1.2, letterSpacing: -0.5, marginBottom: 16 }}>An Africa that feeds itself — and the world.</h2>
             <p style={{ fontSize: 15, color: '#bbf7d0', lineHeight: 1.75 }}>
-              By 2030, we envision AgroYield Network as the default professional home for Ten million agricultural minds across Africa — the place where careers are built, research reaches farmers, grants are discovered, and the next generation of agripreneurs finds its footing.
+              By 2030, we envision AgroYield Network as the default professional home for ten million agricultural minds across Africa — the place where careers are built, research reaches farmers, grants are discovered, and the next generation of agripreneurs finds its footing.
             </p>
           </div>
         </div>
@@ -84,15 +114,14 @@ export default function About() {
         </div>
       </section>
 
-      <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, #1c3825, transparent)', margin: '0 40px' }} />
+      <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, #1c3825, transparent)', margin: '0 24px' }} />
 
       {/* THE STORY */}
-      <section style={{ maxWidth: 760, margin: '0 auto', padding: '100px 24px' }}>
+      <section className="agy-section-lg" style={{ maxWidth: 760, margin: '0 auto' }}>
         <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#22c55e', marginBottom: 16 }}>How it started</p>
         <h2 style={{ fontSize: 'clamp(28px, 3.5vw, 42px)', fontWeight: 900, letterSpacing: -1.5, color: '#f0fdf4', marginBottom: 40, lineHeight: 1.15 }}>
           Born from a frustration<br />every agri student knows.
         </h2>
-
         {[
           {
             year: '2023',
@@ -111,26 +140,25 @@ export default function About() {
             text: `AgroYield Network is now in its final build phase. The waitlist is open. Founding members are being added every day. We're recruiting advisors, engineering the database, and preparing for a beta launch later this year. If you're here — you're early. And we're grateful.`
           },
         ].map((item, i) => (
-          <div key={item.year} style={{ display: 'flex', gap: 32, marginBottom: i < 3 ? 48 : 0 }}>
-            <div style={{ flexShrink: 0, width: 64 }}>
+          <div key={item.year} className="agy-timeline-item" style={{ marginBottom: i < 3 ? 48 : 0 }}>
+            <div className="agy-timeline-year">
               <span style={{ fontSize: 12, fontWeight: 700, color: '#22c55e', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.15)', borderRadius: 100, padding: '4px 10px', whiteSpace: 'nowrap' }}>{item.year}</span>
-              {i < 3 && <div style={{ width: 1, background: '#1c3825', height: 'calc(100% + 32px)', margin: '12px auto 0', display: 'block' }} />}
+              {i < 3 && <div className="agy-timeline-line" style={{ width: 1, background: '#1c3825', height: 'calc(100% + 32px)', margin: '12px auto 0', display: 'block' }} />}
             </div>
             <p style={{ fontSize: 16, color: '#bbf7d0', lineHeight: 1.8, paddingTop: 2 }}>{item.text}</p>
           </div>
         ))}
       </section>
 
-      <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, #1c3825, transparent)', margin: '0 40px' }} />
+      <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, #1c3825, transparent)', margin: '0 24px' }} />
 
       {/* ADVISORS */}
-      <section style={{ maxWidth: 1100, margin: '0 auto', padding: '100px 24px' }}>
+      <section className="agy-section-lg" style={{ maxWidth: 1100, margin: '0 auto' }}>
         <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#22c55e', marginBottom: 16 }}>Advisory Board</p>
         <h2 style={{ fontSize: 'clamp(28px, 3.5vw, 42px)', fontWeight: 900, letterSpacing: -1.5, color: '#f0fdf4', marginBottom: 16, lineHeight: 1.15 }}>Guided by practitioners<br />who&apos;ve done the work.</h2>
         <p style={{ fontSize: 16, color: '#bbf7d0', maxWidth: 480, lineHeight: 1.7, marginBottom: 56 }}>
           Our advisors bring decades of experience across agri-research, rural finance, agritech entrepreneurship, and food policy across Africa.
         </p>
-
         <div style={{ background: '#0c1c11', border: '1px solid #1c3825', borderRadius: 20, padding: '56px 40px', textAlign: 'center' }}>
           <div style={{ fontSize: 40, marginBottom: 20 }}>🌿</div>
           <h3 style={{ fontSize: 22, fontWeight: 800, color: '#f0fdf4', letterSpacing: -0.5, marginBottom: 12 }}>Advisory board to be revealed soon</h3>
@@ -140,10 +168,10 @@ export default function About() {
         </div>
       </section>
 
-      <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, #1c3825, transparent)', margin: '0 40px' }} />
+      <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, #1c3825, transparent)', margin: '0 24px' }} />
 
       {/* BOTTOM CTA */}
-      <div style={{ textAlign: 'center', padding: '80px 24px 100px' }}>
+      <div className="agy-section-cta" style={{ textAlign: 'center' }}>
         <h2 style={{ fontSize: 'clamp(26px, 3.5vw, 42px)', fontWeight: 900, letterSpacing: -1.5, color: '#f0fdf4', marginBottom: 14, lineHeight: 1.1 }}>Want to be part of this?</h2>
         <p style={{ fontSize: 16, color: '#bbf7d0', marginBottom: 32 }}>Join the waitlist. We&apos;re saving a spot for you.</p>
         <a href="/" style={{ display: 'inline-block', padding: '16px 36px', fontSize: 15, fontWeight: 700, color: '#030a05', background: 'linear-gradient(135deg, #22c55e, #16a34a)', borderRadius: 12, textDecoration: 'none', boxShadow: '0 4px 20px rgba(34,197,94,0.3)' }}>
@@ -152,15 +180,14 @@ export default function About() {
       </div>
 
       {/* FOOTER */}
-      <footer style={{ borderTop: '1px solid #1c3825', padding: '28px 40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+      <footer className="agy-footer" style={{ borderTop: '1px solid #1c3825' }}>
         <p style={{ fontSize: 13, color: '#4b7a5c' }}>© 2026 AgroYield Network. All rights reserved.</p>
-        <div style={{ display: 'flex', gap: 24 }}>
+        <div className="agy-footer-links">
           {['Contact', 'Privacy', 'Twitter / X', 'LinkedIn'].map(link => (
             <a key={link} href={link === 'Contact' ? 'mailto:hello@agroyield.africa' : '#'} style={{ fontSize: 13, color: '#4b7a5c', textDecoration: 'none' }}>{link}</a>
           ))}
         </div>
       </footer>
-
     </main>
   )
 }
