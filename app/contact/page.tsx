@@ -11,24 +11,23 @@ export default function Contact() {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
   }
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault()
-  if (!form.name || !form.email || !form.message) return
-  setLoading(true)
-  setError(false)
-  try {
-    const res = await fetch('/api/contact', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
-    })
-    if (!res.ok) throw new Error('Failed')
-    setSubmitted(true)
-  } catch {
-    setError(true)
-  }
-  setLoading(false)
-
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!form.name || !form.email || !form.message) return
+    setLoading(true)
+    setError(false)
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      })
+      if (!res.ok) throw new Error('Failed')
+      setSubmitted(true)
+    } catch {
+      setError(true)
+    }
+    setLoading(false)
   }
 
   const inputStyle = {
@@ -38,7 +37,6 @@ const handleSubmit = async (e: React.FormEvent) => {
     fontFamily: 'inherit', boxSizing: 'border-box' as const,
     transition: 'border-color 0.2s'
   }
-
   const labelStyle = {
     display: 'block', fontSize: 13, fontWeight: 600,
     color: '#6ee7b7', marginBottom: 8
@@ -47,14 +45,41 @@ const handleSubmit = async (e: React.FormEvent) => {
   return (
     <main style={{ fontFamily: "'Inter', system-ui, sans-serif", background: '#060d09', color: '#f0fdf4', minHeight: '100vh', lineHeight: 1.6 }}>
 
+      {/* RESPONSIVE STYLES */}
+      <style>{`
+        .agy-nav { padding: 20px 40px; }
+        .agy-nav-links { display: flex; align-items: center; gap: 20px; }
+        .agy-section-hero { padding-top: 160px; padding-bottom: 80px; padding-left: 24px; padding-right: 24px; }
+        .agy-main-content { padding: 80px 24px 120px; }
+        .agy-form-name-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .agy-footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; padding: 28px 40px; }
+        .agy-footer-links { display: flex; gap: 24px; flex-wrap: wrap; }
+
+        @media (max-width: 768px) {
+          .agy-nav { padding: 16px 20px; }
+          .agy-nav-links { gap: 10px; }
+          .agy-nav-about { display: none; }
+          .agy-section-hero { padding-top: 120px; padding-bottom: 60px; padding-left: 16px; padding-right: 16px; }
+          .agy-main-content { padding: 60px 16px 80px; }
+          .agy-form-name-row { grid-template-columns: 1fr; }
+          .agy-footer { flex-direction: column; align-items: flex-start; padding: 24px 20px; }
+          .agy-footer-links { gap: 16px; }
+        }
+
+        @media (max-width: 480px) {
+          .agy-nav-contact-hide { display: none; }
+          .agy-footer-links { gap: 12px; }
+        }
+      `}</style>
+
       {/* NAV */}
-      <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 40px', background: 'rgba(6,13,9,0.85)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(34,197,94,0.08)' }}>
+      <nav className="agy-nav" style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(6,13,9,0.85)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(34,197,94,0.08)' }}>
         <a href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
           <div style={{ width: 34, height: 34, background: 'linear-gradient(135deg, #16a34a, #22c55e)', borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17 }}>🌾</div>
           <span style={{ fontSize: 17, fontWeight: 800, color: '#f0fdf4', letterSpacing: '-0.3px' }}>Agro<span style={{ color: '#22c55e' }}>Yield</span></span>
         </a>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-          <a href="/about" style={{ fontSize: 13, fontWeight: 600, color: '#bbf7d0', textDecoration: 'none' }}>About</a>
+        <div className="agy-nav-links">
+          <a href="/about" className="agy-nav-about" style={{ fontSize: 13, fontWeight: 600, color: '#bbf7d0', textDecoration: 'none' }}>About</a>
           <a href="/contact" style={{ fontSize: 13, fontWeight: 600, color: '#22c55e', textDecoration: 'none' }}>Contact</a>
           <a href="/" style={{ fontSize: 13, fontWeight: 600, color: '#22c55e', background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 100, padding: '6px 16px', textDecoration: 'none' }}>
             Join Waitlist
@@ -63,7 +88,7 @@ const handleSubmit = async (e: React.FormEvent) => {
       </nav>
 
       {/* HERO */}
-      <section style={{ position: 'relative', paddingTop: 160, paddingBottom: 80, paddingLeft: 24, paddingRight: 24, textAlign: 'center', overflow: 'hidden' }}>
+      <section className="agy-section-hero" style={{ position: 'relative', textAlign: 'center', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(34,197,94,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(34,197,94,0.04) 1px, transparent 1px)', backgroundSize: '64px 64px', maskImage: 'radial-gradient(ellipse 70% 60% at 50% 30%, black 40%, transparent 100%)', pointerEvents: 'none' }} />
         <div style={{ position: 'relative', zIndex: 1, maxWidth: 600, margin: '0 auto' }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 12, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#22c55e', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 100, padding: '7px 16px', marginBottom: 36 }}>
@@ -80,10 +105,10 @@ const handleSubmit = async (e: React.FormEvent) => {
         </div>
       </section>
 
-      <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, #1c3825, transparent)', margin: '0 40px' }} />
+      <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, #1c3825, transparent)', margin: '0 24px' }} />
 
       {/* MAIN CONTENT */}
-      <section style={{ maxWidth: 1000, margin: '0 auto', padding: '80px 24px 120px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 48, alignItems: 'start' }}>
+      <section className="agy-main-content" style={{ maxWidth: 1000, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 48, alignItems: 'start' }}>
 
         {/* LEFT — contact info */}
         <div>
@@ -91,7 +116,6 @@ const handleSubmit = async (e: React.FormEvent) => {
           <p style={{ fontSize: 15, color: '#bbf7d0', lineHeight: 1.7, marginBottom: 40 }}>
             For partnerships, press, or general enquiries — reach us directly or use the form.
           </p>
-
           {[
             { icon: '✉️', label: 'General Enquiries', value: 'hello@agroyield.africa', href: 'mailto:hello@agroyield.africa' },
             { icon: '🤝', label: 'Partnerships & Institutions', value: 'partners@agroyield.africa', href: 'mailto:partners@agroyield.africa' },
@@ -109,7 +133,6 @@ const handleSubmit = async (e: React.FormEvent) => {
               </div>
             </div>
           ))}
-
           <div style={{ marginTop: 40, padding: '24px 28px', background: '#0c1c11', border: '1px solid #1c3825', borderRadius: 16 }}>
             <p style={{ fontSize: 13, fontWeight: 700, color: '#22c55e', marginBottom: 6 }}>⏱ Response time</p>
             <p style={{ fontSize: 14, color: '#bbf7d0', lineHeight: 1.65 }}>We typically respond within <strong style={{ color: '#f0fdf4' }}>1–2 business days</strong>. For urgent matters, email us directly at hello@agroyield.africa.</p>
@@ -126,7 +149,7 @@ const handleSubmit = async (e: React.FormEvent) => {
             </div>
           ) : (
             <form onSubmit={handleSubmit} style={{ background: '#0c1c11', border: '1px solid #1c3825', borderRadius: 20, padding: '40px 36px', display: 'flex', flexDirection: 'column', gap: 20 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="agy-form-name-row">
                 <div>
                   <label style={labelStyle}>Full name *</label>
                   <input name="name" value={form.name} onChange={handleChange} placeholder="Your full name" required style={inputStyle} />
@@ -136,7 +159,6 @@ const handleSubmit = async (e: React.FormEvent) => {
                   <input name="email" type="email" value={form.email} onChange={handleChange} placeholder="you@example.com" required style={inputStyle} />
                 </div>
               </div>
-
               <div>
                 <label style={labelStyle}>Subject</label>
                 <select name="subject" value={form.subject} onChange={handleChange} style={inputStyle}>
@@ -149,7 +171,6 @@ const handleSubmit = async (e: React.FormEvent) => {
                   <option value="Other">Other</option>
                 </select>
               </div>
-
               <div>
                 <label style={labelStyle}>Message *</label>
                 <textarea
@@ -162,13 +183,11 @@ const handleSubmit = async (e: React.FormEvent) => {
                   style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.6 }}
                 />
               </div>
-
               {error && (
                 <p style={{ fontSize: 13, color: '#ef4444', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 10, padding: '10px 14px' }}>
                   Something went wrong. Please try emailing us directly at hello@agroyield.africa.
                 </p>
               )}
-
               <button
                 type="submit"
                 disabled={loading}
@@ -189,9 +208,9 @@ const handleSubmit = async (e: React.FormEvent) => {
       </section>
 
       {/* FOOTER */}
-      <footer style={{ borderTop: '1px solid #1c3825', padding: '28px 40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+      <footer className="agy-footer" style={{ borderTop: '1px solid #1c3825' }}>
         <p style={{ fontSize: 13, color: '#4b7a5c' }}>© 2026 AgroYield Network. All rights reserved.</p>
-        <div style={{ display: 'flex', gap: 24 }}>
+        <div className="agy-footer-links">
           {['Contact', 'Privacy', 'About', 'Twitter / X', 'LinkedIn'].map(link => (
             <a key={link}
               href={link === 'Contact' ? 'mailto:hello@agroyield.africa' : link === 'About' ? '/about' : '#'}
@@ -199,7 +218,6 @@ const handleSubmit = async (e: React.FormEvent) => {
           ))}
         </div>
       </footer>
-
     </main>
   )
 }
