@@ -1,8 +1,7 @@
 'use client'
-
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
+import AppNav from '@/app/components/AppNav'
 
 const CATEGORIES = ['produce', 'inputs', 'equipment', 'livestock', 'services', 'other']
 const TYPES = ['sell', 'buy', 'trade']
@@ -18,7 +17,6 @@ export default function NewListingPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
-
   const [form, setForm] = useState({
     title: '',
     category: '',
@@ -34,7 +32,6 @@ export default function NewListingPage() {
     e.preventDefault()
     setLoading(true)
     setMessage(null)
-
     try {
       const res = await fetch('/api/marketplace', {
         method: 'POST',
@@ -44,10 +41,8 @@ export default function NewListingPage() {
           price: form.price ? parseFloat(form.price) : null,
         }),
       })
-
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to post listing')
-
       setMessage({ type: 'success', text: 'Listing posted successfully! Redirecting...' })
       setTimeout(() => router.push('/marketplace'), 1500)
     } catch (err: unknown) {
@@ -62,27 +57,14 @@ export default function NewListingPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-100">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">🌾</span>
-            <span className="font-bold text-green-700 text-lg">AgroYield Network</span>
-          </div>
-          <Link href="/marketplace" className="text-sm text-gray-600 hover:text-green-700 font-medium">
-            Back to Marketplace
-          </Link>
-        </div>
-      </header>
-
+      <AppNav />
       <main className="max-w-2xl mx-auto px-4 py-10">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Post a Listing</h1>
           <p className="text-gray-500 mt-1">List a product, input, equipment or service.</p>
         </div>
-
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Title <span className="text-red-500">*</span>
@@ -96,7 +78,6 @@ export default function NewListingPage() {
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Listing Type <span className="text-red-500">*</span>
@@ -118,7 +99,6 @@ export default function NewListingPage() {
                 ))}
               </div>
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Category <span className="text-red-500">*</span>
@@ -140,7 +120,6 @@ export default function NewListingPage() {
                 ))}
               </div>
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Price (NGN) {form.type === 'trade' && <span className="text-gray-400 font-normal">— optional for trades</span>}
@@ -166,7 +145,6 @@ export default function NewListingPage() {
                 </label>
               </div>
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
               <textarea
@@ -177,7 +155,6 @@ export default function NewListingPage() {
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
               />
             </div>
-
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
@@ -203,7 +180,6 @@ export default function NewListingPage() {
                 />
               </div>
             </div>
-
             {message && (
               <div className={`rounded-lg px-4 py-3 text-sm ${
                 message.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
@@ -211,7 +187,6 @@ export default function NewListingPage() {
                 {message.text}
               </div>
             )}
-
             <button
               type="submit"
               disabled={loading || !form.title || !form.type || !form.category}
