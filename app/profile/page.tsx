@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import ProfileForm from './profile-form'
+import AppNav from '@/app/components/AppNav'
 
 export default async function ProfilePage() {
   const supabase = await createClient()
@@ -16,6 +17,7 @@ export default async function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <AppNav />
       <div className="max-w-2xl mx-auto px-4 py-12">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Your Profile</h1>
