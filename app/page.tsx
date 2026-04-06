@@ -151,15 +151,44 @@ const modules = [
 export default function Home() {
   return (
     <main id="top" style={{ fontFamily: "'Inter', system-ui, sans-serif", background: '#060d09', color: '#f0fdf4', minHeight: '100vh', lineHeight: 1.6 }}>
+
+      {/* RESPONSIVE STYLES */}
+      <style>{`
+        .agy-nav { padding: 20px 40px; }
+        .agy-nav-links { display: flex; align-items: center; gap: 20px; }
+        .agy-module-wide { grid-column: span 2; }
+        .agy-modules-section { padding: 100px 24px; }
+        .agy-cta-section { padding: 100px 24px 120px; }
+        .agy-footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; padding: 28px 40px; }
+        .agy-footer-links { display: flex; gap: 24px; flex-wrap: wrap; }
+
+        @media (max-width: 768px) {
+          .agy-nav { padding: 16px 20px; }
+          .agy-nav-links { gap: 10px; }
+          .agy-nav-about { display: none; }
+          .agy-module-wide { grid-column: span 1; }
+          .agy-modules-section { padding: 60px 16px; }
+          .agy-cta-section { padding: 60px 16px 80px; }
+          .agy-footer { flex-direction: column; align-items: flex-start; padding: 24px 20px; }
+          .agy-footer-links { gap: 16px; }
+        }
+
+        @media (max-width: 480px) {
+          .agy-nav-links { gap: 8px; }
+          .agy-nav-contact { display: none; }
+          .agy-footer-links { gap: 12px; }
+        }
+      `}</style>
+
       {/* NAV */}
-      <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 40px', background: 'rgba(6,13,9,0.85)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(34,197,94,0.08)' }}>
+      <nav className="agy-nav" style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(6,13,9,0.85)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(34,197,94,0.08)' }}>
         <a href="#top" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
           <div style={{ width: 34, height: 34, background: 'linear-gradient(135deg, #16a34a, #22c55e)', borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17 }}>🌾</div>
           <span style={{ fontSize: 17, fontWeight: 800, color: '#f0fdf4', letterSpacing: '-0.3px' }}>Agro<span style={{ color: '#22c55e' }}>Yield</span></span>
         </a>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-          <a href="/about" style={{ fontSize: 13, fontWeight: 600, color: '#bbf7d0', textDecoration: 'none' }}>About</a>
-          <a href="/contact" style={{ fontSize: 13, fontWeight: 600, color: '#bbf7d0', textDecoration: 'none' }}>Contact</a>
+        <div className="agy-nav-links">
+          <a href="/about" className="agy-nav-about" style={{ fontSize: 13, fontWeight: 600, color: '#bbf7d0', textDecoration: 'none' }}>About</a>
+          <a href="/contact" className="agy-nav-contact" style={{ fontSize: 13, fontWeight: 600, color: '#bbf7d0', textDecoration: 'none' }}>Contact</a>
           <a href="#top" style={{ fontSize: 13, fontWeight: 600, color: '#22c55e', background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 100, padding: '6px 16px', textDecoration: 'none' }}>
             Join Waitlist
           </a>
@@ -206,7 +235,7 @@ export default function Home() {
       <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, #1c3825, transparent)', margin: '0 24px' }} />
 
       {/* WHAT IS AGROYIELD */}
-      <div style={{ position: 'relative', zIndex: 1, padding: '100px 24px', maxWidth: 1100, margin: '0 auto' }}>
+      <div className="agy-modules-section" style={{ position: 'relative', zIndex: 1, maxWidth: 1100, margin: '0 auto' }}>
         <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#22c55e', marginBottom: 16 }}>What is AgroYield Network?</p>
         <h2 style={{ fontSize: 'clamp(30px, 4vw, 48px)', fontWeight: 900, letterSpacing: -1.5, color: '#f0fdf4', marginBottom: 16, lineHeight: 1.1 }}>Everything you need to<br />grow — in one platform.</h2>
         <p style={{ fontSize: 17, color: '#bbf7d0', maxWidth: 540, lineHeight: 1.65, marginBottom: 60 }}>
@@ -214,7 +243,11 @@ export default function Home() {
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
           {modules.map((m) => (
-            <div key={m.tag} style={{ gridColumn: m.wide ? 'span 2' : 'span 1', background: '#0c1c11', border: '1px solid #1c3825', borderRadius: 22, padding: 32 }}>
+            <div
+              key={m.tag}
+              className={m.wide ? 'agy-module-wide' : ''}
+              style={{ background: '#0c1c11', border: '1px solid #1c3825', borderRadius: 22, padding: 32 }}
+            >
               <div style={{ width: 52, height: 52, background: '#0f2318', border: '1px solid #1c3825', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, marginBottom: 20 }}>{m.icon}</div>
               <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#22c55e', marginBottom: 8 }}>{m.tag}</p>
               <h3 style={{ fontSize: 20, fontWeight: 800, color: '#f0fdf4', marginBottom: 10, letterSpacing: -0.4 }}>{m.name}</h3>
@@ -232,7 +265,7 @@ export default function Home() {
       <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, #1c3825, transparent)', margin: '0 24px' }} />
 
       {/* BOTTOM CTA */}
-      <div style={{ textAlign: 'center', padding: '100px 24px 120px', position: 'relative', zIndex: 1 }}>
+      <div className="agy-cta-section" style={{ textAlign: 'center', position: 'relative', zIndex: 1 }}>
         <div style={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: 600, height: 400, background: 'radial-gradient(ellipse at center, rgba(34,197,94,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
         <h2 style={{ fontSize: 'clamp(28px, 4vw, 48px)', fontWeight: 900, letterSpacing: -1.5, color: '#f0fdf4', marginBottom: 16, lineHeight: 1.1 }}>Ready to grow with us?</h2>
         <p style={{ fontSize: 17, color: '#bbf7d0', marginBottom: 40 }}>Be among the first 1,000 founding members when we launch.</p>
@@ -241,9 +274,9 @@ export default function Home() {
       </div>
 
       {/* FOOTER */}
-      <footer style={{ borderTop: '1px solid #1c3825', padding: '28px 40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, position: 'relative', zIndex: 1 }}>
+      <footer className="agy-footer" style={{ borderTop: '1px solid #1c3825', position: 'relative', zIndex: 1 }}>
         <p style={{ fontSize: 13, color: '#4b7a5c' }}>© 2026 AgroYield Network. All rights reserved.</p>
-        <div style={{ display: 'flex', gap: 24 }}>
+        <div className="agy-footer-links">
           {['Contact', 'Privacy', 'About', 'Twitter / X', 'LinkedIn'].map(link => (
             <a key={link}
               href={link === 'Contact' ? '/contact' : link === 'About' ? '/about' : '#'}
