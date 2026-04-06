@@ -36,12 +36,13 @@ export const config = {
     '/dashboard/:path*',
     '/profile/:path*',
     '/directory/:path*',
+    '/opportunities/:path*',
+    '/prices/:path*',
     '/marketplace/:path*',
+    '/research/:path*',
     '/mentorship/:path*',
     '/grants/:path*',
-    '/research/:path*',
     '/insights/:path*',
-    '/prices/:path*',
     '/connections/:path*',
   ]
 }
