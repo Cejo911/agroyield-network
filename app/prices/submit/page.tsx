@@ -39,22 +39,26 @@ export default function SubmitPricePage() {
     state: '',
   })
 
+  const currentCommodities: string[] = form.category ? (COMMODITIES[form.category] ?? []) : []
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setMessage(null)
+
+    const commodityName = form.commodity === 'Other' ? form.customCommodity : form.commodity
 
     try {
       const res = await fetch('/api/prices', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          commodity: form.commodity === 'Other' ? form.customCommodity : form.commodity,
+          commodity: commodityName,
           category: form.category,
           price: parseFloat(form.price),
           unit: form.unit,
-          market_name: form.market_name,
-          state: form.state,
+          market_name: form.market_name || null,
+          state: form.state || null,
         }),
       })
 
@@ -64,7 +68,10 @@ export default function SubmitPricePage() {
       setMessage({ type: 'success', text: 'Price reported successfully! Redirecting...' })
       setTimeout(() => router.push('/prices'), 1500)
     } catch (err: unknown) {
-      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Something went wrong' })
+      setMessage({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Something went wrong',
+      })
     } finally {
       setLoading(false)
     }
@@ -115,13 +122,13 @@ export default function SubmitPricePage() {
               </div>
             </div>
 
-            {form.category && (
+            {form.category && currentCommodities.length > 0 && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Commodity <span className="text-red-500">*</span>
                 </label>
                 <div className="flex flex-wrap gap-2">
-                  {COMMODITIES[form.category].map(item => (
+                  {currentCommodities.map(item => (
                     <button
                       key={item}
                       type="button"
@@ -151,7 +158,7 @@ export default function SubmitPricePage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Price (₦) <span className="text-red-500">*</span>
+                  Price (NGN) <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="number"
