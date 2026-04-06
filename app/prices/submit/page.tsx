@@ -1,238 +1,224 @@
 'use client'
-
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
+import AppNav from '@/app/components/AppNav'
+import { createClient } from '@/lib/supabase/client'
 
 const COMMODITIES: Record<string, string[]> = {
-  grains: ['Maize', 'Rice', 'Wheat', 'Sorghum', 'Millet'],
-  tubers: ['Yam', 'Cassava', 'Sweet Potato', 'Irish Potato'],
-  legumes: ['Cowpea', 'Soybean', 'Groundnut'],
-  vegetables: ['Tomato', 'Pepper', 'Onion', 'Spinach', 'Cabbage'],
-  oils: ['Palm Oil', 'Groundnut Oil', 'Soybean Oil'],
-  livestock: ['Chicken', 'Goat', 'Cow', 'Catfish', 'Tilapia'],
-  other: ['Other'],
+  grains: ['Maize', 'Rice', 'Sorghum', 'Millet', 'Wheat', 'Barley'],
+  legumes: ['Soybeans', 'Cowpea', 'Groundnut', 'Sesame', 'Beans'],
+  tubers: ['Cassava', 'Yam', 'Sweet Potato', 'Cocoyam', 'Irish Potato'],
+  vegetables: ['Tomato', 'Pepper', 'Onion', 'Cabbage', 'Carrot', 'Spinach'],
+  fruits: ['Banana', 'Plantain', 'Mango', 'Orange', 'Pineapple', 'Watermelon'],
+  livestock: ['Cattle', 'Goat', 'Sheep', 'Pig', 'Poultry', 'Fish'],
+  cash_crops: ['Cocoa', 'Coffee', 'Cotton', 'Rubber', 'Palm Oil', 'Sugarcane'],
 }
 
-const UNITS = ['kg', '50kg bag', '100kg bag', 'ton', 'tuber', 'bunch', 'crate', 'litre', 'piece']
-
 const STATES = [
-  'Abia', 'Adamawa', 'Akwa Ibom', 'Anambra', 'Bauchi', 'Bayelsa', 'Benue', 'Borno',
-  'Cross River', 'Delta', 'Ebonyi', 'Edo', 'Ekiti', 'Enugu', 'FCT Abuja', 'Gombe',
-  'Imo', 'Jigawa', 'Kaduna', 'Kano', 'Katsina', 'Kebbi', 'Kogi', 'Kwara', 'Lagos',
-  'Nasarawa', 'Niger', 'Ogun', 'Ondo', 'Osun', 'Oyo', 'Plateau', 'Rivers',
-  'Sokoto', 'Taraba', 'Yobe', 'Zamfara',
+  'Abia','Adamawa','Akwa Ibom','Anambra','Bauchi','Bayelsa','Benue','Borno',
+  'Cross River','Delta','Ebonyi','Edo','Ekiti','Enugu','FCT','Gombe','Imo',
+  'Jigawa','Kaduna','Kano','Katsina','Kebbi','Kogi','Kwara','Lagos','Nasarawa',
+  'Niger','Ogun','Ondo','Osun','Oyo','Plateau','Rivers','Sokoto','Taraba',
+  'Yobe','Zamfara',
 ]
+
+const UNITS = ['kg', 'tonne', 'bag (50kg)', 'bag (100kg)', 'crate', 'bunch', 'piece', 'litre']
 
 export default function SubmitPricePage() {
   const router = useRouter()
-  const [loading, setLoading] = useState(false)
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
-
   const [form, setForm] = useState({
     category: '',
     commodity: '',
-    customCommodity: '',
-    price: '',
+    price_per_unit: '',
     unit: '',
     market_name: '',
     state: '',
+    notes: '',
   })
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
 
   const currentCommodities: string[] = form.category ? (COMMODITIES[form.category] ?? []) : []
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target
+    if (name === 'category') {
+      setForm(prev => ({ ...prev, category: value, commodity: '' }))
+    } else {
+      setForm(prev => ({ ...prev, [name]: value }))
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
-    setMessage(null)
+    setSubmitting(true)
+    setError('')
 
-    const commodityName = form.commodity === 'Other' ? form.customCommodity : form.commodity
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    try {
-      const res = await fetch('/api/prices', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          commodity: commodityName,
-          category: form.category,
-          price: parseFloat(form.price),
-          unit: form.unit,
-          market_name: form.market_name || null,
-          state: form.state || null,
-        }),
-      })
-
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Failed to submit price')
-
-      setMessage({ type: 'success', text: 'Price reported successfully! Redirecting...' })
-      setTimeout(() => router.push('/prices'), 1500)
-    } catch (err: unknown) {
-      setMessage({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Something went wrong',
-      })
-    } finally {
-      setLoading(false)
+    if (!user) {
+      setError('You must be signed in to submit prices.')
+      setSubmitting(false)
+      return
     }
+
+    const { error: insertError } = await supabase.from('price_reports').insert({
+      user_id: user.id,
+      category: form.category,
+      commodity: form.commodity,
+      price_per_unit: parseFloat(form.price_per_unit),
+      unit: form.unit,
+      market_name: form.market_name,
+      state: form.state,
+      notes: form.notes || null,
+    })
+
+    if (insertError) {
+      setError(insertError.message)
+      setSubmitting(false)
+      return
+    }
+
+    router.push('/prices')
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-100">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">🌾</span>
-            <span className="font-bold text-green-700 text-lg">AgroYield Network</span>
+      <AppNav />
+
+      <div className="max-w-2xl mx-auto px-4 py-10">
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">Submit a Price Report</h1>
+        <p className="text-gray-500 mb-8">Help the community by sharing current commodity prices from your local market.</p>
+
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+            {error}
           </div>
-          <Link href="/prices" className="text-sm text-gray-600 hover:text-green-700 font-medium">
-            Back to Price Tracker
-          </Link>
-        </div>
-      </header>
+        )}
 
-      <main className="max-w-xl mx-auto px-4 py-10">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Report a Price</h1>
-          <p className="text-gray-500 mt-1">Share a commodity price from your local market.</p>
-        </div>
-
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Category <span className="text-red-500">*</span>
-              </label>
-              <div className="grid grid-cols-3 gap-2">
-                {Object.keys(COMMODITIES).map(cat => (
-                  <button
-                    key={cat}
-                    type="button"
-                    onClick={() => setForm(prev => ({ ...prev, category: cat, commodity: '' }))}
-                    className={`py-2 px-3 rounded-lg border text-sm font-medium capitalize transition-colors ${
-                      form.category === cat
-                        ? 'border-green-600 bg-green-50 text-green-700'
-                        : 'border-gray-200 text-gray-600 hover:border-green-300'
-                    }`}
-                  >
-                    {cat}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {form.category && currentCommodities.length > 0 && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Commodity <span className="text-red-500">*</span>
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {currentCommodities.map(item => (
-                    <button
-                      key={item}
-                      type="button"
-                      onClick={() => setForm(prev => ({ ...prev, commodity: item }))}
-                      className={`px-3 py-1.5 rounded-full border text-sm transition-colors ${
-                        form.commodity === item
-                          ? 'bg-green-600 text-white border-green-600'
-                          : 'border-gray-300 text-gray-600 hover:border-green-400'
-                      }`}
-                    >
-                      {item}
-                    </button>
-                  ))}
-                </div>
-                {form.commodity === 'Other' && (
-                  <input
-                    type="text"
-                    placeholder="Enter commodity name"
-                    value={form.customCommodity}
-                    onChange={e => setForm(prev => ({ ...prev, customCommodity: e.target.value }))}
-                    className="mt-3 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                  />
-                )}
-              </div>
-            )}
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Price (NGN) <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  required
-                  min="0"
-                  step="0.01"
-                  value={form.price}
-                  onChange={e => setForm(prev => ({ ...prev, price: e.target.value }))}
-                  placeholder="e.g. 500"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Unit <span className="text-red-500">*</span>
-                </label>
-                <select
-                  required
-                  value={form.unit}
-                  onChange={e => setForm(prev => ({ ...prev, unit: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                >
-                  <option value="">Select unit</option>
-                  {UNITS.map(u => (
-                    <option key={u} value={u}>{u}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Market Name</label>
-                <input
-                  type="text"
-                  value={form.market_name}
-                  onChange={e => setForm(prev => ({ ...prev, market_name: e.target.value }))}
-                  placeholder="e.g. Mile 12 Market"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
-                <select
-                  value={form.state}
-                  onChange={e => setForm(prev => ({ ...prev, state: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                >
-                  <option value="">Select state</option>
-                  {STATES.map(s => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {message && (
-              <div className={`rounded-lg px-4 py-3 text-sm ${
-                message.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
-              }`}>
-                {message.text}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading || !form.commodity || !form.price || !form.unit}
-              className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 transition-colors"
+        <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-5">
+          {/* Category */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Category <span className="text-red-500">*</span></label>
+            <select
+              name="category"
+              value={form.category}
+              onChange={handleChange}
+              required
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
             >
-              {loading ? 'Submitting...' : 'Submit Price'}
-            </button>
-          </form>
-        </div>
-      </main>
+              <option value="">Select category</option>
+              {Object.keys(COMMODITIES).map(cat => (
+                <option key={cat} value={cat}>{cat.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Commodity */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Commodity <span className="text-red-500">*</span></label>
+            <select
+              name="commodity"
+              value={form.commodity}
+              onChange={handleChange}
+              required
+              disabled={!form.category}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-gray-100"
+            >
+              <option value="">Select commodity</option>
+              {currentCommodities.map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Price + Unit */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Price (₦) <span className="text-red-500">*</span></label>
+              <input
+                type="number"
+                name="price_per_unit"
+                value={form.price_per_unit}
+                onChange={handleChange}
+                required
+                min="0"
+                step="0.01"
+                placeholder="e.g. 35000"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Unit <span className="text-red-500">*</span></label>
+              <select
+                name="unit"
+                value={form.unit}
+                onChange={handleChange}
+                required
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+              >
+                <option value="">Select unit</option>
+                {UNITS.map(u => (
+                  <option key={u} value={u}>{u}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Market */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Market Name <span className="text-red-500">*</span></label>
+            <input
+              type="text"
+              name="market_name"
+              value={form.market_name}
+              onChange={handleChange}
+              required
+              placeholder="e.g. Mile 12 Market"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+          </div>
+
+          {/* State */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">State <span className="text-red-500">*</span></label>
+            <select
+              name="state"
+              value={form.state}
+              onChange={handleChange}
+              required
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+            >
+              <option value="">Select state</option>
+              {STATES.map(s => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Notes */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Notes <span className="text-gray-400">(optional)</span></label>
+            <textarea
+              name="notes"
+              value={form.notes}
+              onChange={handleChange}
+              rows={3}
+              placeholder="Any additional context about this price..."
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={submitting}
+            className="w-full bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-semibold py-3 rounded-lg transition-colors"
+          >
+            {submitting ? 'Submitting…' : 'Submit Price Report'}
+          </button>
+        </form>
+      </div>
     </div>
   )
 }
