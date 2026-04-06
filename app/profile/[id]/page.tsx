@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
+import AppNav from '@/app/components/AppNav'
 
 export default async function PublicProfilePage({
   params,
@@ -28,28 +29,10 @@ export default async function PublicProfilePage({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-100">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">🌾</span>
-            <span className="font-bold text-green-700 text-lg">AgroYield Network</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <Link href="/directory" className="text-sm text-gray-600 hover:text-green-700 font-medium">
-              Back to Directory
-            </Link>
-            <Link href="/dashboard" className="text-sm text-gray-600 hover:text-green-700 font-medium">
-              Dashboard
-            </Link>
-          </div>
-        </div>
-      </header>
-
+      <AppNav />
       <main className="max-w-2xl mx-auto px-4 py-10">
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
 
-          {/* Avatar + name */}
           <div className="flex items-center gap-5 mb-6">
             <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold text-2xl">
               {profile.first_name?.[0]?.toUpperCase() ?? '?'}
@@ -66,7 +49,6 @@ export default async function PublicProfilePage({
             </div>
           </div>
 
-          {/* Details */}
           <div className="space-y-4 text-sm text-gray-600">
             {profile.institution && (
               <p>
@@ -103,7 +85,6 @@ export default async function PublicProfilePage({
             )}
           </div>
 
-          {/* Links */}
           {(profile.linkedin || profile.twitter || profile.website) && (
             <div className="mt-6 pt-6 border-t border-gray-100 flex flex-wrap gap-3">
               {profile.linkedin && (
@@ -139,7 +120,6 @@ export default async function PublicProfilePage({
             </div>
           )}
 
-          {/* Edit button if own profile */}
           {isOwnProfile && (
             <div className="mt-6 pt-6 border-t border-gray-100">
               <Link
