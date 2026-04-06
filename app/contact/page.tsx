@@ -129,7 +129,7 @@ const handleSubmit = async (e: React.FormEvent) => {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                 <div>
                   <label style={labelStyle}>Full name *</label>
-                  <input name="name" value={form.name} onChange={handleChange} placeholder="Chidi Okonkwo" required style={inputStyle} />
+                  <input name="name" value={form.name} onChange={handleChange} placeholder="Your full name" required style={inputStyle} />
                 </div>
                 <div>
                   <label style={labelStyle}>Email address *</label>
