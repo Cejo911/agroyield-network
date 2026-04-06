@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
+import AppNav from '@/app/components/AppNav'
 
 const TYPE_COLOURS: Record<string, string> = {
   grant: 'bg-green-100 text-green-700',
@@ -35,22 +36,10 @@ export default async function OpportunityPage({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-100">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">🌾</span>
-            <span className="font-bold text-green-700 text-lg">AgroYield Network</span>
-          </div>
-          <Link href="/opportunities" className="text-sm text-gray-600 hover:text-green-700 font-medium">
-            Back to Opportunities
-          </Link>
-        </div>
-      </header>
-
+      <AppNav />
       <main className="max-w-2xl mx-auto px-4 py-10">
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
 
-          {/* Type + expired badge */}
           <div className="flex flex-wrap gap-2 mb-4">
             {opportunity.type && (
               <span className={`text-xs px-3 py-1 rounded-full font-medium capitalize ${TYPE_COLOURS[opportunity.type] ?? 'bg-gray-100 text-gray-600'}`}>
@@ -66,7 +55,6 @@ export default async function OpportunityPage({
 
           <h1 className="text-2xl font-bold text-gray-900 mb-4">{opportunity.title}</h1>
 
-          {/* Meta */}
           <div className="space-y-2 text-sm text-gray-600 mb-6">
             {opportunity.organisation && (
               <p>🏛 <span className="font-medium">{opportunity.organisation}</span></p>
@@ -86,7 +74,6 @@ export default async function OpportunityPage({
             )}
           </div>
 
-          {/* Description */}
           {opportunity.description && (
             <div className="mb-6">
               <h2 className="font-semibold text-gray-800 mb-2">About this opportunity</h2>
@@ -94,7 +81,6 @@ export default async function OpportunityPage({
             </div>
           )}
 
-          {/* Requirements */}
           {opportunity.requirements && (
             <div className="mb-6">
               <h2 className="font-semibold text-gray-800 mb-2">Requirements</h2>
@@ -102,7 +88,6 @@ export default async function OpportunityPage({
             </div>
           )}
 
-          {/* Apply button */}
           {opportunity.url && (
             <div className="pt-6 border-t border-gray-100">
               <Link
@@ -119,6 +104,7 @@ export default async function OpportunityPage({
               </Link>
             </div>
           )}
+
         </div>
       </main>
     </div>
