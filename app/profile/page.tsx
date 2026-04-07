@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import ProfileForm from './profile-form'
 import AppNav from '@/app/components/AppNav'
 
-const PROFILE_FIELDS: { key: string; label: string }[] = [
+const PROFILE_FIELDS = [
   { key: 'first_name',   label: 'First name' },
   { key: 'last_name',    label: 'Last name' },
   { key: 'role',         label: 'Your role' },
@@ -14,7 +14,7 @@ const PROFILE_FIELDS: { key: string; label: string }[] = [
   { key: 'linkedin',     label: 'LinkedIn profile' },
   { key: 'twitter',      label: 'Twitter / X handle' },
   { key: 'website',      label: 'Personal website' },
-]
+] as const
 
 export default async function ProfilePage() {
   const supabase = await createClient()
@@ -27,13 +27,12 @@ export default async function ProfilePage() {
     .eq('id', user.id)
     .single()
 
-  // Calculate completeness server-side
-const profileRecord = (profile ?? {}) as Record<string, unknown>
-const missing  = PROFILE_FIELDS.filter(({ key }) => !profileRecord[key])
-const filled   = PROFILE_FIELDS.length - missing.length
-const percent  = Math.round((filled / PROFILE_FIELDS.length) * 100)
-  const filled  = PROFILE_FIELDS.length - missing.length
-  const percent = Math.round((filled / PROFILE_FIELDS.length) * 100)
+  // Cast to a plain record so TypeScript doesn't complain about dynamic key access
+  const p: Record<string, unknown> = profile ?? {}
+
+  const missing  = PROFILE_FIELDS.filter(({ key }) => !p[key])
+  const filled   = PROFILE_FIELDS.length - missing.length
+  const percent  = Math.round((filled / PROFILE_FIELDS.length) * 100)
 
   const barColor =
     percent >= 70 ? '#16a34a' :
@@ -55,23 +54,17 @@ const percent  = Math.round((filled / PROFILE_FIELDS.length) * 100)
           <p className="text-gray-500 mt-1">Help the community know who you are</p>
         </div>
 
-        {/* ── Profile completeness nudge ── */}
         {percent < 100 ? (
           <div className="mb-6 bg-white rounded-2xl border border-green-100 shadow-sm p-6">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-semibold text-gray-700">
-                Profile completeness
-              </span>
-              <span className={`text-sm font-bold ${percentColor}`}>
-                {percent}%
-              </span>
+              <span className="text-sm font-semibold text-gray-700">Profile completeness</span>
+              <span className={`text-sm font-bold ${percentColor}`}>{percent}%</span>
             </div>
 
-            {/* Progress bar */}
             <div className="w-full bg-gray-100 rounded-full h-2 mb-4">
               <div
                 className="h-2 rounded-full"
-                style={{ width: `${percent}%`, backgroundColor: barColor, transition: 'width 0.5s ease' }}
+                style={{ width: `${percent}%`, backgroundColor: barColor }}
               />
             </div>
 
@@ -92,7 +85,6 @@ const percent  = Math.round((filled / PROFILE_FIELDS.length) * 100)
             </div>
           </div>
         ) : (
-          /* ── 100 % complete banner ── */
           <div className="mb-6 flex items-center gap-3 bg-green-50 border border-green-200 rounded-2xl p-4">
             <span className="text-2xl" aria-hidden="true">✅</span>
             <div>
@@ -104,7 +96,6 @@ const percent  = Math.round((filled / PROFILE_FIELDS.length) * 100)
           </div>
         )}
 
-        {/* ── Form card ── */}
         <div id="profile-form" className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
           <ProfileForm
             userId={user.id}
