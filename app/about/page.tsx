@@ -1,3 +1,19 @@
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'About',
+  description: 'Learn about AgroYield Network — Nigeria\'s first professional platform built entirely for agriculture. Our mission, vision, story, and the team behind the platform.',
+  openGraph: {
+    title: 'About AgroYield Network',
+    description: 'Our mission is to connect every mind working to feed Africa. Learn the story behind AgroYield Network and what we\'re building.',
+    url: 'https://agroyield.africa/about',
+  },
+  twitter: {
+    title: 'About AgroYield Network',
+    description: 'Our mission is to connect every mind working to feed Africa.',
+  },
+}
+
 export default function About() {
   const advisors = [
     { name: 'Dr. Amina Okafor', role: 'Agricultural Economics, University of Ibadan', flag: '🇳🇬' },
