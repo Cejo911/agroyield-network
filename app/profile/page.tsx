@@ -6,7 +6,6 @@ import AppNav from '@/app/components/AppNav'
 export default async function ProfilePage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-
   if (!user) redirect('/login')
 
   const { data: profile } = await supabase
@@ -14,6 +13,12 @@ export default async function ProfilePage() {
     .select('*')
     .eq('id', user.id)
     .single()
+
+  // Safely extract avatar_url without relying on generated types
+  const profileRecord = profile as Record<string, unknown> | null
+  const avatarUrl = typeof profileRecord?.avatar_url === 'string'
+    ? profileRecord.avatar_url
+    : null
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -27,18 +32,18 @@ export default async function ProfilePage() {
           <ProfileForm
             userId={user.id}
             initialData={{
-              first_name: profile?.first_name ?? null,
-              last_name: profile?.last_name ?? null,
-              role: profile?.role ?? null,
-              bio: profile?.bio ?? null,
-              location: profile?.location ?? null,
+              first_name:  profile?.first_name  ?? null,
+              last_name:   profile?.last_name   ?? null,
+              role:        profile?.role        ?? null,
+              bio:         profile?.bio         ?? null,
+              location:    profile?.location    ?? null,
               institution: profile?.institution ?? null,
-              interests: profile?.interests ?? null,
-              linkedin: profile?.linkedin ?? null,
-              twitter: profile?.twitter ?? null,
-              website: profile?.website ?? null,
-              avatar_url:  (profile as { avatar_url?: string | null } & typeof profile)?.avatar_url ?? null,
-}}
+              interests:   profile?.interests   ?? null,
+              linkedin:    profile?.linkedin    ?? null,
+              twitter:     profile?.twitter     ?? null,
+              website:     profile?.website     ?? null,
+              avatar_url:  avatarUrl,
+            }}
           />
         </div>
       </div>
