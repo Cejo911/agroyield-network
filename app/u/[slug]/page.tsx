@@ -71,18 +71,20 @@ export default async function PublicProfilePage(
     isFollowing = !!followData
   }
 
-  const avatarUrl: string | null = typeof raw.avatar_url === 'string' ? raw.avatar_url : null
-  const firstName = typeof raw.first_name === 'string' ? raw.first_name : ''
-  const lastName  = typeof raw.last_name  === 'string' ? raw.last_name  : ''
-  const role        = typeof raw.role        === 'string' ? raw.role        : null
-  const institution = typeof raw.institution === 'string' ? raw.institution : null
-  const bio         = typeof raw.bio         === 'string' ? raw.bio         : null
-  const location    = typeof raw.location    === 'string' ? raw.location    : null
-  const linkedin    = typeof raw.linkedin    === 'string' ? raw.linkedin    : null
-  const twitter     = typeof raw.twitter     === 'string' ? raw.twitter     : null
-  const website     = typeof raw.website     === 'string' ? raw.website     : null
-  const profileId   = typeof raw.id          === 'string' ? raw.id          : ''
-  const interests   = Array.isArray(raw.interests) ? raw.interests as string[] : []
+  const avatarUrl    = typeof raw.avatar_url  === 'string' ? raw.avatar_url  : null
+  const firstName    = typeof raw.first_name  === 'string' ? raw.first_name  : ''
+  const lastName     = typeof raw.last_name   === 'string' ? raw.last_name   : ''
+  const role         = typeof raw.role        === 'string' ? raw.role        : null
+  const institution  = typeof raw.institution === 'string' ? raw.institution : null
+  const bio          = typeof raw.bio         === 'string' ? raw.bio         : null
+  const location     = typeof raw.location    === 'string' ? raw.location    : null
+  const linkedin     = typeof raw.linkedin    === 'string' ? raw.linkedin    : null
+  const twitter      = typeof raw.twitter     === 'string' ? raw.twitter     : null
+  const website      = typeof raw.website     === 'string' ? raw.website     : null
+  const phone        = typeof raw.phone       === 'string' ? raw.phone       : null
+  const whatsapp     = typeof raw.whatsapp    === 'string' ? raw.whatsapp    : null
+  const profileId    = typeof raw.id          === 'string' ? raw.id          : ''
+  const interests    = Array.isArray(raw.interests) ? raw.interests as string[] : []
 
   const initials = [firstName, lastName]
     .filter(Boolean).map(n => n.charAt(0).toUpperCase()).join('') || '?'
@@ -133,10 +135,7 @@ export default async function PublicProfilePage(
                   {location && <p className="text-sm text-gray-500 mt-0.5">📍 {location}</p>}
                 </div>
                 {!isOwnProfile && user && (
-                 <FollowButton
-                   userId={profileId}
-                   initialIsFollowing={isFollowing}
-                />
+                  <FollowButton userId={profileId} initialIsFollowing={isFollowing} />
                 )}
                 {isOwnProfile && (
                   <a href="/profile"
@@ -145,7 +144,6 @@ export default async function PublicProfilePage(
                   </a>
                 )}
               </div>
-
               <div className="flex gap-6 mt-4">
                 <div>
                   <span className="text-lg font-bold text-gray-900">{followersCount}</span>
@@ -174,6 +172,25 @@ export default async function PublicProfilePage(
                     {interest}
                   </span>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* Contact — only visible to logged-in members */}
+          {user && (phone || whatsapp) && (
+            <div className="mt-5 pt-5 border-t border-gray-100">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Contact</p>
+              <div className="flex flex-wrap gap-4">
+                {phone && (
+                  <a href={`tel:${phone}`} className="text-sm text-gray-700 hover:text-green-600 transition-colors">
+                    📞 {phone}
+                  </a>
+                )}
+                {whatsapp && (
+                  <a href={'https://wa.me/' + whatsapp.replace(/[^0-9]/g, '')} target="_blank" rel="noopener noreferrer" className="text-sm text-green-600 hover:underline">
+                    💬 WhatsApp
+                  </a>
+                )}
               </div>
             </div>
           )}
