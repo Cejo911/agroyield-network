@@ -133,11 +133,10 @@ export default async function PublicProfilePage(
                   {location && <p className="text-sm text-gray-500 mt-0.5">📍 {location}</p>}
                 </div>
                 {!isOwnProfile && user && (
-                  <FollowButton
-                    targetUserId={profileId}
-                    currentUserId={user.id}
-                    initialIsFollowing={isFollowing}
-                  />
+                 <FollowButton
+                   userId={profileId}
+                   initialIsFollowing={isFollowing}
+                />
                 )}
                 {isOwnProfile && (
                   <a href="/profile"
