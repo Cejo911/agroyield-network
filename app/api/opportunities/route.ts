@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
+const RATE_LIMIT = 3 // max opportunities per 24 hours
+
 export async function GET() {
   return NextResponse.json({ status: 'ok' })
 }
@@ -20,6 +22,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Please verify your email address before posting opportunities. Check your inbox for a confirmation email.' },
         { status: 403 }
+      )
+    }
+
+    // Rate limiting — max 3 opportunities per 24 hours
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+    const { count } = await supabase
+      .from('opportunities')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .gte('created_at', since)
+
+    if ((count ?? 0) >= RATE_LIMIT) {
+      return NextResponse.json(
+        { error: `You can post a maximum of ${RATE_LIMIT} opportunities per 24 hours. Please try again later.` },
+        { status: 429 }
       )
     }
 
