@@ -273,6 +273,10 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
   // ── Submit ──
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (form.phone && form.whatsapp && form.phone.replace(/\s/g, '') === form.whatsapp.replace(/\s/g, '')) {
+      setMessage({ type: 'error', text: 'WhatsApp number is the same as your phone number. Leave WhatsApp blank if they are the same.' })
+      return
+    }
     setLoading(true)
     setMessage(null)
     try {
@@ -480,6 +484,7 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
                 onChange={e => setForm(prev => ({ ...prev, whatsapp: e.target.value }))}
                 placeholder="+234 800 000 0000"
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+              <p className="text-xs text-gray-400 mt-1">Leave blank if same as phone number</p>
             </div>
           </div>
         </div>
