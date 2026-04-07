@@ -20,7 +20,6 @@ type SearchResults = {
   listings:      ResultItem[]
   research:      ResultItem[]
 }
-
 const SECTIONS: { key: keyof SearchResults; label: string; emoji: string }[] = [
   { key: 'people',        label: 'People',        emoji: '👤' },
   { key: 'opportunities', label: 'Opportunities',  emoji: '📋' },
@@ -39,16 +38,35 @@ function SearchIcon() {
 }
 
 export default function AppNav() {
-  const [menuOpen,    setMenuOpen]    = useState(false)
-  const [searchOpen,  setSearchOpen]  = useState(false)
-  const [query,       setQuery]       = useState('')
-  const [results,     setResults]     = useState<SearchResults | null>(null)
-  const [loading,     setLoading]     = useState(false)
+  const [menuOpen,   setMenuOpen]   = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [query,      setQuery]      = useState('')
+  const [results,    setResults]    = useState<SearchResults | null>(null)
+  const [loading,    setLoading]    = useState(false)
+  const [isAdmin,    setIsAdmin]    = useState(false)
 
   const pathname    = usePathname()
   const router      = useRouter()
   const inputRef    = useRef<HTMLInputElement>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Check admin status on mount
+  useEffect(() => {
+    const checkAdmin = async () => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data } = await (supabase as any)
+        .from('profiles')
+        .select('is_admin')
+        .eq('id', user.id)
+        .single()
+      const raw = data as Record<string, unknown> | null
+      if (raw?.is_admin === true) setIsAdmin(true)
+    }
+    checkAdmin()
+  }, [])
 
   const handleSignOut = async () => {
     const supabase = createClient()
@@ -72,7 +90,6 @@ export default function AppNav() {
     setResults(null)
   }
 
-  // Close on Escape key
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') closeSearch()
@@ -82,7 +99,6 @@ export default function AppNav() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Debounced search fetch
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
     if (!query.trim() || query.length < 2) {
@@ -114,7 +130,6 @@ export default function AppNav() {
     <>
       <header className="bg-white border-b border-gray-100 sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-
           {/* Logo */}
           <Link href="/dashboard" className="flex items-center gap-2 shrink-0">
             <span className="text-2xl">🌾</span>
@@ -133,6 +148,16 @@ export default function AppNav() {
                 {link.label}
               </Link>
             ))}
+            {isAdmin && (
+              <Link href="/admin"
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  isActive('/admin')
+                    ? 'bg-purple-50 text-purple-700'
+                    : 'text-purple-600 hover:text-purple-700 hover:bg-purple-50'
+                }`}>
+                ⚙ Admin
+              </Link>
+            )}
           </nav>
 
           {/* Desktop right actions */}
@@ -184,6 +209,17 @@ export default function AppNav() {
                 {link.label}
               </Link>
             ))}
+            {isAdmin && (
+              <Link href="/admin"
+                onClick={() => setMenuOpen(false)}
+                className={`block px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  isActive('/admin')
+                    ? 'bg-purple-50 text-purple-700'
+                    : 'text-purple-600 hover:text-purple-700 hover:bg-purple-50'
+                }`}>
+                ⚙ Admin
+              </Link>
+            )}
             <Link href="/profile"
               onClick={() => setMenuOpen(false)}
               className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-green-700 hover:bg-gray-50">
@@ -202,11 +238,9 @@ export default function AppNav() {
         <div
           className="fixed inset-0 z-[100] flex items-start justify-center pt-[10vh] px-4 bg-black/50 backdrop-blur-sm"
           onClick={closeSearch}>
-
           <div
             className="w-full max-w-xl bg-white rounded-2xl shadow-2xl overflow-hidden"
             onClick={e => e.stopPropagation()}>
-
             {/* Search input */}
             <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100">
               <span className="text-gray-400 shrink-0"><SearchIcon /></span>
@@ -226,7 +260,6 @@ export default function AppNav() {
                 esc
               </kbd>
             </div>
-
             {/* Results */}
             <div className="max-h-[60vh] overflow-y-auto">
               {!query && (
