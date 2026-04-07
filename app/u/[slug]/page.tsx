@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import AppNav from '@/app/components/AppNav'
 import FollowButton from '@/app/directory/follow-button'
+import VerifiedBadge from '@/app/components/VerifiedBadge'
+import EliteBadge from '@/app/components/EliteBadge'
 
 export async function generateMetadata(
   { params }: { params: Promise<{ slug: string }> }
@@ -15,14 +17,11 @@ export async function generateMetadata(
     .select('first_name, last_name, role, institution, bio')
     .eq('username', slug)
     .single()
-
   if (!data) return { title: 'Member not found — AgroYield Network' }
-
   const raw = data as Record<string, unknown>
   const name = `${raw.first_name ?? ''} ${raw.last_name ?? ''}`.trim()
   const role = typeof raw.role === 'string' ? raw.role : null
   const institution = typeof raw.institution === 'string' ? raw.institution : null
-
   return {
     title: `${name} — AgroYield Network`,
     description: `${role ?? 'Member'}${institution ? ` at ${institution}` : ''} on AgroYield Network`,
@@ -71,20 +70,27 @@ export default async function PublicProfilePage(
     isFollowing = !!followData
   }
 
-  const avatarUrl    = typeof raw.avatar_url  === 'string' ? raw.avatar_url  : null
-  const firstName    = typeof raw.first_name  === 'string' ? raw.first_name  : ''
-  const lastName     = typeof raw.last_name   === 'string' ? raw.last_name   : ''
-  const role         = typeof raw.role        === 'string' ? raw.role        : null
-  const institution  = typeof raw.institution === 'string' ? raw.institution : null
-  const bio          = typeof raw.bio         === 'string' ? raw.bio         : null
-  const location     = typeof raw.location    === 'string' ? raw.location    : null
-  const linkedin     = typeof raw.linkedin    === 'string' ? raw.linkedin    : null
-  const twitter      = typeof raw.twitter     === 'string' ? raw.twitter     : null
-  const website      = typeof raw.website     === 'string' ? raw.website     : null
-  const phone        = typeof raw.phone       === 'string' ? raw.phone       : null
-  const whatsapp     = typeof raw.whatsapp    === 'string' ? raw.whatsapp    : null
-  const profileId    = typeof raw.id          === 'string' ? raw.id          : ''
-  const interests    = Array.isArray(raw.interests) ? raw.interests as string[] : []
+  const avatarUrl   = typeof raw.avatar_url  === 'string' ? raw.avatar_url  : null
+  const firstName   = typeof raw.first_name  === 'string' ? raw.first_name  : ''
+  const lastName    = typeof raw.last_name   === 'string' ? raw.last_name   : ''
+  const role        = typeof raw.role        === 'string' ? raw.role        : null
+  const institution = typeof raw.institution === 'string' ? raw.institution : null
+  const bio         = typeof raw.bio         === 'string' ? raw.bio         : null
+  const location    = typeof raw.location    === 'string' ? raw.location    : null
+  const linkedin    = typeof raw.linkedin    === 'string' ? raw.linkedin    : null
+  const twitter     = typeof raw.twitter     === 'string' ? raw.twitter     : null
+  const website     = typeof raw.website     === 'string' ? raw.website     : null
+  const phone       = typeof raw.phone       === 'string' ? raw.phone       : null
+  const whatsapp    = typeof raw.whatsapp    === 'string' ? raw.whatsapp    : null
+  const profileId   = typeof raw.id          === 'string' ? raw.id          : ''
+  const interests   = Array.isArray(raw.interests) ? raw.interests as string[] : []
+
+  // Verification badges
+  const isVerified =
+    raw.is_verified === true &&
+    (raw.subscription_expires_at == null ||
+      new Date(raw.subscription_expires_at as string) > new Date())
+  const isElite = raw.is_elite === true
 
   const initials = [firstName, lastName]
     .filter(Boolean).map(n => n.charAt(0).toUpperCase()).join('') || '?'
@@ -109,6 +115,7 @@ export default async function PublicProfilePage(
       <main className="max-w-2xl mx-auto px-4 py-10">
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 mb-6">
           <div className="flex flex-col sm:flex-row sm:items-start gap-6">
+
             {/* Avatar */}
             <div className="shrink-0">
               {avatarUrl ? (
@@ -129,7 +136,11 @@ export default async function PublicProfilePage(
             <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900">{firstName} {lastName}</h1>
+                  <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2 flex-wrap">
+                    {firstName} {lastName}
+                    {isVerified && <VerifiedBadge size="md" />}
+                    {isElite && <EliteBadge size="md" />}
+                  </h1>
                   {role && <p className="text-sm text-green-600 font-semibold capitalize mt-0.5">{role}</p>}
                   {institution && <p className="text-sm text-gray-500 mt-0.5">🏛 {institution}</p>}
                   {location && <p className="text-sm text-gray-500 mt-0.5">📍 {location}</p>}
@@ -144,6 +155,7 @@ export default async function PublicProfilePage(
                   </a>
                 )}
               </div>
+
               <div className="flex gap-6 mt-4">
                 <div>
                   <span className="text-lg font-bold text-gray-900">{followersCount}</span>
