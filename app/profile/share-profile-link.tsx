@@ -8,7 +8,7 @@ interface Props {
 
 export default function ShareProfileLink({ username }: Props) {
   const [copied, setCopied] = useState(false)
-  const url = `https://agroyield.africa/u/${username}`
+  const url = 'https://agroyield.africa/u/' + username
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(url)
@@ -23,18 +23,10 @@ export default function ShareProfileLink({ username }: Props) {
         <code className="flex-1 text-xs bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-gray-600 truncate">
           {url}
         </code>
-        <button
-          onClick={handleCopy}
-          className="shrink-0 text-sm font-semibold px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors"
-        >
+        <button onClick={handleCopy} className="shrink-0 text-sm font-semibold px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors">
           {copied ? 'Copied!' : 'Copy'}
         </button>
-        
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="shrink-0 text-sm font-semibold px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
-        >
+        <a href={url} target="_blank" rel="noopener noreferrer" className="shrink-0 text-sm font-semibold px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors">
           View
         </a>
       </div>
