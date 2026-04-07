@@ -16,22 +16,49 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const { userId, is_suspended } = await request.json()
+    const { userId, action } = await request.json() as {
+      userId: string
+      action: 'suspend' | 'unsuspend' | 'verify' | 'unverify' | 'elite' | 'unelite'
+    }
 
-    // Update profiles table
-    await supabaseAny
-      .from('profiles')
-      .update({ is_suspended })
-      .eq('id', userId)
-
-    // Ban or unban in Supabase Auth
     const adminClient = createAdminClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
-    await adminClient.auth.admin.updateUserById(userId, {
-      ban_duration: is_suspended ? '87600h' : 'none',
-    })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const adminAny = adminClient as any
+
+    if (action === 'suspend') {
+      await adminAny.from('profiles').update({ is_suspended: true }).eq('id', userId)
+      await adminClient.auth.admin.updateUserById(userId, { ban_duration: '87600h' })
+    } else if (action === 'unsuspend') {
+      await adminAny.from('profiles').update({ is_suspended: false }).eq('id', userId)
+      await adminClient.auth.admin.updateUserById(userId, { ban_duration: 'none' })
+    } else if (action === 'verify') {
+      await adminAny.from('profiles').update({
+        is_verified: true,
+        verified_at: new Date().toISOString(),
+        subscription_plan: 'admin',
+        subscription_expires_at: null,
+      }).eq('id', userId)
+    } else if (action === 'unverify') {
+      await adminAny.from('profiles').update({
+        is_verified: false,
+        verified_at: null,
+        subscription_plan: null,
+        subscription_expires_at: null,
+      }).eq('id', userId)
+    } else if (action === 'elite') {
+      await adminAny.from('profiles').update({
+        is_elite: true,
+        elite_granted_at: new Date().toISOString(),
+      }).eq('id', userId)
+    } else if (action === 'unelite') {
+      await adminAny.from('profiles').update({
+        is_elite: false,
+        elite_granted_at: null,
+      }).eq('id', userId)
+    }
 
     return NextResponse.json({ success: true })
   } catch (err: unknown) {
