@@ -16,6 +16,106 @@ const INTERESTS = [
   'Climate & Sustainability', 'Supply Chain', 'Research & Development',
 ]
 
+const INSTITUTIONS = [
+  // Federal Universities
+  'University of Lagos (UNILAG)',
+  'University of Ibadan (UI)',
+  'Ahmadu Bello University (ABU)',
+  'University of Nigeria, Nsukka (UNN)',
+  'Obafemi Awolowo University (OAU)',
+  'University of Benin (UNIBEN)',
+  'University of Ilorin (UNILORIN)',
+  'University of Jos (UNIJOS)',
+  'University of Maiduguri (UNIMAID)',
+  'University of Port Harcourt (UNIPORT)',
+  'Federal University of Technology, Akure (FUTA)',
+  'Federal University of Technology, Minna (FUTMINNA)',
+  'Federal University of Technology, Owerri (FUTO)',
+  'Federal University, Oye-Ekiti (FUOYE)',
+  'Federal University, Dutse',
+  'Federal University, Lokoja',
+  'Federal University, Lafia',
+  'Federal University, Wukari',
+  'Federal University, Ndufu-Alike (FUNAI)',
+  'Federal University, Birnin Kebbi',
+  'Federal University, Kashere',
+  // Agricultural Universities & Colleges
+  'Federal University of Agriculture, Abeokuta (FUNAAB)',
+  'Federal University of Agriculture, Makurdi (FUAM)',
+  'Michael Okpara University of Agriculture, Umudike (MOUAU)',
+  'Landmark University, Omu-Aran',
+  'Federal College of Agriculture, Ibadan',
+  'Federal College of Agriculture, Akure',
+  'Federal College of Agriculture, Ishiagu',
+  'Federal College of Agriculture, Moor Plantation',
+  'College of Agriculture, Kabba',
+  'College of Agriculture, Jalingo',
+  'College of Agriculture, Lafia',
+  // State Universities
+  'Lagos State University (LASU)',
+  'Ladoke Akintola University of Technology (LAUTECH)',
+  'Olabisi Onabanjo University (OOU)',
+  'Ekiti State University (EKSU)',
+  'Rivers State University',
+  'Delta State University (DELSU)',
+  'Ambrose Alli University (AAU)',
+  'Enugu State University of Science and Technology (ESUT)',
+  'Imo State University (IMSU)',
+  'Abia State University (ABSU)',
+  'Benue State University',
+  'Nasarawa State University',
+  'Kaduna State University (KASU)',
+  'Kano State University of Science and Technology (KUST)',
+  'Kwara State University',
+  'Plateau State University',
+  'Gombe State University',
+  'Adamawa State University (ADSU)',
+  'Taraba State University',
+  'Yobe State University',
+  'Sokoto State University',
+  'Kebbi State University of Science and Technology',
+  // Private Universities
+  'Covenant University',
+  'Babcock University',
+  'American University of Nigeria (AUN)',
+  'Afe Babalola University (ABUAD)',
+  'Bowen University',
+  'Bells University of Technology',
+  'Pan-Atlantic University',
+  'Redeemer\'s University',
+  'Benson Idahosa University',
+  'Crawford University',
+  'Lead City University',
+  'Joseph Ayo Babalola University (JABU)',
+  'Elizade University',
+  'Mountain Top University',
+  'Caleb University',
+  'Madonna University',
+  'Igbinedion University',
+  // Research Institutes
+  'International Institute of Tropical Agriculture (IITA)',
+  'National Cereals Research Institute (NCRI)',
+  'National Horticultural Research Institute (NIHORT)',
+  'National Root Crops Research Institute (NRCRI)',
+  'National Animal Production Research Institute (NAPRI)',
+  'National Veterinary Research Institute (NVRI)',
+  'Cocoa Research Institute of Nigeria (CRIN)',
+  'Rubber Research Institute of Nigeria (RRIN)',
+  'Forestry Research Institute of Nigeria (FRIN)',
+  'Nigerian Stored Products Research Institute (NSPRI)',
+  'Lake Chad Research Institute (LCRI)',
+  'Institute for Agricultural Research (IAR)',
+  'Nigerian Institute for Oceanography and Marine Research (NIOMR)',
+  // Government & Organisations
+  'Federal Ministry of Agriculture and Food Security',
+  'Bank of Agriculture (BOA)',
+  'Nigerian Agricultural Insurance Corporation (NAIC)',
+  'National Agricultural Land Development Authority (NALDA)',
+  'All Farmers Association of Nigeria (AFAN)',
+  'Agricultural and Rural Management Training Institute (ARMTI)',
+  'National Agricultural Seeds Council (NASC)',
+]
+
 type ProfileFormProps = {
   userId: string
   initialData: {
@@ -38,7 +138,6 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
   const [loading,         setLoading]         = useState(false)
   const [avatarUploading, setAvatarUploading] = useState(false)
   const [message,         setMessage]         = useState<{ type: 'success' | 'error'; text: string } | null>(null)
-
   const [form, setForm] = useState({
     first_name:  initialData.first_name  || '',
     last_name:   initialData.last_name   || '',
@@ -180,7 +279,6 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-8">
-
         {/* ── Avatar ── */}
         <div className="flex flex-col items-center gap-3">
           <div className="relative group">
@@ -274,10 +372,20 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Institution / Organisation</label>
-                <input type="text" value={form.institution}
+                <input
+                  type="text"
+                  value={form.institution}
                   onChange={e => setForm(prev => ({ ...prev, institution: e.target.value }))}
                   placeholder="e.g. University of Ibadan"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                  list="institutions-list"
+                  autoComplete="off"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+                <datalist id="institutions-list">
+                  {INSTITUTIONS.map(inst => (
+                    <option key={inst} value={inst} />
+                  ))}
+                </datalist>
               </div>
             </div>
           </div>
