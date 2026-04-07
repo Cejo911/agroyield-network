@@ -24,6 +24,7 @@ export async function POST(req: Request) {
       linkedin: body.linkedin || null,
       twitter: body.twitter || null,
       website: body.website || null,
+      avatar_url:  body.avatar_url  || null,
       updated_at: new Date().toISOString(),
     }
 
