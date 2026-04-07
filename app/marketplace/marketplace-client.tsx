@@ -1,5 +1,4 @@
 'use client'
-
 import { useState } from 'react'
 import Link from 'next/link'
 
@@ -14,7 +13,6 @@ const CATEGORY_COLOURS: Record<string, string> = {
   services: 'bg-purple-100 text-purple-700',
   other: 'bg-gray-100 text-gray-600',
 }
-
 const TYPE_COLOURS: Record<string, string> = {
   sell: 'bg-emerald-100 text-emerald-700',
   buy: 'bg-blue-100 text-blue-700',
@@ -25,7 +23,6 @@ const getCategoryColour = (category: string | null): string => {
   if (!category) return 'bg-gray-100 text-gray-600'
   return CATEGORY_COLOURS[category] ?? 'bg-gray-100 text-gray-600'
 }
-
 const getTypeColour = (type: string | null): string => {
   if (!type) return 'bg-gray-100 text-gray-600'
   return TYPE_COLOURS[type] ?? 'bg-gray-100 text-gray-600'
@@ -55,15 +52,15 @@ const timeAgo = (dateStr: string) => {
 
 const formatPrice = (price: number) =>
   new Intl.NumberFormat('en-NG', {
-    style: 'currency',
-    currency: 'NGN',
-    maximumFractionDigits: 0,
+    style: 'currency', currency: 'NGN', maximumFractionDigits: 0,
   }).format(price)
 
 export default function MarketplaceClient({ listings }: { listings: Listing[] }) {
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('All')
   const [typeFilter, setTypeFilter] = useState('All')
+  const [minPrice, setMinPrice] = useState('')
+  const [maxPrice, setMaxPrice] = useState('')
 
   const filtered = listings.filter(l => {
     const matchesSearch =
@@ -71,17 +68,20 @@ export default function MarketplaceClient({ listings }: { listings: Listing[] })
       l.title.toLowerCase().includes(search.toLowerCase()) ||
       (l.description ?? '').toLowerCase().includes(search.toLowerCase()) ||
       (l.state ?? '').toLowerCase().includes(search.toLowerCase())
-
     const matchesCategory =
       categoryFilter === 'All' ||
       (l.category ?? '').toLowerCase() === categoryFilter.toLowerCase()
-
     const matchesType =
       typeFilter === 'All' ||
       (l.type ?? '').toLowerCase() === typeFilter.toLowerCase()
-
-    return matchesSearch && matchesCategory && matchesType
+    const min = minPrice ? parseFloat(minPrice) : null
+    const max = maxPrice ? parseFloat(maxPrice) : null
+    const matchesMin = min === null || (l.price !== null && l.price >= min)
+    const matchesMax = max === null || (l.price !== null && l.price <= max)
+    return matchesSearch && matchesCategory && matchesType && matchesMin && matchesMax
   })
+
+  const hasActiveFilters = categoryFilter !== 'All' || typeFilter !== 'All' || search || minPrice || maxPrice
 
   return (
     <div>
@@ -123,6 +123,46 @@ export default function MarketplaceClient({ listings }: { listings: Listing[] })
             </button>
           ))}
         </div>
+        {/* Price range */}
+        <div className="pt-1 border-t border-gray-100">
+          <p className="text-xs font-medium text-gray-500 mb-2">Price range (₦)</p>
+          <div className="flex items-center gap-3">
+            <input
+              type="number"
+              placeholder="Min"
+              value={minPrice}
+              onChange={e => setMinPrice(e.target.value)}
+              min={0}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+            <span className="text-gray-400 text-sm shrink-0">to</span>
+            <input
+              type="number"
+              placeholder="Max"
+              value={maxPrice}
+              onChange={e => setMaxPrice(e.target.value)}
+              min={0}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+            {(minPrice || maxPrice) && (
+              <button
+                onClick={() => { setMinPrice(''); setMaxPrice('') }}
+                className="text-xs text-gray-400 hover:text-red-500 shrink-0 transition-colors"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+        </div>
+        {/* Clear all */}
+        {hasActiveFilters && (
+          <button
+            onClick={() => { setSearch(''); setCategoryFilter('All'); setTypeFilter('All'); setMinPrice(''); setMaxPrice('') }}
+            className="text-xs text-green-600 hover:text-green-700 font-medium"
+          >
+            Clear all filters
+          </button>
+        )}
       </div>
 
       <p className="text-sm text-gray-500 mb-5">
@@ -132,8 +172,8 @@ export default function MarketplaceClient({ listings }: { listings: Listing[] })
       {filtered.length === 0 ? (
         <div className="text-center py-16 text-gray-400">
           <p className="text-4xl mb-3">🛒</p>
-          <p className="font-medium">No listings yet</p>
-          <p className="text-sm mt-1">Be the first to post a listing</p>
+          <p className="font-medium">No listings match your filters</p>
+          <p className="text-sm mt-1">Try adjusting your search or price range</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -155,11 +195,9 @@ export default function MarketplaceClient({ listings }: { listings: Listing[] })
                   </span>
                 )}
               </div>
-
               <h3 className="font-semibold text-gray-900 group-hover:text-green-700 transition-colors mb-2">
                 {listing.title}
               </h3>
-
               {listing.price !== null && (
                 <p className="text-lg font-bold text-green-700 mb-1">
                   {formatPrice(listing.price)}
@@ -168,11 +206,9 @@ export default function MarketplaceClient({ listings }: { listings: Listing[] })
                   )}
                 </p>
               )}
-
               {listing.description && (
                 <p className="text-sm text-gray-400 line-clamp-2 mb-3">{listing.description}</p>
               )}
-
               <div className="flex items-center justify-between text-xs text-gray-400 mt-auto">
                 {listing.state && <span>📍 {listing.state}</span>}
                 <span>{timeAgo(listing.created_at)}</span>
