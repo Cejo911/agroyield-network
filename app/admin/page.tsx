@@ -13,7 +13,6 @@ export default async function AdminPage() {
 
   const { data: profile } = await supabaseAny
     .from('profiles').select('is_admin').eq('id', user.id).single()
-
   const rawProfile = profile as Record<string, unknown> | null
   if (!rawProfile?.is_admin) redirect('/dashboard')
 
@@ -21,10 +20,12 @@ export default async function AdminPage() {
     { data: opportunities },
     { data: listings },
     { data: members },
+    { data: settingsRows },
   ] = await Promise.all([
     supabaseAny.from('opportunities').select('*').order('created_at', { ascending: false }),
     supabaseAny.from('marketplace_listings').select('*').order('created_at', { ascending: false }),
     supabaseAny.from('profiles').select('*').order('created_at', { ascending: false }),
+    supabaseAny.from('settings').select('key, value'),
   ])
 
   // Build profiles map for poster name lookup
@@ -36,6 +37,15 @@ export default async function AdminPage() {
         first_name: typeof raw.first_name === 'string' ? raw.first_name : null,
         last_name:  typeof raw.last_name  === 'string' ? raw.last_name  : null,
       }
+    }
+  }
+
+  // Build settings map
+  const settingsMap: Record<string, string> = {}
+  for (const s of (settingsRows ?? [])) {
+    const raw = s as Record<string, unknown>
+    if (typeof raw.key === 'string' && typeof raw.value === 'string') {
+      settingsMap[raw.key] = raw.value
     }
   }
 
@@ -51,7 +61,6 @@ export default async function AdminPage() {
     <div className="min-h-screen bg-gray-50">
       <AppNav />
       <div className="max-w-4xl mx-auto px-4 py-10">
-
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
           <p className="text-gray-500 mt-1">Manage content and members on AgroYield Network</p>
@@ -77,8 +86,8 @@ export default async function AdminPage() {
           listings={listings ?? []}
           members={members ?? []}
           profilesMap={profilesMap}
+          settingsMap={settingsMap}
         />
-
       </div>
     </div>
   )
