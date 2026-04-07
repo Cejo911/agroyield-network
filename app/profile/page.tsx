@@ -37,6 +37,7 @@ export default async function ProfilePage() {
               linkedin: profile?.linkedin ?? null,
               twitter: profile?.twitter ?? null,
               website: profile?.website ?? null,
+              avatar_url:  profile?.avatar_url  ?? null,
             }}
           />
         </div>
