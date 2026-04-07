@@ -107,7 +107,7 @@ const INSTITUTIONS = [
   'Bowen University',
   'Bells University of Technology',
   'Pan-Atlantic University',
-  'Redeemer\'s University',
+  "Redeemer's University",
   'Benson Idahosa University',
   'Crawford University',
   'Lead City University',
@@ -174,6 +174,8 @@ type ProfileFormProps = {
     twitter:     string | null
     website:     string | null
     avatar_url:  string | null
+    phone:       string | null
+    whatsapp:    string | null
   }
 }
 
@@ -182,6 +184,7 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
   const [loading,         setLoading]         = useState(false)
   const [avatarUploading, setAvatarUploading] = useState(false)
   const [message,         setMessage]         = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+
   const [form, setForm] = useState({
     first_name:  initialData.first_name  || '',
     last_name:   initialData.last_name   || '',
@@ -194,6 +197,8 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
     twitter:     initialData.twitter     || '',
     website:     initialData.website     || '',
     avatar_url:  initialData.avatar_url  || '',
+    phone:       initialData.phone       || '',
+    whatsapp:    initialData.whatsapp    || '',
   })
 
   // ── Completeness ──
@@ -206,10 +211,13 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
     { key: 'institution', label: 'Institution / Organisation', filled: !!form.institution },
     { key: 'interests',   label: 'Areas of interest',          filled: form.interests.length > 0 },
     { key: 'avatar_url',  label: 'Profile photo',              filled: !!form.avatar_url },
+    { key: 'phone',       label: 'Phone number',               filled: !!form.phone },
+    { key: 'whatsapp',    label: 'WhatsApp number',            filled: !!form.whatsapp },
     { key: 'linkedin',    label: 'LinkedIn profile',           filled: !!form.linkedin },
     { key: 'twitter',     label: 'Twitter / X handle',         filled: !!form.twitter },
     { key: 'website',     label: 'Personal website',           filled: !!form.website },
   ]
+
   const missing      = fieldChecks.filter(f => !f.filled)
   const percent      = Math.round(((fieldChecks.length - missing.length) / fieldChecks.length) * 100)
   const barColor     = percent >= 70 ? '#16a34a' : percent >= 40 ? '#ca8a04' : '#dc2626'
@@ -452,9 +460,33 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
           </div>
         </div>
 
+        {/* ── Contact Details ── */}
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900 mb-1">
+            Contact Details <span className="text-sm font-normal text-gray-400">(Optional)</span>
+          </h2>
+          <p className="text-xs text-gray-500 mb-4">Only visible to logged-in members — not shown to guests.</p>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+              <input type="tel" value={form.phone}
+                onChange={e => setForm(prev => ({ ...prev, phone: e.target.value }))}
+                placeholder="+234 800 000 0000"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp Number</label>
+              <input type="tel" value={form.whatsapp}
+                onChange={e => setForm(prev => ({ ...prev, whatsapp: e.target.value }))}
+                placeholder="+234 800 000 0000"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+            </div>
+          </div>
+        </div>
+
         {/* ── Links ── */}
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Links (Optional)</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Links <span className="text-sm font-normal text-gray-400">(Optional)</span></h2>
           <div className="space-y-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">LinkedIn URL</label>
