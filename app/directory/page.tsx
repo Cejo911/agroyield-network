@@ -6,14 +6,22 @@ import AppNav from '@/app/components/AppNav'
 export default async function DirectoryPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-
   if (!user) redirect('/login')
 
-  const { data: profiles } = await supabase
-    .from('profiles')
-    .select('id, first_name, last_name, role, bio, location, institution, interests')
-    .not('role', 'is', null)
-    .order('created_at', { ascending: false })
+  const [{ data: profiles }, { data: followingData }] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('id, first_name, last_name, role, bio, location, institution, interests')
+      .not('role', 'is', null)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('follows')
+      .select('following_id')
+      .eq('follower_id', user.id)
+      .returns<{ following_id: string }[]>(),
+  ])
+
+  const followingIds = (followingData ?? []).map(f => f.following_id)
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -25,7 +33,11 @@ export default async function DirectoryPage() {
             Connect with students, researchers, farmers and agripreneurs across Africa.
           </p>
         </div>
-        <DirectoryClient profiles={profiles ?? []} />
+        <DirectoryClient
+          profiles={profiles ?? []}
+          currentUserId={user.id}
+          followingIds={followingIds}
+        />
       </main>
     </div>
   )
