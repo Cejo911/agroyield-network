@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import ProfileForm from './profile-form'
 import AppNav from '@/app/components/AppNav'
+import ShareProfileLink from './share-profile-link'
 
 export default async function ProfilePage() {
   const supabase = await createClient()
@@ -21,8 +22,13 @@ export default async function ProfilePage() {
   const followingCount: number = followingResult.count ?? 0
 
   const rawProfile = profile as Record<string, unknown> | null
+
   const avatarUrl: string | null = (rawProfile && typeof rawProfile.avatar_url === 'string')
     ? rawProfile.avatar_url
+    : null
+
+  const username: string | null = (rawProfile && typeof rawProfile.username === 'string')
+    ? rawProfile.username
     : null
 
   return (
@@ -55,6 +61,13 @@ export default async function ProfilePage() {
             </a>
           </div>
         </div>
+
+        {/* Share profile link — only shown once username is generated */}
+        {username && (
+          <div className="mb-6">
+            <ShareProfileLink username={username} />
+          </div>
+        )}
 
         {/* Profile form */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
