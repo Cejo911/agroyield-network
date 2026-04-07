@@ -278,10 +278,15 @@ export default function Home() {
         <p style={{ fontSize: 13, color: '#4b7a5c' }}>© 2026 AgroYield Network. All rights reserved.</p>
         <div className="agy-footer-links">
           {['Contact', 'Privacy', 'About', 'Twitter / X', 'LinkedIn'].map(link => (
-            <a key={link}
-              href={link === 'Contact' ? '/contact' : link === 'About' ? '/about' : '#'}
-              style={{ fontSize: 13, color: '#4b7a5c', textDecoration: 'none' }}>{link}</a>
-          ))}
+  <a key={link}
+    href={
+      link === 'Contact' ? '/contact' :
+      link === 'About' ? '/about' :
+      link === 'Privacy' ? '/privacy' :
+      '#'
+    }
+    style={{ fontSize: 13, color: '#4b7a5c', textDecoration: 'none' }}>{link}</a>
+))}
         </div>
       </footer>
     </main>
