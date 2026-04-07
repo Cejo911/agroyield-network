@@ -1,4 +1,5 @@
 'use client'
+
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
@@ -20,6 +21,7 @@ type SearchResults = {
   listings:      ResultItem[]
   research:      ResultItem[]
 }
+
 const SECTIONS: { key: keyof SearchResults; label: string; emoji: string }[] = [
   { key: 'people',        label: 'People',        emoji: '👤' },
   { key: 'opportunities', label: 'Opportunities',  emoji: '📋' },
@@ -50,7 +52,6 @@ export default function AppNav() {
   const inputRef    = useRef<HTMLInputElement>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Check admin status on mount
   useEffect(() => {
     const checkAdmin = async () => {
       const supabase = createClient()
@@ -130,6 +131,7 @@ export default function AppNav() {
     <>
       <header className="bg-white border-b border-gray-100 sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+
           {/* Logo */}
           <Link href="/dashboard" className="flex items-center gap-2 shrink-0">
             <span className="text-2xl">🌾</span>
@@ -168,6 +170,14 @@ export default function AppNav() {
               <SearchIcon />
               <span className="hidden xl:inline text-gray-400">Search…</span>
             </button>
+            <Link href="/verify"
+              className={`text-sm font-semibold transition-colors px-3 py-1.5 rounded-lg border ${
+                isActive('/verify')
+                  ? 'bg-green-50 border-green-300 text-green-700'
+                  : 'border-green-200 text-green-600 hover:bg-green-50'
+              }`}>
+              Get Verified ✓
+            </Link>
             <Link href="/profile"
               className={`text-sm font-medium transition-colors ${
                 isActive('/profile') ? 'text-green-700' : 'text-gray-600 hover:text-green-700'
@@ -220,6 +230,15 @@ export default function AppNav() {
                 ⚙ Admin
               </Link>
             )}
+            <Link href="/verify"
+              onClick={() => setMenuOpen(false)}
+              className={`block px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                isActive('/verify')
+                  ? 'bg-green-50 text-green-700'
+                  : 'text-green-600 hover:bg-green-50'
+              }`}>
+              Get Verified ✓
+            </Link>
             <Link href="/profile"
               onClick={() => setMenuOpen(false)}
               className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-green-700 hover:bg-gray-50">
@@ -233,7 +252,7 @@ export default function AppNav() {
         )}
       </header>
 
-      {/* ── Search modal ── */}
+      {/* Search modal */}
       {searchOpen && (
         <div
           className="fixed inset-0 z-[100] flex items-start justify-center pt-[10vh] px-4 bg-black/50 backdrop-blur-sm"
@@ -241,7 +260,6 @@ export default function AppNav() {
           <div
             className="w-full max-w-xl bg-white rounded-2xl shadow-2xl overflow-hidden"
             onClick={e => e.stopPropagation()}>
-            {/* Search input */}
             <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100">
               <span className="text-gray-400 shrink-0"><SearchIcon /></span>
               <input
@@ -260,7 +278,6 @@ export default function AppNav() {
                 esc
               </kbd>
             </div>
-            {/* Results */}
             <div className="max-h-[60vh] overflow-y-auto">
               {!query && (
                 <p className="text-center text-sm text-gray-400 py-10">
