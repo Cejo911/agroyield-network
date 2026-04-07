@@ -8,13 +8,19 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
-
     const {
       data: { user },
     } = await supabase.auth.getUser()
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    if (!user.email_confirmed_at) {
+      return NextResponse.json(
+        { error: 'Please verify your email address before posting listings. Check your inbox for a confirmation email.' },
+        { status: 403 }
+      )
     }
 
     const body = await request.json()
