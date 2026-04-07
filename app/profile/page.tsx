@@ -3,19 +3,6 @@ import { redirect } from 'next/navigation'
 import ProfileForm from './profile-form'
 import AppNav from '@/app/components/AppNav'
 
-const PROFILE_FIELDS = [
-  { key: 'first_name',   label: 'First name' },
-  { key: 'last_name',    label: 'Last name' },
-  { key: 'role',         label: 'Your role' },
-  { key: 'bio',          label: 'Short bio' },
-  { key: 'location',     label: 'Location' },
-  { key: 'institution',  label: 'Institution / Organisation' },
-  { key: 'interests',    label: 'Areas of interest' },
-  { key: 'linkedin',     label: 'LinkedIn profile' },
-  { key: 'twitter',      label: 'Twitter / X handle' },
-  { key: 'website',      label: 'Personal website' },
-] as const
-
 export default async function ProfilePage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -27,22 +14,30 @@ export default async function ProfilePage() {
     .eq('id', user.id)
     .single()
 
-  // Cast to a plain record so TypeScript doesn't complain about dynamic key access
-  const p: Record<string, unknown> = profile ?? {}
+  // Explicit field-by-field check — no dynamic key access, fully type-safe
+  const fieldStatus = [
+    { key: 'first_name',  label: 'First name',                filled: !!profile?.first_name },
+    { key: 'last_name',   label: 'Last name',                 filled: !!profile?.last_name },
+    { key: 'role',        label: 'Your role',                 filled: !!profile?.role },
+    { key: 'bio',         label: 'Short bio',                 filled: !!profile?.bio },
+    { key: 'location',    label: 'Location',                  filled: !!profile?.location },
+    { key: 'institution', label: 'Institution / Organisation', filled: !!profile?.institution },
+    { key: 'interests',   label: 'Areas of interest',         filled: !!profile?.interests },
+    { key: 'linkedin',    label: 'LinkedIn profile',          filled: !!profile?.linkedin },
+    { key: 'twitter',     label: 'Twitter / X handle',        filled: !!profile?.twitter },
+    { key: 'website',     label: 'Personal website',          filled: !!profile?.website },
+  ]
 
-  const missing  = PROFILE_FIELDS.filter(({ key }) => !p[key])
-  const filled   = PROFILE_FIELDS.length - missing.length
-  const percent  = Math.round((filled / PROFILE_FIELDS.length) * 100)
+  const missing = fieldStatus.filter(f => !f.filled)
+  const percent  = Math.round(((fieldStatus.length - missing.length) / fieldStatus.length) * 100)
 
   const barColor =
     percent >= 70 ? '#16a34a' :
-    percent >= 40 ? '#ca8a04' :
-                    '#dc2626'
+    percent >= 40 ? '#ca8a04' : '#dc2626'
 
   const percentColor =
     percent >= 70 ? 'text-green-600' :
-    percent >= 40 ? 'text-yellow-600' :
-                    'text-red-500'
+    percent >= 40 ? 'text-yellow-600' : 'text-red-500'
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -60,33 +55,30 @@ export default async function ProfilePage() {
               <span className="text-sm font-semibold text-gray-700">Profile completeness</span>
               <span className={`text-sm font-bold ${percentColor}`}>{percent}%</span>
             </div>
-
             <div className="w-full bg-gray-100 rounded-full h-2 mb-4">
               <div
                 className="h-2 rounded-full"
                 style={{ width: `${percent}%`, backgroundColor: barColor }}
               />
             </div>
-
             <p className="text-xs text-gray-500 mb-3">
               Fill in the remaining fields so the AgroYield community can connect with you:
             </p>
-
             <div className="flex flex-wrap gap-2">
-              {missing.map(({ key, label }) => (
+              {missing.map(f => (
                 
-                  key={key}
+                  key={f.key}
                   href="#profile-form"
                   className="inline-flex items-center gap-1 text-xs bg-green-50 text-green-700 border border-green-200 rounded-full px-3 py-1 hover:bg-green-100 transition-colors"
                 >
-                  <span aria-hidden="true">+</span> {label}
+                  + {f.label}
                 </a>
               ))}
             </div>
           </div>
         ) : (
           <div className="mb-6 flex items-center gap-3 bg-green-50 border border-green-200 rounded-2xl p-4">
-            <span className="text-2xl" aria-hidden="true">✅</span>
+            <span className="text-2xl">✅</span>
             <div>
               <p className="text-sm font-semibold text-green-800">Profile complete!</p>
               <p className="text-xs text-green-600">
