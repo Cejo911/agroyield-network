@@ -14,10 +14,10 @@ export default async function ProfilePage() {
     .eq('id', user.id)
     .single()
 
-  // Safely extract avatar_url without relying on generated types
-  const profileRecord = profile as Record<string, unknown> | null
-  const avatarUrl = typeof profileRecord?.avatar_url === 'string'
-    ? profileRecord.avatar_url
+  // Use && instead of ?. so TypeScript can narrow the type correctly
+  const rawProfile = profile as Record<string, unknown> | null
+  const avatarUrl: string | null = (rawProfile && typeof rawProfile.avatar_url === 'string')
+    ? rawProfile.avatar_url
     : null
 
   return (
