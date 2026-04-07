@@ -1,24 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import AppNav from '@/app/components/AppNav'
-
-const PLANS = [
-  {
-    key: 'monthly',
-    label: 'Monthly',
-    price: '₦2,500',
-    period: 'per month',
-    savings: null,
-  },
-  {
-    key: 'yearly',
-    label: 'Yearly',
-    price: '₦25,000',
-    period: 'per year',
-    savings: 'Save ₦5,000 — 2 months free',
-  },
-]
 
 const PERKS = [
   'Green ✓ verified badge on your profile',
@@ -28,10 +11,39 @@ const PERKS = [
   'Priority visibility in search results',
 ]
 
+type Pricing = {
+  monthlyNaira: number
+  yearlyNaira: number
+  monthlyLabel: string
+  yearlyLabel: string
+}
+
 export default function VerifyPage() {
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('yearly')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [loading,      setLoading]      = useState(false)
+  const [error,        setError]        = useState<string | null>(null)
+  const [pricing,      setPricing]      = useState<Pricing>({
+    monthlyNaira: 2500,
+    yearlyNaira:  25000,
+    monthlyLabel: 'Monthly Verification',
+    yearlyLabel:  'Yearly Verification',
+  })
+
+  // Fetch live prices from the settings table
+  useEffect(() => {
+    const fetchPricing = async () => {
+      try {
+        const res  = await fetch('/api/pricing')
+        const data = await res.json() as Partial<Pricing>
+        setPricing(prev => ({ ...prev, ...data }))
+      } catch {
+        // keep defaults on error
+      }
+    }
+    fetchPricing()
+  }, [])
+
+  const monthlySavings = (pricing.monthlyNaira * 12) - pricing.yearlyNaira
 
   const handleSubscribe = async () => {
     setLoading(true)
@@ -63,38 +75,66 @@ export default function VerifyPage() {
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-3">Get Verified on AgroYield Network</h1>
           <p className="text-gray-500 text-base">
-            Stand out in Nigeria's agricultural professional community with a verified badge that signals authenticity and credibility.
+            Stand out in Nigeria&apos;s agricultural professional community with a verified badge that signals authenticity and credibility.
           </p>
         </div>
 
         {/* Plan selector */}
         <div className="flex gap-3 mb-6">
-          {PLANS.map(plan => (
-            <button key={plan.key} onClick={() => setSelectedPlan(plan.key as 'monthly' | 'yearly')}
-              className={`flex-1 rounded-xl border-2 p-4 text-left transition-all ${
-                selectedPlan === plan.key
-                  ? 'border-green-600 bg-green-50'
-                  : 'border-gray-200 bg-white hover:border-green-300'
-              }`}>
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="font-semibold text-gray-900 text-sm">{plan.label}</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">{plan.price}</p>
-                  <p className="text-xs text-gray-500">{plan.period}</p>
-                </div>
-                {selectedPlan === plan.key && (
-                  <div className="w-5 h-5 rounded-full bg-green-600 flex items-center justify-center shrink-0 mt-0.5">
-                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                )}
+          {/* Monthly */}
+          <button onClick={() => setSelectedPlan('monthly')}
+            className={`flex-1 rounded-xl border-2 p-4 text-left transition-all ${
+              selectedPlan === 'monthly'
+                ? 'border-green-600 bg-green-50'
+                : 'border-gray-200 bg-white hover:border-green-300'
+            }`}>
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="font-semibold text-gray-900 text-sm">Monthly</p>
+                <p className="text-2xl font-bold text-gray-900 mt-1">
+                  ₦{pricing.monthlyNaira.toLocaleString()}
+                </p>
+                <p className="text-xs text-gray-500">per month</p>
               </div>
-              {plan.savings && (
-                <p className="text-xs font-semibold text-green-600 mt-2">{plan.savings}</p>
+              {selectedPlan === 'monthly' && (
+                <div className="w-5 h-5 rounded-full bg-green-600 flex items-center justify-center shrink-0 mt-0.5">
+                  <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
               )}
-            </button>
-          ))}
+            </div>
+          </button>
+
+          {/* Yearly */}
+          <button onClick={() => setSelectedPlan('yearly')}
+            className={`flex-1 rounded-xl border-2 p-4 text-left transition-all ${
+              selectedPlan === 'yearly'
+                ? 'border-green-600 bg-green-50'
+                : 'border-gray-200 bg-white hover:border-green-300'
+            }`}>
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="font-semibold text-gray-900 text-sm">Yearly</p>
+                <p className="text-2xl font-bold text-gray-900 mt-1">
+                  ₦{pricing.yearlyNaira.toLocaleString()}
+                </p>
+                <p className="text-xs text-gray-500">per year</p>
+              </div>
+              {selectedPlan === 'yearly' && (
+                <div className="w-5 h-5 rounded-full bg-green-600 flex items-center justify-center shrink-0 mt-0.5">
+                  <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              )}
+            </div>
+            {monthlySavings > 0 && (
+              <p className="text-xs font-semibold text-green-600 mt-2">
+                Save ₦{monthlySavings.toLocaleString()} — 2 months free
+              </p>
+            )}
+          </button>
         </div>
 
         {/* Perks */}
@@ -121,7 +161,7 @@ export default function VerifyPage() {
             <div>
               <p className="text-sm font-semibold text-amber-800">Elite Crown Badge</p>
               <p className="text-xs text-amber-700 mt-0.5">
-                Verified members who fully meet AgroYield's excellence criteria can be awarded the golden crown badge by our admin team. This is an invitation-only distinction for outstanding contributors to Nigerian agriculture.
+                Verified members who fully meet AgroYield&apos;s excellence criteria can be awarded the golden crown badge by our admin team. This is an invitation-only distinction for outstanding contributors to Nigerian agriculture.
               </p>
             </div>
           </div>
@@ -137,12 +177,15 @@ export default function VerifyPage() {
         {/* CTA */}
         <button onClick={handleSubscribe} disabled={loading}
           className="w-full bg-green-600 text-white py-4 rounded-xl font-bold text-base hover:bg-green-700 disabled:opacity-50 transition-colors">
-          {loading ? 'Redirecting to payment…' : `Get Verified — ${selectedPlan === 'yearly' ? '₦25,000/year' : '₦2,500/month'}`}
+          {loading
+            ? 'Redirecting to payment…'
+            : `Get Verified — ${selectedPlan === 'yearly'
+                ? '₦' + pricing.yearlyNaira.toLocaleString() + '/year'
+                : '₦' + pricing.monthlyNaira.toLocaleString() + '/month'}`}
         </button>
         <p className="text-center text-xs text-gray-400 mt-3">
           Secure payment via Paystack · Cancel anytime
         </p>
-
       </div>
     </div>
   )
