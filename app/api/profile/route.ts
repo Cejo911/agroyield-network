@@ -13,13 +13,14 @@ export async function POST(req: Request) {
     const supabase = await createClient()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const supabaseAny = supabase as any
+
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
     const body = await req.json()
 
-    // Check if username already exists for this user
     const { data: existing } = await supabaseAny
       .from('profiles')
       .select('username')
@@ -28,7 +29,6 @@ export async function POST(req: Request) {
 
     let username: string | null = existing?.username ?? null
 
-    // Generate username only if not already set and both names are provided
     if (!username && body.first_name && body.last_name) {
       const baseSlug = generateSlug(body.first_name, body.last_name)
       let candidate = baseSlug
@@ -48,18 +48,20 @@ export async function POST(req: Request) {
 
     const profileData = {
       id: user.id,
-      first_name: body.first_name || null,
-      last_name: body.last_name || null,
-      role: body.role || null,
-      bio: body.bio || null,
-      location: body.location || null,
+      first_name:  body.first_name  || null,
+      last_name:   body.last_name   || null,
+      role:        body.role        || null,
+      bio:         body.bio         || null,
+      location:    body.location    || null,
       institution: body.institution || null,
-      interests: body.interests?.length ? body.interests : null,
-      linkedin: body.linkedin || null,
-      twitter: body.twitter || null,
-      website: body.website || null,
-      avatar_url: body.avatar_url || null,
-      updated_at: new Date().toISOString(),
+      interests:   body.interests?.length ? body.interests : null,
+      linkedin:    body.linkedin    || null,
+      twitter:     body.twitter     || null,
+      website:     body.website     || null,
+      avatar_url:  body.avatar_url  || null,
+      phone:       body.phone       || null,
+      whatsapp:    body.whatsapp    || null,
+      updated_at:  new Date().toISOString(),
       ...(username ? { username } : {}),
     }
 
