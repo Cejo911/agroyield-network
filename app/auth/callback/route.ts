@@ -12,10 +12,8 @@ export async function GET(request: Request) {
   if (code) {
     const supabase = await createClient()
     const { error } = await supabase.auth.exchangeCodeForSession(code)
-
     if (!error) {
       const { data: { user } } = await supabase.auth.getUser()
-
       if (user) {
         const { data: profile } = await supabase
           .from('profiles')
@@ -23,7 +21,6 @@ export async function GET(request: Request) {
           .eq('id', user.id)
           .single()
 
-        // New member — no profile or name not yet set → send welcome email + redirect to profile setup
         if (!profile || !profile.first_name) {
           try {
             await resend.emails.send({
@@ -52,7 +49,16 @@ export async function GET(request: Request) {
                   <p style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#22c55e;margin:0 0 14px;">Your first step</p>
                   <p style="font-size:15px;color:#f0fdf4;font-weight:700;margin:0 0 8px;">Complete your profile</p>
                   <p style="font-size:14px;color:#bbf7d0;line-height:1.7;margin:0 0 20px;">Tell the network who you are — your role, institution, and area of focus. A complete profile helps other members find and connect with you.</p>
-                  <a href="${origin}/profile" style="display:inline-block;padding:12px 24px;font-size:14px;font-weight:700;color:#030a05;background:linear-gradient(135deg,#22c55e,#16a34a);border-radius:10px;text-decoration:none;">Complete My Profile →</a>
+                  <table cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="background:#22c55e;border-radius:10px;padding:12px 24px;">
+                        <a href="${origin}/profile"
+                           style="font-size:14px;font-weight:700;color:#030a05;text-decoration:none;display:block;white-space:nowrap;">
+                          Complete My Profile &rarr;
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
                 </td>
               </tr>
             </table>
@@ -71,7 +77,16 @@ export async function GET(request: Request) {
               </tr>
             </table>
             <p style="font-size:14px;color:#bbf7d0;line-height:1.75;margin:0 0 28px;">If you have any questions, reply to this email or reach us at <a href="mailto:hello@agroyield.africa" style="color:#22c55e;text-decoration:none;">hello@agroyield.africa</a>. We read every message.</p>
-            <a href="${origin}/dashboard" style="display:inline-block;padding:14px 28px;font-size:14px;font-weight:700;color:#030a05;background:linear-gradient(135deg,#22c55e,#16a34a);border-radius:10px;text-decoration:none;">Go to Dashboard →</a>
+            <table cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="background:#22c55e;border-radius:10px;padding:14px 28px;">
+                  <a href="${origin}/dashboard"
+                     style="font-size:14px;font-weight:700;color:#030a05;text-decoration:none;display:block;white-space:nowrap;">
+                    Go to Dashboard &rarr;
+                  </a>
+                </td>
+              </tr>
+            </table>
           </td>
         </tr>
         <tr>
@@ -88,14 +103,11 @@ export async function GET(request: Request) {
           } catch (e) {
             console.error('Welcome email error:', e)
           }
-
           return NextResponse.redirect(`${origin}/profile`)
         }
       }
-
       return NextResponse.redirect(`${origin}${next}`)
     }
   }
-
   return NextResponse.redirect(`${origin}/login`)
 }
