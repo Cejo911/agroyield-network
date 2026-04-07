@@ -19,11 +19,11 @@ function formatDate(val: unknown): string {
 }
 
 export default function AdminClient({ opportunities: init_o, listings: init_l, members: init_m, profilesMap }: Props) {
-  const [tab, setTab]               = useState<Tab>('opportunities')
-  const [opportunities, setOpps]    = useState(init_o)
-  const [listings, setListings]     = useState(init_l)
-  const [members, setMembers]       = useState(init_m)
-  const [loadingId, setLoadingId]   = useState<string | null>(null)
+  const [tab, setTab]             = useState<Tab>('opportunities')
+  const [opportunities, setOpps]  = useState(init_o)
+  const [listings, setListings]   = useState(init_l)
+  const [members, setMembers]     = useState(init_m)
+  const [loadingId, setLoadingId] = useState<string | null>(null)
 
   const posterName = (userId: unknown) => {
     if (typeof userId !== 'string') return 'Unknown'
@@ -88,10 +88,14 @@ export default function AdminClient({ opportunities: init_o, listings: init_l, m
       {/* Opportunities */}
       {tab === 'opportunities' && (
         <div className="space-y-3">
-          {opportunities.length === 0 && <p className="text-gray-500 text-sm text-center py-8">No opportunities yet.</p>}
+          {opportunities.length === 0 && (
+            <p className="text-gray-500 text-sm text-center py-8">No opportunities yet.</p>
+          )}
           {opportunities.map(o => {
             const id = o.id as string
             const isActive = o.is_active as boolean
+            const type = typeof o.type === 'string' ? o.type : ''
+            const title = typeof o.title === 'string' ? o.title : ''
             return (
               <div key={id} className={`flex items-start justify-between gap-4 bg-white rounded-xl border border-gray-100 p-4 ${!isActive ? 'opacity-60' : ''}`}>
                 <div className="flex-1 min-w-0">
@@ -99,9 +103,9 @@ export default function AdminClient({ opportunities: init_o, listings: init_l, m
                     <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
                       {isActive ? 'Active' : 'Removed'}
                     </span>
-                    <span className="text-xs text-gray-400 capitalize">{o.type as string}</span>
+                    <span className="text-xs text-gray-400 capitalize">{type}</span>
                   </div>
-                  <p className="font-semibold text-gray-900 text-sm truncate">{o.title as string}</p>
+                  <p className="font-semibold text-gray-900 text-sm truncate">{title}</p>
                   <p className="text-xs text-gray-500 mt-0.5">By {posterName(o.user_id)} · {formatDate(o.created_at)}</p>
                 </div>
                 <button onClick={() => toggleOpportunity(id, isActive)} disabled={loadingId === id}
@@ -119,10 +123,14 @@ export default function AdminClient({ opportunities: init_o, listings: init_l, m
       {/* Marketplace */}
       {tab === 'listings' && (
         <div className="space-y-3">
-          {listings.length === 0 && <p className="text-gray-500 text-sm text-center py-8">No listings yet.</p>}
+          {listings.length === 0 && (
+            <p className="text-gray-500 text-sm text-center py-8">No listings yet.</p>
+          )}
           {listings.map(l => {
             const id = l.id as string
             const isActive = l.is_active as boolean
+            const category = typeof l.category === 'string' ? l.category : ''
+            const title = typeof l.title === 'string' ? l.title : ''
             return (
               <div key={id} className={`flex items-start justify-between gap-4 bg-white rounded-xl border border-gray-100 p-4 ${!isActive ? 'opacity-60' : ''}`}>
                 <div className="flex-1 min-w-0">
@@ -130,9 +138,9 @@ export default function AdminClient({ opportunities: init_o, listings: init_l, m
                     <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
                       {isActive ? 'Active' : 'Removed'}
                     </span>
-                    <span className="text-xs text-gray-400 capitalize">{l.category as string}</span>
+                    <span className="text-xs text-gray-400 capitalize">{category}</span>
                   </div>
-                  <p className="font-semibold text-gray-900 text-sm truncate">{l.title as string}</p>
+                  <p className="font-semibold text-gray-900 text-sm truncate">{title}</p>
                   <p className="text-xs text-gray-500 mt-0.5">By {posterName(l.user_id)} · {formatDate(l.created_at)}</p>
                 </div>
                 <button onClick={() => toggleListing(id, isActive)} disabled={loadingId === id}
@@ -150,12 +158,16 @@ export default function AdminClient({ opportunities: init_o, listings: init_l, m
       {/* Members */}
       {tab === 'members' && (
         <div className="space-y-3">
-          {members.length === 0 && <p className="text-gray-500 text-sm text-center py-8">No members yet.</p>}
+          {members.length === 0 && (
+            <p className="text-gray-500 text-sm text-center py-8">No members yet.</p>
+          )}
           {members.map(m => {
             const id = m.id as string
             const isSuspended = m.is_suspended as boolean
             const isAdmin = m.is_admin as boolean
-            const name = `${m.first_name ?? ''} ${m.last_name ?? ''}`.trim() || 'Unnamed member'
+            const role = typeof m.role === 'string' ? m.role : ''
+            const institution = typeof m.institution === 'string' ? m.institution : ''
+            const name = `${typeof m.first_name === 'string' ? m.first_name : ''} ${typeof m.last_name === 'string' ? m.last_name : ''}`.trim() || 'Unnamed member'
             return (
               <div key={id} className={`flex items-start justify-between gap-4 bg-white rounded-xl border border-gray-100 p-4 ${isSuspended ? 'opacity-60' : ''}`}>
                 <div className="flex-1 min-w-0">
@@ -163,11 +175,13 @@ export default function AdminClient({ opportunities: init_o, listings: init_l, m
                     <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${isSuspended ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700'}`}>
                       {isSuspended ? 'Suspended' : 'Active'}
                     </span>
-                    {isAdmin && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">Admin</span>}
-                    {m.role && <span className="text-xs text-gray-400 capitalize">{m.role as string}</span>}
+                    {isAdmin && (
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">Admin</span>
+                    )}
+                    {role && <span className="text-xs text-gray-400 capitalize">{role}</span>}
                   </div>
                   <p className="font-semibold text-gray-900 text-sm">{name}</p>
-                  {m.institution && <p className="text-xs text-gray-500 mt-0.5 truncate">{m.institution as string}</p>}
+                  {institution && <p className="text-xs text-gray-500 mt-0.5 truncate">{institution}</p>}
                   <p className="text-xs text-gray-400 mt-0.5">Joined {formatDate(m.created_at)}</p>
                 </div>
                 {!isAdmin && (
