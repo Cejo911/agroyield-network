@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
-import Link from 'next/link'
 import AppNav from '@/app/components/AppNav'
+import ApplyButton from './apply-button'
 
 const TYPE_COLOURS: Record<string, string> = {
   grant: 'bg-green-100 text-green-700',
@@ -18,10 +18,8 @@ export default async function OpportunityPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-
   if (!user) redirect('/login')
 
   const { data: opportunity } = await supabase
@@ -39,7 +37,6 @@ export default async function OpportunityPage({
       <AppNav />
       <main className="max-w-2xl mx-auto px-4 py-10">
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
-
           <div className="flex flex-wrap gap-2 mb-4">
             {opportunity.type && (
               <span className={`text-xs px-3 py-1 rounded-full font-medium capitalize ${TYPE_COLOURS[opportunity.type] ?? 'bg-gray-100 text-gray-600'}`}>
@@ -52,9 +49,7 @@ export default async function OpportunityPage({
               </span>
             )}
           </div>
-
           <h1 className="text-2xl font-bold text-gray-900 mb-4">{opportunity.title}</h1>
-
           <div className="space-y-2 text-sm text-gray-600 mb-6">
             {opportunity.organisation && (
               <p>🏛 <span className="font-medium">{opportunity.organisation}</span></p>
@@ -73,38 +68,27 @@ export default async function OpportunityPage({
               </p>
             )}
           </div>
-
           {opportunity.description && (
             <div className="mb-6">
               <h2 className="font-semibold text-gray-800 mb-2">About this opportunity</h2>
               <p className="text-gray-600 leading-relaxed whitespace-pre-wrap">{opportunity.description}</p>
             </div>
           )}
-
           {opportunity.requirements && (
             <div className="mb-6">
               <h2 className="font-semibold text-gray-800 mb-2">Requirements</h2>
               <p className="text-gray-600 leading-relaxed whitespace-pre-wrap">{opportunity.requirements}</p>
             </div>
           )}
-
           {opportunity.url && (
             <div className="pt-6 border-t border-gray-100">
-              <Link
-                href={opportunity.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`inline-block px-6 py-3 rounded-lg font-semibold text-sm transition-colors ${
-                  isExpired
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : 'bg-green-600 text-white hover:bg-green-700'
-                }`}
-              >
-                {isExpired ? 'Application closed' : 'Apply now'}
-              </Link>
+              <ApplyButton
+                opportunityId={opportunity.id}
+                url={opportunity.url}
+                isExpired={!!isExpired}
+              />
             </div>
           )}
-
         </div>
       </main>
     </div>
