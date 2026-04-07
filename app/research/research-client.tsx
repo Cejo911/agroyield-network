@@ -1,10 +1,8 @@
 'use client'
-
 import { useState } from 'react'
 import Link from 'next/link'
 
 const TYPES = ['All', 'Finding', 'Question', 'Dataset', 'Review', 'Collaboration']
-
 const TYPE_COLOURS: Record<string, string> = {
   finding: 'bg-blue-100 text-blue-700',
   question: 'bg-purple-100 text-purple-700',
@@ -12,7 +10,6 @@ const TYPE_COLOURS: Record<string, string> = {
   review: 'bg-orange-100 text-orange-700',
   collaboration: 'bg-pink-100 text-pink-700',
 }
-
 const TAGS = [
   'Crop Science', 'Livestock', 'Agritech', 'Soil Health', 'Irrigation',
   'Food Processing', 'Agricultural Finance', 'Climate & Sustainability',
@@ -53,15 +50,12 @@ export default function ResearchClient({ posts }: { posts: ResearchPost[] }) {
       !search ||
       p.title.toLowerCase().includes(search.toLowerCase()) ||
       p.content.toLowerCase().includes(search.toLowerCase())
-
     const matchesType =
       typeFilter === 'All' ||
       (p.type ?? '').toLowerCase() === typeFilter.toLowerCase()
-
     const matchesTag =
       !tagFilter ||
       (p.tags ?? []).includes(tagFilter)
-
     return matchesSearch && matchesType && matchesTag
   })
 
@@ -75,6 +69,7 @@ export default function ResearchClient({ posts }: { posts: ResearchPost[] }) {
           onChange={e => setSearch(e.target.value)}
           className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
         />
+        {/* Type filter */}
         <div className="flex flex-wrap gap-2">
           {TYPES.map(type => (
             <button
@@ -90,16 +85,35 @@ export default function ResearchClient({ posts }: { posts: ResearchPost[] }) {
             </button>
           ))}
         </div>
-        <select
-          value={tagFilter}
-          onChange={e => setTagFilter(e.target.value)}
-          className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500"
-        >
-          <option value="">All topics</option>
-          {TAGS.map(tag => (
-            <option key={tag} value={tag}>{tag}</option>
-          ))}
-        </select>
+        {/* Topic filter — pills */}
+        <div className="pt-1 border-t border-gray-100">
+          <p className="text-xs font-medium text-gray-500 mb-2">Filter by topic</p>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setTagFilter('')}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                tagFilter === ''
+                  ? 'bg-green-600 text-white border-green-600'
+                  : 'border-gray-300 text-gray-600 hover:border-green-400'
+              }`}
+            >
+              All topics
+            </button>
+            {TAGS.map(tag => (
+              <button
+                key={tag}
+                onClick={() => setTagFilter(prev => prev === tag ? '' : tag)}
+                className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                  tagFilter === tag
+                    ? 'bg-green-600 text-white border-green-600'
+                    : 'border-gray-300 text-gray-600 hover:border-green-400'
+                }`}
+              >
+                {tag}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       <p className="text-sm text-gray-500 mb-5">
@@ -109,8 +123,8 @@ export default function ResearchClient({ posts }: { posts: ResearchPost[] }) {
       {filtered.length === 0 ? (
         <div className="text-center py-16 text-gray-400">
           <p className="text-4xl mb-3">🔬</p>
-          <p className="font-medium">No research posts yet</p>
-          <p className="text-sm mt-1">Be the first to share your findings</p>
+          <p className="font-medium">No research posts match your filters</p>
+          <p className="text-sm mt-1">Try adjusting your search or topic</p>
         </div>
       ) : (
         <div className="space-y-4">
