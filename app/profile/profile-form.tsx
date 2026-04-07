@@ -179,6 +179,13 @@ type ProfileFormProps = {
   }
 }
 
+const normalizePhone = (phone: string): string => {
+  const digits = phone.replace(/\D/g, '')
+  if (digits.startsWith('234')) return digits.slice(3)
+  if (digits.startsWith('0')) return digits.slice(1)
+  return digits
+}
+
 export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
   const router = useRouter()
   const [loading,         setLoading]         = useState(false)
@@ -273,14 +280,14 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
   // ── Submit ──
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (form.phone && form.whatsapp && form.phone.replace(/\s/g, '') === form.whatsapp.replace(/\s/g, '')) {
+    if (form.phone && form.whatsapp && normalizePhone(form.phone) === normalizePhone(form.whatsapp)) {
       setMessage({ type: 'error', text: 'WhatsApp number is the same as your phone number. Leave WhatsApp blank if they are the same.' })
       return
     }
     setLoading(true)
     setMessage(null)
     try {
-      const res  = await fetch('/api/profile', {
+      const res = await fetch('/api/profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...form, id: userId }),
