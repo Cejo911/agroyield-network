@@ -1,15 +1,51 @@
 import { createClient } from '@/lib/supabase/server'
-import { redirect, notFound } from 'next/navigation'
+import { notFound } from 'next/navigation'
+import type { Metadata } from 'next'
+import Link from 'next/link'
 import AppNav from '@/app/components/AppNav'
 import ApplyButton from './apply-button'
 
 const TYPE_COLOURS: Record<string, string> = {
-  grant: 'bg-green-100 text-green-700',
-  fellowship: 'bg-blue-100 text-blue-700',
-  job: 'bg-purple-100 text-purple-700',
+  grant:       'bg-green-100 text-green-700',
+  fellowship:  'bg-blue-100 text-blue-700',
+  job:         'bg-purple-100 text-purple-700',
   partnership: 'bg-orange-100 text-orange-700',
-  internship: 'bg-yellow-100 text-yellow-700',
-  training: 'bg-pink-100 text-pink-700',
+  internship:  'bg-yellow-100 text-yellow-700',
+  training:    'bg-pink-100 text-pink-700',
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}): Promise<Metadata> {
+  const { id } = await params
+  const supabase = await createClient()
+  const { data: opportunity } = await supabase
+    .from('opportunities')
+    .select('title, description, organisation, type')
+    .eq('id', id)
+    .single()
+
+  if (!opportunity) return { title: 'Opportunity Not Found' }
+
+  const description = opportunity.description
+    ? opportunity.description.slice(0, 160)
+    : `${opportunity.type ?? 'Opportunity'} at ${opportunity.organisation ?? 'AgroYield Network'}`
+
+  return {
+    title: opportunity.title,
+    description,
+    openGraph: {
+      title: `${opportunity.title} | AgroYield Network`,
+      description,
+      url: `https://agroyield.africa/opportunities/${id}`,
+    },
+    twitter: {
+      title: `${opportunity.title} | AgroYield Network`,
+      description,
+    },
+  }
 }
 
 export default async function OpportunityPage({
@@ -19,8 +55,9 @@ export default async function OpportunityPage({
 }) {
   const { id } = await params
   const supabase = await createClient()
+
+  // Get user without redirecting — page is publicly accessible
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
 
   const { data: opportunity } = await supabase
     .from('opportunities')
@@ -30,16 +67,56 @@ export default async function OpportunityPage({
 
   if (!opportunity) notFound()
 
-  const isExpired = opportunity.deadline && new Date(opportunity.deadline) < new Date()
+  const isExpired = opportunity.deadline
+    ? new Date(opportunity.deadline) < new Date()
+    : false
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <AppNav />
+
+      {/* Full nav for members, simple public bar for guests */}
+      {user ? (
+        <AppNav />
+      ) : (
+        <header className="bg-white border-b border-gray-100 sticky top-0 z-50">
+          <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+            <Link href="/" className="flex items-center gap-2">
+              <span className="text-2xl">🌾</span>
+              <span className="font-bold text-green-700 text-lg hidden sm:block">
+                AgroYield Network
+              </span>
+            </Link>
+            <div className="flex items-center gap-3">
+              <Link href="/login"
+                className="text-sm font-medium text-gray-600 hover:text-green-700 transition-colors">
+                Log in
+              </Link>
+              <Link href="/register"
+                className="text-sm font-semibold bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                Sign up free
+              </Link>
+            </div>
+          </div>
+        </header>
+      )}
+
       <main className="max-w-2xl mx-auto px-4 py-10">
+
+        {user && (
+          <Link href="/opportunities"
+            className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-green-700 transition-colors mb-6">
+            ← Back to Opportunities
+          </Link>
+        )}
+
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
+
+          {/* Badges */}
           <div className="flex flex-wrap gap-2 mb-4">
             {opportunity.type && (
-              <span className={`text-xs px-3 py-1 rounded-full font-medium capitalize ${TYPE_COLOURS[opportunity.type] ?? 'bg-gray-100 text-gray-600'}`}>
+              <span className={`text-xs px-3 py-1 rounded-full font-medium capitalize ${
+                TYPE_COLOURS[opportunity.type] ?? 'bg-gray-100 text-gray-600'
+              }`}>
                 {opportunity.type}
               </span>
             )}
@@ -49,7 +126,9 @@ export default async function OpportunityPage({
               </span>
             )}
           </div>
+
           <h1 className="text-2xl font-bold text-gray-900 mb-4">{opportunity.title}</h1>
+
           <div className="space-y-2 text-sm text-gray-600 mb-6">
             {opportunity.organisation && (
               <p>🏛 <span className="font-medium">{opportunity.organisation}</span></p>
@@ -68,27 +147,57 @@ export default async function OpportunityPage({
               </p>
             )}
           </div>
+
           {opportunity.description && (
             <div className="mb-6">
               <h2 className="font-semibold text-gray-800 mb-2">About this opportunity</h2>
-              <p className="text-gray-600 leading-relaxed whitespace-pre-wrap">{opportunity.description}</p>
+              <p className="text-gray-600 leading-relaxed whitespace-pre-wrap">
+                {opportunity.description}
+              </p>
             </div>
           )}
+
           {opportunity.requirements && (
             <div className="mb-6">
               <h2 className="font-semibold text-gray-800 mb-2">Requirements</h2>
-              <p className="text-gray-600 leading-relaxed whitespace-pre-wrap">{opportunity.requirements}</p>
+              <p className="text-gray-600 leading-relaxed whitespace-pre-wrap">
+                {opportunity.requirements}
+              </p>
             </div>
           )}
-          {opportunity.url && (
-            <div className="pt-6 border-t border-gray-100">
-              <ApplyButton
-                opportunityId={opportunity.id}
-                url={opportunity.url}
-                isExpired={!!isExpired}
-              />
-            </div>
-          )}
+
+          {/* Apply / Sign-up CTA */}
+          <div className="pt-6 border-t border-gray-100">
+            {user ? (
+              opportunity.url && (
+                <ApplyButton
+                  opportunityId={opportunity.id}
+                  url={opportunity.url}
+                  isExpired={isExpired}
+                />
+              )
+            ) : (
+              <div className="bg-green-50 border border-green-200 rounded-xl p-5 text-center">
+                <p className="text-sm font-semibold text-green-800 mb-1">
+                  Join AgroYield Network to apply
+                </p>
+                <p className="text-xs text-green-600 mb-4">
+                  Connect with agricultural opportunities across Africa — free to join.
+                </p>
+                <div className="flex gap-3 justify-center">
+                  <Link href="/register"
+                    className="text-sm font-semibold bg-green-600 text-white px-5 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                    Create free account
+                  </Link>
+                  <Link href="/login"
+                    className="text-sm font-medium text-green-700 border border-green-300 px-5 py-2 rounded-lg hover:bg-green-100 transition-colors">
+                    Log in
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
+
         </div>
       </main>
     </div>
