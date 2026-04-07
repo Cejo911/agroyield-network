@@ -28,9 +28,10 @@ export default async function ProfilePage() {
     .single()
 
   // Calculate completeness server-side
-  const missing = PROFILE_FIELDS.filter(
-    ({ key }) => !profile?.[key as keyof typeof profile]
-  )
+const profileRecord = (profile ?? {}) as Record<string, unknown>
+const missing  = PROFILE_FIELDS.filter(({ key }) => !profileRecord[key])
+const filled   = PROFILE_FIELDS.length - missing.length
+const percent  = Math.round((filled / PROFILE_FIELDS.length) * 100)
   const filled  = PROFILE_FIELDS.length - missing.length
   const percent = Math.round((filled / PROFILE_FIELDS.length) * 100)
 
