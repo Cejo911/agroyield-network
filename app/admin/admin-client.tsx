@@ -54,14 +54,14 @@ export default function AdminClient({ opportunities: init_o, listings: init_l, m
     setLoadingId(null)
   }
 
-  const toggleMember = async (id: string, current: boolean) => {
-    setLoadingId(id)
+  const memberAction = async (id: string, action: string, updateKey: string, updateVal: boolean) => {
+    setLoadingId(`${id}-${action}`)
     await fetch('/api/admin/member', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: id, is_suspended: !current }),
+      body: JSON.stringify({ userId: id, action }),
     })
-    setMembers(prev => prev.map(m => m.id === id ? { ...m, is_suspended: !current } : m))
+    setMembers(prev => prev.map(m => m.id === id ? { ...m, [updateKey]: updateVal } : m))
     setLoadingId(null)
   }
 
@@ -162,21 +162,29 @@ export default function AdminClient({ opportunities: init_o, listings: init_l, m
             <p className="text-gray-500 text-sm text-center py-8">No members yet.</p>
           )}
           {members.map(m => {
-            const id = m.id as string
+            const id          = m.id as string
             const isSuspended = m.is_suspended as boolean
-            const isAdmin = m.is_admin as boolean
-            const role = typeof m.role === 'string' ? m.role : ''
+            const isAdmin     = m.is_admin as boolean
+            const isVerified  = m.is_verified as boolean
+            const isElite     = m.is_elite as boolean
+            const role        = typeof m.role === 'string' ? m.role : ''
             const institution = typeof m.institution === 'string' ? m.institution : ''
-            const name = `${typeof m.first_name === 'string' ? m.first_name : ''} ${typeof m.last_name === 'string' ? m.last_name : ''}`.trim() || 'Unnamed member'
+            const name        = `${typeof m.first_name === 'string' ? m.first_name : ''} ${typeof m.last_name === 'string' ? m.last_name : ''}`.trim() || 'Unnamed member'
             return (
               <div key={id} className={`flex items-start justify-between gap-4 bg-white rounded-xl border border-gray-100 p-4 ${isSuspended ? 'opacity-60' : ''}`}>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${isSuspended ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700'}`}>
                       {isSuspended ? 'Suspended' : 'Active'}
                     </span>
                     {isAdmin && (
                       <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">Admin</span>
+                    )}
+                    {isVerified && (
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-50 text-green-600">✓ Verified</span>
+                    )}
+                    {isElite && (
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-600">★ Elite</span>
                     )}
                     {role && <span className="text-xs text-gray-400 capitalize">{role}</span>}
                   </div>
@@ -184,13 +192,45 @@ export default function AdminClient({ opportunities: init_o, listings: init_l, m
                   {institution && <p className="text-xs text-gray-500 mt-0.5 truncate">{institution}</p>}
                   <p className="text-xs text-gray-400 mt-0.5">Joined {formatDate(m.created_at)}</p>
                 </div>
+
                 {!isAdmin && (
-                  <button onClick={() => toggleMember(id, isSuspended)} disabled={loadingId === id}
-                    className={`shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors disabled:opacity-50 ${
-                      isSuspended ? 'border-green-200 text-green-600 hover:bg-green-50' : 'border-red-200 text-red-600 hover:bg-red-50'
-                    }`}>
-                    {loadingId === id ? '…' : isSuspended ? 'Unsuspend' : 'Suspend'}
-                  </button>
+                  <div className="flex flex-col gap-1.5 shrink-0">
+                    {/* Suspend / Unsuspend */}
+                    <button
+                      onClick={() => memberAction(id, isSuspended ? 'unsuspend' : 'suspend', 'is_suspended', !isSuspended)}
+                      disabled={loadingId === `${id}-suspend` || loadingId === `${id}-unsuspend`}
+                      className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors disabled:opacity-50 ${
+                        isSuspended
+                          ? 'border-green-200 text-green-600 hover:bg-green-50'
+                          : 'border-red-200 text-red-600 hover:bg-red-50'
+                      }`}>
+                      {isSuspended ? 'Unsuspend' : 'Suspend'}
+                    </button>
+
+                    {/* Verify / Unverify */}
+                    <button
+                      onClick={() => memberAction(id, isVerified ? 'unverify' : 'verify', 'is_verified', !isVerified)}
+                      disabled={loadingId === `${id}-verify` || loadingId === `${id}-unverify`}
+                      className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors disabled:opacity-50 ${
+                        isVerified
+                          ? 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                          : 'border-green-200 text-green-600 hover:bg-green-50'
+                      }`}>
+                      {isVerified ? 'Unverify' : 'Verify ✓'}
+                    </button>
+
+                    {/* Grant Crown / Revoke Crown */}
+                    <button
+                      onClick={() => memberAction(id, isElite ? 'unelite' : 'elite', 'is_elite', !isElite)}
+                      disabled={loadingId === `${id}-elite` || loadingId === `${id}-unelite`}
+                      className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors disabled:opacity-50 ${
+                        isElite
+                          ? 'border-amber-200 text-amber-600 hover:bg-amber-50'
+                          : 'border-amber-200 text-amber-700 hover:bg-amber-50'
+                      }`}>
+                      {isElite ? 'Revoke Crown' : 'Grant Crown ★'}
+                    </button>
+                  </div>
                 )}
               </div>
             )
