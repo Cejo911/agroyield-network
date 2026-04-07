@@ -1,10 +1,8 @@
 'use client'
-
 import { useState } from 'react'
 import Link from 'next/link'
 
 const TYPES = ['All', 'Grant', 'Fellowship', 'Job', 'Partnership', 'Internship', 'Training']
-
 const TYPE_COLOURS: Record<string, string> = {
   grant: 'bg-green-100 text-green-700',
   fellowship: 'bg-blue-100 text-blue-700',
@@ -25,27 +23,27 @@ type Opportunity = {
   created_at: string
 }
 
+const isExpired = (deadline: string | null) => {
+  if (!deadline) return false
+  return new Date(deadline) < new Date()
+}
+
 export default function OpportunitiesClient({ opportunities }: { opportunities: Opportunity[] }) {
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('All')
+  const [hideExpired, setHideExpired] = useState(false)
 
   const filtered = opportunities.filter(o => {
     const matchesSearch =
       !search ||
       o.title.toLowerCase().includes(search.toLowerCase()) ||
       (o.organisation ?? '').toLowerCase().includes(search.toLowerCase())
-
     const matchesType =
       typeFilter === 'All' ||
       o.type?.toLowerCase() === typeFilter.toLowerCase()
-
-    return matchesSearch && matchesType
+    const matchesExpiry = !hideExpired || !isExpired(o.deadline)
+    return matchesSearch && matchesType && matchesExpiry
   })
-
-  const isExpired = (deadline: string | null) => {
-    if (!deadline) return false
-    return new Date(deadline) < new Date()
-  }
 
   return (
     <div>
@@ -72,6 +70,22 @@ export default function OpportunitiesClient({ opportunities }: { opportunities: 
               {type}
             </button>
           ))}
+        </div>
+        <div className="flex items-center justify-between pt-1 border-t border-gray-100">
+          <span className="text-sm text-gray-500">Hide expired opportunities</span>
+          <button
+            type="button"
+            onClick={() => setHideExpired(prev => !prev)}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+              hideExpired ? 'bg-green-600' : 'bg-gray-200'
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                hideExpired ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
         </div>
       </div>
 
