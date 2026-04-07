@@ -6,59 +6,59 @@ export async function GET(request: NextRequest) {
   if (!q || q.length < 2) return NextResponse.json({ results: [] })
 
   const supabase = await createClient()
-  const p = `%${q}%`
+  const pattern = `%${q}%`
 
   const [people, opps, listings, research] = await Promise.all([
     supabase
       .from('profiles')
       .select('id, first_name, last_name, role, institution')
-      .or(`first_name.ilike.${p},last_name.ilike.${p},institution.ilike.${p}`)
+      .or(`first_name.ilike.${pattern},last_name.ilike.${pattern},institution.ilike.${pattern}`)
       .limit(5),
 
     supabase
       .from('opportunities')
       .select('id, title, organisation, type')
-      .or(`title.ilike.${p},organisation.ilike.${p}`)
+      .or(`title.ilike.${pattern},organisation.ilike.${pattern}`)
       .limit(5),
 
     supabase
       .from('listings')
       .select('id, title, category')
-      .or(`title.ilike.${p},category.ilike.${p}`)
+      .or(`title.ilike.${pattern},category.ilike.${pattern}`)
       .limit(5),
 
     supabase
       .from('research_posts')
       .select('id, title, abstract')
-      .or(`title.ilike.${p},abstract.ilike.${p}`)
+      .or(`title.ilike.${pattern},abstract.ilike.${pattern}`)
       .limit(5),
   ])
 
   return NextResponse.json({
     results: {
-      people: (people.data ?? []).map(p => ({
-        id: p.id,
-        title: `${p.first_name ?? ''} ${p.last_name ?? ''}`.trim() || 'Unnamed member',
-        subtitle: [p.role, p.institution].filter(Boolean).join(' · '),
-        href: `/directory/${p.id}`,
+      people: (people.data ?? []).map(member => ({
+        id: member.id,
+        title: `${member.first_name ?? ''} ${member.last_name ?? ''}`.trim() || 'Unnamed member',
+        subtitle: [member.role, member.institution].filter(Boolean).join(' · '),
+        href: `/directory/${member.id}`,
       })),
-      opportunities: (opps.data ?? []).map(o => ({
-        id: o.id,
-        title: o.title,
-        subtitle: [o.type, o.organisation].filter(Boolean).join(' · '),
-        href: `/opportunities/${o.id}`,
+      opportunities: (opps.data ?? []).map(opp => ({
+        id: opp.id,
+        title: opp.title,
+        subtitle: [opp.type, opp.organisation].filter(Boolean).join(' · '),
+        href: `/opportunities/${opp.id}`,
       })),
-      listings: (listings.data ?? []).map(l => ({
-        id: l.id,
-        title: l.title,
-        subtitle: l.category,
-        href: `/marketplace/${l.id}`,
+      listings: (listings.data ?? []).map(listing => ({
+        id: listing.id,
+        title: listing.title,
+        subtitle: listing.category,
+        href: `/marketplace/${listing.id}`,
       })),
-      research: (research.data ?? []).map(r => ({
-        id: r.id,
-        title: r.title,
-        subtitle: r.abstract ? r.abstract.slice(0, 90) + '…' : undefined,
-        href: `/research/${r.id}`,
+      research: (research.data ?? []).map(post => ({
+        id: post.id,
+        title: post.title,
+        subtitle: post.abstract ? `${post.abstract.slice(0, 90)}…` : undefined,
+        href: `/research/${post.id}`,
       })),
     },
   })
