@@ -8,20 +8,24 @@ export default async function DirectoryPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabaseAny = supabase as any
+
   const [{ data: profiles }, { data: followingData }] = await Promise.all([
     supabase
       .from('profiles')
       .select('id, first_name, last_name, role, bio, location, institution, interests')
       .not('role', 'is', null)
       .order('created_at', { ascending: false }),
-    supabase
+    supabaseAny
       .from('follows')
       .select('following_id')
-      .eq('follower_id', user.id)
-      .returns<{ following_id: string }[]>(),
+      .eq('follower_id', user.id),
   ])
 
-  const followingIds = (followingData ?? []).map(f => f.following_id)
+  const followingIds: string[] = (followingData ?? []).map(
+    (f: { following_id: string }) => f.following_id
+  )
 
   return (
     <div className="min-h-screen bg-gray-50">
