@@ -160,9 +160,9 @@ export default function Login() {
 
           <p style={{ textAlign: 'center', fontSize: 12, color: '#4b7a5c', marginTop: 24 }}>
             By signing in you agree to our{' '}
-            <a href="#" style={{ color: '#4b7a5c', textDecoration: 'underline' }}>Terms of Service</a>
-            {' '}and{' '}
-            <a href="#" style={{ color: '#4b7a5c', textDecoration: 'underline' }}>Privacy Policy</a>
+<a href="/terms" style={{ color: '#4b7a5c', textDecoration: 'underline' }}>Terms of Service</a>
+{' '}and{' '}
+<a href="/privacy" style={{ color: '#4b7a5c', textDecoration: 'underline' }}>Privacy Policy</a>
           </p>
         </div>
       </div>
