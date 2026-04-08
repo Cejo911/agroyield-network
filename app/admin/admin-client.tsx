@@ -31,6 +31,20 @@ function formatDate(val: unknown): string {
   return new Date(val).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
+const ANNOUNCEMENT_COLORS = [
+  { value: 'green',  label: 'Green',  preview: 'bg-green-600'  },
+  { value: 'yellow', label: 'Yellow', preview: 'bg-yellow-400' },
+  { value: 'red',    label: 'Red',    preview: 'bg-red-600'    },
+  { value: 'blue',   label: 'Blue',   preview: 'bg-blue-600'   },
+]
+
+const ANNOUNCEMENT_COLOR_CLASSES: Record<string, string> = {
+  green:  'bg-green-600 text-white',
+  yellow: 'bg-yellow-400 text-yellow-900',
+  red:    'bg-red-600 text-white',
+  blue:   'bg-blue-600 text-white',
+}
+
 export default function AdminClient({
   opportunities: init_o,
   listings: init_l,
@@ -50,6 +64,11 @@ export default function AdminClient({
   const [reportGroups, setReports] = useState(init_r)
   const [loadingId, setLoadingId]  = useState<string | null>(null)
 
+  // Announcement banner settings
+  const [announcementEnabled, setAnnouncementEnabled] = useState(settingsMap['announcement_enabled'] === 'true')
+  const [announcementText,    setAnnouncementText]    = useState(settingsMap['announcement_text']    ?? '')
+  const [announcementColor,   setAnnouncementColor]   = useState(settingsMap['announcement_color']   ?? 'green')
+
   // Pricing settings
   const [monthlyNaira,  setMonthlyNaira]  = useState(settingsMap['subscription_monthly_naira']  ?? '2500')
   const [yearlyNaira,   setYearlyNaira]   = useState(settingsMap['subscription_yearly_naira']   ?? '25000')
@@ -60,7 +79,7 @@ export default function AdminClient({
   const [rateLimitOpps,   setRateLimitOpps]   = useState(settingsMap['rate_limit_opportunities'] ?? '3')
   const [rateLimitMarket, setRateLimitMarket] = useState(settingsMap['rate_limit_marketplace']   ?? '5')
 
-  // Report threshold setting
+  // Report threshold
   const [reportThreshold, setReportThreshold] = useState(settingsMap['report_threshold'] ?? '3')
 
   const [savingSettings, setSavingSettings] = useState(false)
@@ -76,6 +95,9 @@ export default function AdminClient({
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          announcement_enabled:       announcementEnabled ? 'true' : 'false',
+          announcement_text:          announcementText,
+          announcement_color:         announcementColor,
           subscription_monthly_naira: monthlyNaira,
           subscription_yearly_naira:  yearlyNaira,
           subscription_monthly_label: monthlyLabel,
@@ -149,7 +171,6 @@ export default function AdminClient({
     setLoadingId(null)
   }
 
-  // Clears all reports for a post and restores its visibility
   const dismissReports = async (postId: string, postType: 'opportunity' | 'listing') => {
     setLoadingId(`dismiss-${postId}`)
     const res = await fetch('/api/admin/reports', {
@@ -162,7 +183,6 @@ export default function AdminClient({
       setLoadingId(null)
       return
     }
-    // Remove the group entirely from local state — post is cleared and restored
     setReports(prev => prev.filter(g => !(g.postId === postId && g.postType === postType)))
     setLoadingId(null)
   }
@@ -425,26 +445,20 @@ export default function AdminClient({
                   <p className="font-semibold text-gray-900 text-sm truncate">{g.postTitle}</p>
                   <div className="flex flex-wrap gap-1.5 mt-2">
                     {Object.entries(g.reasons).map(([reason, cnt]) => (
-                      <span key={reason}
-                        className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                      <span key={reason} className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
                         {reason}: {cnt}
                       </span>
                     ))}
                   </div>
                   <p className="text-xs text-gray-400 mt-1">Latest report: {formatDate(g.latestAt)}</p>
                 </div>
-
-                {/* Action buttons */}
                 <div className="flex flex-col gap-1.5 shrink-0">
-                  {/* Dismiss — report not valid: clear all reports + restore post */}
                   <button
                     onClick={() => dismissReports(g.postId, g.postType)}
                     disabled={loadingId === `dismiss-${g.postId}`}
                     className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-green-200 text-green-600 hover:bg-green-50 transition-colors disabled:opacity-50">
                     {loadingId === `dismiss-${g.postId}` ? '…' : '✓ Dismiss'}
                   </button>
-
-                  {/* Remove — report valid: hide the post */}
                   {g.isActive ? (
                     <button
                       onClick={() => {
@@ -456,7 +470,6 @@ export default function AdminClient({
                       {loadingId === g.postId ? '…' : 'Remove'}
                     </button>
                   ) : (
-                    /* Post already hidden — offer restore without clearing reports */
                     <button
                       onClick={() => restorePost(g.postId, g.postType)}
                       disabled={loadingId === `restore-${g.postId}`}
@@ -474,6 +487,81 @@ export default function AdminClient({
       {/* Settings — super admin only */}
       {tab === 'settings' && isSuperAdmin && (
         <div className="space-y-8">
+
+          {/* Announcement Banner */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-5">
+            <div>
+              <h2 className="text-base font-bold text-gray-900 mb-1">Announcement Banner</h2>
+              <p className="text-sm text-gray-500">Show a site-wide message at the top of every page.</p>
+            </div>
+
+            {/* Enable toggle */}
+            <div className="flex items-center justify-between p-4 rounded-xl border border-gray-100 bg-gray-50">
+              <div>
+                <p className="text-sm font-semibold text-gray-700">Show banner</p>
+                <p className="text-xs text-gray-400 mt-0.5">Visible to all visitors when enabled</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAnnouncementEnabled(prev => !prev)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                  announcementEnabled ? 'bg-green-600' : 'bg-gray-200'
+                }`}
+              >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                  announcementEnabled ? 'translate-x-6' : 'translate-x-1'
+                }`} />
+              </button>
+            </div>
+
+            {/* Message */}
+            <div>
+              <label className="text-xs text-gray-500 mb-1 block">Message</label>
+              <input
+                type="text"
+                value={announcementText}
+                onChange={e => setAnnouncementText(e.target.value)}
+                placeholder="e.g. Scheduled maintenance Friday 10pm — 11pm WAT"
+                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+            </div>
+
+            {/* Color picker */}
+            <div>
+              <label className="text-xs text-gray-500 mb-2 block">Banner colour</label>
+              <div className="flex gap-2">
+                {ANNOUNCEMENT_COLORS.map(c => (
+                  <button
+                    key={c.value}
+                    type="button"
+                    onClick={() => setAnnouncementColor(c.value)}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                      announcementColor === c.value
+                        ? 'border-gray-400 ring-2 ring-offset-1 ring-gray-400'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <span className={`w-3 h-3 rounded-full ${c.preview}`} />
+                    {c.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Live preview */}
+            {announcementText.trim() && (
+              <div>
+                <p className="text-xs text-gray-400 mb-2">Preview</p>
+                <div className={`rounded-lg py-2.5 px-4 text-sm font-medium text-center ${
+                  ANNOUNCEMENT_COLOR_CLASSES[announcementColor] ?? ANNOUNCEMENT_COLOR_CLASSES.green
+                } ${!announcementEnabled ? 'opacity-40' : ''}`}>
+                  {announcementText}
+                  {!announcementEnabled && <span className="ml-2 text-xs opacity-70">(disabled)</span>}
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Subscription Pricing */}
           <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-6">
             <div>
