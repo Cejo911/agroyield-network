@@ -29,10 +29,14 @@ interface Member {
   first_name: string | null
   last_name: string | null
   email: string
+  username: string | null
   is_admin: boolean
+  admin_role: string | null
   is_verified: boolean
-  is_active: boolean
+  is_elite: boolean
+  is_suspended: boolean
   subscription_expires_at: string | null
+  subscription_plan: string | null
   created_at: string
 }
 
@@ -77,7 +81,7 @@ export default function AdminClient({
   const [members, setMembers] = useState<Member[]>(initialMembers)
   const [reportGroups, setReportGroups] = useState<ReportGroup[]>(initialReportGroups)
 
-  // Settings state — initialised from server-passed settingsMap
+  // Settings state
   const [registrationEnabled, setRegistrationEnabled] = useState(
     settingsMap.registration_enabled !== 'false'
   )
@@ -116,9 +120,7 @@ export default function AdminClient({
   const [newMarketplaceCategory, setNewMarketplaceCategory] = useState('')
   const [monthlyPrice, setMonthlyPrice] = useState(settingsMap.monthly_price ?? '2500')
   const [annualPrice, setAnnualPrice] = useState(settingsMap.annual_price ?? '25000')
-  const [opportunityLimit, setOpportunityLimit] = useState(
-    settingsMap.opportunity_daily_limit ?? '3'
-  )
+  const [opportunityLimit, setOpportunityLimit] = useState(settingsMap.opportunity_daily_limit ?? '3')
   const [listingLimit, setListingLimit] = useState(settingsMap.listing_daily_limit ?? '3')
   const [reportThreshold, setReportThreshold] = useState(settingsMap.report_threshold ?? '3')
   const [adminNotificationEmail, setAdminNotificationEmail] = useState(
@@ -137,9 +139,7 @@ export default function AdminClient({
 
   const fmt = (dateStr: string) =>
     new Date(dateStr).toLocaleDateString('en-GB', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
+      day: 'numeric', month: 'short', year: 'numeric',
     })
 
   // ── Settings save ─────────────────────────────────────────────────────────
@@ -244,21 +244,16 @@ export default function AdminClient({
 
   // ── Member actions ────────────────────────────────────────────────────────
 
-  const toggleMember = async (id: string, is_active: boolean) => {
-    setMembers(prev => prev.map(m => m.id === id ? { ...m, is_active } : m))
+  const memberAction = async (
+    userId: string,
+    action: string,
+    optimistic: (m: Member) => Member
+  ) => {
+    setMembers(prev => prev.map(m => m.id === userId ? optimistic(m) : m))
     await fetch('/api/admin/member', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, is_active }),
-    })
-  }
-
-  const toggleVerified = async (id: string, is_verified: boolean) => {
-    setMembers(prev => prev.map(m => m.id === id ? { ...m, is_verified } : m))
-    await fetch('/api/admin/member', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, is_verified }),
+      body: JSON.stringify({ userId, action }),
     })
   }
 
@@ -288,39 +283,35 @@ export default function AdminClient({
     }
   }
 
-  // ── Tag editor helpers ────────────────────────────────────────────────────
+  // ── Tag helpers ───────────────────────────────────────────────────────────
 
   const addOpportunityType = () => {
-    const trimmed = newOpportunityType.trim()
-    if (trimmed && !opportunityTypes.includes(trimmed)) {
-      setOpportunityTypes(prev => [...prev, trimmed])
+    const t = newOpportunityType.trim()
+    if (t && !opportunityTypes.includes(t)) {
+      setOpportunityTypes(prev => [...prev, t])
       setNewOpportunityType('')
     }
   }
-
-  const removeOpportunityType = (type: string) => {
+  const removeOpportunityType = (type: string) =>
     setOpportunityTypes(prev => prev.filter(t => t !== type))
-  }
 
   const addMarketplaceCategory = () => {
-    const trimmed = newMarketplaceCategory.trim()
-    if (trimmed && !marketplaceCategories.includes(trimmed)) {
-      setMarketplaceCategories(prev => [...prev, trimmed])
+    const t = newMarketplaceCategory.trim()
+    if (t && !marketplaceCategories.includes(t)) {
+      setMarketplaceCategories(prev => [...prev, t])
       setNewMarketplaceCategory('')
     }
   }
-
-  const removeMarketplaceCategory = (cat: string) => {
+  const removeMarketplaceCategory = (cat: string) =>
     setMarketplaceCategories(prev => prev.filter(c => c !== cat))
-  }
 
   // ── Tab config ────────────────────────────────────────────────────────────
 
   const tabs: { id: Tab; label: string; badge?: number }[] = [
     { id: 'opportunities', label: 'Opportunities' },
-    { id: 'marketplace', label: 'Marketplace' },
-    { id: 'members', label: 'Members' },
-    { id: 'reports', label: 'Reports', badge: reportGroups.length || undefined },
+    { id: 'marketplace',   label: 'Marketplace' },
+    { id: 'members',       label: 'Members' },
+    { id: 'reports',       label: 'Reports', badge: reportGroups.length || undefined },
     ...(isSuperAdmin ? [{ id: 'settings' as Tab, label: 'Settings' }] : []),
   ]
 
@@ -370,9 +361,7 @@ export default function AdminClient({
                     </span>
                   )}
                   {!opp.is_active && !opp.is_pending_review && (
-                    <span className="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full">
-                      Hidden
-                    </span>
+                    <span className="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full">Hidden</span>
                   )}
                 </div>
                 <p className="text-sm text-gray-500 mt-0.5">
@@ -383,16 +372,12 @@ export default function AdminClient({
               <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
                 {opp.is_pending_review ? (
                   <>
-                    <button
-                      onClick={() => approveOpportunity(opp.id)}
-                      className="text-xs bg-green-600 text-white px-3 py-1.5 rounded-md hover:bg-green-700"
-                    >
+                    <button onClick={() => approveOpportunity(opp.id)}
+                      className="text-xs bg-green-600 text-white px-3 py-1.5 rounded-md hover:bg-green-700">
                       Approve
                     </button>
-                    <button
-                      onClick={() => declineOpportunity(opp.id)}
-                      className="text-xs bg-red-600 text-white px-3 py-1.5 rounded-md hover:bg-red-700"
-                    >
+                    <button onClick={() => declineOpportunity(opp.id)}
+                      className="text-xs bg-red-600 text-white px-3 py-1.5 rounded-md hover:bg-red-700">
                       Decline
                     </button>
                   </>
@@ -403,8 +388,7 @@ export default function AdminClient({
                       opp.is_active
                         ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                         : 'bg-green-100 text-green-700 hover:bg-green-200'
-                    }`}
-                  >
+                    }`}>
                     {opp.is_active ? 'Hide' : 'Show'}
                   </button>
                 )}
@@ -431,30 +415,23 @@ export default function AdminClient({
                     </span>
                   )}
                   {!listing.is_active && !listing.is_pending_review && (
-                    <span className="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full">
-                      Hidden
-                    </span>
+                    <span className="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full">Hidden</span>
                   )}
                 </div>
                 <p className="text-sm text-gray-500 mt-0.5">
-                  {listing.category} · ₦{listing.price?.toLocaleString()} · by{' '}
-                  {getDisplayName(listing.user_id)}
+                  {listing.category} · ₦{listing.price?.toLocaleString()} · by {getDisplayName(listing.user_id)}
                 </p>
                 <p className="text-xs text-gray-400 mt-0.5">{fmt(listing.created_at)}</p>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
                 {listing.is_pending_review ? (
                   <>
-                    <button
-                      onClick={() => approveListing(listing.id)}
-                      className="text-xs bg-green-600 text-white px-3 py-1.5 rounded-md hover:bg-green-700"
-                    >
+                    <button onClick={() => approveListing(listing.id)}
+                      className="text-xs bg-green-600 text-white px-3 py-1.5 rounded-md hover:bg-green-700">
                       Approve
                     </button>
-                    <button
-                      onClick={() => declineListing(listing.id)}
-                      className="text-xs bg-red-600 text-white px-3 py-1.5 rounded-md hover:bg-red-700"
-                    >
+                    <button onClick={() => declineListing(listing.id)}
+                      className="text-xs bg-red-600 text-white px-3 py-1.5 rounded-md hover:bg-red-700">
                       Decline
                     </button>
                   </>
@@ -465,8 +442,7 @@ export default function AdminClient({
                       listing.is_active
                         ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                         : 'bg-green-100 text-green-700 hover:bg-green-200'
-                    }`}
-                  >
+                    }`}>
                     {listing.is_active ? 'Hide' : 'Show'}
                   </button>
                 )}
@@ -484,63 +460,165 @@ export default function AdminClient({
           )}
           {members.map((member) => {
             const displayName =
-              [member.first_name, member.last_name].filter(Boolean).join(' ') || member.email
+              [member.first_name, member.last_name].filter(Boolean).join(' ') ||
+              member.username ||
+              member.email
+            const isSelf = member.id === currentUserId
+
             return (
-              <div key={member.id} className="bg-white border rounded-lg p-4 flex items-start justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-medium text-gray-900">{displayName}</span>
-                    {member.is_verified && (
-                      <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">
-                        Verified
-                      </span>
-                    )}
-                    {member.is_admin && (
-                      <span className="bg-purple-100 text-purple-700 text-xs px-2 py-0.5 rounded-full">
-                        Admin
-                      </span>
-                    )}
-                    {!member.is_active && (
-                      <span className="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full">
-                        Suspended
-                      </span>
+              <div key={member.id} className="bg-white border rounded-lg p-4">
+                {/* Top row: name + badges */}
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium text-gray-900">{displayName}</span>
+
+                      {/* Elite crown */}
+                      {member.is_elite && (
+                        <span className="bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded-full font-semibold">
+                          👑 Elite
+                        </span>
+                      )}
+
+                      {/* Verified */}
+                      {member.is_verified && (
+                        <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">
+                          ✓ Verified
+                        </span>
+                      )}
+
+                      {/* Admin role */}
+                      {member.is_admin && (
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${
+                          member.admin_role === 'super'
+                            ? 'bg-purple-100 text-purple-700'
+                            : 'bg-blue-100 text-blue-700'
+                        }`}>
+                          {member.admin_role === 'super' ? '⚙ Super Admin' : '⚙ Moderator'}
+                        </span>
+                      )}
+
+                      {/* Suspended */}
+                      {member.is_suspended && (
+                        <span className="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full">
+                          Suspended
+                        </span>
+                      )}
+
+                      {isSelf && (
+                        <span className="text-xs text-gray-400 italic">You</span>
+                      )}
+                    </div>
+
+                    <p className="text-sm text-gray-500 mt-0.5">{member.email}</p>
+
+                    {member.subscription_plan && (
+                      <p className="text-xs text-gray-400 mt-0.5 capitalize">
+                        Plan: {member.subscription_plan}
+                        {member.subscription_expires_at
+                          ? ` · Expires ${fmt(member.subscription_expires_at)}`
+                          : ' · No expiry'}
+                      </p>
                     )}
                   </div>
-                  <p className="text-sm text-gray-500 mt-0.5">{member.email}</p>
-                  {member.subscription_expires_at && (
-                    <p className="text-xs text-gray-400 mt-0.5">
-                      Subscription expires: {fmt(member.subscription_expires_at)}
-                    </p>
-                  )}
                 </div>
-                <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
-                  {member.id !== currentUserId ? (
-                    <>
+
+                {/* Action buttons — hidden for self */}
+                {!isSelf && (
+                  <div className="mt-3 pt-3 border-t border-gray-100 flex flex-wrap gap-2">
+
+                    {/* Suspend / Unsuspend — all admins */}
+                    {member.is_suspended ? (
                       <button
-                        onClick={() => toggleVerified(member.id, !member.is_verified)}
-                        className={`text-xs px-3 py-1.5 rounded-md ${
-                          member.is_verified
-                            ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                            : 'bg-green-100 text-green-700 hover:bg-green-200'
-                        }`}
+                        onClick={() => memberAction(member.id, 'unsuspend',
+                          m => ({ ...m, is_suspended: false }))}
+                        className="text-xs bg-gray-100 text-gray-700 px-3 py-1.5 rounded-md hover:bg-gray-200"
                       >
-                        {member.is_verified ? 'Unverify' : 'Verify'}
+                        Reinstate
                       </button>
+                    ) : (
                       <button
-                        onClick={() => toggleMember(member.id, !member.is_active)}
-                        className={`text-xs px-3 py-1.5 rounded-md ${
-                          member.is_active
-                            ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
+                        onClick={() => memberAction(member.id, 'suspend',
+                          m => ({ ...m, is_suspended: true }))}
+                        className="text-xs bg-red-100 text-red-700 px-3 py-1.5 rounded-md hover:bg-red-200"
                       >
-                        {member.is_active ? 'Suspend' : 'Reinstate'}
+                        Suspend
                       </button>
-                    </>
-                  ) : (
-                    <span className="text-xs text-gray-400 italic">You</span>
-                  )}
-                </div>
+                    )}
+
+                    {/* Super admin only actions */}
+                    {isSuperAdmin && (
+                      <>
+                        {/* Verify / Unverify */}
+                        {member.is_verified ? (
+                          <button
+                            onClick={() => memberAction(member.id, 'unverify',
+                              m => ({ ...m, is_verified: false }))}
+                            className="text-xs bg-gray-100 text-gray-700 px-3 py-1.5 rounded-md hover:bg-gray-200"
+                          >
+                            Unverify
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => memberAction(member.id, 'verify',
+                              m => ({ ...m, is_verified: true }))}
+                            className="text-xs bg-green-100 text-green-700 px-3 py-1.5 rounded-md hover:bg-green-200"
+                          >
+                            Verify
+                          </button>
+                        )}
+
+                        {/* Elite / Unelite */}
+                        {member.is_elite ? (
+                          <button
+                            onClick={() => memberAction(member.id, 'unelite',
+                              m => ({ ...m, is_elite: false }))}
+                            className="text-xs bg-gray-100 text-gray-700 px-3 py-1.5 rounded-md hover:bg-gray-200"
+                          >
+                            Remove Elite
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => memberAction(member.id, 'elite',
+                              m => ({ ...m, is_elite: true }))}
+                            className="text-xs bg-yellow-100 text-yellow-700 px-3 py-1.5 rounded-md hover:bg-yellow-200"
+                          >
+                            👑 Make Elite
+                          </button>
+                        )}
+
+                        {/* Admin role management */}
+                        {!member.is_admin && (
+                          <>
+                            <button
+                              onClick={() => memberAction(member.id, 'makemoderator',
+                                m => ({ ...m, is_admin: true, admin_role: 'moderator' }))}
+                              className="text-xs bg-blue-100 text-blue-700 px-3 py-1.5 rounded-md hover:bg-blue-200"
+                            >
+                              Make Moderator
+                            </button>
+                            <button
+                              onClick={() => memberAction(member.id, 'makesuper',
+                                m => ({ ...m, is_admin: true, admin_role: 'super' }))}
+                              className="text-xs bg-purple-100 text-purple-700 px-3 py-1.5 rounded-md hover:bg-purple-200"
+                            >
+                              Make Super Admin
+                            </button>
+                          </>
+                        )}
+                        {member.is_admin && (
+                          <button
+                            onClick={() => memberAction(member.id, 'removeadmin',
+                              m => ({ ...m, is_admin: false, admin_role: null }))}
+                            className="text-xs bg-gray-100 text-gray-500 px-3 py-1.5 rounded-md hover:bg-gray-200"
+                          >
+                            Remove Admin
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
             )
           })}
@@ -571,9 +649,7 @@ export default function AdminClient({
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    Last reported: {fmt(rg.latestAt)}
-                  </p>
+                  <p className="text-xs text-gray-400 mt-0.5">Last reported: {fmt(rg.latestAt)}</p>
                   <div className="mt-2 space-y-0.5">
                     {Object.entries(rg.reasons).map(([reason, count]) => (
                       <p key={reason} className="text-xs text-gray-500">
@@ -609,9 +685,7 @@ export default function AdminClient({
           {/* Member Registration */}
           <div className="border rounded-lg p-4">
             <h3 className="font-semibold text-gray-800 mb-1">Member Registration</h3>
-            <p className="text-sm text-gray-500 mb-3">
-              Allow or block new members from creating accounts.
-            </p>
+            <p className="text-sm text-gray-500 mb-3">Allow or block new members from creating accounts.</p>
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setRegistrationEnabled(!registrationEnabled)}
@@ -619,11 +693,9 @@ export default function AdminClient({
                   registrationEnabled ? 'bg-green-600' : 'bg-gray-300'
                 }`}
               >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
-                    registrationEnabled ? 'translate-x-6' : 'translate-x-1'
-                  }`}
-                />
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                  registrationEnabled ? 'translate-x-6' : 'translate-x-1'
+                }`} />
               </button>
               <span className="text-sm text-gray-700">
                 {registrationEnabled ? 'Registration open' : 'Registration closed'}
@@ -638,26 +710,17 @@ export default function AdminClient({
               Choose whether new posts go live immediately or require admin approval.
             </p>
             <div className="flex gap-3">
-              <button
-                onClick={() => setModerationMode('immediate')}
-                className={`flex-1 py-2 px-3 rounded-md border text-sm font-medium transition-colors ${
-                  moderationMode === 'immediate'
-                    ? 'bg-green-600 text-white border-green-600'
-                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                }`}
-              >
-                Immediate
-              </button>
-              <button
-                onClick={() => setModerationMode('approval')}
-                className={`flex-1 py-2 px-3 rounded-md border text-sm font-medium transition-colors ${
-                  moderationMode === 'approval'
-                    ? 'bg-green-600 text-white border-green-600'
-                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                }`}
-              >
-                Requires Approval
-              </button>
+              {(['immediate', 'approval'] as const).map(mode => (
+                <button key={mode}
+                  onClick={() => setModerationMode(mode)}
+                  className={`flex-1 py-2 px-3 rounded-md border text-sm font-medium transition-colors ${
+                    moderationMode === mode
+                      ? 'bg-green-600 text-white border-green-600'
+                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                  }`}>
+                  {mode === 'immediate' ? 'Immediate' : 'Requires Approval'}
+                </button>
+              ))}
             </div>
             {moderationMode === 'approval' && (
               <p className="text-xs text-yellow-700 bg-yellow-50 rounded-md px-3 py-2 mt-3">
@@ -673,27 +736,18 @@ export default function AdminClient({
               Days after subscription expiry before the verified badge is removed.
             </p>
             <div className="flex items-center gap-3">
-              <input
-                type="number"
-                min={0}
-                max={90}
-                value={graceDays}
+              <input type="number" min={0} max={90} value={graceDays}
                 onChange={(e) => setGraceDays(parseInt(e.target.value, 10) || 0)}
-                className="w-24 border rounded px-3 py-2 text-sm"
-              />
+                className="w-24 border rounded px-3 py-2 text-sm" />
               <span className="text-sm text-gray-600">days</span>
             </div>
-            <p className="text-xs text-gray-400 mt-2">
-              Set to 0 to revoke verification immediately on expiry.
-            </p>
+            <p className="text-xs text-gray-400 mt-2">Set to 0 to revoke verification immediately on expiry.</p>
           </div>
 
           {/* Announcement Banner */}
           <div className="border rounded-lg p-4">
             <h3 className="font-semibold text-gray-800 mb-1">Announcement Banner</h3>
-            <p className="text-sm text-gray-500 mb-3">
-              Show a platform-wide banner at the top of every page.
-            </p>
+            <p className="text-sm text-gray-500 mb-3">Show a platform-wide banner at the top of every page.</p>
             <div className="flex items-center gap-3 mb-3">
               <button
                 onClick={() => setAnnouncementEnabled(!announcementEnabled)}
@@ -701,11 +755,9 @@ export default function AdminClient({
                   announcementEnabled ? 'bg-green-600' : 'bg-gray-300'
                 }`}
               >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
-                    announcementEnabled ? 'translate-x-6' : 'translate-x-1'
-                  }`}
-                />
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                  announcementEnabled ? 'translate-x-6' : 'translate-x-1'
+                }`} />
               </button>
               <span className="text-sm text-gray-700">
                 {announcementEnabled ? 'Banner visible' : 'Banner hidden'}
@@ -713,18 +765,13 @@ export default function AdminClient({
             </div>
             {announcementEnabled && (
               <div className="space-y-3">
-                <textarea
-                  value={announcementText}
+                <textarea value={announcementText}
                   onChange={(e) => setAnnouncementText(e.target.value)}
-                  placeholder="Enter announcement message..."
-                  rows={2}
-                  className="w-full border rounded px-3 py-2 text-sm resize-none"
-                />
+                  placeholder="Enter announcement message..." rows={2}
+                  className="w-full border rounded px-3 py-2 text-sm resize-none" />
                 <div className="flex gap-2">
                   {(['green', 'yellow', 'red', 'blue'] as const).map((color) => (
-                    <button
-                      key={color}
-                      onClick={() => setAnnouncementColor(color)}
+                    <button key={color} onClick={() => setAnnouncementColor(color)}
                       className={`px-3 py-1.5 rounded-md text-xs font-medium border-2 transition-all ${
                         announcementColor === color ? 'border-gray-800 scale-105' : 'border-transparent'
                       } ${
@@ -732,8 +779,7 @@ export default function AdminClient({
                         : color === 'yellow' ? 'bg-yellow-100 text-yellow-800'
                         : color === 'red' ? 'bg-red-100 text-red-800'
                         : 'bg-blue-100 text-blue-800'
-                      }`}
-                    >
+                      }`}>
                       {color.charAt(0).toUpperCase() + color.slice(1)}
                     </button>
                   ))}
@@ -754,26 +800,18 @@ export default function AdminClient({
                 {opportunityTypes.map((type) => (
                   <span key={type} className="flex items-center gap-1 bg-gray-100 text-gray-700 text-xs px-2.5 py-1 rounded-full">
                     {type}
-                    <button
-                      onClick={() => removeOpportunityType(type)}
-                      className="text-gray-400 hover:text-red-500 ml-0.5 leading-none text-base"
-                    >×</button>
+                    <button onClick={() => removeOpportunityType(type)}
+                      className="text-gray-400 hover:text-red-500 ml-0.5 leading-none text-base">×</button>
                   </span>
                 ))}
               </div>
               <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={newOpportunityType}
+                <input type="text" value={newOpportunityType}
                   onChange={(e) => setNewOpportunityType(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && addOpportunityType()}
-                  placeholder="Add type..."
-                  className="flex-1 border rounded px-3 py-1.5 text-sm"
-                />
-                <button
-                  onClick={addOpportunityType}
-                  className="bg-green-600 text-white px-3 py-1.5 rounded text-sm hover:bg-green-700"
-                >Add</button>
+                  placeholder="Add type..." className="flex-1 border rounded px-3 py-1.5 text-sm" />
+                <button onClick={addOpportunityType}
+                  className="bg-green-600 text-white px-3 py-1.5 rounded text-sm hover:bg-green-700">Add</button>
               </div>
             </div>
             <div>
@@ -782,26 +820,18 @@ export default function AdminClient({
                 {marketplaceCategories.map((cat) => (
                   <span key={cat} className="flex items-center gap-1 bg-gray-100 text-gray-700 text-xs px-2.5 py-1 rounded-full">
                     {cat}
-                    <button
-                      onClick={() => removeMarketplaceCategory(cat)}
-                      className="text-gray-400 hover:text-red-500 ml-0.5 leading-none text-base"
-                    >×</button>
+                    <button onClick={() => removeMarketplaceCategory(cat)}
+                      className="text-gray-400 hover:text-red-500 ml-0.5 leading-none text-base">×</button>
                   </span>
                 ))}
               </div>
               <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={newMarketplaceCategory}
+                <input type="text" value={newMarketplaceCategory}
                   onChange={(e) => setNewMarketplaceCategory(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && addMarketplaceCategory()}
-                  placeholder="Add category..."
-                  className="flex-1 border rounded px-3 py-1.5 text-sm"
-                />
-                <button
-                  onClick={addMarketplaceCategory}
-                  className="bg-green-600 text-white px-3 py-1.5 rounded text-sm hover:bg-green-700"
-                >Add</button>
+                  placeholder="Add category..." className="flex-1 border rounded px-3 py-1.5 text-sm" />
+                <button onClick={addMarketplaceCategory}
+                  className="bg-green-600 text-white px-3 py-1.5 rounded text-sm hover:bg-green-700">Add</button>
               </div>
             </div>
           </div>
@@ -809,27 +839,19 @@ export default function AdminClient({
           {/* Subscription Pricing */}
           <div className="border rounded-lg p-4">
             <h3 className="font-semibold text-gray-800 mb-1">Subscription Pricing</h3>
-            <p className="text-sm text-gray-500 mb-3">
-              Set the verified membership prices displayed on the platform.
-            </p>
+            <p className="text-sm text-gray-500 mb-3">Set the verified membership prices displayed on the platform.</p>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-xs text-gray-600 block mb-1">Monthly Price (₦)</label>
-                <input
-                  type="number"
-                  value={monthlyPrice}
+                <input type="number" value={monthlyPrice}
                   onChange={(e) => setMonthlyPrice(e.target.value)}
-                  className="w-full border rounded px-3 py-2 text-sm"
-                />
+                  className="w-full border rounded px-3 py-2 text-sm" />
               </div>
               <div>
                 <label className="text-xs text-gray-600 block mb-1">Annual Price (₦)</label>
-                <input
-                  type="number"
-                  value={annualPrice}
+                <input type="number" value={annualPrice}
                   onChange={(e) => setAnnualPrice(e.target.value)}
-                  className="w-full border rounded px-3 py-2 text-sm"
-                />
+                  className="w-full border rounded px-3 py-2 text-sm" />
               </div>
             </div>
           </div>
@@ -837,29 +859,19 @@ export default function AdminClient({
           {/* Rate Limits */}
           <div className="border rounded-lg p-4">
             <h3 className="font-semibold text-gray-800 mb-1">Rate Limits</h3>
-            <p className="text-sm text-gray-500 mb-3">
-              Maximum posts a member can create per day.
-            </p>
+            <p className="text-sm text-gray-500 mb-3">Maximum posts a member can create per day.</p>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-xs text-gray-600 block mb-1">Opportunities / day</label>
-                <input
-                  type="number"
-                  min={1}
-                  value={opportunityLimit}
+                <input type="number" min={1} value={opportunityLimit}
                   onChange={(e) => setOpportunityLimit(e.target.value)}
-                  className="w-full border rounded px-3 py-2 text-sm"
-                />
+                  className="w-full border rounded px-3 py-2 text-sm" />
               </div>
               <div>
                 <label className="text-xs text-gray-600 block mb-1">Listings / day</label>
-                <input
-                  type="number"
-                  min={1}
-                  value={listingLimit}
+                <input type="number" min={1} value={listingLimit}
                   onChange={(e) => setListingLimit(e.target.value)}
-                  className="w-full border rounded px-3 py-2 text-sm"
-                />
+                  className="w-full border rounded px-3 py-2 text-sm" />
               </div>
             </div>
           </div>
@@ -871,14 +883,9 @@ export default function AdminClient({
               Number of reports before a post is automatically hidden pending review.
             </p>
             <div className="flex items-center gap-3">
-              <input
-                type="number"
-                min={1}
-                max={50}
-                value={reportThreshold}
+              <input type="number" min={1} max={50} value={reportThreshold}
                 onChange={(e) => setReportThreshold(e.target.value)}
-                className="w-24 border rounded px-3 py-2 text-sm"
-              />
+                className="w-24 border rounded px-3 py-2 text-sm" />
               <span className="text-sm text-gray-600">reports</span>
             </div>
           </div>
@@ -887,16 +894,12 @@ export default function AdminClient({
           <div className="border rounded-lg p-4">
             <h3 className="font-semibold text-gray-800 mb-1">Admin Notification Email</h3>
             <p className="text-sm text-gray-500 mb-3">
-              Email address that receives an alert whenever a post is reported.
-              Leave empty to disable notifications.
+              Email address that receives an alert whenever a post is reported. Leave empty to disable.
             </p>
-            <input
-              type="email"
-              value={adminNotificationEmail}
+            <input type="email" value={adminNotificationEmail}
               onChange={(e) => setAdminNotificationEmail(e.target.value)}
               placeholder="admin@agroyield.africa"
-              className="w-full border rounded px-3 py-2 text-sm"
-            />
+              className="w-full border rounded px-3 py-2 text-sm" />
             {adminNotificationEmail && (
               <p className="text-xs text-green-700 bg-green-50 rounded-md px-3 py-2 mt-2">
                 Alerts will be sent to {adminNotificationEmail} on every new report.
@@ -906,11 +909,8 @@ export default function AdminClient({
 
           {/* Save */}
           <div className="flex items-center gap-3 pt-2 pb-8">
-            <button
-              onClick={saveSettings}
-              disabled={savingSettings}
-              className="bg-green-600 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50 transition-colors"
-            >
+            <button onClick={saveSettings} disabled={savingSettings}
+              className="bg-green-600 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50 transition-colors">
               {savingSettings ? 'Saving...' : 'Save Settings'}
             </button>
             {settingsSaved && (
