@@ -34,8 +34,13 @@ export default function NewOpportunityPage() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to post opportunity')
-      setMessage({ type: 'success', text: 'Opportunity posted successfully! Redirecting...' })
-      setTimeout(() => router.push('/opportunities'), 1500)
+
+      if (data.pending) {
+        setMessage({ type: 'success', text: 'Opportunity submitted for review. An admin will approve it shortly.' })
+      } else {
+        setMessage({ type: 'success', text: 'Opportunity posted successfully! Redirecting...' })
+      }
+      setTimeout(() => router.push('/opportunities'), 2000)
     } catch (err: unknown) {
       setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Something went wrong' })
     } finally {
@@ -71,15 +76,13 @@ export default function NewOpportunityPage() {
               </label>
               <div className="flex flex-wrap gap-2">
                 {types.map(type => (
-                  <button
-                    key={type} type="button"
+                  <button key={type} type="button"
                     onClick={() => setForm(prev => ({ ...prev, type }))}
                     className={`py-2 px-3 rounded-lg border text-sm font-medium capitalize transition-colors ${
                       form.type === type
                         ? 'border-green-600 bg-green-50 text-green-700'
                         : 'border-gray-200 text-gray-600 hover:border-green-300'
-                    }`}
-                  >
+                    }`}>
                     {type}
                   </button>
                 ))}
@@ -89,8 +92,7 @@ export default function NewOpportunityPage() {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Organisation</label>
-                <input
-                  type="text" value={form.organisation}
+                <input type="text" value={form.organisation}
                   onChange={e => setForm(prev => ({ ...prev, organisation: e.target.value }))}
                   placeholder="e.g. AGRA, FAO, USAID"
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
@@ -98,8 +100,7 @@ export default function NewOpportunityPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
-                <input
-                  type="text" value={form.location}
+                <input type="text" value={form.location}
                   onChange={e => setForm(prev => ({ ...prev, location: e.target.value }))}
                   placeholder="e.g. Nigeria or Remote"
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
@@ -109,8 +110,7 @@ export default function NewOpportunityPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-              <textarea
-                value={form.description}
+              <textarea value={form.description}
                 onChange={e => setForm(prev => ({ ...prev, description: e.target.value }))}
                 rows={4} placeholder="Describe the opportunity..."
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
@@ -119,8 +119,7 @@ export default function NewOpportunityPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Requirements</label>
-              <textarea
-                value={form.requirements}
+              <textarea value={form.requirements}
                 onChange={e => setForm(prev => ({ ...prev, requirements: e.target.value }))}
                 rows={3} placeholder="Who is eligible to apply?"
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
@@ -130,16 +129,14 @@ export default function NewOpportunityPage() {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Deadline</label>
-                <input
-                  type="date" value={form.deadline}
+                <input type="date" value={form.deadline}
                   onChange={e => setForm(prev => ({ ...prev, deadline: e.target.value }))}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Application URL</label>
-                <input
-                  type="url" value={form.url}
+                <input type="url" value={form.url}
                   onChange={e => setForm(prev => ({ ...prev, url: e.target.value }))}
                   placeholder="https://..."
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
@@ -155,11 +152,8 @@ export default function NewOpportunityPage() {
               </div>
             )}
 
-            <button
-              type="submit"
-              disabled={loading || !form.title || !form.type}
-              className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 transition-colors"
-            >
+            <button type="submit" disabled={loading || !form.title || !form.type}
+              className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 transition-colors">
               {loading ? 'Posting...' : 'Post Opportunity'}
             </button>
           </form>
