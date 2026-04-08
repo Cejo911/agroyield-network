@@ -1,24 +1,42 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import ThemeToggle from './ThemeToggle'
 
 const NAV_LINKS = [
-  { href: '/dashboard',    label: 'Dashboard' },
-  { href: '/directory',    label: 'Directory' },
-  { href: '/opportunities',label: 'Opportunities' },
-  { href: '/prices',       label: 'Price Tracker' },
-  { href: '/marketplace',  label: 'Marketplace' },
-  { href: '/research',     label: 'Research' },
+  { href: '/dashboard',     label: 'Dashboard' },
+  { href: '/directory',     label: 'Directory' },
+  { href: '/opportunities', label: 'Opportunities' },
+  { href: '/prices',        label: 'Price Tracker' },
+  { href: '/marketplace',   label: 'Marketplace' },
+  { href: '/research',      label: 'Research' },
 ]
 
 export default function AppNav() {
   const [menuOpen, setMenuOpen] = useState(false)
-  const pathname  = usePathname()
-  const router    = useRouter()
+  const [isAdmin,  setIsAdmin]  = useState(false)
+  const pathname = usePathname()
+  const router   = useRouter()
+
+  useEffect(() => {
+    const supabase = createClient()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const supabaseAny = supabase as any
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return
+      supabaseAny
+        .from('profiles')
+        .select('is_admin')
+        .eq('id', user.id)
+        .single()
+        .then(({ data }: { data: { is_admin: boolean } | null }) => {
+          if (data) setIsAdmin(data.is_admin)
+        })
+    })
+  }, [])
 
   const handleSignOut = async () => {
     const supabase = createClient()
@@ -60,12 +78,25 @@ export default function AppNav() {
 
         {/* Desktop right side */}
         <div className="hidden lg:flex items-center gap-3">
-          <Link
-            href="/pricing"
-            className="text-sm font-semibold text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 transition-colors"
-          >
-            Get Verified ✓
-          </Link>
+          {isAdmin ? (
+            <Link
+              href="/admin"
+              className={`text-sm font-semibold transition-colors ${
+                isActive('/admin')
+                  ? 'text-green-700 dark:text-green-400'
+                  : 'text-gray-600 dark:text-gray-300 hover:text-green-700 dark:hover:text-green-400'
+              }`}
+            >
+              Admin Dashboard
+            </Link>
+          ) : (
+            <Link
+              href="/pricing"
+              className="text-sm font-semibold text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 transition-colors"
+            >
+              Get Verified ✓
+            </Link>
+          )}
           <ThemeToggle />
           <Link
             href="/profile"
@@ -112,13 +143,23 @@ export default function AppNav() {
             </Link>
           ))}
 
-          <Link
-            href="/pricing"
-            onClick={() => setMenuOpen(false)}
-            className="block px-3 py-2 rounded-lg text-sm font-semibold text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/40"
-          >
-            Get Verified ✓
-          </Link>
+          {isAdmin ? (
+            <Link
+              href="/admin"
+              onClick={() => setMenuOpen(false)}
+              className="block px-3 py-2 rounded-lg text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+            >
+              Admin Dashboard
+            </Link>
+          ) : (
+            <Link
+              href="/pricing"
+              onClick={() => setMenuOpen(false)}
+              className="block px-3 py-2 rounded-lg text-sm font-semibold text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/40"
+            >
+              Get Verified ✓
+            </Link>
+          )}
 
           <Link
             href="/profile"
@@ -128,7 +169,7 @@ export default function AppNav() {
             My Profile
           </Link>
 
-          {/* Theme toggle row in mobile menu */}
+          {/* Theme toggle row */}
           <div className="flex items-center justify-between px-3 py-2">
             <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Dark mode</span>
             <ThemeToggle />
