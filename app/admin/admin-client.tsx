@@ -72,6 +72,39 @@ export default function AdminClient({
   const [announcementText,    setAnnouncementText]    = useState(settingsMap['announcement_text']    ?? '')
   const [announcementColor,   setAnnouncementColor]   = useState(settingsMap['announcement_color']   ?? 'green')
 
+  // Content types
+  const [opportunityTypes, setOpportunityTypes] = useState<string[]>(
+    (settingsMap['opportunity_types'] ?? 'grant,fellowship,job,partnership,internship,training')
+      .split(',').map(s => s.trim()).filter(Boolean)
+  )
+  const [newOpportunityType, setNewOpportunityType] = useState('')
+
+  const [marketplaceCategories, setMarketplaceCategories] = useState<string[]>(
+    (settingsMap['marketplace_categories'] ?? 'produce,inputs,equipment,livestock,services,other')
+      .split(',').map(s => s.trim()).filter(Boolean)
+  )
+  const [newMarketplaceCategory, setNewMarketplaceCategory] = useState('')
+
+  const addOpportunityType = () => {
+    const val = newOpportunityType.trim().toLowerCase()
+    if (!val || opportunityTypes.includes(val)) return
+    setOpportunityTypes(prev => [...prev, val])
+    setNewOpportunityType('')
+  }
+  const removeOpportunityType = (type: string) => {
+    setOpportunityTypes(prev => prev.filter(t => t !== type))
+  }
+
+  const addMarketplaceCategory = () => {
+    const val = newMarketplaceCategory.trim().toLowerCase()
+    if (!val || marketplaceCategories.includes(val)) return
+    setMarketplaceCategories(prev => [...prev, val])
+    setNewMarketplaceCategory('')
+  }
+  const removeMarketplaceCategory = (cat: string) => {
+    setMarketplaceCategories(prev => prev.filter(c => c !== cat))
+  }
+
   // Pricing
   const [monthlyNaira,  setMonthlyNaira]  = useState(settingsMap['subscription_monthly_naira']  ?? '2500')
   const [yearlyNaira,   setYearlyNaira]   = useState(settingsMap['subscription_yearly_naira']   ?? '25000')
@@ -102,6 +135,8 @@ export default function AdminClient({
           announcement_enabled:       announcementEnabled ? 'true' : 'false',
           announcement_text:          announcementText,
           announcement_color:         announcementColor,
+          opportunity_types:          opportunityTypes.join(','),
+          marketplace_categories:     marketplaceCategories.join(','),
           subscription_monthly_naira: monthlyNaira,
           subscription_yearly_naira:  yearlyNaira,
           subscription_monthly_label: monthlyLabel,
@@ -221,30 +256,23 @@ export default function AdminClient({
       {/* Opportunities */}
       {tab === 'opportunities' && (
         <div className="space-y-3">
-          {opportunities.length === 0 && (
-            <p className="text-gray-500 text-sm text-center py-8">No opportunities yet.</p>
-          )}
+          {opportunities.length === 0 && <p className="text-gray-500 text-sm text-center py-8">No opportunities yet.</p>}
           {opportunities.map(o => {
-            const id       = o.id as string
-            const isActive = o.is_active as boolean
-            const type     = typeof o.type  === 'string' ? o.type  : ''
-            const title    = typeof o.title === 'string' ? o.title : ''
+            const id = o.id as string; const isActive = o.is_active as boolean
+            const type = typeof o.type === 'string' ? o.type : ''
+            const title = typeof o.title === 'string' ? o.title : ''
             return (
               <div key={id} className={`flex items-start justify-between gap-4 bg-white rounded-xl border border-gray-100 p-4 ${!isActive ? 'opacity-60' : ''}`}>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
-                      {isActive ? 'Active' : 'Removed'}
-                    </span>
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>{isActive ? 'Active' : 'Removed'}</span>
                     <span className="text-xs text-gray-400 capitalize">{type}</span>
                   </div>
                   <p className="font-semibold text-gray-900 text-sm truncate">{title}</p>
                   <p className="text-xs text-gray-500 mt-0.5">By {posterName(o.user_id)} · {formatDate(o.created_at)}</p>
                 </div>
                 <button onClick={() => toggleOpportunity(id, isActive)} disabled={loadingId === id}
-                  className={`shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors disabled:opacity-50 ${
-                    isActive ? 'border-red-200 text-red-600 hover:bg-red-50' : 'border-green-200 text-green-600 hover:bg-green-50'
-                  }`}>
+                  className={`shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors disabled:opacity-50 ${isActive ? 'border-red-200 text-red-600 hover:bg-red-50' : 'border-green-200 text-green-600 hover:bg-green-50'}`}>
                   {loadingId === id ? '…' : isActive ? 'Remove' : 'Restore'}
                 </button>
               </div>
@@ -256,30 +284,23 @@ export default function AdminClient({
       {/* Marketplace */}
       {tab === 'listings' && (
         <div className="space-y-3">
-          {listings.length === 0 && (
-            <p className="text-gray-500 text-sm text-center py-8">No listings yet.</p>
-          )}
+          {listings.length === 0 && <p className="text-gray-500 text-sm text-center py-8">No listings yet.</p>}
           {listings.map(l => {
-            const id       = l.id as string
-            const isActive = l.is_active as boolean
+            const id = l.id as string; const isActive = l.is_active as boolean
             const category = typeof l.category === 'string' ? l.category : ''
-            const title    = typeof l.title    === 'string' ? l.title    : ''
+            const title = typeof l.title === 'string' ? l.title : ''
             return (
               <div key={id} className={`flex items-start justify-between gap-4 bg-white rounded-xl border border-gray-100 p-4 ${!isActive ? 'opacity-60' : ''}`}>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
-                      {isActive ? 'Active' : 'Removed'}
-                    </span>
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>{isActive ? 'Active' : 'Removed'}</span>
                     <span className="text-xs text-gray-400 capitalize">{category}</span>
                   </div>
                   <p className="font-semibold text-gray-900 text-sm truncate">{title}</p>
                   <p className="text-xs text-gray-500 mt-0.5">By {posterName(l.user_id)} · {formatDate(l.created_at)}</p>
                 </div>
                 <button onClick={() => toggleListing(id, isActive)} disabled={loadingId === id}
-                  className={`shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors disabled:opacity-50 ${
-                    isActive ? 'border-red-200 text-red-600 hover:bg-red-50' : 'border-green-200 text-green-600 hover:bg-green-50'
-                  }`}>
+                  className={`shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors disabled:opacity-50 ${isActive ? 'border-red-200 text-red-600 hover:bg-red-50' : 'border-green-200 text-green-600 hover:bg-green-50'}`}>
                   {loadingId === id ? '…' : isActive ? 'Remove' : 'Restore'}
                 </button>
               </div>
@@ -291,74 +312,49 @@ export default function AdminClient({
       {/* Members */}
       {tab === 'members' && (
         <div className="space-y-3">
-          {members.length === 0 && (
-            <p className="text-gray-500 text-sm text-center py-8">No members yet.</p>
-          )}
+          {members.length === 0 && <p className="text-gray-500 text-sm text-center py-8">No members yet.</p>}
           {members.map(m => {
-            const id              = m.id as string
-            const isSuspended     = m.is_suspended as boolean
-            const isAdmin         = m.is_admin as boolean
-            const isVerified      = m.is_verified as boolean
-            const isElite         = m.is_elite as boolean
-            const memberAdminRole = typeof m.admin_role  === 'string' ? m.admin_role  : null
-            const role            = typeof m.role        === 'string' ? m.role        : ''
-            const institution     = typeof m.institution === 'string' ? m.institution : ''
-            const name            = `${typeof m.first_name === 'string' ? m.first_name : ''} ${typeof m.last_name === 'string' ? m.last_name : ''}`.trim() || 'Unnamed member'
-            const isCurrentUser   = id === currentUserId
+            const id = m.id as string; const isSuspended = m.is_suspended as boolean
+            const isAdmin = m.is_admin as boolean; const isVerified = m.is_verified as boolean
+            const isElite = m.is_elite as boolean
+            const memberAdminRole = typeof m.admin_role === 'string' ? m.admin_role : null
+            const role = typeof m.role === 'string' ? m.role : ''
+            const institution = typeof m.institution === 'string' ? m.institution : ''
+            const name = `${typeof m.first_name === 'string' ? m.first_name : ''} ${typeof m.last_name === 'string' ? m.last_name : ''}`.trim() || 'Unnamed member'
+            const isCurrentUser = id === currentUserId
             return (
               <div key={id} className={`flex items-start justify-between gap-4 bg-white rounded-xl border border-gray-100 p-4 ${isSuspended ? 'opacity-60' : ''}`}>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${isSuspended ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700'}`}>
-                      {isSuspended ? 'Suspended' : 'Active'}
-                    </span>
-                    {isAdmin && memberAdminRole === 'super' && (
-                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">Super Admin</span>
-                    )}
-                    {isAdmin && memberAdminRole === 'moderator' && (
-                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">Moderator</span>
-                    )}
-                    {isVerified && (
-                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-50 text-green-600">✓ Verified</span>
-                    )}
-                    {isElite && (
-                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-600">★ Elite</span>
-                    )}
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${isSuspended ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700'}`}>{isSuspended ? 'Suspended' : 'Active'}</span>
+                    {isAdmin && memberAdminRole === 'super' && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">Super Admin</span>}
+                    {isAdmin && memberAdminRole === 'moderator' && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">Moderator</span>}
+                    {isVerified && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-50 text-green-600">✓ Verified</span>}
+                    {isElite && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-600">★ Elite</span>}
                     {role && <span className="text-xs text-gray-400 capitalize">{role}</span>}
                   </div>
-                  <p className="font-semibold text-gray-900 text-sm">
-                    {name} {isCurrentUser && <span className="text-xs text-gray-400 font-normal">(you)</span>}
-                  </p>
+                  <p className="font-semibold text-gray-900 text-sm">{name} {isCurrentUser && <span className="text-xs text-gray-400 font-normal">(you)</span>}</p>
                   {institution && <p className="text-xs text-gray-500 mt-0.5 truncate">{institution}</p>}
                   <p className="text-xs text-gray-400 mt-0.5">Joined {formatDate(m.created_at)}</p>
                 </div>
                 <div className="flex flex-col gap-1.5 shrink-0">
                   {!isCurrentUser && (
-                    <button
-                      onClick={() => memberAction(id, isSuspended ? 'unsuspend' : 'suspend', { is_suspended: !isSuspended })}
+                    <button onClick={() => memberAction(id, isSuspended ? 'unsuspend' : 'suspend', { is_suspended: !isSuspended })}
                       disabled={loadingId === `${id}-suspend` || loadingId === `${id}-unsuspend`}
-                      className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors disabled:opacity-50 ${
-                        isSuspended ? 'border-green-200 text-green-600 hover:bg-green-50' : 'border-red-200 text-red-600 hover:bg-red-50'
-                      }`}>
+                      className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors disabled:opacity-50 ${isSuspended ? 'border-green-200 text-green-600 hover:bg-green-50' : 'border-red-200 text-red-600 hover:bg-red-50'}`}>
                       {isSuspended ? 'Unsuspend' : 'Suspend'}
                     </button>
                   )}
                   {isSuperAdmin && (
                     <>
-                      <button
-                        onClick={() => memberAction(id, isVerified ? 'unverify' : 'verify', { is_verified: !isVerified })}
+                      <button onClick={() => memberAction(id, isVerified ? 'unverify' : 'verify', { is_verified: !isVerified })}
                         disabled={loadingId === `${id}-verify` || loadingId === `${id}-unverify`}
-                        className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors disabled:opacity-50 ${
-                          isVerified ? 'border-gray-200 text-gray-600 hover:bg-gray-50' : 'border-green-200 text-green-600 hover:bg-green-50'
-                        }`}>
+                        className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors disabled:opacity-50 ${isVerified ? 'border-gray-200 text-gray-600 hover:bg-gray-50' : 'border-green-200 text-green-600 hover:bg-green-50'}`}>
                         {isVerified ? 'Unverify' : 'Verify ✓'}
                       </button>
-                      <button
-                        onClick={() => memberAction(id, isElite ? 'unelite' : 'elite', { is_elite: !isElite })}
+                      <button onClick={() => memberAction(id, isElite ? 'unelite' : 'elite', { is_elite: !isElite })}
                         disabled={loadingId === `${id}-elite` || loadingId === `${id}-unelite`}
-                        className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors disabled:opacity-50 ${
-                          isElite ? 'border-amber-200 text-amber-600 hover:bg-amber-50' : 'border-amber-200 text-amber-700 hover:bg-amber-50'
-                        }`}>
+                        className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors disabled:opacity-50 ${isElite ? 'border-amber-200 text-amber-600 hover:bg-amber-50' : 'border-amber-200 text-amber-700 hover:bg-amber-50'}`}>
                         {isElite ? 'Revoke Crown' : 'Grant Crown ★'}
                       </button>
                     </>
@@ -367,50 +363,20 @@ export default function AdminClient({
                     <div className="flex flex-col gap-1.5 pt-1.5 mt-0.5 border-t border-gray-100">
                       {!isAdmin && (
                         <>
-                          <button
-                            onClick={() => memberAction(id, 'makemoderator', { is_admin: true, admin_role: 'moderator' })}
-                            disabled={loadingId === `${id}-makemoderator`}
-                            className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-indigo-200 text-indigo-600 hover:bg-indigo-50 transition-colors disabled:opacity-50">
-                            Make Moderator
-                          </button>
-                          <button
-                            onClick={() => memberAction(id, 'makesuper', { is_admin: true, admin_role: 'super' })}
-                            disabled={loadingId === `${id}-makesuper`}
-                            className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-purple-200 text-purple-600 hover:bg-purple-50 transition-colors disabled:opacity-50">
-                            Make Super Admin
-                          </button>
+                          <button onClick={() => memberAction(id, 'makemoderator', { is_admin: true, admin_role: 'moderator' })} disabled={loadingId === `${id}-makemoderator`} className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-indigo-200 text-indigo-600 hover:bg-indigo-50 transition-colors disabled:opacity-50">Make Moderator</button>
+                          <button onClick={() => memberAction(id, 'makesuper', { is_admin: true, admin_role: 'super' })} disabled={loadingId === `${id}-makesuper`} className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-purple-200 text-purple-600 hover:bg-purple-50 transition-colors disabled:opacity-50">Make Super Admin</button>
                         </>
                       )}
                       {isAdmin && memberAdminRole === 'moderator' && (
                         <>
-                          <button
-                            onClick={() => memberAction(id, 'makesuper', { is_admin: true, admin_role: 'super' })}
-                            disabled={loadingId === `${id}-makesuper`}
-                            className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-purple-200 text-purple-600 hover:bg-purple-50 transition-colors disabled:opacity-50">
-                            Upgrade to Super Admin
-                          </button>
-                          <button
-                            onClick={() => memberAction(id, 'removeadmin', { is_admin: false, admin_role: null })}
-                            disabled={loadingId === `${id}-removeadmin`}
-                            className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-50">
-                            Remove Admin
-                          </button>
+                          <button onClick={() => memberAction(id, 'makesuper', { is_admin: true, admin_role: 'super' })} disabled={loadingId === `${id}-makesuper`} className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-purple-200 text-purple-600 hover:bg-purple-50 transition-colors disabled:opacity-50">Upgrade to Super Admin</button>
+                          <button onClick={() => memberAction(id, 'removeadmin', { is_admin: false, admin_role: null })} disabled={loadingId === `${id}-removeadmin`} className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-50">Remove Admin</button>
                         </>
                       )}
                       {isAdmin && memberAdminRole === 'super' && (
                         <>
-                          <button
-                            onClick={() => memberAction(id, 'makemoderator', { is_admin: true, admin_role: 'moderator' })}
-                            disabled={loadingId === `${id}-makemoderator`}
-                            className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-indigo-200 text-indigo-600 hover:bg-indigo-50 transition-colors disabled:opacity-50">
-                            Downgrade to Moderator
-                          </button>
-                          <button
-                            onClick={() => memberAction(id, 'removeadmin', { is_admin: false, admin_role: null })}
-                            disabled={loadingId === `${id}-removeadmin`}
-                            className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-50">
-                            Remove Admin
-                          </button>
+                          <button onClick={() => memberAction(id, 'makemoderator', { is_admin: true, admin_role: 'moderator' })} disabled={loadingId === `${id}-makemoderator`} className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-indigo-200 text-indigo-600 hover:bg-indigo-50 transition-colors disabled:opacity-50">Downgrade to Moderator</button>
+                          <button onClick={() => memberAction(id, 'removeadmin', { is_admin: false, admin_role: null })} disabled={loadingId === `${id}-removeadmin`} className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-50">Remove Admin</button>
                         </>
                       )}
                     </div>
@@ -425,58 +391,37 @@ export default function AdminClient({
       {/* Reports */}
       {tab === 'reports' && (
         <div className="space-y-3">
-          {reportGroups.length === 0 && (
-            <p className="text-gray-500 text-sm text-center py-8">No reports yet.</p>
-          )}
+          {reportGroups.length === 0 && <p className="text-gray-500 text-sm text-center py-8">No reports yet.</p>}
           {reportGroups.map(g => (
-            <div key={`${g.postType}:${g.postId}`}
-              className={`bg-white rounded-xl border p-4 ${!g.isActive ? 'border-red-100' : 'border-gray-100'}`}>
+            <div key={`${g.postType}:${g.postId}`} className={`bg-white rounded-xl border p-4 ${!g.isActive ? 'border-red-100' : 'border-gray-100'}`}>
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                      !g.isActive ? 'bg-red-100 text-red-600' : 'bg-orange-100 text-orange-600'
-                    }`}>
-                      {!g.isActive ? 'Auto-hidden' : 'Active'}
-                    </span>
-                    <span className="text-xs text-gray-400 capitalize">
-                      {g.postType === 'listing' ? 'Marketplace' : 'Opportunity'}
-                    </span>
-                    <span className="text-xs font-semibold text-orange-600">
-                      {g.count} report{g.count === 1 ? '' : 's'}
-                    </span>
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${!g.isActive ? 'bg-red-100 text-red-600' : 'bg-orange-100 text-orange-600'}`}>{!g.isActive ? 'Auto-hidden' : 'Active'}</span>
+                    <span className="text-xs text-gray-400 capitalize">{g.postType === 'listing' ? 'Marketplace' : 'Opportunity'}</span>
+                    <span className="text-xs font-semibold text-orange-600">{g.count} report{g.count === 1 ? '' : 's'}</span>
                   </div>
                   <p className="font-semibold text-gray-900 text-sm truncate">{g.postTitle}</p>
                   <div className="flex flex-wrap gap-1.5 mt-2">
                     {Object.entries(g.reasons).map(([reason, cnt]) => (
-                      <span key={reason} className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
-                        {reason}: {cnt}
-                      </span>
+                      <span key={reason} className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{reason}: {cnt}</span>
                     ))}
                   </div>
                   <p className="text-xs text-gray-400 mt-1">Latest report: {formatDate(g.latestAt)}</p>
                 </div>
                 <div className="flex flex-col gap-1.5 shrink-0">
-                  <button
-                    onClick={() => dismissReports(g.postId, g.postType)}
-                    disabled={loadingId === `dismiss-${g.postId}`}
+                  <button onClick={() => dismissReports(g.postId, g.postType)} disabled={loadingId === `dismiss-${g.postId}`}
                     className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-green-200 text-green-600 hover:bg-green-50 transition-colors disabled:opacity-50">
                     {loadingId === `dismiss-${g.postId}` ? '…' : '✓ Dismiss'}
                   </button>
                   {g.isActive ? (
-                    <button
-                      onClick={() => {
-                        if (g.postType === 'opportunity') toggleOpportunity(g.postId, true)
-                        else toggleListing(g.postId, true)
-                      }}
+                    <button onClick={() => { if (g.postType === 'opportunity') toggleOpportunity(g.postId, true); else toggleListing(g.postId, true) }}
                       disabled={loadingId === g.postId}
                       className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50">
                       {loadingId === g.postId ? '…' : 'Remove'}
                     </button>
                   ) : (
-                    <button
-                      onClick={() => restorePost(g.postId, g.postType)}
-                      disabled={loadingId === `restore-${g.postId}`}
+                    <button onClick={() => restorePost(g.postId, g.postType)} disabled={loadingId === `restore-${g.postId}`}
                       className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-50">
                       {loadingId === `restore-${g.postId}` ? '…' : 'Restore only'}
                     </button>
@@ -501,22 +446,11 @@ export default function AdminClient({
             <div className="flex items-center justify-between p-4 rounded-xl border border-gray-100 bg-gray-50">
               <div>
                 <p className="text-sm font-semibold text-gray-700">Open registration</p>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  {registrationEnabled
-                    ? 'New members can currently sign up'
-                    : 'Sign-up page shows a "Registration closed" message'}
-                </p>
+                <p className="text-xs text-gray-400 mt-0.5">{registrationEnabled ? 'New members can currently sign up' : 'Sign-up page shows a "Registration closed" message'}</p>
               </div>
-              <button
-                type="button"
-                onClick={() => setRegistrationEnabled(prev => !prev)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
-                  registrationEnabled ? 'bg-green-600' : 'bg-gray-200'
-                }`}
-              >
-                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
-                  registrationEnabled ? 'translate-x-6' : 'translate-x-1'
-                }`} />
+              <button type="button" onClick={() => setRegistrationEnabled(prev => !prev)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${registrationEnabled ? 'bg-green-600' : 'bg-gray-200'}`}>
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${registrationEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
               </button>
             </div>
             {!registrationEnabled && (
@@ -538,44 +472,24 @@ export default function AdminClient({
                 <p className="text-sm font-semibold text-gray-700">Show banner</p>
                 <p className="text-xs text-gray-400 mt-0.5">Visible to all visitors when enabled</p>
               </div>
-              <button
-                type="button"
-                onClick={() => setAnnouncementEnabled(prev => !prev)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
-                  announcementEnabled ? 'bg-green-600' : 'bg-gray-200'
-                }`}
-              >
-                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
-                  announcementEnabled ? 'translate-x-6' : 'translate-x-1'
-                }`} />
+              <button type="button" onClick={() => setAnnouncementEnabled(prev => !prev)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${announcementEnabled ? 'bg-green-600' : 'bg-gray-200'}`}>
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${announcementEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
               </button>
             </div>
             <div>
               <label className="text-xs text-gray-500 mb-1 block">Message</label>
-              <input
-                type="text"
-                value={announcementText}
-                onChange={e => setAnnouncementText(e.target.value)}
+              <input type="text" value={announcementText} onChange={e => setAnnouncementText(e.target.value)}
                 placeholder="e.g. Scheduled maintenance Friday 10pm — 11pm WAT"
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-              />
+                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" />
             </div>
             <div>
               <label className="text-xs text-gray-500 mb-2 block">Banner colour</label>
               <div className="flex gap-2">
                 {ANNOUNCEMENT_COLORS.map(c => (
-                  <button
-                    key={c.value}
-                    type="button"
-                    onClick={() => setAnnouncementColor(c.value)}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
-                      announcementColor === c.value
-                        ? 'border-gray-400 ring-2 ring-offset-1 ring-gray-400'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <span className={`w-3 h-3 rounded-full ${c.preview}`} />
-                    {c.label}
+                  <button key={c.value} type="button" onClick={() => setAnnouncementColor(c.value)}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${announcementColor === c.value ? 'border-gray-400 ring-2 ring-offset-1 ring-gray-400' : 'border-gray-200 hover:border-gray-300'}`}>
+                    <span className={`w-3 h-3 rounded-full ${c.preview}`} />{c.label}
                   </button>
                 ))}
               </div>
@@ -583,14 +497,77 @@ export default function AdminClient({
             {announcementText.trim() && (
               <div>
                 <p className="text-xs text-gray-400 mb-2">Preview</p>
-                <div className={`rounded-lg py-2.5 px-4 text-sm font-medium text-center ${
-                  ANNOUNCEMENT_COLOR_CLASSES[announcementColor] ?? ANNOUNCEMENT_COLOR_CLASSES.green
-                } ${!announcementEnabled ? 'opacity-40' : ''}`}>
-                  {announcementText}
-                  {!announcementEnabled && <span className="ml-2 text-xs opacity-70">(disabled)</span>}
+                <div className={`rounded-lg py-2.5 px-4 text-sm font-medium text-center ${ANNOUNCEMENT_COLOR_CLASSES[announcementColor] ?? ANNOUNCEMENT_COLOR_CLASSES.green} ${!announcementEnabled ? 'opacity-40' : ''}`}>
+                  {announcementText}{!announcementEnabled && <span className="ml-2 text-xs opacity-70">(disabled)</span>}
                 </div>
               </div>
             )}
+          </div>
+
+          {/* Content Types */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-6">
+            <div>
+              <h2 className="text-base font-bold text-gray-900 mb-1">Content Types</h2>
+              <p className="text-sm text-gray-500">Manage the types and categories members see when posting. Changes take effect immediately.</p>
+            </div>
+
+            {/* Opportunity Types */}
+            <div className="space-y-3 p-4 rounded-xl border border-gray-100 bg-gray-50">
+              <p className="text-sm font-semibold text-gray-700">Opportunity Types</p>
+              <div className="flex flex-wrap gap-2 min-h-[32px]">
+                {opportunityTypes.map(type => (
+                  <span key={type} className="flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-white border border-gray-200 text-gray-700">
+                    <span className="capitalize">{type}</span>
+                    <button type="button" onClick={() => removeOpportunityType(type)}
+                      className="text-gray-300 hover:text-red-500 transition-colors ml-0.5 leading-none text-base">
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="text" value={newOpportunityType}
+                  onChange={e => setNewOpportunityType(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addOpportunityType() }}}
+                  placeholder="Type a name and press Enter or Add…"
+                  className="flex-1 px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
+                />
+                <button type="button" onClick={addOpportunityType}
+                  className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-green-200 text-green-600 hover:bg-green-50 transition-colors shrink-0">
+                  Add
+                </button>
+              </div>
+            </div>
+
+            {/* Marketplace Categories */}
+            <div className="space-y-3 p-4 rounded-xl border border-gray-100 bg-gray-50">
+              <p className="text-sm font-semibold text-gray-700">Marketplace Categories</p>
+              <div className="flex flex-wrap gap-2 min-h-[32px]">
+                {marketplaceCategories.map(cat => (
+                  <span key={cat} className="flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-white border border-gray-200 text-gray-700">
+                    <span className="capitalize">{cat}</span>
+                    <button type="button" onClick={() => removeMarketplaceCategory(cat)}
+                      className="text-gray-300 hover:text-red-500 transition-colors ml-0.5 leading-none text-base">
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="text" value={newMarketplaceCategory}
+                  onChange={e => setNewMarketplaceCategory(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addMarketplaceCategory() }}}
+                  placeholder="Type a name and press Enter or Add…"
+                  className="flex-1 px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
+                />
+                <button type="button" onClick={addMarketplaceCategory}
+                  className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-green-200 text-green-600 hover:bg-green-50 transition-colors shrink-0">
+                  Add
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* Subscription Pricing */}
@@ -606,8 +583,7 @@ export default function AdminClient({
                   <label className="text-xs text-gray-500 mb-1 block">Price (₦)</label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₦</span>
-                    <input type="number" min="0" value={monthlyNaira}
-                      onChange={e => setMonthlyNaira(e.target.value)}
+                    <input type="number" min="0" value={monthlyNaira} onChange={e => setMonthlyNaira(e.target.value)}
                       className="w-full pl-7 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white" />
                   </div>
                 </div>
@@ -623,8 +599,7 @@ export default function AdminClient({
                   <label className="text-xs text-gray-500 mb-1 block">Price (₦)</label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₦</span>
-                    <input type="number" min="0" value={yearlyNaira}
-                      onChange={e => setYearlyNaira(e.target.value)}
+                    <input type="number" min="0" value={yearlyNaira} onChange={e => setYearlyNaira(e.target.value)}
                       className="w-full pl-7 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white" />
                   </div>
                 </div>
@@ -639,9 +614,7 @@ export default function AdminClient({
               <p className="font-semibold mb-1">Live preview</p>
               <p>Monthly: <strong>₦{parseInt(monthlyNaira || '0').toLocaleString()}</strong> — {monthlyLabel}</p>
               <p>Yearly: <strong>₦{parseInt(yearlyNaira || '0').toLocaleString()}</strong> — {yearlyLabel}</p>
-              <p className="text-xs text-green-600 mt-1">
-                Yearly saves ₦{Math.max(0, (parseInt(monthlyNaira || '0') * 12) - parseInt(yearlyNaira || '0')).toLocaleString()} vs paying monthly
-              </p>
+              <p className="text-xs text-green-600 mt-1">Yearly saves ₦{Math.max(0, (parseInt(monthlyNaira || '0') * 12) - parseInt(yearlyNaira || '0')).toLocaleString()} vs paying monthly</p>
             </div>
           </div>
 
@@ -656,25 +629,19 @@ export default function AdminClient({
                 <p className="text-sm font-semibold text-gray-700">Opportunities</p>
                 <div>
                   <label className="text-xs text-gray-500 mb-1 block">Max posts per 24 hours</label>
-                  <input type="number" min="1" value={rateLimitOpps}
-                    onChange={e => setRateLimitOpps(e.target.value)}
+                  <input type="number" min="1" value={rateLimitOpps} onChange={e => setRateLimitOpps(e.target.value)}
                     className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white" />
                 </div>
-                <p className="text-xs text-gray-400">
-                  Up to <strong>{rateLimitOpps}</strong> opportunit{parseInt(rateLimitOpps) === 1 ? 'y' : 'ies'} per 24 hours
-                </p>
+                <p className="text-xs text-gray-400">Up to <strong>{rateLimitOpps}</strong> opportunit{parseInt(rateLimitOpps) === 1 ? 'y' : 'ies'} per 24 hours</p>
               </div>
               <div className="space-y-3 p-4 rounded-xl border border-gray-100 bg-gray-50">
                 <p className="text-sm font-semibold text-gray-700">Marketplace</p>
                 <div>
                   <label className="text-xs text-gray-500 mb-1 block">Max listings per 24 hours</label>
-                  <input type="number" min="1" value={rateLimitMarket}
-                    onChange={e => setRateLimitMarket(e.target.value)}
+                  <input type="number" min="1" value={rateLimitMarket} onChange={e => setRateLimitMarket(e.target.value)}
                     className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white" />
                 </div>
-                <p className="text-xs text-gray-400">
-                  Up to <strong>{rateLimitMarket}</strong> listing{parseInt(rateLimitMarket) === 1 ? '' : 's'} per 24 hours
-                </p>
+                <p className="text-xs text-gray-400">Up to <strong>{rateLimitMarket}</strong> listing{parseInt(rateLimitMarket) === 1 ? '' : 's'} per 24 hours</p>
               </div>
             </div>
           </div>
@@ -689,13 +656,10 @@ export default function AdminClient({
               <p className="text-sm font-semibold text-gray-700">Auto-hide after</p>
               <div>
                 <label className="text-xs text-gray-500 mb-1 block">Number of reports</label>
-                <input type="number" min="1" value={reportThreshold}
-                  onChange={e => setReportThreshold(e.target.value)}
+                <input type="number" min="1" value={reportThreshold} onChange={e => setReportThreshold(e.target.value)}
                   className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white" />
               </div>
-              <p className="text-xs text-gray-400">
-                Posts are hidden after <strong>{reportThreshold}</strong> report{parseInt(reportThreshold) === 1 ? '' : 's'} and flagged in the Reports tab
-              </p>
+              <p className="text-xs text-gray-400">Posts are hidden after <strong>{reportThreshold}</strong> report{parseInt(reportThreshold) === 1 ? '' : 's'} and flagged in the Reports tab</p>
             </div>
           </div>
 
