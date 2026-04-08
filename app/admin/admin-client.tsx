@@ -5,11 +5,13 @@ import { useState } from 'react'
 type Row = Record<string, unknown>
 
 type Props = {
-  opportunities: Row[]
-  listings: Row[]
-  members: Row[]
-  profilesMap: Record<string, { first_name: string | null; last_name: string | null }>
-  settingsMap: Record<string, string>
+  opportunities:    Row[]
+  listings:         Row[]
+  members:          Row[]
+  profilesMap:      Record<string, { first_name: string | null; last_name: string | null }>
+  settingsMap:      Record<string, string>
+  currentAdminRole: string
+  currentUserId:    string
 }
 
 type Tab = 'opportunities' | 'listings' | 'members' | 'settings'
@@ -19,21 +21,31 @@ function formatDate(val: unknown): string {
   return new Date(val).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
-export default function AdminClient({ opportunities: init_o, listings: init_l, members: init_m, profilesMap, settingsMap }: Props) {
+export default function AdminClient({
+  opportunities: init_o,
+  listings: init_l,
+  members: init_m,
+  profilesMap,
+  settingsMap,
+  currentAdminRole,
+  currentUserId,
+}: Props) {
+  const isSuperAdmin = currentAdminRole === 'super'
+
   const [tab, setTab]             = useState<Tab>('opportunities')
   const [opportunities, setOpps]  = useState(init_o)
   const [listings, setListings]   = useState(init_l)
   const [members, setMembers]     = useState(init_m)
   const [loadingId, setLoadingId] = useState<string | null>(null)
 
-  // Settings state — pre-filled from DB
-  const [monthlyNaira,  setMonthlyNaira]  = useState(settingsMap['subscription_monthly_naira']  ?? '2500')
-  const [yearlyNaira,   setYearlyNaira]   = useState(settingsMap['subscription_yearly_naira']   ?? '25000')
-  const [monthlyLabel,  setMonthlyLabel]  = useState(settingsMap['subscription_monthly_label']  ?? 'Monthly Verification')
-  const [yearlyLabel,   setYearlyLabel]   = useState(settingsMap['subscription_yearly_label']   ?? 'Yearly Verification')
-  const [savingSettings, setSavingSettings] = useState(false)
-  const [settingsSaved,  setSettingsSaved]  = useState(false)
-  const [settingsError,  setSettingsError]  = useState<string | null>(null)
+  // Settings state
+  const [monthlyNaira,   setMonthlyNaira]   = useState(settingsMap['subscription_monthly_naira']  ?? '2500')
+  const [yearlyNaira,    setYearlyNaira]     = useState(settingsMap['subscription_yearly_naira']   ?? '25000')
+  const [monthlyLabel,   setMonthlyLabel]    = useState(settingsMap['subscription_monthly_label']  ?? 'Monthly Verification')
+  const [yearlyLabel,    setYearlyLabel]     = useState(settingsMap['subscription_yearly_label']   ?? 'Yearly Verification')
+  const [savingSettings, setSavingSettings]  = useState(false)
+  const [settingsSaved,  setSettingsSaved]   = useState(false)
+  const [settingsError,  setSettingsError]   = useState<string | null>(null)
 
   const saveSettings = async () => {
     setSavingSettings(true)
@@ -89,14 +101,14 @@ export default function AdminClient({ opportunities: init_o, listings: init_l, m
     setLoadingId(null)
   }
 
-  const memberAction = async (id: string, action: string, updateKey: string, updateVal: boolean) => {
+  const memberAction = async (id: string, action: string, stateUpdate: Partial<Row>) => {
     setLoadingId(`${id}-${action}`)
     await fetch('/api/admin/member', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId: id, action }),
     })
-    setMembers(prev => prev.map(m => m.id === id ? { ...m, [updateKey]: updateVal } : m))
+    setMembers(prev => prev.map(m => m.id === id ? { ...m, ...stateUpdate } : m))
     setLoadingId(null)
   }
 
@@ -104,7 +116,7 @@ export default function AdminClient({ opportunities: init_o, listings: init_l, m
     { key: 'opportunities', label: 'Opportunities', count: opportunities.length },
     { key: 'listings',      label: 'Marketplace',   count: listings.length },
     { key: 'members',       label: 'Members',        count: members.length },
-    { key: 'settings',      label: '⚙ Settings' },
+    ...(isSuperAdmin ? [{ key: 'settings' as Tab, label: '⚙ Settings' }] : []),
   ]
 
   return (
@@ -131,10 +143,10 @@ export default function AdminClient({ opportunities: init_o, listings: init_l, m
             <p className="text-gray-500 text-sm text-center py-8">No opportunities yet.</p>
           )}
           {opportunities.map(o => {
-            const id = o.id as string
+            const id       = o.id as string
             const isActive = o.is_active as boolean
-            const type = typeof o.type === 'string' ? o.type : ''
-            const title = typeof o.title === 'string' ? o.title : ''
+            const type     = typeof o.type  === 'string' ? o.type  : ''
+            const title    = typeof o.title === 'string' ? o.title : ''
             return (
               <div key={id} className={`flex items-start justify-between gap-4 bg-white rounded-xl border border-gray-100 p-4 ${!isActive ? 'opacity-60' : ''}`}>
                 <div className="flex-1 min-w-0">
@@ -166,10 +178,10 @@ export default function AdminClient({ opportunities: init_o, listings: init_l, m
             <p className="text-gray-500 text-sm text-center py-8">No listings yet.</p>
           )}
           {listings.map(l => {
-            const id = l.id as string
+            const id       = l.id as string
             const isActive = l.is_active as boolean
             const category = typeof l.category === 'string' ? l.category : ''
-            const title = typeof l.title === 'string' ? l.title : ''
+            const title    = typeof l.title    === 'string' ? l.title    : ''
             return (
               <div key={id} className={`flex items-start justify-between gap-4 bg-white rounded-xl border border-gray-100 p-4 ${!isActive ? 'opacity-60' : ''}`}>
                 <div className="flex-1 min-w-0">
@@ -201,14 +213,17 @@ export default function AdminClient({ opportunities: init_o, listings: init_l, m
             <p className="text-gray-500 text-sm text-center py-8">No members yet.</p>
           )}
           {members.map(m => {
-            const id          = m.id as string
-            const isSuspended = m.is_suspended as boolean
-            const isAdmin     = m.is_admin as boolean
-            const isVerified  = m.is_verified as boolean
-            const isElite     = m.is_elite as boolean
-            const role        = typeof m.role === 'string' ? m.role : ''
-            const institution = typeof m.institution === 'string' ? m.institution : ''
-            const name        = `${typeof m.first_name === 'string' ? m.first_name : ''} ${typeof m.last_name === 'string' ? m.last_name : ''}`.trim() || 'Unnamed member'
+            const id              = m.id as string
+            const isSuspended     = m.is_suspended as boolean
+            const isAdmin         = m.is_admin as boolean
+            const isVerified      = m.is_verified as boolean
+            const isElite         = m.is_elite as boolean
+            const memberAdminRole = typeof m.admin_role === 'string' ? m.admin_role : null
+            const role            = typeof m.role        === 'string' ? m.role        : ''
+            const institution     = typeof m.institution === 'string' ? m.institution : ''
+            const name            = `${typeof m.first_name === 'string' ? m.first_name : ''} ${typeof m.last_name === 'string' ? m.last_name : ''}`.trim() || 'Unnamed member'
+            const isCurrentUser   = id === currentUserId
+
             return (
               <div key={id} className={`flex items-start justify-between gap-4 bg-white rounded-xl border border-gray-100 p-4 ${isSuspended ? 'opacity-60' : ''}`}>
                 <div className="flex-1 min-w-0">
@@ -216,8 +231,11 @@ export default function AdminClient({ opportunities: init_o, listings: init_l, m
                     <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${isSuspended ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700'}`}>
                       {isSuspended ? 'Suspended' : 'Active'}
                     </span>
-                    {isAdmin && (
-                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">Admin</span>
+                    {isAdmin && memberAdminRole === 'super' && (
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">Super Admin</span>
+                    )}
+                    {isAdmin && memberAdminRole === 'moderator' && (
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">Moderator</span>
                     )}
                     {isVerified && (
                       <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-50 text-green-600">✓ Verified</span>
@@ -227,47 +245,116 @@ export default function AdminClient({ opportunities: init_o, listings: init_l, m
                     )}
                     {role && <span className="text-xs text-gray-400 capitalize">{role}</span>}
                   </div>
-                  <p className="font-semibold text-gray-900 text-sm">{name}</p>
+                  <p className="font-semibold text-gray-900 text-sm">
+                    {name} {isCurrentUser && <span className="text-xs text-gray-400 font-normal">(you)</span>}
+                  </p>
                   {institution && <p className="text-xs text-gray-500 mt-0.5 truncate">{institution}</p>}
                   <p className="text-xs text-gray-400 mt-0.5">Joined {formatDate(m.created_at)}</p>
                 </div>
 
-                {!isAdmin && (
-                  <div className="flex flex-col gap-1.5 shrink-0">
+                <div className="flex flex-col gap-1.5 shrink-0">
+                  {/* Suspend — available to all admins, not on yourself */}
+                  {!isCurrentUser && (
                     <button
-                      onClick={() => memberAction(id, isSuspended ? 'unsuspend' : 'suspend', 'is_suspended', !isSuspended)}
+                      onClick={() => memberAction(id, isSuspended ? 'unsuspend' : 'suspend', { is_suspended: !isSuspended })}
                       disabled={loadingId === `${id}-suspend` || loadingId === `${id}-unsuspend`}
                       className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors disabled:opacity-50 ${
-                        isSuspended ? 'border-green-200 text-green-600 hover:bg-green-50' : 'border-red-200 text-red-600 hover:bg-red-50'
+                        isSuspended
+                          ? 'border-green-200 text-green-600 hover:bg-green-50'
+                          : 'border-red-200 text-red-600 hover:bg-red-50'
                       }`}>
                       {isSuspended ? 'Unsuspend' : 'Suspend'}
                     </button>
-                    <button
-                      onClick={() => memberAction(id, isVerified ? 'unverify' : 'verify', 'is_verified', !isVerified)}
-                      disabled={loadingId === `${id}-verify` || loadingId === `${id}-unverify`}
-                      className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors disabled:opacity-50 ${
-                        isVerified ? 'border-gray-200 text-gray-600 hover:bg-gray-50' : 'border-green-200 text-green-600 hover:bg-green-50'
-                      }`}>
-                      {isVerified ? 'Unverify' : 'Verify ✓'}
-                    </button>
-                    <button
-                      onClick={() => memberAction(id, isElite ? 'unelite' : 'elite', 'is_elite', !isElite)}
-                      disabled={loadingId === `${id}-elite` || loadingId === `${id}-unelite`}
-                      className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors disabled:opacity-50 ${
-                        isElite ? 'border-amber-200 text-amber-600 hover:bg-amber-50' : 'border-amber-200 text-amber-700 hover:bg-amber-50'
-                      }`}>
-                      {isElite ? 'Revoke Crown' : 'Grant Crown ★'}
-                    </button>
-                  </div>
-                )}
+                  )}
+
+                  {/* Verify + Elite — super admin only */}
+                  {isSuperAdmin && (
+                    <>
+                      <button
+                        onClick={() => memberAction(id, isVerified ? 'unverify' : 'verify', { is_verified: !isVerified })}
+                        disabled={loadingId === `${id}-verify` || loadingId === `${id}-unverify`}
+                        className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors disabled:opacity-50 ${
+                          isVerified
+                            ? 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                            : 'border-green-200 text-green-600 hover:bg-green-50'
+                        }`}>
+                        {isVerified ? 'Unverify' : 'Verify ✓'}
+                      </button>
+                      <button
+                        onClick={() => memberAction(id, isElite ? 'unelite' : 'elite', { is_elite: !isElite })}
+                        disabled={loadingId === `${id}-elite` || loadingId === `${id}-unelite`}
+                        className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors disabled:opacity-50 ${
+                          isElite
+                            ? 'border-amber-200 text-amber-600 hover:bg-amber-50'
+                            : 'border-amber-200 text-amber-700 hover:bg-amber-50'
+                        }`}>
+                        {isElite ? 'Revoke Crown' : 'Grant Crown ★'}
+                      </button>
+                    </>
+                  )}
+
+                  {/* Admin management — super admin only, not on yourself */}
+                  {isSuperAdmin && !isCurrentUser && (
+                    <div className="flex flex-col gap-1.5 pt-1.5 mt-0.5 border-t border-gray-100">
+                      {!isAdmin && (
+                        <>
+                          <button
+                            onClick={() => memberAction(id, 'makemoderator', { is_admin: true, admin_role: 'moderator' })}
+                            disabled={loadingId === `${id}-makemoderator`}
+                            className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-indigo-200 text-indigo-600 hover:bg-indigo-50 transition-colors disabled:opacity-50">
+                            Make Moderator
+                          </button>
+                          <button
+                            onClick={() => memberAction(id, 'makesuper', { is_admin: true, admin_role: 'super' })}
+                            disabled={loadingId === `${id}-makesuper`}
+                            className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-purple-200 text-purple-600 hover:bg-purple-50 transition-colors disabled:opacity-50">
+                            Make Super Admin
+                          </button>
+                        </>
+                      )}
+                      {isAdmin && memberAdminRole === 'moderator' && (
+                        <>
+                          <button
+                            onClick={() => memberAction(id, 'makesuper', { is_admin: true, admin_role: 'super' })}
+                            disabled={loadingId === `${id}-makesuper`}
+                            className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-purple-200 text-purple-600 hover:bg-purple-50 transition-colors disabled:opacity-50">
+                            Upgrade to Super Admin
+                          </button>
+                          <button
+                            onClick={() => memberAction(id, 'removeadmin', { is_admin: false, admin_role: null })}
+                            disabled={loadingId === `${id}-removeadmin`}
+                            className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-50">
+                            Remove Admin
+                          </button>
+                        </>
+                      )}
+                      {isAdmin && memberAdminRole === 'super' && (
+                        <>
+                          <button
+                            onClick={() => memberAction(id, 'makemoderator', { is_admin: true, admin_role: 'moderator' })}
+                            disabled={loadingId === `${id}-makemoderator`}
+                            className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-indigo-200 text-indigo-600 hover:bg-indigo-50 transition-colors disabled:opacity-50">
+                            Downgrade to Moderator
+                          </button>
+                          <button
+                            onClick={() => memberAction(id, 'removeadmin', { is_admin: false, admin_role: null })}
+                            disabled={loadingId === `${id}-removeadmin`}
+                            className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-50">
+                            Remove Admin
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             )
           })}
         </div>
       )}
 
-      {/* Settings */}
-      {tab === 'settings' && (
+      {/* Settings — super admin only */}
+      {tab === 'settings' && isSuperAdmin && (
         <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-6">
           <div>
             <h2 className="text-base font-bold text-gray-900 mb-1">Subscription Pricing</h2>
@@ -282,23 +369,16 @@ export default function AdminClient({ opportunities: init_o, listings: init_l, m
                 <label className="text-xs text-gray-500 mb-1 block">Price (₦)</label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₦</span>
-                  <input
-                    type="number"
-                    min="0"
-                    value={monthlyNaira}
+                  <input type="number" min="0" value={monthlyNaira}
                     onChange={e => setMonthlyNaira(e.target.value)}
-                    className="w-full pl-7 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
-                  />
+                    className="w-full pl-7 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white" />
                 </div>
               </div>
               <div>
                 <label className="text-xs text-gray-500 mb-1 block">Label (shown on Paystack)</label>
-                <input
-                  type="text"
-                  value={monthlyLabel}
+                <input type="text" value={monthlyLabel}
                   onChange={e => setMonthlyLabel(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
-                />
+                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white" />
               </div>
             </div>
 
@@ -309,23 +389,16 @@ export default function AdminClient({ opportunities: init_o, listings: init_l, m
                 <label className="text-xs text-gray-500 mb-1 block">Price (₦)</label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₦</span>
-                  <input
-                    type="number"
-                    min="0"
-                    value={yearlyNaira}
+                  <input type="number" min="0" value={yearlyNaira}
                     onChange={e => setYearlyNaira(e.target.value)}
-                    className="w-full pl-7 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
-                  />
+                    className="w-full pl-7 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white" />
                 </div>
               </div>
               <div>
                 <label className="text-xs text-gray-500 mb-1 block">Label (shown on Paystack)</label>
-                <input
-                  type="text"
-                  value={yearlyLabel}
+                <input type="text" value={yearlyLabel}
                   onChange={e => setYearlyLabel(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
-                />
+                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white" />
               </div>
             </div>
           </div>
@@ -340,13 +413,9 @@ export default function AdminClient({ opportunities: init_o, listings: init_l, m
             </p>
           </div>
 
-          {settingsError && (
-            <p className="text-sm text-red-600">{settingsError}</p>
-          )}
+          {settingsError && <p className="text-sm text-red-600">{settingsError}</p>}
 
-          <button
-            onClick={saveSettings}
-            disabled={savingSettings}
+          <button onClick={saveSettings} disabled={savingSettings}
             className="w-full sm:w-auto bg-green-600 text-white px-6 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors disabled:opacity-50">
             {savingSettings ? 'Saving…' : settingsSaved ? '✓ Saved!' : 'Save Pricing'}
           </button>
