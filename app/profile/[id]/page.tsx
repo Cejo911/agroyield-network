@@ -1,3 +1,4 @@
+// app/profile/[id]/page.tsx
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
@@ -9,12 +10,10 @@ export default async function PublicProfilePage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-
   const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
-
   if (!user) redirect('/login')
 
   const { data: profile } = await supabase
@@ -32,7 +31,6 @@ export default async function PublicProfilePage({
       <AppNav />
       <main className="max-w-2xl mx-auto px-4 py-10">
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
-
           <div className="flex items-center gap-5 mb-6">
             <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold text-2xl">
               {profile.first_name?.[0]?.toUpperCase() ?? '?'}
@@ -41,11 +39,35 @@ export default async function PublicProfilePage({
               <h1 className="text-2xl font-bold text-gray-900">
                 {profile.first_name} {profile.last_name}
               </h1>
+              {/* Role pill */}
               {profile.role && (
                 <span className="inline-block mt-1 text-sm bg-green-100 text-green-700 px-3 py-0.5 rounded-full font-medium capitalize">
                   {profile.role}
                 </span>
               )}
+              {/* Badges row */}
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {profile.is_elite && (
+                  <span className="inline-flex items-center gap-1 text-xs bg-yellow-50 text-yellow-700 px-2 py-0.5 rounded-full font-medium border border-yellow-200">
+                    👑 Elite
+                  </span>
+                )}
+                {profile.is_verified && (
+                  <span className="inline-flex items-center gap-1 text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium border border-blue-200">
+                    ✓ Verified
+                  </span>
+                )}
+                {profile.is_admin && profile.admin_role === 'super' && (
+                  <span className="inline-flex items-center gap-1 text-xs bg-red-50 text-red-600 px-2 py-0.5 rounded-full font-medium border border-red-200">
+                    ⚡ Admin
+                  </span>
+                )}
+                {profile.is_admin && profile.admin_role === 'moderator' && (
+                  <span className="inline-flex items-center gap-1 text-xs bg-purple-50 text-purple-600 px-2 py-0.5 rounded-full font-medium border border-purple-200">
+                    🛡 Moderator
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
@@ -130,7 +152,6 @@ export default async function PublicProfilePage({
               </Link>
             </div>
           )}
-
         </div>
       </main>
     </div>
