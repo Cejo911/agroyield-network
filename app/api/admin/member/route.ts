@@ -7,18 +7,35 @@ export async function PATCH(request: NextRequest) {
     const supabase = await createClient()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const supabaseAny = supabase as any
+
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const { data: profile } = await supabaseAny
-      .from('profiles').select('is_admin').eq('id', user.id).single()
-    if (!(profile as Record<string, unknown>)?.is_admin) {
+      .from('profiles').select('is_admin, admin_role').eq('id', user.id).single()
+    const adminProfile = profile as Record<string, unknown> | null
+    if (!adminProfile?.is_admin) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     const { userId, action } = await request.json() as {
       userId: string
-      action: 'suspend' | 'unsuspend' | 'verify' | 'unverify' | 'elite' | 'unelite'
+      action:
+        | 'suspend' | 'unsuspend'
+        | 'verify'  | 'unverify'
+        | 'elite'   | 'unelite'
+        | 'makesuper' | 'makemoderator' | 'removeadmin'
+    }
+
+    // These actions require super admin
+    const superOnly = ['verify', 'unverify', 'elite', 'unelite', 'makesuper', 'makemoderator', 'removeadmin']
+    if (superOnly.includes(action) && adminProfile.admin_role !== 'super') {
+      return NextResponse.json({ error: 'Forbidden — super admin only' }, { status: 403 })
+    }
+
+    // Prevent super admin from removing their own admin status
+    if (action === 'removeadmin' && userId === user.id) {
+      return NextResponse.json({ error: 'Cannot remove your own admin status' }, { status: 400 })
     }
 
     const adminClient = createAdminClient(
@@ -58,9 +75,24 @@ export async function PATCH(request: NextRequest) {
         is_elite: false,
         elite_granted_at: null,
       }).eq('id', userId)
+    } else if (action === 'makesuper') {
+      await adminAny.from('profiles').update({
+        is_admin: true,
+        admin_role: 'super',
+      }).eq('id', userId)
+    } else if (action === 'makemoderator') {
+      await adminAny.from('profiles').update({
+        is_admin: true,
+        admin_role: 'moderator',
+      }).eq('id', userId)
+    } else if (action === 'removeadmin') {
+      await adminAny.from('profiles').update({
+        is_admin: false,
+        admin_role: null,
+      }).eq('id', userId)
     }
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ ok: true })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unexpected error'
     return NextResponse.json({ error: message }, { status: 500 })
