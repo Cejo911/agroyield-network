@@ -1,12 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { Suspense, useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
-export default function SubscribeSuccessPage() {
+function SuccessContent() {
   const searchParams = useSearchParams()
-  const router = useRouter()
   const reference = searchParams.get('reference') ?? searchParams.get('trxref')
 
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
@@ -66,10 +65,7 @@ export default function SubscribeSuccessPage() {
             >
               Go to Dashboard
             </Link>
-            <Link
-              href="/pricing"
-              className="text-sm text-gray-500 hover:text-gray-700 py-2"
-            >
+            <Link href="/pricing" className="text-sm text-gray-500 hover:text-gray-700 py-2">
               Try again
             </Link>
           </div>
@@ -101,5 +97,19 @@ export default function SubscribeSuccessPage() {
         </Link>
       </div>
     </div>
+  )
+}
+
+export default function SubscribeSuccessPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="w-10 h-10 border-4 border-green-600 border-t-transparent rounded-full animate-spin" />
+        </div>
+      }
+    >
+      <SuccessContent />
+    </Suspense>
   )
 }
