@@ -16,13 +16,13 @@ export default async function ResearchPage() {
     .order('created_at', { ascending: false })
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <AppNav />
       <main className="max-w-4xl mx-auto px-4 py-10">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Research Board</h1>
-            <p className="text-gray-500 mt-1">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Research Board</h1>
+            <p className="text-gray-500 dark:text-gray-400 mt-1">
               Share findings, ask questions, and collaborate on agricultural research.
             </p>
           </div>
