@@ -1,4 +1,4 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
@@ -8,9 +8,24 @@ const adminClient = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-// DELETE — dismiss all reports for a post and restore its visibility
 export async function DELETE(req: Request) {
-  const supabase = createRouteHandlerClient({ cookies })
+  const cookieStore = await cookies()
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() { return cookieStore.getAll() },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) =>
+            cookieStore.set(name, value, options)
+          )
+        },
+      },
+    }
+  )
+
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -20,12 +35,13 @@ export async function DELETE(req: Request) {
     .select('is_admin')
     .eq('id', user.id)
     .single()
+
   if (!profile?.is_admin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const { postId, postType } = await req.json()
   if (!postId || !postType) return NextResponse.json({ error: 'Missing postId or postType' }, { status: 400 })
 
-  // 1. Delete all reports for this post
+  // Delete all reports for this post
   const { error: deleteError } = await adminAny
     .from('reports')
     .delete()
@@ -34,7 +50,7 @@ export async function DELETE(req: Request) {
 
   if (deleteError) return NextResponse.json({ error: deleteError.message }, { status: 500 })
 
-  // 2. Restore post visibility
+  // Restore post visibility
   const table = postType === 'opportunity' ? 'opportunities' : 'marketplace_listings'
   const { error: restoreError } = await adminAny
     .from(table)
