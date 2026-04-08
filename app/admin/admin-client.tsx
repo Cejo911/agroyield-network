@@ -10,7 +10,7 @@ interface Opportunity {
   is_active: boolean
   is_pending_review: boolean
   created_at: string
-  profiles: { full_name: string; email: string } | null
+  user_id: string
 }
 
 interface Listing {
@@ -21,12 +21,13 @@ interface Listing {
   is_active: boolean
   is_pending_review: boolean
   created_at: string
-  profiles: { full_name: string; email: string } | null
+  user_id: string
 }
 
 interface Member {
   id: string
-  full_name: string
+  first_name: string | null
+  last_name: string | null
   email: string
   is_admin: boolean
   is_verified: boolean
@@ -35,97 +36,107 @@ interface Member {
   created_at: string
 }
 
-interface Report {
-  id: string
+interface ReportGroup {
   post_id: string
   post_type: 'opportunity' | 'listing'
-  reason: string
-  created_at: string
+  count: number
+  reasons: string[]
 }
 
 interface AdminClientProps {
-  initialOpportunities: Opportunity[]
-  initialListings: Listing[]
-  initialMembers: Member[]
-  initialReports: Report[]
-  isSuperAdmin: boolean
+  opportunities: Opportunity[]
+  listings: Listing[]
+  members: Member[]
+  reportGroups: ReportGroup[]
+  profilesMap: Record<string, { first_name: string | null; last_name: string | null }>
+  settingsMap: Record<string, string>
+  currentAdminRole: string
+  currentUserId: string
 }
 
 type Tab = 'opportunities' | 'marketplace' | 'members' | 'reports' | 'settings'
 
 export default function AdminClient({
-  initialOpportunities,
-  initialListings,
-  initialMembers,
-  initialReports,
-  isSuperAdmin,
+  opportunities: initialOpportunities,
+  listings: initialListings,
+  members: initialMembers,
+  reportGroups: initialReportGroups,
+  profilesMap,
+  settingsMap,
+  currentAdminRole,
+  currentUserId,
 }: AdminClientProps) {
-  const [activeTab, setActiveTab] = useState<Tab>('opportunities')
+  const isSuperAdmin = currentAdminRole === 'super_admin'
 
+  const [activeTab, setActiveTab] = useState<Tab>('opportunities')
   const [opportunities, setOpportunities] = useState<Opportunity[]>(initialOpportunities)
   const [listings, setListings] = useState<Listing[]>(initialListings)
   const [members, setMembers] = useState<Member[]>(initialMembers)
-  const [reports, setReports] = useState<Report[]>(initialReports)
+  const [reportGroups, setReportGroups] = useState<ReportGroup[]>(initialReportGroups)
 
-  // Settings state
-  const [registrationEnabled, setRegistrationEnabled] = useState(true)
-  const [moderationMode, setModerationMode] = useState<'immediate' | 'approval'>('immediate')
-  const [graceDays, setGraceDays] = useState<number>(7)
-  const [announcementEnabled, setAnnouncementEnabled] = useState(false)
-  const [announcementText, setAnnouncementText] = useState('')
-  const [announcementColor, setAnnouncementColor] = useState('green')
-  const [opportunityTypes, setOpportunityTypes] = useState<string[]>([
-    'Job', 'Internship', 'Grant', 'Fellowship', 'Training', 'Conference',
-  ])
-  const [marketplaceCategories, setMarketplaceCategories] = useState<string[]>([
-    'Equipment', 'Seeds', 'Fertilizer', 'Services', 'Land', 'Other',
-  ])
+  // Settings state — initialised from server-passed settingsMap
+  const [registrationEnabled, setRegistrationEnabled] = useState(
+    settingsMap.registration_enabled !== 'false'
+  )
+  const [moderationMode, setModerationMode] = useState<'immediate' | 'approval'>(
+    (settingsMap.moderation_mode as 'immediate' | 'approval') ?? 'immediate'
+  )
+  const [graceDays, setGraceDays] = useState<number>(
+    settingsMap.verification_grace_days ? parseInt(settingsMap.verification_grace_days, 10) : 7
+  )
+  const [announcementEnabled, setAnnouncementEnabled] = useState(
+    settingsMap.announcement_enabled === 'true'
+  )
+  const [announcementText, setAnnouncementText] = useState(settingsMap.announcement_text ?? '')
+  const [announcementColor, setAnnouncementColor] = useState(
+    settingsMap.announcement_color ?? 'green'
+  )
+  const [opportunityTypes, setOpportunityTypes] = useState<string[]>(() => {
+    try {
+      return settingsMap.opportunity_types
+        ? JSON.parse(settingsMap.opportunity_types)
+        : ['Job', 'Internship', 'Grant', 'Fellowship', 'Training', 'Conference']
+    } catch {
+      return ['Job', 'Internship', 'Grant', 'Fellowship', 'Training', 'Conference']
+    }
+  })
+  const [marketplaceCategories, setMarketplaceCategories] = useState<string[]>(() => {
+    try {
+      return settingsMap.marketplace_categories
+        ? JSON.parse(settingsMap.marketplace_categories)
+        : ['Equipment', 'Seeds', 'Fertilizer', 'Services', 'Land', 'Other']
+    } catch {
+      return ['Equipment', 'Seeds', 'Fertilizer', 'Services', 'Land', 'Other']
+    }
+  })
   const [newOpportunityType, setNewOpportunityType] = useState('')
   const [newMarketplaceCategory, setNewMarketplaceCategory] = useState('')
-  const [monthlyPrice, setMonthlyPrice] = useState('2500')
-  const [annualPrice, setAnnualPrice] = useState('25000')
-  const [opportunityLimit, setOpportunityLimit] = useState('3')
-  const [listingLimit, setListingLimit] = useState('3')
-  const [reportThreshold, setReportThreshold] = useState('3')
+  const [monthlyPrice, setMonthlyPrice] = useState(settingsMap.monthly_price ?? '2500')
+  const [annualPrice, setAnnualPrice] = useState(settingsMap.annual_price ?? '25000')
+  const [opportunityLimit, setOpportunityLimit] = useState(
+    settingsMap.opportunity_daily_limit ?? '3'
+  )
+  const [listingLimit, setListingLimit] = useState(settingsMap.listing_daily_limit ?? '3')
+  const [reportThreshold, setReportThreshold] = useState(settingsMap.report_threshold ?? '3')
   const [savingSettings, setSavingSettings] = useState(false)
   const [settingsSaved, setSettingsSaved] = useState(false)
 
-  // Load settings on mount
-  useEffect(() => {
-    const loadSettings = async () => {
-      try {
-        const res = await fetch('/api/admin/settings')
-        if (!res.ok) return
-        const { settings } = await res.json()
-        if (!settings) return
+  // ── Helpers ───────────────────────────────────────────────────────────────
 
-        if (settings.registration_enabled !== undefined) {
-          setRegistrationEnabled(settings.registration_enabled === 'true')
-        }
-        if (settings.moderation_mode) setModerationMode(settings.moderation_mode)
-        if (settings.verification_grace_days) setGraceDays(parseInt(settings.verification_grace_days, 10))
-        if (settings.announcement_enabled !== undefined) {
-          setAnnouncementEnabled(settings.announcement_enabled === 'true')
-        }
-        if (settings.announcement_text) setAnnouncementText(settings.announcement_text)
-        if (settings.announcement_color) setAnnouncementColor(settings.announcement_color)
-        if (settings.opportunity_types) {
-          try { setOpportunityTypes(JSON.parse(settings.opportunity_types)) } catch {}
-        }
-        if (settings.marketplace_categories) {
-          try { setMarketplaceCategories(JSON.parse(settings.marketplace_categories)) } catch {}
-        }
-        if (settings.monthly_price) setMonthlyPrice(settings.monthly_price)
-        if (settings.annual_price) setAnnualPrice(settings.annual_price)
-        if (settings.opportunity_daily_limit) setOpportunityLimit(settings.opportunity_daily_limit)
-        if (settings.listing_daily_limit) setListingLimit(settings.listing_daily_limit)
-        if (settings.report_threshold) setReportThreshold(settings.report_threshold)
-      } catch (err) {
-        console.error('Failed to load settings', err)
-      }
-    }
-    if (isSuperAdmin) loadSettings()
-  }, [isSuperAdmin])
+  const getDisplayName = (userId: string) => {
+    const p = profilesMap[userId]
+    if (!p) return 'Unknown'
+    return [p.first_name, p.last_name].filter(Boolean).join(' ') || 'Unknown'
+  }
+
+  const fmt = (dateStr: string) =>
+    new Date(dateStr).toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    })
+
+  // ── Settings save ─────────────────────────────────────────────────────────
 
   const saveSettings = async () => {
     setSavingSettings(true)
@@ -252,7 +263,9 @@ export default function AdminClient({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ postId, postType }),
     })
-    setReports(prev => prev.filter(r => !(r.post_id === postId && r.post_type === postType)))
+    setReportGroups(prev =>
+      prev.filter(rg => !(rg.post_id === postId && rg.post_type === postType))
+    )
     if (postType === 'opportunity') {
       setOpportunities(prev => prev.map(o => o.id === postId ? { ...o, is_active: true } : o))
     } else {
@@ -294,27 +307,13 @@ export default function AdminClient({
     setMarketplaceCategories(prev => prev.filter(c => c !== cat))
   }
 
-  // ── Grouped reports ───────────────────────────────────────────────────────
-
-  const groupedReports = reports.reduce((acc, report) => {
-    const key = `${report.post_type}::${report.post_id}`
-    if (!acc[key]) acc[key] = []
-    acc[key].push(report)
-    return acc
-  }, {} as Record<string, Report[]>)
-
-  const reportGroupCount = Object.keys(groupedReports).length
-
-  // ── Helpers ───────────────────────────────────────────────────────────────
-
-  const fmt = (dateStr: string) =>
-    new Date(dateStr).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+  // ── Tab config ────────────────────────────────────────────────────────────
 
   const tabs: { id: Tab; label: string; badge?: number }[] = [
     { id: 'opportunities', label: 'Opportunities' },
     { id: 'marketplace', label: 'Marketplace' },
     { id: 'members', label: 'Members' },
-    { id: 'reports', label: 'Reports', badge: reportGroupCount || undefined },
+    { id: 'reports', label: 'Reports', badge: reportGroups.length || undefined },
     ...(isSuperAdmin ? [{ id: 'settings' as Tab, label: 'Settings' }] : []),
   ]
 
@@ -355,7 +354,10 @@ export default function AdminClient({
             <p className="text-gray-500 text-sm">No opportunities found.</p>
           )}
           {opportunities.map((opp) => (
-            <div key={opp.id} className="bg-white border rounded-lg p-4 flex items-start justify-between gap-4">
+            <div
+              key={opp.id}
+              className="bg-white border rounded-lg p-4 flex items-start justify-between gap-4"
+            >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-medium text-gray-900 truncate">{opp.title}</span>
@@ -371,7 +373,7 @@ export default function AdminClient({
                   )}
                 </div>
                 <p className="text-sm text-gray-500 mt-0.5">
-                  {opp.type} · {opp.location} · by {opp.profiles?.full_name ?? 'Unknown'}
+                  {opp.type} · {opp.location} · by {getDisplayName(opp.user_id)}
                 </p>
                 <p className="text-xs text-gray-400 mt-0.5">{fmt(opp.created_at)}</p>
               </div>
@@ -416,7 +418,10 @@ export default function AdminClient({
             <p className="text-gray-500 text-sm">No listings found.</p>
           )}
           {listings.map((listing) => (
-            <div key={listing.id} className="bg-white border rounded-lg p-4 flex items-start justify-between gap-4">
+            <div
+              key={listing.id}
+              className="bg-white border rounded-lg p-4 flex items-start justify-between gap-4"
+            >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-medium text-gray-900 truncate">{listing.title}</span>
@@ -432,7 +437,8 @@ export default function AdminClient({
                   )}
                 </div>
                 <p className="text-sm text-gray-500 mt-0.5">
-                  {listing.category} · ₦{listing.price?.toLocaleString()} · by {listing.profiles?.full_name ?? 'Unknown'}
+                  {listing.category} · ₦{listing.price?.toLocaleString()} · by{' '}
+                  {getDisplayName(listing.user_id)}
                 </p>
                 <p className="text-xs text-gray-400 mt-0.5">{fmt(listing.created_at)}</p>
               </div>
@@ -476,106 +482,117 @@ export default function AdminClient({
           {members.length === 0 && (
             <p className="text-gray-500 text-sm">No members found.</p>
           )}
-          {members.map((member) => (
-            <div key={member.id} className="bg-white border rounded-lg p-4 flex items-start justify-between gap-4">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-medium text-gray-900">{member.full_name}</span>
-                  {member.is_verified && (
-                    <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">
-                      Verified
-                    </span>
-                  )}
-                  {member.is_admin && (
-                    <span className="bg-purple-100 text-purple-700 text-xs px-2 py-0.5 rounded-full">
-                      Admin
-                    </span>
-                  )}
-                  {!member.is_active && (
-                    <span className="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full">
-                      Suspended
-                    </span>
+          {members.map((member) => {
+            const displayName =
+              [member.first_name, member.last_name].filter(Boolean).join(' ') || member.email
+            return (
+              <div
+                key={member.id}
+                className="bg-white border rounded-lg p-4 flex items-start justify-between gap-4"
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-medium text-gray-900">{displayName}</span>
+                    {member.is_verified && (
+                      <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">
+                        Verified
+                      </span>
+                    )}
+                    {member.is_admin && (
+                      <span className="bg-purple-100 text-purple-700 text-xs px-2 py-0.5 rounded-full">
+                        Admin
+                      </span>
+                    )}
+                    {!member.is_active && (
+                      <span className="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full">
+                        Suspended
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-500 mt-0.5">{member.email}</p>
+                  {member.subscription_expires_at && (
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      Subscription expires: {fmt(member.subscription_expires_at)}
+                    </p>
                   )}
                 </div>
-                <p className="text-sm text-gray-500 mt-0.5">{member.email}</p>
-                {member.subscription_expires_at && (
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    Subscription expires: {fmt(member.subscription_expires_at)}
-                  </p>
-                )}
+                <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
+                  {member.id !== currentUserId && (
+                    <>
+                      <button
+                        onClick={() => toggleVerified(member.id, !member.is_verified)}
+                        className={`text-xs px-3 py-1.5 rounded-md ${
+                          member.is_verified
+                            ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            : 'bg-green-100 text-green-700 hover:bg-green-200'
+                        }`}
+                      >
+                        {member.is_verified ? 'Unverify' : 'Verify'}
+                      </button>
+                      <button
+                        onClick={() => toggleMember(member.id, !member.is_active)}
+                        className={`text-xs px-3 py-1.5 rounded-md ${
+                          member.is_active
+                            ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        {member.is_active ? 'Suspend' : 'Reinstate'}
+                      </button>
+                    </>
+                  )}
+                  {member.id === currentUserId && (
+                    <span className="text-xs text-gray-400 italic">You</span>
+                  )}
+                </div>
               </div>
-              <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
-                <button
-                  onClick={() => toggleVerified(member.id, !member.is_verified)}
-                  className={`text-xs px-3 py-1.5 rounded-md ${
-                    member.is_verified
-                      ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      : 'bg-green-100 text-green-700 hover:bg-green-200'
-                  }`}
-                >
-                  {member.is_verified ? 'Unverify' : 'Verify'}
-                </button>
-                <button
-                  onClick={() => toggleMember(member.id, !member.is_active)}
-                  className={`text-xs px-3 py-1.5 rounded-md ${
-                    member.is_active
-                      ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  {member.is_active ? 'Suspend' : 'Reinstate'}
-                </button>
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
 
       {/* ── Reports ── */}
       {activeTab === 'reports' && (
         <div className="space-y-4">
-          {reportGroupCount === 0 && (
+          {reportGroups.length === 0 && (
             <p className="text-gray-500 text-sm">No active reports.</p>
           )}
-          {Object.entries(groupedReports).map(([key, postReports]) => {
-            const [postType, postId] = key.split('::')
-            return (
-              <div key={key} className="bg-white border rounded-lg p-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium text-gray-900 capitalize">{postType}</span>
-                      <span className="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full">
-                        {postReports.length} report{postReports.length !== 1 ? 's' : ''}
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-400 mt-0.5 font-mono">ID: {postId}</p>
-                    <div className="mt-2 space-y-1">
-                      {postReports.map((r) => (
-                        <p key={r.id} className="text-xs text-gray-500">
-                          · {r.reason}
-                        </p>
-                      ))}
-                    </div>
+          {reportGroups.map((rg) => (
+            <div key={`${rg.post_type}-${rg.post_id}`} className="bg-white border rounded-lg p-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-medium text-gray-900 capitalize">{rg.post_type}</span>
+                    <span className="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full">
+                      {rg.count} report{rg.count !== 1 ? 's' : ''}
+                    </span>
                   </div>
-                  <div className="flex gap-2 flex-shrink-0 flex-wrap justify-end">
-                    <button
-                      onClick={() => dismissReports(postId, postType)}
-                      className="text-xs bg-gray-100 text-gray-700 px-3 py-1.5 rounded-md hover:bg-gray-200"
-                    >
-                      Dismiss Reports
-                    </button>
-                    <button
-                      onClick={() => removeReportedPost(postId, postType)}
-                      className="text-xs bg-red-600 text-white px-3 py-1.5 rounded-md hover:bg-red-700"
-                    >
-                      Remove Post
-                    </button>
+                  <p className="text-xs text-gray-400 mt-0.5 font-mono">ID: {rg.post_id}</p>
+                  <div className="mt-2 space-y-1">
+                    {rg.reasons.map((reason, i) => (
+                      <p key={i} className="text-xs text-gray-500">
+                        · {reason}
+                      </p>
+                    ))}
                   </div>
                 </div>
+                <div className="flex gap-2 flex-shrink-0 flex-wrap justify-end">
+                  <button
+                    onClick={() => dismissReports(rg.post_id, rg.post_type)}
+                    className="text-xs bg-gray-100 text-gray-700 px-3 py-1.5 rounded-md hover:bg-gray-200"
+                  >
+                    Dismiss Reports
+                  </button>
+                  <button
+                    onClick={() => removeReportedPost(rg.post_id, rg.post_type)}
+                    className="text-xs bg-red-600 text-white px-3 py-1.5 rounded-md hover:bg-red-700"
+                  >
+                    Remove Post
+                  </button>
+                </div>
               </div>
-            )
-          })}
+            </div>
+          ))}
         </div>
       )}
 
@@ -703,7 +720,9 @@ export default function AdminClient({
                       key={color}
                       onClick={() => setAnnouncementColor(color)}
                       className={`px-3 py-1.5 rounded-md text-xs font-medium border-2 transition-all ${
-                        announcementColor === color ? 'border-gray-800 scale-105' : 'border-transparent'
+                        announcementColor === color
+                          ? 'border-gray-800 scale-105'
+                          : 'border-transparent'
                       } ${
                         color === 'green'
                           ? 'bg-green-100 text-green-800'
@@ -729,7 +748,6 @@ export default function AdminClient({
               Manage opportunity types and marketplace categories available to members.
             </p>
 
-            {/* Opportunity Types */}
             <div className="mb-5">
               <p className="text-sm font-medium text-gray-700 mb-2">Opportunity Types</p>
               <div className="flex flex-wrap gap-2 mb-2">
@@ -766,7 +784,6 @@ export default function AdminClient({
               </div>
             </div>
 
-            {/* Marketplace Categories */}
             <div>
               <p className="text-sm font-medium text-gray-700 mb-2">Marketplace Categories</p>
               <div className="flex flex-wrap gap-2 mb-2">
@@ -881,7 +898,7 @@ export default function AdminClient({
             </div>
           </div>
 
-          {/* Save button */}
+          {/* Save */}
           <div className="flex items-center gap-3 pt-2 pb-8">
             <button
               onClick={saveSettings}
