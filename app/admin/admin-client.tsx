@@ -1,5 +1,4 @@
 'use client'
-
 import { useState } from 'react'
 
 type Row = Record<string, unknown>
@@ -44,12 +43,12 @@ export default function AdminClient({
 }: Props) {
   const isSuperAdmin = currentAdminRole === 'super'
 
-  const [tab, setTab]               = useState<Tab>('opportunities')
-  const [opportunities, setOpps]    = useState(init_o)
-  const [listings, setListings]     = useState(init_l)
-  const [members, setMembers]       = useState(init_m)
-  const [reportGroups, setReports]  = useState(init_r)
-  const [loadingId, setLoadingId]   = useState<string | null>(null)
+  const [tab, setTab]              = useState<Tab>('opportunities')
+  const [opportunities, setOpps]   = useState(init_o)
+  const [listings, setListings]    = useState(init_l)
+  const [members, setMembers]      = useState(init_m)
+  const [reportGroups, setReports] = useState(init_r)
+  const [loadingId, setLoadingId]  = useState<string | null>(null)
 
   // Pricing settings
   const [monthlyNaira,  setMonthlyNaira]  = useState(settingsMap['subscription_monthly_naira']  ?? '2500')
@@ -147,6 +146,24 @@ export default function AdminClient({
     setReports(prev => prev.map(g =>
       g.postId === postId && g.postType === postType ? { ...g, isActive: true } : g
     ))
+    setLoadingId(null)
+  }
+
+  // Clears all reports for a post and restores its visibility
+  const dismissReports = async (postId: string, postType: 'opportunity' | 'listing') => {
+    setLoadingId(`dismiss-${postId}`)
+    const res = await fetch('/api/admin/reports', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ postId, postType }),
+    })
+    if (!res.ok) {
+      alert('Failed to dismiss reports. Please try again.')
+      setLoadingId(null)
+      return
+    }
+    // Remove the group entirely from local state — post is cleared and restored
+    setReports(prev => prev.filter(g => !(g.postId === postId && g.postType === postType)))
     setLoadingId(null)
   }
 
@@ -416,16 +433,19 @@ export default function AdminClient({
                   </div>
                   <p className="text-xs text-gray-400 mt-1">Latest report: {formatDate(g.latestAt)}</p>
                 </div>
+
+                {/* Action buttons */}
                 <div className="flex flex-col gap-1.5 shrink-0">
-                  {!g.isActive && (
-                    <button
-                      onClick={() => restorePost(g.postId, g.postType)}
-                      disabled={loadingId === `restore-${g.postId}`}
-                      className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-green-200 text-green-600 hover:bg-green-50 transition-colors disabled:opacity-50">
-                      {loadingId === `restore-${g.postId}` ? '…' : 'Restore'}
-                    </button>
-                  )}
-                  {g.isActive && (
+                  {/* Dismiss — report not valid: clear all reports + restore post */}
+                  <button
+                    onClick={() => dismissReports(g.postId, g.postType)}
+                    disabled={loadingId === `dismiss-${g.postId}`}
+                    className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-green-200 text-green-600 hover:bg-green-50 transition-colors disabled:opacity-50">
+                    {loadingId === `dismiss-${g.postId}` ? '…' : '✓ Dismiss'}
+                  </button>
+
+                  {/* Remove — report valid: hide the post */}
+                  {g.isActive ? (
                     <button
                       onClick={() => {
                         if (g.postType === 'opportunity') toggleOpportunity(g.postId, true)
@@ -434,6 +454,14 @@ export default function AdminClient({
                       disabled={loadingId === g.postId}
                       className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50">
                       {loadingId === g.postId ? '…' : 'Remove'}
+                    </button>
+                  ) : (
+                    /* Post already hidden — offer restore without clearing reports */
+                    <button
+                      onClick={() => restorePost(g.postId, g.postType)}
+                      disabled={loadingId === `restore-${g.postId}`}
+                      className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-50">
+                      {loadingId === `restore-${g.postId}` ? '…' : 'Restore only'}
                     </button>
                   )}
                 </div>
@@ -446,7 +474,6 @@ export default function AdminClient({
       {/* Settings — super admin only */}
       {tab === 'settings' && isSuperAdmin && (
         <div className="space-y-8">
-
           {/* Subscription Pricing */}
           <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-6">
             <div>
