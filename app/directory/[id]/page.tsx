@@ -2,15 +2,13 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import AppNav from '@/app/components/AppNav'
-import FollowButton from '../follow-button'
 
-export default async function MemberProfilePage({
+export default async function PublicProfilePage({
   params,
 }: {
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -23,156 +21,126 @@ export default async function MemberProfilePage({
 
   if (!profile) notFound()
 
-  // Safe access for avatar_url (not yet in generated types)
-  const rawProfile = profile as Record<string, unknown>
-  const avatarUrl = typeof rawProfile.avatar_url === 'string' ? rawProfile.avatar_url : null
-
-  // Follow counts + status (follows table not yet in generated types)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const supabaseAny = supabase as any
-
-  const [followersResult, followingResult] = await Promise.all([
-    supabaseAny.from('follows').select('*', { count: 'exact', head: true }).eq('following_id', id),
-    supabaseAny.from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', id),
-  ])
-  const followersCount: number = followersResult.count ?? 0
-  const followingCount: number = followingResult.count ?? 0
-
-  let isFollowing = false
-  if (user.id !== id) {
-    const followCheck = await supabaseAny
-      .from('follows').select('id')
-      .eq('follower_id', user.id)
-      .eq('following_id', id)
-      .maybeSingle()
-    isFollowing = !!followCheck.data
-  }
-
-  const initials =
-    [profile.first_name, profile.last_name]
-      .filter(Boolean)
-      .map((n: string) => n[0].toUpperCase())
-      .join('') || '?'
+  const isOwnProfile = user.id === id
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <AppNav />
       <main className="max-w-2xl mx-auto px-4 py-10">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-8">
 
-        {/* Back */}
-        <Link href="/directory"
-          className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-green-700 transition-colors mb-6">
-          ← Back to Directory
-        </Link>
-
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
-
-          {/* Header row */}
-          <div className="flex items-start justify-between gap-4 mb-6">
-            <div className="flex items-center gap-4">
-              {avatarUrl ? (
-                <div
-                  style={{ backgroundImage: `url(${avatarUrl})` }}
-                  className="w-20 h-20 rounded-full bg-cover bg-center border-4 border-white shadow-md shrink-0"
-                  role="img" aria-label="Profile photo"
-                />
-              ) : (
-                <div className="w-20 h-20 rounded-full bg-green-600 flex items-center justify-center text-white text-2xl font-bold border-4 border-white shadow-md shrink-0">
-                  {initials}
-                </div>
+          {/* Header */}
+          <div className="flex items-center gap-5 mb-6">
+            <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center text-green-700 dark:text-green-400 font-bold text-2xl">
+              {profile.first_name?.[0]?.toUpperCase() ?? '?'}
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                {profile.first_name} {profile.last_name}
+              </h1>
+              {profile.role && (
+                <span className="inline-block mt-1 text-sm bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 px-3 py-0.5 rounded-full font-medium capitalize">
+                  {profile.role}
+                </span>
               )}
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">
-                  {profile.first_name} {profile.last_name}
-                </h1>
-                {profile.role && (
-                  <span className="inline-block mt-1 text-sm bg-green-100 text-green-700 px-3 py-0.5 rounded-full font-medium capitalize">
-                    {profile.role}
+              {/* Badges */}
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {profile.is_elite && (
+                  <span className="inline-flex items-center gap-1 text-xs bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 px-2 py-0.5 rounded-full font-medium border border-yellow-200 dark:border-yellow-800">
+                    👑 Elite
+                  </span>
+                )}
+                {profile.is_verified && (
+                  <span className="inline-flex items-center gap-1 text-xs bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full font-medium border border-blue-200 dark:border-blue-800">
+                    ✓ Verified
+                  </span>
+                )}
+                {profile.is_admin && profile.admin_role === 'super' && (
+                  <span className="inline-flex items-center gap-1 text-xs bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 px-2 py-0.5 rounded-full font-medium border border-red-200 dark:border-red-800">
+                    ⚡ Admin
+                  </span>
+                )}
+                {profile.is_admin && profile.admin_role === 'moderator' && (
+                  <span className="inline-flex items-center gap-1 text-xs bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 px-2 py-0.5 rounded-full font-medium border border-purple-200 dark:border-purple-800">
+                    🛡 Moderator
                   </span>
                 )}
               </div>
             </div>
-
-            {/* Follow button — hidden on own profile */}
-            {user.id !== id && (
-              <div className="shrink-0 mt-1">
-                <FollowButton userId={id} initialIsFollowing={isFollowing} />
-              </div>
-            )}
           </div>
-
-          {/* Follower / Following counts */}
-          <div className="flex gap-8 mb-6 pb-6 border-b border-gray-100">
-            <div>
-              <p className="text-xl font-bold text-gray-900">{followersCount}</p>
-              <p className="text-xs text-gray-500">Followers</p>
-            </div>
-            <div>
-              <p className="text-xl font-bold text-gray-900">{followingCount}</p>
-              <p className="text-xs text-gray-500">Following</p>
-            </div>
-          </div>
-
-          {/* Bio */}
-          {profile.bio && (
-            <div className="mb-6">
-              <h2 className="text-sm font-semibold text-gray-700 mb-2">About</h2>
-              <p className="text-sm text-gray-600 leading-relaxed">{profile.bio}</p>
-            </div>
-          )}
 
           {/* Details */}
-          <div className="space-y-2 mb-6">
+          <div className="space-y-4 text-sm text-gray-600 dark:text-gray-400">
             {profile.institution && (
-              <p className="text-sm text-gray-600">🏛 {profile.institution}</p>
+              <p>
+                <span className="mr-1">🏛</span>
+                <span className="font-medium text-gray-700 dark:text-gray-300">{profile.institution}</span>
+              </p>
             )}
             {profile.location && (
-              <p className="text-sm text-gray-600">📍 {profile.location}</p>
+              <p>
+                <span className="mr-1">📍</span>
+                <span className="font-medium text-gray-700 dark:text-gray-300">{profile.location}</span>
+              </p>
+            )}
+            {profile.bio && (
+              <div>
+                <p className="font-semibold text-gray-800 dark:text-gray-200 mb-1">About</p>
+                <p className="text-gray-600 dark:text-gray-400 leading-relaxed">{profile.bio}</p>
+              </div>
+            )}
+            {profile.interests && profile.interests.length > 0 && (
+              <div>
+                <p className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Areas of Interest</p>
+                <div className="flex flex-wrap gap-2">
+                  {profile.interests.map((interest: string) => (
+                    <span
+                      key={interest}
+                      className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-3 py-1 rounded-full text-xs"
+                    >
+                      {interest}
+                    </span>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
 
-          {/* Interests */}
-          {profile.interests && profile.interests.length > 0 && (
-            <div className="mb-6">
-              <h2 className="text-sm font-semibold text-gray-700 mb-3">Areas of Interest</h2>
-              <div className="flex flex-wrap gap-2">
-                {(profile.interests as string[]).map((interest: string) => (
-                  <span key={interest}
-                    className="text-xs bg-green-50 text-green-700 border border-green-200 px-3 py-1 rounded-full">
-                    {interest}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Links */}
+          {/* Social links */}
           {(profile.linkedin || profile.twitter || profile.website) && (
-            <div>
-              <h2 className="text-sm font-semibold text-gray-700 mb-3">Links</h2>
-              <div className="flex flex-col gap-2">
-                {profile.linkedin && (
-                  <a href={profile.linkedin} target="_blank" rel="noopener noreferrer"
-                    className="text-sm text-green-600 hover:underline">
-                    LinkedIn ↗
-                  </a>
-                )}
-                {profile.twitter && (
-                  <a href={profile.twitter} target="_blank" rel="noopener noreferrer"
-                    className="text-sm text-green-600 hover:underline">
-                    Twitter / X ↗
-                  </a>
-                )}
-                {profile.website && (
-                  <a href={profile.website} target="_blank" rel="noopener noreferrer"
-                    className="text-sm text-green-600 hover:underline">
-                    Website ↗
-                  </a>
-                )}
-              </div>
+            <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-800 flex flex-wrap gap-3">
+              {profile.linkedin && (
+                <Link href={profile.linkedin} target="_blank" rel="noopener noreferrer"
+                  className="text-sm bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 px-4 py-2 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors">
+                  LinkedIn
+                </Link>
+              )}
+              {profile.twitter && (
+                <Link href={profile.twitter} target="_blank" rel="noopener noreferrer"
+                  className="text-sm bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                  Twitter / X
+                </Link>
+              )}
+              {profile.website && (
+                <Link href={profile.website} target="_blank" rel="noopener noreferrer"
+                  className="text-sm bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 px-4 py-2 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/40 transition-colors">
+                  Website
+                </Link>
+              )}
             </div>
           )}
 
+          {/* Edit button */}
+          {isOwnProfile && (
+            <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-800">
+              <Link
+                href="/profile"
+                className="inline-block bg-green-600 text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors"
+              >
+                Edit your profile
+              </Link>
+            </div>
+          )}
         </div>
       </main>
     </div>
