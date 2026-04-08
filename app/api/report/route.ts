@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
+import { Resend } from 'resend'
 
 const REASONS = ['Spam', 'Misleading', 'Inappropriate', 'Duplicate', 'Other']
 
@@ -10,6 +11,8 @@ function getAdminClient() {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 }
+
+const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function GET(request: NextRequest) {
   try {
@@ -59,7 +62,6 @@ export async function POST(request: NextRequest) {
     const { data: existing } = await adminAny.from('reports').select('id')
       .eq('user_id', user.id).eq('post_type', postType).eq('post_id', postId)
       .maybeSingle()
-
     if (existing) {
       return NextResponse.json({ error: 'You have already reported this post' }, { status: 409 })
     }
@@ -81,10 +83,83 @@ export async function POST(request: NextRequest) {
       .select('*', { count: 'exact', head: true })
       .eq('post_type', postType).eq('post_id', postId)
 
+    const totalReports = count ?? 0
+
     // Auto-hide if threshold reached
-    if ((count ?? 0) >= threshold) {
+    const autoHidden = totalReports >= threshold
+    if (autoHidden) {
       const table = postType === 'opportunity' ? 'opportunities' : 'marketplace_listings'
       await adminAny.from(table).update({ is_active: false }).eq('id', postId)
+    }
+
+    // Send admin notification email (fire-and-forget, never blocks the response)
+    try {
+      const { data: emailSetting } = await adminAny.from('settings')
+        .select('value').eq('key', 'admin_notification_email').maybeSingle()
+      const notificationEmail =
+        (emailSetting as Record<string, unknown> | null)?.value as string | undefined
+
+      if (notificationEmail) {
+        const postLabel = postType === 'opportunity' ? 'Opportunity' : 'Marketplace listing'
+        const postPath  = postType === 'opportunity'
+          ? `opportunities/${postId}`
+          : `marketplace/${postId}`
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://agroyield.africa'
+
+        await resend.emails.send({
+          from: 'AgroYield Network <noreply@agroyield.africa>',
+          to: notificationEmail,
+          subject: autoHidden
+            ? `⚠️ Post auto-hidden after ${totalReports} reports — AgroYield`
+            : `New report submitted — AgroYield`,
+          html: `
+            <div style="font-family:sans-serif;max-width:560px;margin:0 auto;color:#111;">
+              <h2 style="color:#166534;">AgroYield Network — Report Alert</h2>
+
+              <table style="width:100%;border-collapse:collapse;margin-bottom:16px;">
+                <tr>
+                  <td style="padding:8px;border:1px solid #e5e7eb;font-weight:600;width:40%;">Content type</td>
+                  <td style="padding:8px;border:1px solid #e5e7eb;">${postLabel}</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px;border:1px solid #e5e7eb;font-weight:600;">Reason</td>
+                  <td style="padding:8px;border:1px solid #e5e7eb;">${reason}</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px;border:1px solid #e5e7eb;font-weight:600;">Total reports</td>
+                  <td style="padding:8px;border:1px solid #e5e7eb;">${totalReports} of ${threshold} threshold</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px;border:1px solid #e5e7eb;font-weight:600;">Status</td>
+                  <td style="padding:8px;border:1px solid #e5e7eb;">
+                    ${autoHidden
+                      ? '<span style="color:#dc2626;font-weight:600;">⚠️ Auto-hidden — threshold reached</span>'
+                      : '<span style="color:#16a34a;">Visible — below threshold</span>'}
+                  </td>
+                </tr>
+              </table>
+
+              <div style="display:flex;gap:12px;margin-top:20px;">
+                <a href="${baseUrl}/${postPath}"
+                   style="background:#166534;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-size:14px;">
+                  View Post
+                </a>
+                <a href="${baseUrl}/admin"
+                   style="background:#f3f4f6;color:#111;padding:10px 20px;border-radius:6px;text-decoration:none;font-size:14px;">
+                  Open Admin Dashboard
+                </a>
+              </div>
+
+              <p style="color:#6b7280;font-size:12px;margin-top:24px;">
+                You are receiving this because an admin notification email is configured on AgroYield Network.
+              </p>
+            </div>
+          `,
+        })
+      }
+    } catch (emailErr) {
+      // Never let email failure affect the report response
+      console.error('[reports] Notification email failed:', emailErr)
     }
 
     return NextResponse.json({ ok: true })
