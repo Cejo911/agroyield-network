@@ -20,10 +20,10 @@ export default async function ProfilePage() {
   const followersCount: number = followersResult.count ?? 0
   const followingCount: number = followingResult.count ?? 0
   const rawProfile = profile as Record<string, unknown> | null
-  const avatarUrl: string | null  = (rawProfile && typeof rawProfile.avatar_url === 'string') ? rawProfile.avatar_url : null
-  const username: string | null   = (rawProfile && typeof rawProfile.username === 'string')   ? rawProfile.username  : null
-  const phone: string | null      = (rawProfile && typeof rawProfile.phone === 'string')      ? rawProfile.phone     : null
-  const whatsapp: string | null   = (rawProfile && typeof rawProfile.whatsapp === 'string')   ? rawProfile.whatsapp  : null
+  const avatarUrl: string | null = (rawProfile && typeof rawProfile.avatar_url === 'string') ? rawProfile.avatar_url : null
+  const username: string | null  = (rawProfile && typeof rawProfile.username === 'string')   ? rawProfile.username  : null
+  const phone: string | null     = (rawProfile && typeof rawProfile.phone === 'string')      ? rawProfile.phone     : null
+  const whatsapp: string | null  = (rawProfile && typeof rawProfile.whatsapp === 'string')   ? rawProfile.whatsapp  : null
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
@@ -47,12 +47,7 @@ export default async function ProfilePage() {
           </div>
           <div className="w-px h-8 bg-gray-100 dark:bg-gray-700" />
           <div className="ml-auto">
-            
-              href="/directory"
-              className="text-sm text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 font-medium transition-colors"
-            >
-              Browse members →
-            </a>
+            <a href="/directory" className="text-sm text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 font-medium transition-colors">Browse members &rarr;</a>
           </div>
         </div>
 
