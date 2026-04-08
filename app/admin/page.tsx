@@ -1,7 +1,18 @@
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { redirect } from 'next/navigation'
 import AppNav from '@/app/components/AppNav'
 import AdminClient from './admin-client'
+
+type ReportGroup = {
+  postId:    string
+  postType:  'opportunity' | 'listing'
+  postTitle: string
+  isActive:  boolean
+  count:     number
+  reasons:   Record<string, number>
+  latestAt:  string
+}
 
 export default async function AdminPage() {
   const supabase = await createClient()
@@ -20,19 +31,29 @@ export default async function AdminPage() {
     ? rawProfile.admin_role
     : 'moderator'
 
+  // Use admin client for settings (bypasses RLS)
+  const adminDb = createAdminClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const adminAny = adminDb as any
+
   const [
     { data: opportunities },
     { data: listings },
     { data: members },
     { data: settingsRows },
+    { data: reports },
   ] = await Promise.all([
     supabaseAny.from('opportunities').select('*').order('created_at', { ascending: false }),
     supabaseAny.from('marketplace_listings').select('*').order('created_at', { ascending: false }),
     supabaseAny.from('profiles').select('*').order('created_at', { ascending: false }),
-    supabaseAny.from('settings').select('key, value'),
+    adminAny.from('settings').select('key, value'),
+    adminAny.from('reports').select('*').order('created_at', { ascending: false }),
   ])
 
-  // Build profiles map for poster name lookup
+  // Build profiles map
   const profilesMap: Record<string, { first_name: string | null; last_name: string | null }> = {}
   for (const m of (members ?? [])) {
     const raw = m as Record<string, unknown>
@@ -52,6 +73,52 @@ export default async function AdminPage() {
       settingsMap[raw.key] = raw.value
     }
   }
+
+  // Build report groups
+  const groupsMap: Record<string, ReportGroup> = {}
+  for (const r of (reports ?? [])) {
+    const raw = r as Record<string, unknown>
+    const postId   = raw.post_id   as string
+    const postType = raw.post_type as 'opportunity' | 'listing'
+    const reason   = raw.reason    as string
+    const key      = `${postType}:${postId}`
+
+    if (!groupsMap[key]) {
+      let postTitle = 'Untitled'
+      let isActive  = true
+
+      if (postType === 'opportunity') {
+        const match = (opportunities ?? []).find(
+          (o: unknown) => (o as Record<string, unknown>).id === postId
+        ) as Record<string, unknown> | undefined
+        if (match) {
+          postTitle = typeof match.title === 'string' ? match.title : 'Untitled'
+          isActive  = match.is_active as boolean
+        }
+      } else {
+        const match = (listings ?? []).find(
+          (l: unknown) => (l as Record<string, unknown>).id === postId
+        ) as Record<string, unknown> | undefined
+        if (match) {
+          postTitle = typeof match.title === 'string' ? match.title : 'Untitled'
+          isActive  = match.is_active as boolean
+        }
+      }
+
+      groupsMap[key] = {
+        postId, postType, postTitle, isActive,
+        count: 0, reasons: {}, latestAt: raw.created_at as string,
+      }
+    }
+
+    groupsMap[key].count++
+    groupsMap[key].reasons[reason] = (groupsMap[key].reasons[reason] ?? 0) + 1
+    if (raw.created_at && raw.created_at > groupsMap[key].latestAt) {
+      groupsMap[key].latestAt = raw.created_at as string
+    }
+  }
+
+  const reportGroups = Object.values(groupsMap).sort((a, b) => b.count - a.count)
 
   const oppsCount     = (opportunities ?? []).length
   const listingsCount = (listings ?? []).length
@@ -91,6 +158,7 @@ export default async function AdminPage() {
           opportunities={opportunities ?? []}
           listings={listings ?? []}
           members={members ?? []}
+          reportGroups={reportGroups}
           profilesMap={profilesMap}
           settingsMap={settingsMap}
           currentAdminRole={currentAdminRole}
