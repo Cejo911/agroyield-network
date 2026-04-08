@@ -1,5 +1,4 @@
 'use client'
-
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
@@ -178,9 +177,9 @@ export default function AppNav() {
               <span className="hidden xl:inline text-gray-400">Search…</span>
             </button>
             {isChecked && !isAdmin && !isVerified && (
-              <Link href="/verify"
+              <Link href="/pricing"
                 className={`text-sm font-semibold transition-colors px-3 py-1.5 rounded-lg border ${
-                  isActive('/verify')
+                  isActive('/pricing')
                     ? 'bg-green-50 border-green-300 text-green-700'
                     : 'border-green-200 text-green-600 hover:bg-green-50'
                 }`}>
@@ -240,10 +239,10 @@ export default function AppNav() {
               </Link>
             )}
             {isChecked && !isAdmin && !isVerified && (
-              <Link href="/verify"
+              <Link href="/pricing"
                 onClick={() => setMenuOpen(false)}
                 className={`block px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
-                  isActive('/verify')
+                  isActive('/pricing')
                     ? 'bg-green-50 text-green-700'
                     : 'text-green-600 hover:bg-green-50'
                 }`}>
