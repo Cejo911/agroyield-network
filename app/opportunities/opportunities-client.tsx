@@ -1,6 +1,8 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
+import LikeButton from '@/app/components/LikeButton'
+import ReportButton from '@/app/components/ReportButton'
 
 const TYPES = ['All', 'Grant', 'Fellowship', 'Job', 'Partnership', 'Internship', 'Training']
 const TYPE_COLOURS: Record<string, string> = {
@@ -146,6 +148,15 @@ export default function OpportunitiesClient({ opportunities }: { opportunities: 
                     </p>
                   </div>
                 )}
+              </div>
+
+              {/* Like + Report — stopPropagation prevents card navigation on click */}
+              <div
+                className="mt-4 pt-3 border-t border-gray-100 flex items-center gap-4"
+                onClick={e => e.stopPropagation()}
+              >
+                <LikeButton postId={opportunity.id} postType="opportunity" />
+                <ReportButton postId={opportunity.id} postType="opportunity" />
               </div>
             </Link>
           ))}
