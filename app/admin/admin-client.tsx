@@ -38,14 +38,19 @@ export default function AdminClient({
   const [members, setMembers]     = useState(init_m)
   const [loadingId, setLoadingId] = useState<string | null>(null)
 
-  // Settings state
-  const [monthlyNaira,   setMonthlyNaira]   = useState(settingsMap['subscription_monthly_naira']  ?? '2500')
-  const [yearlyNaira,    setYearlyNaira]     = useState(settingsMap['subscription_yearly_naira']   ?? '25000')
-  const [monthlyLabel,   setMonthlyLabel]    = useState(settingsMap['subscription_monthly_label']  ?? 'Monthly Verification')
-  const [yearlyLabel,    setYearlyLabel]     = useState(settingsMap['subscription_yearly_label']   ?? 'Yearly Verification')
-  const [savingSettings, setSavingSettings]  = useState(false)
-  const [settingsSaved,  setSettingsSaved]   = useState(false)
-  const [settingsError,  setSettingsError]   = useState<string | null>(null)
+  // Pricing settings
+  const [monthlyNaira,  setMonthlyNaira]  = useState(settingsMap['subscription_monthly_naira']  ?? '2500')
+  const [yearlyNaira,   setYearlyNaira]   = useState(settingsMap['subscription_yearly_naira']   ?? '25000')
+  const [monthlyLabel,  setMonthlyLabel]  = useState(settingsMap['subscription_monthly_label']  ?? 'Monthly Verification')
+  const [yearlyLabel,   setYearlyLabel]   = useState(settingsMap['subscription_yearly_label']   ?? 'Yearly Verification')
+
+  // Rate limit settings
+  const [rateLimitOpps,   setRateLimitOpps]   = useState(settingsMap['rate_limit_opportunities'] ?? '3')
+  const [rateLimitMarket, setRateLimitMarket] = useState(settingsMap['rate_limit_marketplace']   ?? '5')
+
+  const [savingSettings, setSavingSettings] = useState(false)
+  const [settingsSaved,  setSettingsSaved]  = useState(false)
+  const [settingsError,  setSettingsError]  = useState<string | null>(null)
 
   const saveSettings = async () => {
     setSavingSettings(true)
@@ -60,6 +65,8 @@ export default function AdminClient({
           subscription_yearly_naira:  yearlyNaira,
           subscription_monthly_label: monthlyLabel,
           subscription_yearly_label:  yearlyLabel,
+          rate_limit_opportunities:   rateLimitOpps,
+          rate_limit_marketplace:     rateLimitMarket,
         }),
       })
       if (!res.ok) throw new Error('Failed to save')
@@ -218,9 +225,9 @@ export default function AdminClient({
             const isAdmin         = m.is_admin as boolean
             const isVerified      = m.is_verified as boolean
             const isElite         = m.is_elite as boolean
-            const memberAdminRole = typeof m.admin_role === 'string' ? m.admin_role : null
-            const role            = typeof m.role        === 'string' ? m.role        : ''
-            const institution     = typeof m.institution === 'string' ? m.institution : ''
+            const memberAdminRole = typeof m.admin_role   === 'string' ? m.admin_role   : null
+            const role            = typeof m.role         === 'string' ? m.role         : ''
+            const institution     = typeof m.institution  === 'string' ? m.institution  : ''
             const name            = `${typeof m.first_name === 'string' ? m.first_name : ''} ${typeof m.last_name === 'string' ? m.last_name : ''}`.trim() || 'Unnamed member'
             const isCurrentUser   = id === currentUserId
 
@@ -253,30 +260,24 @@ export default function AdminClient({
                 </div>
 
                 <div className="flex flex-col gap-1.5 shrink-0">
-                  {/* Suspend — available to all admins, not on yourself */}
                   {!isCurrentUser && (
                     <button
                       onClick={() => memberAction(id, isSuspended ? 'unsuspend' : 'suspend', { is_suspended: !isSuspended })}
                       disabled={loadingId === `${id}-suspend` || loadingId === `${id}-unsuspend`}
                       className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors disabled:opacity-50 ${
-                        isSuspended
-                          ? 'border-green-200 text-green-600 hover:bg-green-50'
-                          : 'border-red-200 text-red-600 hover:bg-red-50'
+                        isSuspended ? 'border-green-200 text-green-600 hover:bg-green-50' : 'border-red-200 text-red-600 hover:bg-red-50'
                       }`}>
                       {isSuspended ? 'Unsuspend' : 'Suspend'}
                     </button>
                   )}
 
-                  {/* Verify + Elite — super admin only */}
                   {isSuperAdmin && (
                     <>
                       <button
                         onClick={() => memberAction(id, isVerified ? 'unverify' : 'verify', { is_verified: !isVerified })}
                         disabled={loadingId === `${id}-verify` || loadingId === `${id}-unverify`}
                         className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors disabled:opacity-50 ${
-                          isVerified
-                            ? 'border-gray-200 text-gray-600 hover:bg-gray-50'
-                            : 'border-green-200 text-green-600 hover:bg-green-50'
+                          isVerified ? 'border-gray-200 text-gray-600 hover:bg-gray-50' : 'border-green-200 text-green-600 hover:bg-green-50'
                         }`}>
                         {isVerified ? 'Unverify' : 'Verify ✓'}
                       </button>
@@ -284,16 +285,13 @@ export default function AdminClient({
                         onClick={() => memberAction(id, isElite ? 'unelite' : 'elite', { is_elite: !isElite })}
                         disabled={loadingId === `${id}-elite` || loadingId === `${id}-unelite`}
                         className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors disabled:opacity-50 ${
-                          isElite
-                            ? 'border-amber-200 text-amber-600 hover:bg-amber-50'
-                            : 'border-amber-200 text-amber-700 hover:bg-amber-50'
+                          isElite ? 'border-amber-200 text-amber-600 hover:bg-amber-50' : 'border-amber-200 text-amber-700 hover:bg-amber-50'
                         }`}>
                         {isElite ? 'Revoke Crown' : 'Grant Crown ★'}
                       </button>
                     </>
                   )}
 
-                  {/* Admin management — super admin only, not on yourself */}
                   {isSuperAdmin && !isCurrentUser && (
                     <div className="flex flex-col gap-1.5 pt-1.5 mt-0.5 border-t border-gray-100">
                       {!isAdmin && (
@@ -355,69 +353,107 @@ export default function AdminClient({
 
       {/* Settings — super admin only */}
       {tab === 'settings' && isSuperAdmin && (
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-6">
-          <div>
-            <h2 className="text-base font-bold text-gray-900 mb-1">Subscription Pricing</h2>
-            <p className="text-sm text-gray-500">Changes take effect immediately for all new payments.</p>
-          </div>
+        <div className="space-y-8">
 
-          <div className="grid sm:grid-cols-2 gap-6">
-            {/* Monthly */}
-            <div className="space-y-3 p-4 rounded-xl border border-gray-100 bg-gray-50">
-              <p className="text-sm font-semibold text-gray-700">Monthly Plan</p>
-              <div>
-                <label className="text-xs text-gray-500 mb-1 block">Price (₦)</label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₦</span>
-                  <input type="number" min="0" value={monthlyNaira}
-                    onChange={e => setMonthlyNaira(e.target.value)}
-                    className="w-full pl-7 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white" />
+          {/* Subscription Pricing */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-6">
+            <div>
+              <h2 className="text-base font-bold text-gray-900 mb-1">Subscription Pricing</h2>
+              <p className="text-sm text-gray-500">Changes take effect immediately for all new payments.</p>
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-6">
+              <div className="space-y-3 p-4 rounded-xl border border-gray-100 bg-gray-50">
+                <p className="text-sm font-semibold text-gray-700">Monthly Plan</p>
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">Price (₦)</label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₦</span>
+                    <input type="number" min="0" value={monthlyNaira}
+                      onChange={e => setMonthlyNaira(e.target.value)}
+                      className="w-full pl-7 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white" />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">Label (shown on Paystack)</label>
+                  <input type="text" value={monthlyLabel}
+                    onChange={e => setMonthlyLabel(e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white" />
                 </div>
               </div>
-              <div>
-                <label className="text-xs text-gray-500 mb-1 block">Label (shown on Paystack)</label>
-                <input type="text" value={monthlyLabel}
-                  onChange={e => setMonthlyLabel(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white" />
+
+              <div className="space-y-3 p-4 rounded-xl border border-gray-100 bg-gray-50">
+                <p className="text-sm font-semibold text-gray-700">Yearly Plan</p>
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">Price (₦)</label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₦</span>
+                    <input type="number" min="0" value={yearlyNaira}
+                      onChange={e => setYearlyNaira(e.target.value)}
+                      className="w-full pl-7 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white" />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">Label (shown on Paystack)</label>
+                  <input type="text" value={yearlyLabel}
+                    onChange={e => setYearlyLabel(e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white" />
+                </div>
               </div>
             </div>
 
-            {/* Yearly */}
-            <div className="space-y-3 p-4 rounded-xl border border-gray-100 bg-gray-50">
-              <p className="text-sm font-semibold text-gray-700">Yearly Plan</p>
-              <div>
-                <label className="text-xs text-gray-500 mb-1 block">Price (₦)</label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₦</span>
-                  <input type="number" min="0" value={yearlyNaira}
-                    onChange={e => setYearlyNaira(e.target.value)}
-                    className="w-full pl-7 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white" />
+            <div className="bg-green-50 border border-green-100 rounded-xl p-4 text-sm text-green-800">
+              <p className="font-semibold mb-1">Live preview</p>
+              <p>Monthly: <strong>₦{parseInt(monthlyNaira || '0').toLocaleString()}</strong> — {monthlyLabel}</p>
+              <p>Yearly: <strong>₦{parseInt(yearlyNaira || '0').toLocaleString()}</strong> — {yearlyLabel}</p>
+              <p className="text-xs text-green-600 mt-1">
+                Yearly saves ₦{Math.max(0, (parseInt(monthlyNaira || '0') * 12) - parseInt(yearlyNaira || '0')).toLocaleString()} vs paying monthly
+              </p>
+            </div>
+          </div>
+
+          {/* Rate Limits */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-6">
+            <div>
+              <h2 className="text-base font-bold text-gray-900 mb-1">Rate Limits</h2>
+              <p className="text-sm text-gray-500">Maximum number of posts a member can submit per 24 hours.</p>
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-6">
+              <div className="space-y-3 p-4 rounded-xl border border-gray-100 bg-gray-50">
+                <p className="text-sm font-semibold text-gray-700">Opportunities</p>
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">Max posts per 24 hours</label>
+                  <input type="number" min="1" value={rateLimitOpps}
+                    onChange={e => setRateLimitOpps(e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white" />
                 </div>
+                <p className="text-xs text-gray-400">
+                  Members can post up to <strong>{rateLimitOpps}</strong> opportunit{parseInt(rateLimitOpps) === 1 ? 'y' : 'ies'} every 24 hours
+                </p>
               </div>
-              <div>
-                <label className="text-xs text-gray-500 mb-1 block">Label (shown on Paystack)</label>
-                <input type="text" value={yearlyLabel}
-                  onChange={e => setYearlyLabel(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white" />
+
+              <div className="space-y-3 p-4 rounded-xl border border-gray-100 bg-gray-50">
+                <p className="text-sm font-semibold text-gray-700">Marketplace</p>
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">Max listings per 24 hours</label>
+                  <input type="number" min="1" value={rateLimitMarket}
+                    onChange={e => setRateLimitMarket(e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white" />
+                </div>
+                <p className="text-xs text-gray-400">
+                  Members can post up to <strong>{rateLimitMarket}</strong> listing{parseInt(rateLimitMarket) === 1 ? '' : 's'} every 24 hours
+                </p>
               </div>
             </div>
           </div>
 
-          {/* Preview */}
-          <div className="bg-green-50 border border-green-100 rounded-xl p-4 text-sm text-green-800">
-            <p className="font-semibold mb-1">Live preview</p>
-            <p>Monthly: <strong>₦{parseInt(monthlyNaira || '0').toLocaleString()}</strong> — {monthlyLabel}</p>
-            <p>Yearly: <strong>₦{parseInt(yearlyNaira || '0').toLocaleString()}</strong> — {yearlyLabel}</p>
-            <p className="text-xs text-green-600 mt-1">
-              Yearly saves ₦{Math.max(0, (parseInt(monthlyNaira || '0') * 12) - parseInt(yearlyNaira || '0')).toLocaleString()} vs paying monthly
-            </p>
-          </div>
-
+          {/* Save button — shared for all settings */}
           {settingsError && <p className="text-sm text-red-600">{settingsError}</p>}
 
           <button onClick={saveSettings} disabled={savingSettings}
             className="w-full sm:w-auto bg-green-600 text-white px-6 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors disabled:opacity-50">
-            {savingSettings ? 'Saving…' : settingsSaved ? '✓ Saved!' : 'Save Pricing'}
+            {savingSettings ? 'Saving…' : settingsSaved ? '✓ All settings saved!' : 'Save All Settings'}
           </button>
         </div>
       )}
