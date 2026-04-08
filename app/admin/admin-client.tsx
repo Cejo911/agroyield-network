@@ -4,17 +4,28 @@ import { useState } from 'react'
 
 type Row = Record<string, unknown>
 
+type ReportGroup = {
+  postId:    string
+  postType:  'opportunity' | 'listing'
+  postTitle: string
+  isActive:  boolean
+  count:     number
+  reasons:   Record<string, number>
+  latestAt:  string
+}
+
 type Props = {
   opportunities:    Row[]
   listings:         Row[]
   members:          Row[]
+  reportGroups:     ReportGroup[]
   profilesMap:      Record<string, { first_name: string | null; last_name: string | null }>
   settingsMap:      Record<string, string>
   currentAdminRole: string
   currentUserId:    string
 }
 
-type Tab = 'opportunities' | 'listings' | 'members' | 'settings'
+type Tab = 'opportunities' | 'listings' | 'members' | 'reports' | 'settings'
 
 function formatDate(val: unknown): string {
   if (typeof val !== 'string') return '—'
@@ -25,6 +36,7 @@ export default function AdminClient({
   opportunities: init_o,
   listings: init_l,
   members: init_m,
+  reportGroups: init_r,
   profilesMap,
   settingsMap,
   currentAdminRole,
@@ -32,11 +44,12 @@ export default function AdminClient({
 }: Props) {
   const isSuperAdmin = currentAdminRole === 'super'
 
-  const [tab, setTab]             = useState<Tab>('opportunities')
-  const [opportunities, setOpps]  = useState(init_o)
-  const [listings, setListings]   = useState(init_l)
-  const [members, setMembers]     = useState(init_m)
-  const [loadingId, setLoadingId] = useState<string | null>(null)
+  const [tab, setTab]               = useState<Tab>('opportunities')
+  const [opportunities, setOpps]    = useState(init_o)
+  const [listings, setListings]     = useState(init_l)
+  const [members, setMembers]       = useState(init_m)
+  const [reportGroups, setReports]  = useState(init_r)
+  const [loadingId, setLoadingId]   = useState<string | null>(null)
 
   // Pricing settings
   const [monthlyNaira,  setMonthlyNaira]  = useState(settingsMap['subscription_monthly_naira']  ?? '2500')
@@ -47,6 +60,9 @@ export default function AdminClient({
   // Rate limit settings
   const [rateLimitOpps,   setRateLimitOpps]   = useState(settingsMap['rate_limit_opportunities'] ?? '3')
   const [rateLimitMarket, setRateLimitMarket] = useState(settingsMap['rate_limit_marketplace']   ?? '5')
+
+  // Report threshold setting
+  const [reportThreshold, setReportThreshold] = useState(settingsMap['report_threshold'] ?? '3')
 
   const [savingSettings, setSavingSettings] = useState(false)
   const [settingsSaved,  setSettingsSaved]  = useState(false)
@@ -67,6 +83,7 @@ export default function AdminClient({
           subscription_yearly_label:  yearlyLabel,
           rate_limit_opportunities:   rateLimitOpps,
           rate_limit_marketplace:     rateLimitMarket,
+          report_threshold:           reportThreshold,
         }),
       })
       if (!res.ok) throw new Error('Failed to save')
@@ -119,10 +136,25 @@ export default function AdminClient({
     setLoadingId(null)
   }
 
+  const restorePost = async (postId: string, postType: 'opportunity' | 'listing') => {
+    setLoadingId(`restore-${postId}`)
+    const endpoint = postType === 'opportunity' ? '/api/admin/opportunity' : '/api/admin/listing'
+    await fetch(endpoint, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: postId, is_active: true }),
+    })
+    setReports(prev => prev.map(g =>
+      g.postId === postId && g.postType === postType ? { ...g, isActive: true } : g
+    ))
+    setLoadingId(null)
+  }
+
   const tabs: { key: Tab; label: string; count?: number }[] = [
     { key: 'opportunities', label: 'Opportunities', count: opportunities.length },
     { key: 'listings',      label: 'Marketplace',   count: listings.length },
     { key: 'members',       label: 'Members',        count: members.length },
+    { key: 'reports',       label: '🚩 Reports',     count: reportGroups.length },
     ...(isSuperAdmin ? [{ key: 'settings' as Tab, label: '⚙ Settings' }] : []),
   ]
 
@@ -132,12 +164,14 @@ export default function AdminClient({
       <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-6 flex-wrap">
         {tabs.map(t => (
           <button key={t.key} onClick={() => setTab(t.key)}
-            className={`flex-1 py-2 px-4 rounded-lg text-sm font-semibold transition-colors ${
+            className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition-colors ${
               tab === t.key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
             }`}>
             {t.label}
             {t.count !== undefined && (
-              <span className="ml-1 text-xs text-gray-400">({t.count})</span>
+              <span className={`ml-1 text-xs ${t.key === 'reports' && t.count > 0 ? 'text-orange-500' : 'text-gray-400'}`}>
+                ({t.count})
+              </span>
             )}
           </button>
         ))}
@@ -225,12 +259,11 @@ export default function AdminClient({
             const isAdmin         = m.is_admin as boolean
             const isVerified      = m.is_verified as boolean
             const isElite         = m.is_elite as boolean
-            const memberAdminRole = typeof m.admin_role   === 'string' ? m.admin_role   : null
-            const role            = typeof m.role         === 'string' ? m.role         : ''
-            const institution     = typeof m.institution  === 'string' ? m.institution  : ''
+            const memberAdminRole = typeof m.admin_role  === 'string' ? m.admin_role  : null
+            const role            = typeof m.role        === 'string' ? m.role        : ''
+            const institution     = typeof m.institution === 'string' ? m.institution : ''
             const name            = `${typeof m.first_name === 'string' ? m.first_name : ''} ${typeof m.last_name === 'string' ? m.last_name : ''}`.trim() || 'Unnamed member'
             const isCurrentUser   = id === currentUserId
-
             return (
               <div key={id} className={`flex items-start justify-between gap-4 bg-white rounded-xl border border-gray-100 p-4 ${isSuspended ? 'opacity-60' : ''}`}>
                 <div className="flex-1 min-w-0">
@@ -258,7 +291,6 @@ export default function AdminClient({
                   {institution && <p className="text-xs text-gray-500 mt-0.5 truncate">{institution}</p>}
                   <p className="text-xs text-gray-400 mt-0.5">Joined {formatDate(m.created_at)}</p>
                 </div>
-
                 <div className="flex flex-col gap-1.5 shrink-0">
                   {!isCurrentUser && (
                     <button
@@ -270,7 +302,6 @@ export default function AdminClient({
                       {isSuspended ? 'Unsuspend' : 'Suspend'}
                     </button>
                   )}
-
                   {isSuperAdmin && (
                     <>
                       <button
@@ -291,7 +322,6 @@ export default function AdminClient({
                       </button>
                     </>
                   )}
-
                   {isSuperAdmin && !isCurrentUser && (
                     <div className="flex flex-col gap-1.5 pt-1.5 mt-0.5 border-t border-gray-100">
                       {!isAdmin && (
@@ -351,6 +381,68 @@ export default function AdminClient({
         </div>
       )}
 
+      {/* Reports */}
+      {tab === 'reports' && (
+        <div className="space-y-3">
+          {reportGroups.length === 0 && (
+            <p className="text-gray-500 text-sm text-center py-8">No reports yet.</p>
+          )}
+          {reportGroups.map(g => (
+            <div key={`${g.postType}:${g.postId}`}
+              className={`bg-white rounded-xl border p-4 ${!g.isActive ? 'border-red-100' : 'border-gray-100'}`}>
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                      !g.isActive ? 'bg-red-100 text-red-600' : 'bg-orange-100 text-orange-600'
+                    }`}>
+                      {!g.isActive ? 'Auto-hidden' : 'Active'}
+                    </span>
+                    <span className="text-xs text-gray-400 capitalize">
+                      {g.postType === 'listing' ? 'Marketplace' : 'Opportunity'}
+                    </span>
+                    <span className="text-xs font-semibold text-orange-600">
+                      {g.count} report{g.count === 1 ? '' : 's'}
+                    </span>
+                  </div>
+                  <p className="font-semibold text-gray-900 text-sm truncate">{g.postTitle}</p>
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {Object.entries(g.reasons).map(([reason, cnt]) => (
+                      <span key={reason}
+                        className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                        {reason}: {cnt}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1">Latest report: {formatDate(g.latestAt)}</p>
+                </div>
+                <div className="flex flex-col gap-1.5 shrink-0">
+                  {!g.isActive && (
+                    <button
+                      onClick={() => restorePost(g.postId, g.postType)}
+                      disabled={loadingId === `restore-${g.postId}`}
+                      className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-green-200 text-green-600 hover:bg-green-50 transition-colors disabled:opacity-50">
+                      {loadingId === `restore-${g.postId}` ? '…' : 'Restore'}
+                    </button>
+                  )}
+                  {g.isActive && (
+                    <button
+                      onClick={() => {
+                        if (g.postType === 'opportunity') toggleOpportunity(g.postId, true)
+                        else toggleListing(g.postId, true)
+                      }}
+                      disabled={loadingId === g.postId}
+                      className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50">
+                      {loadingId === g.postId ? '…' : 'Remove'}
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Settings — super admin only */}
       {tab === 'settings' && isSuperAdmin && (
         <div className="space-y-8">
@@ -361,7 +453,6 @@ export default function AdminClient({
               <h2 className="text-base font-bold text-gray-900 mb-1">Subscription Pricing</h2>
               <p className="text-sm text-gray-500">Changes take effect immediately for all new payments.</p>
             </div>
-
             <div className="grid sm:grid-cols-2 gap-6">
               <div className="space-y-3 p-4 rounded-xl border border-gray-100 bg-gray-50">
                 <p className="text-sm font-semibold text-gray-700">Monthly Plan</p>
@@ -376,12 +467,10 @@ export default function AdminClient({
                 </div>
                 <div>
                   <label className="text-xs text-gray-500 mb-1 block">Label (shown on Paystack)</label>
-                  <input type="text" value={monthlyLabel}
-                    onChange={e => setMonthlyLabel(e.target.value)}
+                  <input type="text" value={monthlyLabel} onChange={e => setMonthlyLabel(e.target.value)}
                     className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white" />
                 </div>
               </div>
-
               <div className="space-y-3 p-4 rounded-xl border border-gray-100 bg-gray-50">
                 <p className="text-sm font-semibold text-gray-700">Yearly Plan</p>
                 <div>
@@ -395,13 +484,11 @@ export default function AdminClient({
                 </div>
                 <div>
                   <label className="text-xs text-gray-500 mb-1 block">Label (shown on Paystack)</label>
-                  <input type="text" value={yearlyLabel}
-                    onChange={e => setYearlyLabel(e.target.value)}
+                  <input type="text" value={yearlyLabel} onChange={e => setYearlyLabel(e.target.value)}
                     className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white" />
                 </div>
               </div>
             </div>
-
             <div className="bg-green-50 border border-green-100 rounded-xl p-4 text-sm text-green-800">
               <p className="font-semibold mb-1">Live preview</p>
               <p>Monthly: <strong>₦{parseInt(monthlyNaira || '0').toLocaleString()}</strong> — {monthlyLabel}</p>
@@ -416,9 +503,8 @@ export default function AdminClient({
           <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-6">
             <div>
               <h2 className="text-base font-bold text-gray-900 mb-1">Rate Limits</h2>
-              <p className="text-sm text-gray-500">Maximum number of posts a member can submit per 24 hours.</p>
+              <p className="text-sm text-gray-500">Maximum posts a member can submit per 24 hours.</p>
             </div>
-
             <div className="grid sm:grid-cols-2 gap-6">
               <div className="space-y-3 p-4 rounded-xl border border-gray-100 bg-gray-50">
                 <p className="text-sm font-semibold text-gray-700">Opportunities</p>
@@ -429,10 +515,9 @@ export default function AdminClient({
                     className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white" />
                 </div>
                 <p className="text-xs text-gray-400">
-                  Members can post up to <strong>{rateLimitOpps}</strong> opportunit{parseInt(rateLimitOpps) === 1 ? 'y' : 'ies'} every 24 hours
+                  Up to <strong>{rateLimitOpps}</strong> opportunit{parseInt(rateLimitOpps) === 1 ? 'y' : 'ies'} per 24 hours
                 </p>
               </div>
-
               <div className="space-y-3 p-4 rounded-xl border border-gray-100 bg-gray-50">
                 <p className="text-sm font-semibold text-gray-700">Marketplace</p>
                 <div>
@@ -442,15 +527,33 @@ export default function AdminClient({
                     className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white" />
                 </div>
                 <p className="text-xs text-gray-400">
-                  Members can post up to <strong>{rateLimitMarket}</strong> listing{parseInt(rateLimitMarket) === 1 ? '' : 's'} every 24 hours
+                  Up to <strong>{rateLimitMarket}</strong> listing{parseInt(rateLimitMarket) === 1 ? '' : 's'} per 24 hours
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Save button — shared for all settings */}
-          {settingsError && <p className="text-sm text-red-600">{settingsError}</p>}
+          {/* Report Threshold */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-6">
+            <div>
+              <h2 className="text-base font-bold text-gray-900 mb-1">Report Threshold</h2>
+              <p className="text-sm text-gray-500">Number of reports before a post is automatically hidden.</p>
+            </div>
+            <div className="max-w-xs space-y-3 p-4 rounded-xl border border-gray-100 bg-gray-50">
+              <p className="text-sm font-semibold text-gray-700">Auto-hide after</p>
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">Number of reports</label>
+                <input type="number" min="1" value={reportThreshold}
+                  onChange={e => setReportThreshold(e.target.value)}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white" />
+              </div>
+              <p className="text-xs text-gray-400">
+                Posts are hidden after <strong>{reportThreshold}</strong> report{parseInt(reportThreshold) === 1 ? '' : 's'} and flagged in the Reports tab
+              </p>
+            </div>
+          </div>
 
+          {settingsError && <p className="text-sm text-red-600">{settingsError}</p>}
           <button onClick={saveSettings} disabled={savingSettings}
             className="w-full sm:w-auto bg-green-600 text-white px-6 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors disabled:opacity-50">
             {savingSettings ? 'Saving…' : settingsSaved ? '✓ All settings saved!' : 'Save All Settings'}
