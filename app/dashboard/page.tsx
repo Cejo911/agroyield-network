@@ -39,7 +39,6 @@ const MODULES = [
 export default async function Dashboard() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-
   if (!user) redirect('/login')
 
   const { data: profile } = await supabase
@@ -52,20 +51,21 @@ export default async function Dashboard() {
   const profileComplete = !!(profile?.first_name && profile?.role)
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <AppNav />
-
       <main className="max-w-6xl mx-auto px-4 py-10">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Welcome, {firstName} 👋</h1>
-          <p className="text-gray-500 mt-1">What would you like to do today?</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            Welcome, {firstName} 👋
+          </h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">What would you like to do today?</p>
         </div>
 
         {!profileComplete && (
-          <div className="mb-8 bg-amber-50 border border-amber-200 rounded-xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="mb-8 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <p className="font-semibold text-amber-800">Complete your profile</p>
-              <p className="text-sm text-amber-700 mt-0.5">
+              <p className="font-semibold text-amber-800 dark:text-amber-400">Complete your profile</p>
+              <p className="text-sm text-amber-700 dark:text-amber-500 mt-0.5">
                 Let the community know who you are and what you are working on.
               </p>
             </div>
@@ -83,13 +83,13 @@ export default async function Dashboard() {
             <Link
               key={module.title}
               href={module.href}
-              className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 hover:shadow-md hover:border-green-200 transition-all group"
+              className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-6 hover:shadow-md hover:border-green-200 dark:hover:border-green-800 transition-all group"
             >
               <div className="text-3xl mb-3">{module.icon}</div>
-              <h3 className="font-semibold text-gray-900 group-hover:text-green-700 transition-colors mb-2">
+              <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-green-700 dark:group-hover:text-green-400 transition-colors mb-2">
                 {module.title}
               </h3>
-              <p className="text-sm text-gray-500">{module.description}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{module.description}</p>
             </Link>
           ))}
         </div>
