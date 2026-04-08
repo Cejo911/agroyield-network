@@ -1,6 +1,8 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
+import LikeButton from '@/app/components/LikeButton'
+import ReportButton from '@/app/components/ReportButton'
 
 const CATEGORIES = ['All', 'Produce', 'Inputs', 'Equipment', 'Livestock', 'Services', 'Other']
 const TYPES = ['All', 'Sell', 'Buy', 'Trade']
@@ -49,7 +51,6 @@ const timeAgo = (dateStr: string) => {
   if (days < 7) return `${days}d ago`
   return new Date(dateStr).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
 }
-
 const formatPrice = (price: number) =>
   new Intl.NumberFormat('en-NG', {
     style: 'currency', currency: 'NGN', maximumFractionDigits: 0,
@@ -123,6 +124,7 @@ export default function MarketplaceClient({ listings }: { listings: Listing[] })
             </button>
           ))}
         </div>
+
         {/* Price range */}
         <div className="pt-1 border-t border-gray-100">
           <p className="text-xs font-medium text-gray-500 mb-2">Price range (₦)</p>
@@ -154,6 +156,7 @@ export default function MarketplaceClient({ listings }: { listings: Listing[] })
             )}
           </div>
         </div>
+
         {/* Clear all */}
         {hasActiveFilters && (
           <button
@@ -209,9 +212,21 @@ export default function MarketplaceClient({ listings }: { listings: Listing[] })
               {listing.description && (
                 <p className="text-sm text-gray-400 line-clamp-2 mb-3">{listing.description}</p>
               )}
-              <div className="flex items-center justify-between text-xs text-gray-400 mt-auto">
-                {listing.state && <span>📍 {listing.state}</span>}
-                <span>{timeAgo(listing.created_at)}</span>
+
+              {/* Bottom row: location + time + like/report */}
+              <div className="flex items-center justify-between text-xs text-gray-400 mt-auto pt-3 border-t border-gray-100">
+                <div className="flex items-center gap-2">
+                  {listing.state && <span>📍 {listing.state}</span>}
+                  <span>{timeAgo(listing.created_at)}</span>
+                </div>
+                {/* stopPropagation prevents card navigation on button click */}
+                <div
+                  className="flex items-center gap-3"
+                  onClick={e => e.stopPropagation()}
+                >
+                  <LikeButton postId={listing.id} postType="listing" />
+                  <ReportButton postId={listing.id} postType="listing" />
+                </div>
               </div>
             </Link>
           ))}
