@@ -7,6 +7,7 @@ async function getPrices() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const adminAny = adminDb as any
   const { data } = await adminAny
     .from('settings')
@@ -17,15 +18,14 @@ async function getPrices() {
   for (const row of data ?? []) map[row.key] = row.value
   return {
     monthly: parseInt(map.monthly_price ?? '2500', 10),
-    annual: parseInt(map.annual_price ?? '25000', 10),
+    annual:  parseInt(map.annual_price  ?? '25000', 10),
   }
 }
 
 export default async function PricingPage() {
   const prices = await getPrices()
-
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <AppNav />
       <PricingClient monthly={prices.monthly} annual={prices.annual} />
     </div>
