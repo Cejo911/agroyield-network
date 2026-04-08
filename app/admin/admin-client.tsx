@@ -67,6 +67,11 @@ export default function AdminClient({
   // Registration
   const [registrationEnabled, setRegistrationEnabled] = useState(settingsMap['registration_enabled'] !== 'false')
 
+  // Moderation mode
+  const [moderationMode, setModerationMode] = useState<'immediate' | 'approval'>(
+    (settingsMap['moderation_mode'] as 'immediate' | 'approval') ?? 'immediate'
+  )
+
   // Announcement banner
   const [announcementEnabled, setAnnouncementEnabled] = useState(settingsMap['announcement_enabled'] === 'true')
   const [announcementText,    setAnnouncementText]    = useState(settingsMap['announcement_text']    ?? '')
@@ -91,9 +96,7 @@ export default function AdminClient({
     setOpportunityTypes(prev => [...prev, val])
     setNewOpportunityType('')
   }
-  const removeOpportunityType = (type: string) => {
-    setOpportunityTypes(prev => prev.filter(t => t !== type))
-  }
+  const removeOpportunityType = (type: string) => setOpportunityTypes(prev => prev.filter(t => t !== type))
 
   const addMarketplaceCategory = () => {
     const val = newMarketplaceCategory.trim().toLowerCase()
@@ -101,9 +104,7 @@ export default function AdminClient({
     setMarketplaceCategories(prev => [...prev, val])
     setNewMarketplaceCategory('')
   }
-  const removeMarketplaceCategory = (cat: string) => {
-    setMarketplaceCategories(prev => prev.filter(c => c !== cat))
-  }
+  const removeMarketplaceCategory = (cat: string) => setMarketplaceCategories(prev => prev.filter(c => c !== cat))
 
   // Pricing
   const [monthlyNaira,  setMonthlyNaira]  = useState(settingsMap['subscription_monthly_naira']  ?? '2500')
@@ -132,6 +133,7 @@ export default function AdminClient({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           registration_enabled:       registrationEnabled ? 'true' : 'false',
+          moderation_mode:            moderationMode,
           announcement_enabled:       announcementEnabled ? 'true' : 'false',
           announcement_text:          announcementText,
           announcement_color:         announcementColor,
@@ -174,6 +176,28 @@ export default function AdminClient({
     setLoadingId(null)
   }
 
+  const approveOpportunity = async (id: string) => {
+    setLoadingId(`approve-${id}`)
+    await fetch('/api/admin/opportunity', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, is_active: true, is_pending_review: false }),
+    })
+    setOpps(prev => prev.map(o => o.id === id ? { ...o, is_active: true, is_pending_review: false } : o))
+    setLoadingId(null)
+  }
+
+  const declineOpportunity = async (id: string) => {
+    setLoadingId(`decline-${id}`)
+    await fetch('/api/admin/opportunity', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, is_active: false, is_pending_review: false }),
+    })
+    setOpps(prev => prev.map(o => o.id === id ? { ...o, is_active: false, is_pending_review: false } : o))
+    setLoadingId(null)
+  }
+
   const toggleListing = async (id: string, current: boolean) => {
     setLoadingId(id)
     await fetch('/api/admin/listing', {
@@ -182,6 +206,28 @@ export default function AdminClient({
       body: JSON.stringify({ id, is_active: !current }),
     })
     setListings(prev => prev.map(l => l.id === id ? { ...l, is_active: !current } : l))
+    setLoadingId(null)
+  }
+
+  const approveListing = async (id: string) => {
+    setLoadingId(`approve-${id}`)
+    await fetch('/api/admin/listing', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, is_active: true, is_pending_review: false }),
+    })
+    setListings(prev => prev.map(l => l.id === id ? { ...l, is_active: true, is_pending_review: false } : l))
+    setLoadingId(null)
+  }
+
+  const declineListing = async (id: string) => {
+    setLoadingId(`decline-${id}`)
+    await fetch('/api/admin/listing', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, is_active: false, is_pending_review: false }),
+    })
+    setListings(prev => prev.map(l => l.id === id ? { ...l, is_active: false, is_pending_review: false } : l))
     setLoadingId(null)
   }
 
@@ -258,23 +304,48 @@ export default function AdminClient({
         <div className="space-y-3">
           {opportunities.length === 0 && <p className="text-gray-500 text-sm text-center py-8">No opportunities yet.</p>}
           {opportunities.map(o => {
-            const id = o.id as string; const isActive = o.is_active as boolean
-            const type = typeof o.type === 'string' ? o.type : ''
-            const title = typeof o.title === 'string' ? o.title : ''
+            const id        = o.id as string
+            const isActive  = o.is_active as boolean
+            const isPending = o.is_pending_review as boolean
+            const type      = typeof o.type  === 'string' ? o.type  : ''
+            const title     = typeof o.title === 'string' ? o.title : ''
             return (
-              <div key={id} className={`flex items-start justify-between gap-4 bg-white rounded-xl border border-gray-100 p-4 ${!isActive ? 'opacity-60' : ''}`}>
+              <div key={id} className={`flex items-start justify-between gap-4 bg-white rounded-xl border p-4 ${
+                isPending ? 'border-yellow-100' : !isActive ? 'opacity-60 border-gray-100' : 'border-gray-100'
+              }`}>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>{isActive ? 'Active' : 'Removed'}</span>
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                      isPending ? 'bg-yellow-100 text-yellow-700' :
+                      isActive  ? 'bg-green-100 text-green-700'  :
+                                  'bg-red-100 text-red-600'
+                    }`}>
+                      {isPending ? 'Pending' : isActive ? 'Active' : 'Removed'}
+                    </span>
                     <span className="text-xs text-gray-400 capitalize">{type}</span>
                   </div>
                   <p className="font-semibold text-gray-900 text-sm truncate">{title}</p>
                   <p className="text-xs text-gray-500 mt-0.5">By {posterName(o.user_id)} · {formatDate(o.created_at)}</p>
                 </div>
-                <button onClick={() => toggleOpportunity(id, isActive)} disabled={loadingId === id}
-                  className={`shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors disabled:opacity-50 ${isActive ? 'border-red-200 text-red-600 hover:bg-red-50' : 'border-green-200 text-green-600 hover:bg-green-50'}`}>
-                  {loadingId === id ? '…' : isActive ? 'Remove' : 'Restore'}
-                </button>
+                {isPending ? (
+                  <div className="flex flex-col gap-1.5 shrink-0">
+                    <button onClick={() => approveOpportunity(id)} disabled={loadingId === `approve-${id}`}
+                      className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-green-200 text-green-600 hover:bg-green-50 transition-colors disabled:opacity-50">
+                      {loadingId === `approve-${id}` ? '…' : '✓ Approve'}
+                    </button>
+                    <button onClick={() => declineOpportunity(id)} disabled={loadingId === `decline-${id}`}
+                      className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50">
+                      {loadingId === `decline-${id}` ? '…' : 'Decline'}
+                    </button>
+                  </div>
+                ) : (
+                  <button onClick={() => toggleOpportunity(id, isActive)} disabled={loadingId === id}
+                    className={`shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors disabled:opacity-50 ${
+                      isActive ? 'border-red-200 text-red-600 hover:bg-red-50' : 'border-green-200 text-green-600 hover:bg-green-50'
+                    }`}>
+                    {loadingId === id ? '…' : isActive ? 'Remove' : 'Restore'}
+                  </button>
+                )}
               </div>
             )
           })}
@@ -286,23 +357,48 @@ export default function AdminClient({
         <div className="space-y-3">
           {listings.length === 0 && <p className="text-gray-500 text-sm text-center py-8">No listings yet.</p>}
           {listings.map(l => {
-            const id = l.id as string; const isActive = l.is_active as boolean
-            const category = typeof l.category === 'string' ? l.category : ''
-            const title = typeof l.title === 'string' ? l.title : ''
+            const id        = l.id as string
+            const isActive  = l.is_active as boolean
+            const isPending = l.is_pending_review as boolean
+            const category  = typeof l.category === 'string' ? l.category : ''
+            const title     = typeof l.title    === 'string' ? l.title    : ''
             return (
-              <div key={id} className={`flex items-start justify-between gap-4 bg-white rounded-xl border border-gray-100 p-4 ${!isActive ? 'opacity-60' : ''}`}>
+              <div key={id} className={`flex items-start justify-between gap-4 bg-white rounded-xl border p-4 ${
+                isPending ? 'border-yellow-100' : !isActive ? 'opacity-60 border-gray-100' : 'border-gray-100'
+              }`}>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>{isActive ? 'Active' : 'Removed'}</span>
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                      isPending ? 'bg-yellow-100 text-yellow-700' :
+                      isActive  ? 'bg-green-100 text-green-700'  :
+                                  'bg-red-100 text-red-600'
+                    }`}>
+                      {isPending ? 'Pending' : isActive ? 'Active' : 'Removed'}
+                    </span>
                     <span className="text-xs text-gray-400 capitalize">{category}</span>
                   </div>
                   <p className="font-semibold text-gray-900 text-sm truncate">{title}</p>
                   <p className="text-xs text-gray-500 mt-0.5">By {posterName(l.user_id)} · {formatDate(l.created_at)}</p>
                 </div>
-                <button onClick={() => toggleListing(id, isActive)} disabled={loadingId === id}
-                  className={`shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors disabled:opacity-50 ${isActive ? 'border-red-200 text-red-600 hover:bg-red-50' : 'border-green-200 text-green-600 hover:bg-green-50'}`}>
-                  {loadingId === id ? '…' : isActive ? 'Remove' : 'Restore'}
-                </button>
+                {isPending ? (
+                  <div className="flex flex-col gap-1.5 shrink-0">
+                    <button onClick={() => approveListing(id)} disabled={loadingId === `approve-${id}`}
+                      className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-green-200 text-green-600 hover:bg-green-50 transition-colors disabled:opacity-50">
+                      {loadingId === `approve-${id}` ? '…' : '✓ Approve'}
+                    </button>
+                    <button onClick={() => declineListing(id)} disabled={loadingId === `decline-${id}`}
+                      className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50">
+                      {loadingId === `decline-${id}` ? '…' : 'Decline'}
+                    </button>
+                  </div>
+                ) : (
+                  <button onClick={() => toggleListing(id, isActive)} disabled={loadingId === id}
+                    className={`shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors disabled:opacity-50 ${
+                      isActive ? 'border-red-200 text-red-600 hover:bg-red-50' : 'border-green-200 text-green-600 hover:bg-green-50'
+                    }`}>
+                    {loadingId === id ? '…' : isActive ? 'Remove' : 'Restore'}
+                  </button>
+                )}
               </div>
             )
           })}
@@ -314,14 +410,16 @@ export default function AdminClient({
         <div className="space-y-3">
           {members.length === 0 && <p className="text-gray-500 text-sm text-center py-8">No members yet.</p>}
           {members.map(m => {
-            const id = m.id as string; const isSuspended = m.is_suspended as boolean
-            const isAdmin = m.is_admin as boolean; const isVerified = m.is_verified as boolean
-            const isElite = m.is_elite as boolean
-            const memberAdminRole = typeof m.admin_role === 'string' ? m.admin_role : null
-            const role = typeof m.role === 'string' ? m.role : ''
-            const institution = typeof m.institution === 'string' ? m.institution : ''
-            const name = `${typeof m.first_name === 'string' ? m.first_name : ''} ${typeof m.last_name === 'string' ? m.last_name : ''}`.trim() || 'Unnamed member'
-            const isCurrentUser = id === currentUserId
+            const id              = m.id as string
+            const isSuspended     = m.is_suspended as boolean
+            const isAdmin         = m.is_admin as boolean
+            const isVerified      = m.is_verified as boolean
+            const isElite         = m.is_elite as boolean
+            const memberAdminRole = typeof m.admin_role  === 'string' ? m.admin_role  : null
+            const role            = typeof m.role        === 'string' ? m.role        : ''
+            const institution     = typeof m.institution === 'string' ? m.institution : ''
+            const name            = `${typeof m.first_name === 'string' ? m.first_name : ''} ${typeof m.last_name === 'string' ? m.last_name : ''}`.trim() || 'Unnamed member'
+            const isCurrentUser   = id === currentUserId
             return (
               <div key={id} className={`flex items-start justify-between gap-4 bg-white rounded-xl border border-gray-100 p-4 ${isSuspended ? 'opacity-60' : ''}`}>
                 <div className="flex-1 min-w-0">
@@ -456,7 +554,33 @@ export default function AdminClient({
             {!registrationEnabled && (
               <div className="flex items-start gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-xl p-3">
                 <span className="shrink-0 mt-0.5">⚠️</span>
-                <span>Registration is closed. Existing members can still log in. New visitors will see a closed message on the sign-up page.</span>
+                <span>Registration is closed. Existing members can still log in.</span>
+              </div>
+            )}
+          </div>
+
+          {/* Post Moderation */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
+            <div>
+              <h2 className="text-base font-bold text-gray-900 mb-1">Post Moderation</h2>
+              <p className="text-sm text-gray-500">Control whether new posts go live immediately or require admin approval.</p>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-3">
+              <button type="button" onClick={() => setModerationMode('immediate')}
+                className={`p-4 rounded-xl border text-left transition-all ${moderationMode === 'immediate' ? 'border-green-500 bg-green-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                <p className={`text-sm font-semibold ${moderationMode === 'immediate' ? 'text-green-700' : 'text-gray-700'}`}>⚡ Publish immediately</p>
+                <p className="text-xs text-gray-400 mt-1">Posts go live as soon as a member submits them</p>
+              </button>
+              <button type="button" onClick={() => setModerationMode('approval')}
+                className={`p-4 rounded-xl border text-left transition-all ${moderationMode === 'approval' ? 'border-green-500 bg-green-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                <p className={`text-sm font-semibold ${moderationMode === 'approval' ? 'text-green-700' : 'text-gray-700'}`}>🔍 Require approval</p>
+                <p className="text-xs text-gray-400 mt-1">Posts are hidden until an admin approves them</p>
+              </button>
+            </div>
+            {moderationMode === 'approval' && (
+              <div className="flex items-start gap-2 text-xs text-blue-700 bg-blue-50 border border-blue-100 rounded-xl p-3">
+                <span className="shrink-0 mt-0.5">ℹ️</span>
+                <span>New posts will appear in the Opportunities and Marketplace tabs with a Pending badge. Use Approve or Decline to action them.</span>
               </div>
             )}
           </div>
@@ -508,64 +632,42 @@ export default function AdminClient({
           <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-6">
             <div>
               <h2 className="text-base font-bold text-gray-900 mb-1">Content Types</h2>
-              <p className="text-sm text-gray-500">Manage the types and categories members see when posting. Changes take effect immediately.</p>
+              <p className="text-sm text-gray-500">Manage the types and categories members see when posting.</p>
             </div>
-
-            {/* Opportunity Types */}
             <div className="space-y-3 p-4 rounded-xl border border-gray-100 bg-gray-50">
               <p className="text-sm font-semibold text-gray-700">Opportunity Types</p>
               <div className="flex flex-wrap gap-2 min-h-[32px]">
                 {opportunityTypes.map(type => (
                   <span key={type} className="flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-white border border-gray-200 text-gray-700">
                     <span className="capitalize">{type}</span>
-                    <button type="button" onClick={() => removeOpportunityType(type)}
-                      className="text-gray-300 hover:text-red-500 transition-colors ml-0.5 leading-none text-base">
-                      ×
-                    </button>
+                    <button type="button" onClick={() => removeOpportunityType(type)} className="text-gray-300 hover:text-red-500 transition-colors ml-0.5 leading-none text-base">×</button>
                   </span>
                 ))}
               </div>
               <div className="flex gap-2">
-                <input
-                  type="text" value={newOpportunityType}
-                  onChange={e => setNewOpportunityType(e.target.value)}
+                <input type="text" value={newOpportunityType} onChange={e => setNewOpportunityType(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addOpportunityType() }}}
                   placeholder="Type a name and press Enter or Add…"
-                  className="flex-1 px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
-                />
-                <button type="button" onClick={addOpportunityType}
-                  className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-green-200 text-green-600 hover:bg-green-50 transition-colors shrink-0">
-                  Add
-                </button>
+                  className="flex-1 px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white" />
+                <button type="button" onClick={addOpportunityType} className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-green-200 text-green-600 hover:bg-green-50 transition-colors shrink-0">Add</button>
               </div>
             </div>
-
-            {/* Marketplace Categories */}
             <div className="space-y-3 p-4 rounded-xl border border-gray-100 bg-gray-50">
               <p className="text-sm font-semibold text-gray-700">Marketplace Categories</p>
               <div className="flex flex-wrap gap-2 min-h-[32px]">
                 {marketplaceCategories.map(cat => (
                   <span key={cat} className="flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-white border border-gray-200 text-gray-700">
                     <span className="capitalize">{cat}</span>
-                    <button type="button" onClick={() => removeMarketplaceCategory(cat)}
-                      className="text-gray-300 hover:text-red-500 transition-colors ml-0.5 leading-none text-base">
-                      ×
-                    </button>
+                    <button type="button" onClick={() => removeMarketplaceCategory(cat)} className="text-gray-300 hover:text-red-500 transition-colors ml-0.5 leading-none text-base">×</button>
                   </span>
                 ))}
               </div>
               <div className="flex gap-2">
-                <input
-                  type="text" value={newMarketplaceCategory}
-                  onChange={e => setNewMarketplaceCategory(e.target.value)}
+                <input type="text" value={newMarketplaceCategory} onChange={e => setNewMarketplaceCategory(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addMarketplaceCategory() }}}
                   placeholder="Type a name and press Enter or Add…"
-                  className="flex-1 px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
-                />
-                <button type="button" onClick={addMarketplaceCategory}
-                  className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-green-200 text-green-600 hover:bg-green-50 transition-colors shrink-0">
-                  Add
-                </button>
+                  className="flex-1 px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white" />
+                <button type="button" onClick={addMarketplaceCategory} className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-green-200 text-green-600 hover:bg-green-50 transition-colors shrink-0">Add</button>
               </div>
             </div>
           </div>
