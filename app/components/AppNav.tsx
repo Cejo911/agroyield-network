@@ -47,6 +47,7 @@ export default function AppNav() {
   const [loading,    setLoading]    = useState(false)
   const [isAdmin,    setIsAdmin]    = useState(false)
   const [isVerified, setIsVerified] = useState(false)
+  const [isChecked,  setIsChecked]  = useState(false)
 
   const pathname    = usePathname()
   const router      = useRouter()
@@ -55,18 +56,22 @@ export default function AppNav() {
 
   useEffect(() => {
     const checkAdmin = async () => {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data } = await (supabase as any)
-        .from('profiles')
-        .select('is_admin, is_verified')
-        .eq('id', user.id)
-        .single()
-      const raw = data as Record<string, unknown> | null
-      if (raw?.is_admin    === true) setIsAdmin(true)
-      if (raw?.is_verified === true) setIsVerified(true)
+      try {
+        const supabase = createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data } = await (supabase as any)
+          .from('profiles')
+          .select('is_admin, is_verified')
+          .eq('id', user.id)
+          .single()
+        const raw = data as Record<string, unknown> | null
+        if (raw?.is_admin    === true) setIsAdmin(true)
+        if (raw?.is_verified === true) setIsVerified(true)
+      } finally {
+        setIsChecked(true)
+      }
     }
     checkAdmin()
   }, [])
@@ -172,7 +177,7 @@ export default function AppNav() {
               <SearchIcon />
               <span className="hidden xl:inline text-gray-400">Search…</span>
             </button>
-            {!isAdmin && !isVerified && (
+            {isChecked && !isAdmin && !isVerified && (
               <Link href="/verify"
                 className={`text-sm font-semibold transition-colors px-3 py-1.5 rounded-lg border ${
                   isActive('/verify')
@@ -234,7 +239,7 @@ export default function AppNav() {
                 ⚙ Admin
               </Link>
             )}
-            {!isAdmin && !isVerified && (
+            {isChecked && !isAdmin && !isVerified && (
               <Link href="/verify"
                 onClick={() => setMenuOpen(false)}
                 className={`block px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
