@@ -42,8 +42,13 @@ export default function NewListingPage() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to post listing')
-      setMessage({ type: 'success', text: 'Listing posted successfully! Redirecting...' })
-      setTimeout(() => router.push('/marketplace'), 1500)
+
+      if (data.pending) {
+        setMessage({ type: 'success', text: 'Listing submitted for review. An admin will approve it shortly.' })
+      } else {
+        setMessage({ type: 'success', text: 'Listing posted successfully! Redirecting...' })
+      }
+      setTimeout(() => router.push('/marketplace'), 2000)
     } catch (err: unknown) {
       setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Something went wrong' })
     } finally {
@@ -65,8 +70,7 @@ export default function NewListingPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Title <span className="text-red-500">*</span>
               </label>
-              <input
-                type="text" required value={form.title}
+              <input type="text" required value={form.title}
                 onChange={e => setForm(prev => ({ ...prev, title: e.target.value }))}
                 placeholder="e.g. 50kg bags of yellow maize for sale"
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
@@ -79,15 +83,13 @@ export default function NewListingPage() {
               </label>
               <div className="grid grid-cols-3 gap-3">
                 {TYPES.map(type => (
-                  <button
-                    key={type} type="button"
+                  <button key={type} type="button"
                     onClick={() => setForm(prev => ({ ...prev, type }))}
                     className={`py-2.5 rounded-lg border text-sm font-medium capitalize transition-colors ${
                       form.type === type
                         ? 'border-green-600 bg-green-50 text-green-700'
                         : 'border-gray-200 text-gray-600 hover:border-green-300'
-                    }`}
-                  >
+                    }`}>
                     {type}
                   </button>
                 ))}
@@ -100,15 +102,13 @@ export default function NewListingPage() {
               </label>
               <div className="flex flex-wrap gap-2">
                 {categories.map(cat => (
-                  <button
-                    key={cat} type="button"
+                  <button key={cat} type="button"
                     onClick={() => setForm(prev => ({ ...prev, category: cat }))}
                     className={`py-2 px-3 rounded-lg border text-sm font-medium capitalize transition-colors ${
                       form.category === cat
                         ? 'border-green-600 bg-green-50 text-green-700'
                         : 'border-gray-200 text-gray-600 hover:border-green-300'
-                    }`}
-                  >
+                    }`}>
                     {cat}
                   </button>
                 ))}
@@ -121,15 +121,13 @@ export default function NewListingPage() {
                 {form.type === 'trade' && <span className="text-gray-400 font-normal">— optional for trades</span>}
               </label>
               <div className="flex gap-3 items-center">
-                <input
-                  type="number" min="0" step="0.01" value={form.price}
+                <input type="number" min="0" step="0.01" value={form.price}
                   onChange={e => setForm(prev => ({ ...prev, price: e.target.value }))}
                   placeholder="e.g. 25000"
                   className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                 />
                 <label className="flex items-center gap-2 text-sm text-gray-600 whitespace-nowrap">
-                  <input
-                    type="checkbox" checked={form.price_negotiable}
+                  <input type="checkbox" checked={form.price_negotiable}
                     onChange={e => setForm(prev => ({ ...prev, price_negotiable: e.target.checked }))}
                     className="rounded"
                   />
@@ -140,8 +138,7 @@ export default function NewListingPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-              <textarea
-                value={form.description}
+              <textarea value={form.description}
                 onChange={e => setForm(prev => ({ ...prev, description: e.target.value }))}
                 rows={4} placeholder="Describe what you are selling, buying or trading..."
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
@@ -151,19 +148,16 @@ export default function NewListingPage() {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
-                <select
-                  value={form.state}
+                <select value={form.state}
                   onChange={e => setForm(prev => ({ ...prev, state: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                >
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
                   <option value="">Select state</option>
                   {STATES.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Contact</label>
-                <input
-                  type="text" value={form.contact}
+                <input type="text" value={form.contact}
                   onChange={e => setForm(prev => ({ ...prev, contact: e.target.value }))}
                   placeholder="Phone or email"
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
@@ -179,11 +173,8 @@ export default function NewListingPage() {
               </div>
             )}
 
-            <button
-              type="submit"
-              disabled={loading || !form.title || !form.type || !form.category}
-              className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 transition-colors"
-            >
+            <button type="submit" disabled={loading || !form.title || !form.type || !form.category}
+              className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 transition-colors">
               {loading ? 'Posting...' : 'Post Listing'}
             </button>
           </form>
