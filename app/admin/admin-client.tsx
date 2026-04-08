@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 
 interface Opportunity {
   id: string
@@ -37,10 +37,13 @@ interface Member {
 }
 
 interface ReportGroup {
-  post_id: string
-  post_type: 'opportunity' | 'listing'
+  postId: string
+  postType: 'opportunity' | 'listing'
+  postTitle: string
+  isActive: boolean
   count: number
-  reasons: string[]
+  reasons: Record<string, number>
+  latestAt: string
 }
 
 interface AdminClientProps {
@@ -66,7 +69,7 @@ export default function AdminClient({
   currentAdminRole,
   currentUserId,
 }: AdminClientProps) {
-  const isSuperAdmin = currentAdminRole === 'super_admin'
+  const isSuperAdmin = currentAdminRole === 'super'
 
   const [activeTab, setActiveTab] = useState<Tab>('opportunities')
   const [opportunities, setOpportunities] = useState<Opportunity[]>(initialOpportunities)
@@ -264,7 +267,7 @@ export default function AdminClient({
       body: JSON.stringify({ postId, postType }),
     })
     setReportGroups(prev =>
-      prev.filter(rg => !(rg.post_id === postId && rg.post_type === postType))
+      prev.filter(rg => !(rg.postId === postId && rg.postType === postType))
     )
     if (postType === 'opportunity') {
       setOpportunities(prev => prev.map(o => o.id === postId ? { ...o, is_active: true } : o))
@@ -321,7 +324,6 @@ export default function AdminClient({
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Admin Dashboard</h1>
 
       {/* Tab bar */}
       <div className="border-b border-gray-200 mb-6">
@@ -354,10 +356,7 @@ export default function AdminClient({
             <p className="text-gray-500 text-sm">No opportunities found.</p>
           )}
           {opportunities.map((opp) => (
-            <div
-              key={opp.id}
-              className="bg-white border rounded-lg p-4 flex items-start justify-between gap-4"
-            >
+            <div key={opp.id} className="bg-white border rounded-lg p-4 flex items-start justify-between gap-4">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-medium text-gray-900 truncate">{opp.title}</span>
@@ -418,10 +417,7 @@ export default function AdminClient({
             <p className="text-gray-500 text-sm">No listings found.</p>
           )}
           {listings.map((listing) => (
-            <div
-              key={listing.id}
-              className="bg-white border rounded-lg p-4 flex items-start justify-between gap-4"
-            >
+            <div key={listing.id} className="bg-white border rounded-lg p-4 flex items-start justify-between gap-4">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-medium text-gray-900 truncate">{listing.title}</span>
@@ -486,10 +482,7 @@ export default function AdminClient({
             const displayName =
               [member.first_name, member.last_name].filter(Boolean).join(' ') || member.email
             return (
-              <div
-                key={member.id}
-                className="bg-white border rounded-lg p-4 flex items-start justify-between gap-4"
-              >
+              <div key={member.id} className="bg-white border rounded-lg p-4 flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-medium text-gray-900">{displayName}</span>
@@ -517,7 +510,7 @@ export default function AdminClient({
                   )}
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
-                  {member.id !== currentUserId && (
+                  {member.id !== currentUserId ? (
                     <>
                       <button
                         onClick={() => toggleVerified(member.id, !member.is_verified)}
@@ -540,8 +533,7 @@ export default function AdminClient({
                         {member.is_active ? 'Suspend' : 'Reinstate'}
                       </button>
                     </>
-                  )}
-                  {member.id === currentUserId && (
+                  ) : (
                     <span className="text-xs text-gray-400 italic">You</span>
                   )}
                 </div>
@@ -558,33 +550,43 @@ export default function AdminClient({
             <p className="text-gray-500 text-sm">No active reports.</p>
           )}
           {reportGroups.map((rg) => (
-            <div key={`${rg.post_type}-${rg.post_id}`} className="bg-white border rounded-lg p-4">
+            <div key={`${rg.postType}-${rg.postId}`} className="bg-white border rounded-lg p-4">
               <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-medium text-gray-900 capitalize">{rg.post_type}</span>
+                    <span className="font-medium text-gray-900 truncate">{rg.postTitle}</span>
+                    <span className="capitalize text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                      {rg.postType}
+                    </span>
                     <span className="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full">
                       {rg.count} report{rg.count !== 1 ? 's' : ''}
                     </span>
+                    {!rg.isActive && (
+                      <span className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full">
+                        Hidden
+                      </span>
+                    )}
                   </div>
-                  <p className="text-xs text-gray-400 mt-0.5 font-mono">ID: {rg.post_id}</p>
-                  <div className="mt-2 space-y-1">
-                    {rg.reasons.map((reason, i) => (
-                      <p key={i} className="text-xs text-gray-500">
-                        · {reason}
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    Last reported: {fmt(rg.latestAt)}
+                  </p>
+                  <div className="mt-2 space-y-0.5">
+                    {Object.entries(rg.reasons).map(([reason, count]) => (
+                      <p key={reason} className="text-xs text-gray-500">
+                        · {reason} {count > 1 ? `(×${count})` : ''}
                       </p>
                     ))}
                   </div>
                 </div>
                 <div className="flex gap-2 flex-shrink-0 flex-wrap justify-end">
                   <button
-                    onClick={() => dismissReports(rg.post_id, rg.post_type)}
+                    onClick={() => dismissReports(rg.postId, rg.postType)}
                     className="text-xs bg-gray-100 text-gray-700 px-3 py-1.5 rounded-md hover:bg-gray-200"
                   >
                     Dismiss Reports
                   </button>
                   <button
-                    onClick={() => removeReportedPost(rg.post_id, rg.post_type)}
+                    onClick={() => removeReportedPost(rg.postId, rg.postType)}
                     className="text-xs bg-red-600 text-white px-3 py-1.5 rounded-md hover:bg-red-700"
                   >
                     Remove Post
@@ -720,17 +722,12 @@ export default function AdminClient({
                       key={color}
                       onClick={() => setAnnouncementColor(color)}
                       className={`px-3 py-1.5 rounded-md text-xs font-medium border-2 transition-all ${
-                        announcementColor === color
-                          ? 'border-gray-800 scale-105'
-                          : 'border-transparent'
+                        announcementColor === color ? 'border-gray-800 scale-105' : 'border-transparent'
                       } ${
-                        color === 'green'
-                          ? 'bg-green-100 text-green-800'
-                          : color === 'yellow'
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : color === 'red'
-                          ? 'bg-red-100 text-red-800'
-                          : 'bg-blue-100 text-blue-800'
+                        color === 'green' ? 'bg-green-100 text-green-800'
+                        : color === 'yellow' ? 'bg-yellow-100 text-yellow-800'
+                        : color === 'red' ? 'bg-red-100 text-red-800'
+                        : 'bg-blue-100 text-blue-800'
                       }`}
                     >
                       {color.charAt(0).toUpperCase() + color.slice(1)}
@@ -747,22 +744,16 @@ export default function AdminClient({
             <p className="text-sm text-gray-500 mb-4">
               Manage opportunity types and marketplace categories available to members.
             </p>
-
             <div className="mb-5">
               <p className="text-sm font-medium text-gray-700 mb-2">Opportunity Types</p>
               <div className="flex flex-wrap gap-2 mb-2">
                 {opportunityTypes.map((type) => (
-                  <span
-                    key={type}
-                    className="flex items-center gap-1 bg-gray-100 text-gray-700 text-xs px-2.5 py-1 rounded-full"
-                  >
+                  <span key={type} className="flex items-center gap-1 bg-gray-100 text-gray-700 text-xs px-2.5 py-1 rounded-full">
                     {type}
                     <button
                       onClick={() => removeOpportunityType(type)}
                       className="text-gray-400 hover:text-red-500 ml-0.5 leading-none text-base"
-                    >
-                      ×
-                    </button>
+                    >×</button>
                   </span>
                 ))}
               </div>
@@ -778,27 +769,19 @@ export default function AdminClient({
                 <button
                   onClick={addOpportunityType}
                   className="bg-green-600 text-white px-3 py-1.5 rounded text-sm hover:bg-green-700"
-                >
-                  Add
-                </button>
+                >Add</button>
               </div>
             </div>
-
             <div>
               <p className="text-sm font-medium text-gray-700 mb-2">Marketplace Categories</p>
               <div className="flex flex-wrap gap-2 mb-2">
                 {marketplaceCategories.map((cat) => (
-                  <span
-                    key={cat}
-                    className="flex items-center gap-1 bg-gray-100 text-gray-700 text-xs px-2.5 py-1 rounded-full"
-                  >
+                  <span key={cat} className="flex items-center gap-1 bg-gray-100 text-gray-700 text-xs px-2.5 py-1 rounded-full">
                     {cat}
                     <button
                       onClick={() => removeMarketplaceCategory(cat)}
                       className="text-gray-400 hover:text-red-500 ml-0.5 leading-none text-base"
-                    >
-                      ×
-                    </button>
+                    >×</button>
                   </span>
                 ))}
               </div>
@@ -814,9 +797,7 @@ export default function AdminClient({
                 <button
                   onClick={addMarketplaceCategory}
                   className="bg-green-600 text-white px-3 py-1.5 rounded text-sm hover:bg-green-700"
-                >
-                  Add
-                </button>
+                >Add</button>
               </div>
             </div>
           </div>
