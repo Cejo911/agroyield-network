@@ -57,41 +57,47 @@ export default function DirectoryClient({ profiles, currentUserId, followingIds 
   return (
     <div>
       {/* Filters */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-8 space-y-4">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-5 mb-8 space-y-4">
         <input
           type="text"
           placeholder="Search by name or institution..."
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+          className="w-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
         />
         <div className="flex flex-wrap gap-2">
           {ROLES.map(role => (
-            <button key={role} onClick={() => setRoleFilter(role)}
+            <button
+              key={role}
+              onClick={() => setRoleFilter(role)}
               className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${
                 roleFilter === role
                   ? 'bg-green-600 text-white border-green-600'
-                  : 'border-gray-300 text-gray-600 hover:border-green-400'
-              }`}>
+                  : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-green-400 dark:hover:border-green-500'
+              }`}
+            >
               {role}
             </button>
           ))}
         </div>
-        <select value={interestFilter} onChange={e => setInterestFilter(e.target.value)}
-          className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500">
+        <select
+          value={interestFilter}
+          onChange={e => setInterestFilter(e.target.value)}
+          className="w-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+        >
           <option value="">All areas of interest</option>
           {INTERESTS.map(i => <option key={i} value={i}>{i}</option>)}
         </select>
       </div>
 
       {/* Results count */}
-      <p className="text-sm text-gray-500 mb-5">
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
         {filtered.length} {filtered.length === 1 ? 'member' : 'members'} found
       </p>
 
       {/* Member cards */}
       {filtered.length === 0 ? (
-        <div className="text-center py-16 text-gray-400">
+        <div className="text-center py-16 text-gray-400 dark:text-gray-500">
           <p className="text-4xl mb-3">🌾</p>
           <p className="font-medium">No members match your filters</p>
           <p className="text-sm mt-1">Try adjusting your search or filters</p>
@@ -99,9 +105,11 @@ export default function DirectoryClient({ profiles, currentUserId, followingIds 
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map(profile => (
-            <div key={profile.id}
-              className="relative bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md hover:border-green-200 transition-all group">
-              {/* Follow button — hidden for own card */}
+            <div
+              key={profile.id}
+              className="relative bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-5 hover:shadow-md hover:border-green-200 dark:hover:border-green-800 transition-all group"
+            >
+              {/* Follow button */}
               {profile.id !== currentUserId && (
                 <div className="absolute top-4 right-4">
                   <FollowButton
@@ -110,19 +118,20 @@ export default function DirectoryClient({ profiles, currentUserId, followingIds 
                   />
                 </div>
               )}
+
               <Link href={`/directory/${profile.id}`} className="block">
                 {/* Avatar */}
-                <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold text-lg mb-4">
+                <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center text-green-700 dark:text-green-400 font-bold text-lg mb-4">
                   {profile.first_name?.[0]?.toUpperCase() ?? '?'}
                 </div>
 
-                <h3 className="font-semibold text-gray-900 group-hover:text-green-700 transition-colors pr-20">
+                <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-green-700 dark:group-hover:text-green-400 transition-colors pr-20">
                   {profile.first_name} {profile.last_name}
                 </h3>
 
                 {/* Role pill */}
                 {profile.role && (
-                  <span className="inline-block mt-1 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium capitalize">
+                  <span className="inline-block mt-1 text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full font-medium capitalize">
                     {profile.role}
                   </span>
                 )}
@@ -130,46 +139,48 @@ export default function DirectoryClient({ profiles, currentUserId, followingIds 
                 {/* Badges */}
                 <div className="flex flex-wrap gap-1 mt-1.5">
                   {profile.is_elite && (
-                    <span className="inline-flex items-center gap-0.5 text-xs bg-yellow-50 text-yellow-700 px-2 py-0.5 rounded-full font-medium border border-yellow-200">
+                    <span className="inline-flex items-center gap-0.5 text-xs bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 px-2 py-0.5 rounded-full font-medium border border-yellow-200 dark:border-yellow-800">
                       👑 Elite
                     </span>
                   )}
                   {profile.is_verified && (
-                    <span className="inline-flex items-center gap-0.5 text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium border border-blue-200">
+                    <span className="inline-flex items-center gap-0.5 text-xs bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full font-medium border border-blue-200 dark:border-blue-800">
                       ✓ Verified
                     </span>
                   )}
                   {profile.is_admin && profile.admin_role === 'super' && (
-                    <span className="inline-flex items-center gap-0.5 text-xs bg-red-50 text-red-600 px-2 py-0.5 rounded-full font-medium border border-red-200">
+                    <span className="inline-flex items-center gap-0.5 text-xs bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 px-2 py-0.5 rounded-full font-medium border border-red-200 dark:border-red-800">
                       ⚡ Admin
                     </span>
                   )}
                   {profile.is_admin && profile.admin_role === 'moderator' && (
-                    <span className="inline-flex items-center gap-0.5 text-xs bg-purple-50 text-purple-600 px-2 py-0.5 rounded-full font-medium border border-purple-200">
+                    <span className="inline-flex items-center gap-0.5 text-xs bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 px-2 py-0.5 rounded-full font-medium border border-purple-200 dark:border-purple-800">
                       🛡 Mod
                     </span>
                   )}
                 </div>
 
                 {profile.institution && (
-                  <p className="text-sm text-gray-500 mt-2">🏛 {profile.institution}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">🏛 {profile.institution}</p>
                 )}
                 {profile.location && (
-                  <p className="text-sm text-gray-500 mt-1">📍 {profile.location}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">📍 {profile.location}</p>
                 )}
                 {profile.bio && (
-                  <p className="text-sm text-gray-400 mt-3 line-clamp-2">{profile.bio}</p>
+                  <p className="text-sm text-gray-400 dark:text-gray-500 mt-3 line-clamp-2">{profile.bio}</p>
                 )}
                 {profile.interests && profile.interests.length > 0 && (
                   <div className="flex flex-wrap gap-1 mt-3">
                     {profile.interests.slice(0, 3).map(interest => (
-                      <span key={interest}
-                        className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
+                      <span
+                        key={interest}
+                        className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-full"
+                      >
                         {interest}
                       </span>
                     ))}
                     {profile.interests.length > 3 && (
-                      <span className="text-xs text-gray-400 px-1">
+                      <span className="text-xs text-gray-400 dark:text-gray-500 px-1">
                         +{profile.interests.length - 3} more
                       </span>
                     )}
