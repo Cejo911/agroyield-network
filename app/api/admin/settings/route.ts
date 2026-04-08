@@ -20,7 +20,7 @@ export async function PATCH(request: NextRequest) {
 
     const updates = await request.json() as Record<string, string>
 
-    // Use admin client to bypass RLS on the settings table
+    // Use admin client to bypass RLS
     const adminClient = createAdminClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -28,10 +28,20 @@ export async function PATCH(request: NextRequest) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const adminAny = adminClient as any
 
+    const errors: string[] = []
+
     for (const [key, value] of Object.entries(updates)) {
-      await adminAny
+      const { error } = await adminAny
         .from('settings')
-        .upsert({ key, value, updated_at: new Date().toISOString() })
+        .upsert(
+          { key, value, updated_at: new Date().toISOString() },
+          { onConflict: 'key' }
+        )
+      if (error) errors.push(`${key}: ${error.message}`)
+    }
+
+    if (errors.length > 0) {
+      return NextResponse.json({ error: errors.join(', ') }, { status: 500 })
     }
 
     return NextResponse.json({ ok: true })
