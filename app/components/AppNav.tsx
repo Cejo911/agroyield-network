@@ -17,7 +17,7 @@ const NAV_LINKS = [
 
 export default function AppNav() {
   const [menuOpen, setMenuOpen] = useState(false)
-  const [isAdmin,  setIsAdmin]  = useState(false)
+  const [isAdmin,  setIsAdmin]  = useState<boolean | null>(null)
   const pathname = usePathname()
   const router   = useRouter()
 
@@ -78,24 +78,26 @@ export default function AppNav() {
 
         {/* Desktop right side */}
         <div className="hidden lg:flex items-center gap-3">
-          {isAdmin ? (
-            <Link
-              href="/admin"
-              className={`text-sm font-semibold transition-colors ${
-                isActive('/admin')
-                  ? 'text-green-700 dark:text-green-400'
-                  : 'text-gray-600 dark:text-gray-300 hover:text-green-700 dark:hover:text-green-400'
-              }`}
-            >
-              Admin Dashboard
-            </Link>
-          ) : (
-            <Link
-              href="/pricing"
-              className="text-sm font-semibold text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 transition-colors"
-            >
-              Get Verified ✓
-            </Link>
+          {isAdmin !== null && (
+            isAdmin ? (
+              <Link
+                href="/admin"
+                className={`text-sm font-semibold transition-colors ${
+                  isActive('/admin')
+                    ? 'text-green-700 dark:text-green-400'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-green-700 dark:hover:text-green-400'
+                }`}
+              >
+                Admin Dashboard
+              </Link>
+            ) : (
+              <Link
+                href="/pricing"
+                className="text-sm font-semibold text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 transition-colors"
+              >
+                Get Verified ✓
+              </Link>
+            )
           )}
           <ThemeToggle />
           <Link
@@ -143,22 +145,24 @@ export default function AppNav() {
             </Link>
           ))}
 
-          {isAdmin ? (
-            <Link
-              href="/admin"
-              onClick={() => setMenuOpen(false)}
-              className="block px-3 py-2 rounded-lg text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
-            >
-              Admin Dashboard
-            </Link>
-          ) : (
-            <Link
-              href="/pricing"
-              onClick={() => setMenuOpen(false)}
-              className="block px-3 py-2 rounded-lg text-sm font-semibold text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/40"
-            >
-              Get Verified ✓
-            </Link>
+          {isAdmin !== null && (
+            isAdmin ? (
+              <Link
+                href="/admin"
+                onClick={() => setMenuOpen(false)}
+                className="block px-3 py-2 rounded-lg text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+              >
+                Admin Dashboard
+              </Link>
+            ) : (
+              <Link
+                href="/pricing"
+                onClick={() => setMenuOpen(false)}
+                className="block px-3 py-2 rounded-lg text-sm font-semibold text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/40"
+              >
+                Get Verified ✓
+              </Link>
+            )
           )}
 
           <Link
