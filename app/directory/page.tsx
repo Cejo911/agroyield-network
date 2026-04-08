@@ -28,12 +28,12 @@ export default async function DirectoryPage() {
   )
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <AppNav />
       <main className="max-w-6xl mx-auto px-4 py-10">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Member Directory</h1>
-          <p className="text-gray-500 mt-1">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Member Directory</h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">
             Connect with students, researchers, farmers and agripreneurs across Africa.
           </p>
         </div>
