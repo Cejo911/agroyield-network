@@ -19,6 +19,10 @@ type Profile = {
   location: string | null
   institution: string | null
   interests: string[] | null
+  is_verified: boolean
+  is_elite: boolean
+  is_admin: boolean
+  admin_role: string | null
 }
 
 type Props = {
@@ -97,7 +101,6 @@ export default function DirectoryClient({ profiles, currentUserId, followingIds 
           {filtered.map(profile => (
             <div key={profile.id}
               className="relative bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md hover:border-green-200 transition-all group">
-
               {/* Follow button — hidden for own card */}
               {profile.id !== currentUserId && (
                 <div className="absolute top-4 right-4">
@@ -107,7 +110,6 @@ export default function DirectoryClient({ profiles, currentUserId, followingIds 
                   />
                 </div>
               )}
-
               <Link href={`/directory/${profile.id}`} className="block">
                 {/* Avatar */}
                 <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold text-lg mb-4">
@@ -118,11 +120,37 @@ export default function DirectoryClient({ profiles, currentUserId, followingIds 
                   {profile.first_name} {profile.last_name}
                 </h3>
 
+                {/* Role pill */}
                 {profile.role && (
                   <span className="inline-block mt-1 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium capitalize">
                     {profile.role}
                   </span>
                 )}
+
+                {/* Badges */}
+                <div className="flex flex-wrap gap-1 mt-1.5">
+                  {profile.is_elite && (
+                    <span className="inline-flex items-center gap-0.5 text-xs bg-yellow-50 text-yellow-700 px-2 py-0.5 rounded-full font-medium border border-yellow-200">
+                      👑 Elite
+                    </span>
+                  )}
+                  {profile.is_verified && (
+                    <span className="inline-flex items-center gap-0.5 text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium border border-blue-200">
+                      ✓ Verified
+                    </span>
+                  )}
+                  {profile.is_admin && profile.admin_role === 'super' && (
+                    <span className="inline-flex items-center gap-0.5 text-xs bg-red-50 text-red-600 px-2 py-0.5 rounded-full font-medium border border-red-200">
+                      ⚡ Admin
+                    </span>
+                  )}
+                  {profile.is_admin && profile.admin_role === 'moderator' && (
+                    <span className="inline-flex items-center gap-0.5 text-xs bg-purple-50 text-purple-600 px-2 py-0.5 rounded-full font-medium border border-purple-200">
+                      🛡 Mod
+                    </span>
+                  )}
+                </div>
+
                 {profile.institution && (
                   <p className="text-sm text-gray-500 mt-2">🏛 {profile.institution}</p>
                 )}
