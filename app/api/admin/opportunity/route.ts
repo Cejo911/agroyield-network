@@ -6,6 +6,7 @@ export async function PATCH(request: NextRequest) {
     const supabase = await createClient()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const supabaseAny = supabase as any
+
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -15,10 +16,14 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const { id, is_active } = await request.json()
-    const { error } = await supabase
+    const { id, is_active, is_pending_review } = await request.json()
+
+    const updateData: Record<string, unknown> = { is_active }
+    if (typeof is_pending_review === 'boolean') updateData.is_pending_review = is_pending_review
+
+    const { error } = await supabaseAny
       .from('opportunities')
-      .update({ is_active })
+      .update(updateData)
       .eq('id', id)
 
     if (error) throw error
