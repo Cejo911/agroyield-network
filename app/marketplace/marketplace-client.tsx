@@ -157,7 +157,6 @@ export default function MarketplaceClient({ listings }: { listings: Listing[] })
           </div>
         </div>
 
-        {/* Clear all */}
         {hasActiveFilters && (
           <button
             onClick={() => { setSearch(''); setCategoryFilter('All'); setTypeFilter('All'); setMinPrice(''); setMaxPrice('') }}
@@ -181,54 +180,50 @@ export default function MarketplaceClient({ listings }: { listings: Listing[] })
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map(listing => (
-            <Link
+            /* Outer div owns card chrome — Link wraps only the content */
+            <div
               key={listing.id}
-              href={`/marketplace/${listing.id}`}
-              className="block bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md hover:border-green-200 transition-all group"
+              className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-green-200 transition-all group flex flex-col"
             >
-              <div className="flex flex-wrap gap-2 mb-3">
-                {listing.type && (
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${getTypeColour(listing.type)}`}>
-                    {listing.type}
-                  </span>
-                )}
-                {listing.category && (
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${getCategoryColour(listing.category)}`}>
-                    {listing.category}
-                  </span>
-                )}
-              </div>
-              <h3 className="font-semibold text-gray-900 group-hover:text-green-700 transition-colors mb-2">
-                {listing.title}
-              </h3>
-              {listing.price !== null && (
-                <p className="text-lg font-bold text-green-700 mb-1">
-                  {formatPrice(listing.price)}
-                  {listing.price_negotiable && (
-                    <span className="text-xs font-normal text-gray-400 ml-1">(negotiable)</span>
+              <Link href={`/marketplace/${listing.id}`} className="block p-5 flex-1">
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {listing.type && (
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${getTypeColour(listing.type)}`}>
+                      {listing.type}
+                    </span>
                   )}
-                </p>
-              )}
-              {listing.description && (
-                <p className="text-sm text-gray-400 line-clamp-2 mb-3">{listing.description}</p>
-              )}
-
-              {/* Bottom row: location + time + like/report */}
-              <div className="flex items-center justify-between text-xs text-gray-400 mt-auto pt-3 border-t border-gray-100">
-                <div className="flex items-center gap-2">
+                  {listing.category && (
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${getCategoryColour(listing.category)}`}>
+                      {listing.category}
+                    </span>
+                  )}
+                </div>
+                <h3 className="font-semibold text-gray-900 group-hover:text-green-700 transition-colors mb-2">
+                  {listing.title}
+                </h3>
+                {listing.price !== null && (
+                  <p className="text-lg font-bold text-green-700 mb-1">
+                    {formatPrice(listing.price)}
+                    {listing.price_negotiable && (
+                      <span className="text-xs font-normal text-gray-400 ml-1">(negotiable)</span>
+                    )}
+                  </p>
+                )}
+                {listing.description && (
+                  <p className="text-sm text-gray-400 line-clamp-2 mb-3">{listing.description}</p>
+                )}
+                <div className="flex items-center justify-between text-xs text-gray-400 mt-2">
                   {listing.state && <span>📍 {listing.state}</span>}
                   <span>{timeAgo(listing.created_at)}</span>
                 </div>
-                {/* stopPropagation prevents card navigation on button click */}
-                <div
-                  className="flex items-center gap-3"
-                  onClick={e => e.stopPropagation()}
-                >
-                  <LikeButton postId={listing.id} postType="listing" />
-                  <ReportButton postId={listing.id} postType="listing" />
-                </div>
+              </Link>
+
+              {/* Like + Report live OUTSIDE the Link — no navigation risk */}
+              <div className="px-5 pb-4 pt-3 border-t border-gray-100 flex items-center gap-4">
+                <LikeButton postId={listing.id} postType="listing" />
+                <ReportButton postId={listing.id} postType="listing" />
               </div>
-            </Link>
+            </div>
           ))}
         </div>
       )}
