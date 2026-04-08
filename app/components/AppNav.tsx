@@ -46,6 +46,7 @@ export default function AppNav() {
   const [results,    setResults]    = useState<SearchResults | null>(null)
   const [loading,    setLoading]    = useState(false)
   const [isAdmin,    setIsAdmin]    = useState(false)
+  const [isVerified, setIsVerified] = useState(false)
 
   const pathname    = usePathname()
   const router      = useRouter()
@@ -60,11 +61,12 @@ export default function AppNav() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data } = await (supabase as any)
         .from('profiles')
-        .select('is_admin')
+        .select('is_admin, is_verified')
         .eq('id', user.id)
         .single()
       const raw = data as Record<string, unknown> | null
-      if (raw?.is_admin === true) setIsAdmin(true)
+      if (raw?.is_admin    === true) setIsAdmin(true)
+      if (raw?.is_verified === true) setIsVerified(true)
     }
     checkAdmin()
   }, [])
@@ -170,14 +172,16 @@ export default function AppNav() {
               <SearchIcon />
               <span className="hidden xl:inline text-gray-400">Search…</span>
             </button>
-            <Link href="/verify"
-              className={`text-sm font-semibold transition-colors px-3 py-1.5 rounded-lg border ${
-                isActive('/verify')
-                  ? 'bg-green-50 border-green-300 text-green-700'
-                  : 'border-green-200 text-green-600 hover:bg-green-50'
-              }`}>
-              Get Verified ✓
-            </Link>
+            {!isAdmin && !isVerified && (
+              <Link href="/verify"
+                className={`text-sm font-semibold transition-colors px-3 py-1.5 rounded-lg border ${
+                  isActive('/verify')
+                    ? 'bg-green-50 border-green-300 text-green-700'
+                    : 'border-green-200 text-green-600 hover:bg-green-50'
+                }`}>
+                Get Verified ✓
+              </Link>
+            )}
             <Link href="/profile"
               className={`text-sm font-medium transition-colors ${
                 isActive('/profile') ? 'text-green-700' : 'text-gray-600 hover:text-green-700'
@@ -230,15 +234,17 @@ export default function AppNav() {
                 ⚙ Admin
               </Link>
             )}
-            <Link href="/verify"
-              onClick={() => setMenuOpen(false)}
-              className={`block px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
-                isActive('/verify')
-                  ? 'bg-green-50 text-green-700'
-                  : 'text-green-600 hover:bg-green-50'
-              }`}>
-              Get Verified ✓
-            </Link>
+            {!isAdmin && !isVerified && (
+              <Link href="/verify"
+                onClick={() => setMenuOpen(false)}
+                className={`block px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                  isActive('/verify')
+                    ? 'bg-green-50 text-green-700'
+                    : 'text-green-600 hover:bg-green-50'
+                }`}>
+                Get Verified ✓
+              </Link>
+            )}
             <Link href="/profile"
               onClick={() => setMenuOpen(false)}
               className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-green-700 hover:bg-gray-50">
