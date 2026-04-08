@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
@@ -10,20 +10,27 @@ export default function SignUp() {
   const [googleLoading, setGoogleLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+  const [registrationEnabled, setRegistrationEnabled] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    fetch('/api/registration-status')
+      .then(r => r.json())
+      .then(data => setRegistrationEnabled(data.enabled))
+      .catch(() => setRegistrationEnabled(true))
+  }, [])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
   }
 
   const handleGoogleSignUp = async () => {
+    if (!registrationEnabled) return
     setGoogleLoading(true)
     setError('')
     const supabase = createClient()
     const { error: err } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
     })
     if (err) {
       setError(err.message)
@@ -33,14 +40,9 @@ export default function SignUp() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (form.password !== form.confirm) {
-      setError('Passwords do not match.')
-      return
-    }
-    if (form.password.length < 8) {
-      setError('Password must be at least 8 characters.')
-      return
-    }
+    if (!registrationEnabled) return
+    if (form.password !== form.confirm) { setError('Passwords do not match.'); return }
+    if (form.password.length < 8) { setError('Password must be at least 8 characters.'); return }
     setLoading(true)
     setError('')
     const supabase = createClient()
@@ -56,11 +58,7 @@ export default function SignUp() {
         }
       }
     })
-    if (err) {
-      setError(err.message)
-      setLoading(false)
-      return
-    }
+    if (err) { setError(err.message); setLoading(false); return }
     setSuccess(true)
     setLoading(false)
   }
@@ -72,6 +70,36 @@ export default function SignUp() {
     fontFamily: 'inherit', boxSizing: 'border-box'
   }
 
+  // ── Loading state ──────────────────────────────────────────────
+  if (registrationEnabled === null) {
+    return (
+      <main style={{ fontFamily: "'Inter', system-ui, sans-serif", background: '#060d09', color: '#f0fdf4', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ color: '#4b7a5c', fontSize: 14 }}>Loading…</p>
+      </main>
+    )
+  }
+
+  // ── Registration closed ────────────────────────────────────────
+  if (!registrationEnabled) {
+    return (
+      <main style={{ fontFamily: "'Inter', system-ui, sans-serif", background: '#060d09', color: '#f0fdf4', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+        <div style={{ maxWidth: 440, width: '100%', textAlign: 'center' }}>
+          <div style={{ fontSize: 52, marginBottom: 24 }}>🔒</div>
+          <h1 style={{ fontSize: 28, fontWeight: 900, color: '#f0fdf4', letterSpacing: -1, marginBottom: 12 }}>
+            Registration is closed
+          </h1>
+          <p style={{ fontSize: 16, color: '#bbf7d0', lineHeight: 1.75, marginBottom: 32 }}>
+            AgroYield Network is not accepting new members at this time. Check back soon or sign in if you already have an account.
+          </p>
+          <a href="/login" style={{ display: 'inline-block', padding: '14px 28px', fontSize: 14, fontWeight: 700, color: '#030a05', background: 'linear-gradient(135deg, #22c55e, #16a34a)', borderRadius: 12, textDecoration: 'none' }}>
+            Sign In →
+          </a>
+        </div>
+      </main>
+    )
+  }
+
+  // ── Success ────────────────────────────────────────────────────
   if (success) {
     return (
       <main style={{ fontFamily: "'Inter', system-ui, sans-serif", background: '#060d09', color: '#f0fdf4', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
@@ -89,6 +117,7 @@ export default function SignUp() {
     )
   }
 
+  // ── Sign up form ───────────────────────────────────────────────
   return (
     <main style={{ fontFamily: "'Inter', system-ui, sans-serif", background: '#060d09', color: '#f0fdf4', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* NAV */}
@@ -103,16 +132,13 @@ export default function SignUp() {
       {/* FORM */}
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px' }}>
         <div style={{ width: '100%', maxWidth: 480 }}>
-          {/* Header */}
           <div style={{ textAlign: 'center', marginBottom: 40 }}>
             <div style={{ width: 56, height: 56, background: 'linear-gradient(135deg, #16a34a, #22c55e)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, margin: '0 auto 24px' }}>🌾</div>
             <h1 style={{ fontSize: 28, fontWeight: 900, color: '#f0fdf4', letterSpacing: -1, marginBottom: 8 }}>Create your account</h1>
             <p style={{ fontSize: 15, color: '#bbf7d0' }}>Join AgroYield Network as a founding member</p>
           </div>
 
-          {/* Card */}
           <div style={{ background: '#0c1c11', border: '1px solid #1c3825', borderRadius: 20, padding: '36px 32px', display: 'flex', flexDirection: 'column', gap: 20 }}>
-
             {/* Google Button */}
             <button
               type="button"
@@ -123,8 +149,7 @@ export default function SignUp() {
                 padding: '13px 20px', fontSize: 15, fontWeight: 600, fontFamily: 'inherit',
                 color: '#f0fdf4', background: '#0f2318', border: '1.5px solid #1c3825',
                 borderRadius: 12, cursor: (googleLoading || loading) ? 'not-allowed' : 'pointer',
-                opacity: (googleLoading || loading) ? 0.6 : 1,
-                transition: 'border-color 0.2s',
+                opacity: (googleLoading || loading) ? 0.6 : 1, transition: 'border-color 0.2s',
               }}
               onMouseEnter={e => { if (!googleLoading && !loading) (e.currentTarget as HTMLButtonElement).style.borderColor = '#22c55e' }}
               onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = '#1c3825' }}
