@@ -106,59 +106,58 @@ export default function OpportunitiesClient({ opportunities }: { opportunities: 
       ) : (
         <div className="space-y-4">
           {filtered.map(opportunity => (
-            <Link
+            /* Outer div owns the card chrome — Link only wraps the content */
+            <div
               key={opportunity.id}
-              href={`/opportunities/${opportunity.id}`}
-              className="block bg-white rounded-2xl border border-gray-100 shadow-sm p-6 hover:shadow-md hover:border-green-200 transition-all group"
+              className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-green-200 transition-all group"
             >
-              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                <div className="flex-1">
-                  <div className="flex flex-wrap items-center gap-2 mb-2">
-                    {opportunity.type && (
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${TYPE_COLOURS[opportunity.type] ?? 'bg-gray-100 text-gray-600'}`}>
-                        {opportunity.type}
-                      </span>
+              <Link href={`/opportunities/${opportunity.id}`} className="block p-6">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                  <div className="flex-1">
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                      {opportunity.type && (
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${TYPE_COLOURS[opportunity.type] ?? 'bg-gray-100 text-gray-600'}`}>
+                          {opportunity.type}
+                        </span>
+                      )}
+                      {isExpired(opportunity.deadline) && (
+                        <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-red-100 text-red-600">
+                          Expired
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="font-semibold text-gray-900 group-hover:text-green-700 transition-colors text-lg">
+                      {opportunity.title}
+                    </h3>
+                    {opportunity.organisation && (
+                      <p className="text-sm text-gray-500 mt-1">🏛 {opportunity.organisation}</p>
                     )}
-                    {isExpired(opportunity.deadline) && (
-                      <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-red-100 text-red-600">
-                        Expired
-                      </span>
+                    {opportunity.location && (
+                      <p className="text-sm text-gray-500 mt-0.5">📍 {opportunity.location}</p>
+                    )}
+                    {opportunity.description && (
+                      <p className="text-sm text-gray-400 mt-3 line-clamp-2">{opportunity.description}</p>
                     )}
                   </div>
-                  <h3 className="font-semibold text-gray-900 group-hover:text-green-700 transition-colors text-lg">
-                    {opportunity.title}
-                  </h3>
-                  {opportunity.organisation && (
-                    <p className="text-sm text-gray-500 mt-1">🏛 {opportunity.organisation}</p>
-                  )}
-                  {opportunity.location && (
-                    <p className="text-sm text-gray-500 mt-0.5">📍 {opportunity.location}</p>
-                  )}
-                  {opportunity.description && (
-                    <p className="text-sm text-gray-400 mt-3 line-clamp-2">{opportunity.description}</p>
+                  {opportunity.deadline && (
+                    <div className="text-right shrink-0">
+                      <p className="text-xs text-gray-400">Deadline</p>
+                      <p className={`text-sm font-medium ${isExpired(opportunity.deadline) ? 'text-red-500' : 'text-gray-700'}`}>
+                        {new Date(opportunity.deadline).toLocaleDateString('en-GB', {
+                          day: 'numeric', month: 'short', year: 'numeric'
+                        })}
+                      </p>
+                    </div>
                   )}
                 </div>
-                {opportunity.deadline && (
-                  <div className="text-right shrink-0">
-                    <p className="text-xs text-gray-400">Deadline</p>
-                    <p className={`text-sm font-medium ${isExpired(opportunity.deadline) ? 'text-red-500' : 'text-gray-700'}`}>
-                      {new Date(opportunity.deadline).toLocaleDateString('en-GB', {
-                        day: 'numeric', month: 'short', year: 'numeric'
-                      })}
-                    </p>
-                  </div>
-                )}
-              </div>
+              </Link>
 
-              {/* Like + Report — stopPropagation prevents card navigation on click */}
-              <div
-                className="mt-4 pt-3 border-t border-gray-100 flex items-center gap-4"
-                onClick={e => e.stopPropagation()}
-              >
+              {/* Like + Report live OUTSIDE the Link — no navigation risk */}
+              <div className="px-6 pb-4 flex items-center gap-4 border-t border-gray-100 pt-3">
                 <LikeButton postId={opportunity.id} postType="opportunity" />
                 <ReportButton postId={opportunity.id} postType="opportunity" />
               </div>
-            </Link>
+            </div>
           ))}
         </div>
       )}
