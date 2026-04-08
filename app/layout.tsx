@@ -1,16 +1,17 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
-import AnnouncementBanner from "./components/AnnouncementBanner";
+import type { Metadata, Viewport } from "next"
+import { Geist, Geist_Mono } from "next/font/google"
+import "./globals.css"
+import AnnouncementBanner from "./components/AnnouncementBanner"
+import ThemeProvider from "./components/ThemeProvider"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
-});
+})
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
-});
+})
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://agroyield.africa'),
@@ -73,23 +74,30 @@ export const metadata: Metadata = {
     apple: '/apple-touch-icon.png',
   },
   manifest: '/site.webmanifest',
+}
+
+// themeColor moved here to fix Next.js 15 deprecation warning
+export const viewport: Viewport = {
   themeColor: '#22c55e',
 }
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: React.ReactNode
 }>) {
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <AnnouncementBanner />
-        {children}
+        <ThemeProvider>
+          <AnnouncementBanner />
+          {children}
+        </ThemeProvider>
       </body>
     </html>
-  );
+  )
 }
