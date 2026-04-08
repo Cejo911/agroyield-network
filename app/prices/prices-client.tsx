@@ -1,17 +1,16 @@
 'use client'
-
 import { useState } from 'react'
 
 const CATEGORIES = ['All', 'Grains', 'Tubers', 'Legumes', 'Vegetables', 'Oils', 'Livestock', 'Other']
 
 const CATEGORY_COLOURS: Record<string, string> = {
-  grains: 'bg-yellow-100 text-yellow-700',
-  tubers: 'bg-orange-100 text-orange-700',
-  legumes: 'bg-green-100 text-green-700',
-  vegetables: 'bg-emerald-100 text-emerald-700',
-  oils: 'bg-amber-100 text-amber-700',
-  livestock: 'bg-red-100 text-red-700',
-  other: 'bg-gray-100 text-gray-600',
+  grains:     'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400',
+  tubers:     'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400',
+  legumes:    'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
+  vegetables: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400',
+  oils:       'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
+  livestock:  'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
+  other:      'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400',
 }
 
 type PriceReport = {
@@ -35,11 +34,9 @@ export default function PricesClient({ reports }: { reports: PriceReport[] }) {
       r.commodity.toLowerCase().includes(search.toLowerCase()) ||
       (r.state ?? '').toLowerCase().includes(search.toLowerCase()) ||
       (r.market_name ?? '').toLowerCase().includes(search.toLowerCase())
-
     const matchesCategory =
       categoryFilter === 'All' ||
       (r.category ?? '').toLowerCase() === categoryFilter.toLowerCase()
-
     return matchesSearch && matchesCategory
   })
 
@@ -61,19 +58,20 @@ export default function PricesClient({ reports }: { reports: PriceReport[] }) {
   }
 
   const getCategoryColour = (category: string | null): string => {
-    if (!category) return 'bg-gray-100 text-gray-600'
-    return CATEGORY_COLOURS[category] ?? 'bg-gray-100 text-gray-600'
+    if (!category) return 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+    return CATEGORY_COLOURS[category] ?? 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
   }
 
   return (
     <div>
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-8 space-y-4">
+      {/* Filter panel */}
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-5 mb-8 space-y-4">
         <input
           type="text"
           placeholder="Search by commodity, state or market..."
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+          className="w-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
         />
         <div className="flex flex-wrap gap-2">
           {CATEGORIES.map(cat => (
@@ -83,7 +81,7 @@ export default function PricesClient({ reports }: { reports: PriceReport[] }) {
               className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${
                 categoryFilter === cat
                   ? 'bg-green-600 text-white border-green-600'
-                  : 'border-gray-300 text-gray-600 hover:border-green-400'
+                  : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-green-400 dark:hover:border-green-500'
               }`}
             >
               {cat}
@@ -92,12 +90,14 @@ export default function PricesClient({ reports }: { reports: PriceReport[] }) {
         </div>
       </div>
 
-      <p className="text-sm text-gray-500 mb-5">
+      {/* Result count */}
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
         {filtered.length} {filtered.length === 1 ? 'report' : 'reports'} found
       </p>
 
+      {/* Empty state */}
       {filtered.length === 0 ? (
-        <div className="text-center py-16 text-gray-400">
+        <div className="text-center py-16 text-gray-400 dark:text-gray-500">
           <p className="text-4xl mb-3">📊</p>
           <p className="font-medium">No prices reported yet</p>
           <p className="text-sm mt-1">Be the first to report a market price</p>
@@ -105,27 +105,40 @@ export default function PricesClient({ reports }: { reports: PriceReport[] }) {
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map(report => (
-            <div key={report.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            <div
+              key={report.id}
+              className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-5"
+            >
               <div className="flex items-start justify-between mb-3">
                 <div>
-                  <h3 className="font-semibold text-gray-900 text-lg">{report.commodity}</h3>
+                  <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-lg">
+                    {report.commodity}
+                  </h3>
                   {report.category && (
-                    <span className={`inline-block text-xs px-2 py-0.5 rounded-full font-medium capitalize mt-1 ${getCategoryColour(report.category)}`}>
+                    <span
+                      className={`inline-block text-xs px-2 py-0.5 rounded-full font-medium capitalize mt-1 ${getCategoryColour(report.category)}`}
+                    >
                       {report.category}
                     </span>
                   )}
                 </div>
                 <div className="text-right">
-                  <p className="text-xl font-bold text-green-700">{formatPrice(report.price)}</p>
-                  <p className="text-xs text-gray-400">per {report.unit}</p>
+                  <p className="text-xl font-bold text-green-700 dark:text-green-400">
+                    {formatPrice(report.price)}
+                  </p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">per {report.unit}</p>
                 </div>
               </div>
-              <div className="space-y-1 text-sm text-gray-500">
+
+              <div className="space-y-1 text-sm text-gray-500 dark:text-gray-400">
                 {report.market_name && <p>🏪 {report.market_name}</p>}
                 {report.state && <p>📍 {report.state}</p>}
               </div>
-              <div className="mt-3 pt-3 border-t border-gray-50 text-right">
-                <span className="text-xs text-gray-400">{timeAgo(report.reported_at)}</span>
+
+              <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800 text-right">
+                <span className="text-xs text-gray-400 dark:text-gray-500">
+                  {timeAgo(report.reported_at)}
+                </span>
               </div>
             </div>
           ))}
