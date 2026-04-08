@@ -1,9 +1,9 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import AppNav from '@/app/components/AppNav'
 
-const CATEGORIES = ['produce', 'inputs', 'equipment', 'livestock', 'services', 'other']
+const DEFAULT_CATEGORIES = ['produce', 'inputs', 'equipment', 'livestock', 'services', 'other']
 const TYPES = ['sell', 'buy', 'trade']
 const STATES = [
   'Abia', 'Adamawa', 'Akwa Ibom', 'Anambra', 'Bauchi', 'Bayelsa', 'Benue', 'Borno',
@@ -15,18 +15,20 @@ const STATES = [
 
 export default function NewListingPage() {
   const router = useRouter()
+  const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [form, setForm] = useState({
-    title: '',
-    category: '',
-    type: '',
-    price: '',
-    price_negotiable: false,
-    description: '',
-    state: '',
-    contact: '',
+    title: '', category: '', type: '', price: '',
+    price_negotiable: false, description: '', state: '', contact: '',
   })
+
+  useEffect(() => {
+    fetch('/api/content-types')
+      .then(r => r.json())
+      .then(data => { if (data.marketplaceCategories?.length) setCategories(data.marketplaceCategories) })
+      .catch(() => {})
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -36,20 +38,14 @@ export default function NewListingPage() {
       const res = await fetch('/api/marketplace', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...form,
-          price: form.price ? parseFloat(form.price) : null,
-        }),
+        body: JSON.stringify({ ...form, price: form.price ? parseFloat(form.price) : null }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to post listing')
       setMessage({ type: 'success', text: 'Listing posted successfully! Redirecting...' })
       setTimeout(() => router.push('/marketplace'), 1500)
     } catch (err: unknown) {
-      setMessage({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Something went wrong',
-      })
+      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Something went wrong' })
     } finally {
       setLoading(false)
     }
@@ -70,14 +66,13 @@ export default function NewListingPage() {
                 Title <span className="text-red-500">*</span>
               </label>
               <input
-                type="text"
-                required
-                value={form.title}
+                type="text" required value={form.title}
                 onChange={e => setForm(prev => ({ ...prev, title: e.target.value }))}
                 placeholder="e.g. 50kg bags of yellow maize for sale"
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
               />
             </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Listing Type <span className="text-red-500">*</span>
@@ -85,8 +80,7 @@ export default function NewListingPage() {
               <div className="grid grid-cols-3 gap-3">
                 {TYPES.map(type => (
                   <button
-                    key={type}
-                    type="button"
+                    key={type} type="button"
                     onClick={() => setForm(prev => ({ ...prev, type }))}
                     className={`py-2.5 rounded-lg border text-sm font-medium capitalize transition-colors ${
                       form.type === type
@@ -99,15 +93,15 @@ export default function NewListingPage() {
                 ))}
               </div>
             </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Category <span className="text-red-500">*</span>
               </label>
-              <div className="grid grid-cols-3 gap-2">
-                {CATEGORIES.map(cat => (
+              <div className="flex flex-wrap gap-2">
+                {categories.map(cat => (
                   <button
-                    key={cat}
-                    type="button"
+                    key={cat} type="button"
                     onClick={() => setForm(prev => ({ ...prev, category: cat }))}
                     className={`py-2 px-3 rounded-lg border text-sm font-medium capitalize transition-colors ${
                       form.category === cat
@@ -120,24 +114,22 @@ export default function NewListingPage() {
                 ))}
               </div>
             </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Price (NGN) {form.type === 'trade' && <span className="text-gray-400 font-normal">— optional for trades</span>}
+                Price (NGN){' '}
+                {form.type === 'trade' && <span className="text-gray-400 font-normal">— optional for trades</span>}
               </label>
               <div className="flex gap-3 items-center">
                 <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={form.price}
+                  type="number" min="0" step="0.01" value={form.price}
                   onChange={e => setForm(prev => ({ ...prev, price: e.target.value }))}
                   placeholder="e.g. 25000"
                   className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                 />
                 <label className="flex items-center gap-2 text-sm text-gray-600 whitespace-nowrap">
                   <input
-                    type="checkbox"
-                    checked={form.price_negotiable}
+                    type="checkbox" checked={form.price_negotiable}
                     onChange={e => setForm(prev => ({ ...prev, price_negotiable: e.target.checked }))}
                     className="rounded"
                   />
@@ -145,16 +137,17 @@ export default function NewListingPage() {
                 </label>
               </div>
             </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
               <textarea
                 value={form.description}
                 onChange={e => setForm(prev => ({ ...prev, description: e.target.value }))}
-                rows={4}
-                placeholder="Describe what you are selling, buying or trading..."
+                rows={4} placeholder="Describe what you are selling, buying or trading..."
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
               />
             </div>
+
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
@@ -164,22 +157,20 @@ export default function NewListingPage() {
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                 >
                   <option value="">Select state</option>
-                  {STATES.map(s => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
+                  {STATES.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Contact</label>
                 <input
-                  type="text"
-                  value={form.contact}
+                  type="text" value={form.contact}
                   onChange={e => setForm(prev => ({ ...prev, contact: e.target.value }))}
                   placeholder="Phone or email"
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                 />
               </div>
             </div>
+
             {message && (
               <div className={`rounded-lg px-4 py-3 text-sm ${
                 message.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
@@ -187,6 +178,7 @@ export default function NewListingPage() {
                 {message.text}
               </div>
             )}
+
             <button
               type="submit"
               disabled={loading || !form.title || !form.type || !form.category}
