@@ -1,0 +1,64 @@
+import { NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
+
+const adminClient = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
+
+export async function GET(request: Request) {
+  // Verify this is called by Vercel Cron
+  const authHeader = request.headers.get('authorization')
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  try {
+    const adminAny = adminClient as any
+
+    // Read grace period from settings (default 7 days)
+    const { data: setting } = await adminAny
+      .from('settings')
+      .select('value')
+      .eq('key', 'verification_grace_days')
+      .single()
+
+    const graceDays = setting?.value ? parseInt(setting.value, 10) : 7
+
+    // Calculate the cutoff: subscriptions that expired more than graceDays ago
+    const cutoff = new Date()
+    cutoff.setDate(cutoff.getDate() - graceDays)
+
+    // Find verified profiles whose subscription expired before the cutoff
+    const { data: expiredProfiles, error: fetchError } = await adminAny
+      .from('profiles')
+      .select('id, subscription_expires_at')
+      .eq('is_verified', true)
+      .lt('subscription_expires_at', cutoff.toISOString())
+      .not('subscription_expires_at', 'is', null)
+
+    if (fetchError) throw fetchError
+
+    if (!expiredProfiles || expiredProfiles.length === 0) {
+      return NextResponse.json({ success: true, revoked: 0 })
+    }
+
+    const ids = expiredProfiles.map((p: any) => p.id)
+
+    // Revoke verified status
+    const { error: updateError } = await adminAny
+      .from('profiles')
+      .update({ is_verified: false })
+      .in('id', ids)
+
+    if (updateError) throw updateError
+
+    console.log(`[expire-subscriptions] Revoked verification for ${ids.length} profiles`)
+
+    return NextResponse.json({ success: true, revoked: ids.length })
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Unexpected error'
+    console.error('[expire-subscriptions]', message)
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
+}
