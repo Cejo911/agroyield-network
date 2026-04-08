@@ -12,9 +12,13 @@ export default async function AdminPage() {
   if (!user) redirect('/login')
 
   const { data: profile } = await supabaseAny
-    .from('profiles').select('is_admin').eq('id', user.id).single()
+    .from('profiles').select('is_admin, admin_role').eq('id', user.id).single()
   const rawProfile = profile as Record<string, unknown> | null
   if (!rawProfile?.is_admin) redirect('/dashboard')
+
+  const currentAdminRole = typeof rawProfile.admin_role === 'string'
+    ? rawProfile.admin_role
+    : 'moderator'
 
   const [
     { data: opportunities },
@@ -63,7 +67,9 @@ export default async function AdminPage() {
       <div className="max-w-4xl mx-auto px-4 py-10">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-gray-500 mt-1">Manage content and members on AgroYield Network</p>
+          <p className="text-gray-500 mt-1">
+            {currentAdminRole === 'super' ? 'Super Admin' : 'Moderator'} · Manage content and members on AgroYield Network
+          </p>
         </div>
 
         {/* Stats */}
@@ -87,6 +93,8 @@ export default async function AdminPage() {
           members={members ?? []}
           profilesMap={profilesMap}
           settingsMap={settingsMap}
+          currentAdminRole={currentAdminRole}
+          currentUserId={user.id}
         />
       </div>
     </div>
