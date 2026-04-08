@@ -121,6 +121,9 @@ export default function AdminClient({
   )
   const [listingLimit, setListingLimit] = useState(settingsMap.listing_daily_limit ?? '3')
   const [reportThreshold, setReportThreshold] = useState(settingsMap.report_threshold ?? '3')
+  const [adminNotificationEmail, setAdminNotificationEmail] = useState(
+    settingsMap.admin_notification_email ?? ''
+  )
   const [savingSettings, setSavingSettings] = useState(false)
   const [settingsSaved, setSettingsSaved] = useState(false)
 
@@ -161,6 +164,7 @@ export default function AdminClient({
           opportunity_daily_limit: opportunityLimit,
           listing_daily_limit: listingLimit,
           report_threshold: reportThreshold,
+          admin_notification_email: adminNotificationEmail,
         }),
       })
       setSettingsSaved(true)
@@ -877,6 +881,27 @@ export default function AdminClient({
               />
               <span className="text-sm text-gray-600">reports</span>
             </div>
+          </div>
+
+          {/* Admin Notification Email */}
+          <div className="border rounded-lg p-4">
+            <h3 className="font-semibold text-gray-800 mb-1">Admin Notification Email</h3>
+            <p className="text-sm text-gray-500 mb-3">
+              Email address that receives an alert whenever a post is reported.
+              Leave empty to disable notifications.
+            </p>
+            <input
+              type="email"
+              value={adminNotificationEmail}
+              onChange={(e) => setAdminNotificationEmail(e.target.value)}
+              placeholder="admin@agroyield.africa"
+              className="w-full border rounded px-3 py-2 text-sm"
+            />
+            {adminNotificationEmail && (
+              <p className="text-xs text-green-700 bg-green-50 rounded-md px-3 py-2 mt-2">
+                Alerts will be sent to {adminNotificationEmail} on every new report.
+              </p>
+            )}
           </div>
 
           {/* Save */}
