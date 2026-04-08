@@ -64,18 +64,21 @@ export default function AdminClient({
   const [reportGroups, setReports] = useState(init_r)
   const [loadingId, setLoadingId]  = useState<string | null>(null)
 
-  // Announcement banner settings
+  // Registration
+  const [registrationEnabled, setRegistrationEnabled] = useState(settingsMap['registration_enabled'] !== 'false')
+
+  // Announcement banner
   const [announcementEnabled, setAnnouncementEnabled] = useState(settingsMap['announcement_enabled'] === 'true')
   const [announcementText,    setAnnouncementText]    = useState(settingsMap['announcement_text']    ?? '')
   const [announcementColor,   setAnnouncementColor]   = useState(settingsMap['announcement_color']   ?? 'green')
 
-  // Pricing settings
+  // Pricing
   const [monthlyNaira,  setMonthlyNaira]  = useState(settingsMap['subscription_monthly_naira']  ?? '2500')
   const [yearlyNaira,   setYearlyNaira]   = useState(settingsMap['subscription_yearly_naira']   ?? '25000')
   const [monthlyLabel,  setMonthlyLabel]  = useState(settingsMap['subscription_monthly_label']  ?? 'Monthly Verification')
   const [yearlyLabel,   setYearlyLabel]   = useState(settingsMap['subscription_yearly_label']   ?? 'Yearly Verification')
 
-  // Rate limit settings
+  // Rate limits
   const [rateLimitOpps,   setRateLimitOpps]   = useState(settingsMap['rate_limit_opportunities'] ?? '3')
   const [rateLimitMarket, setRateLimitMarket] = useState(settingsMap['rate_limit_marketplace']   ?? '5')
 
@@ -95,6 +98,7 @@ export default function AdminClient({
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          registration_enabled:       registrationEnabled ? 'true' : 'false',
           announcement_enabled:       announcementEnabled ? 'true' : 'false',
           announcement_text:          announcementText,
           announcement_color:         announcementColor,
@@ -488,14 +492,47 @@ export default function AdminClient({
       {tab === 'settings' && isSuperAdmin && (
         <div className="space-y-8">
 
+          {/* Registration */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
+            <div>
+              <h2 className="text-base font-bold text-gray-900 mb-1">Member Registration</h2>
+              <p className="text-sm text-gray-500">Control whether new members can sign up to the platform.</p>
+            </div>
+            <div className="flex items-center justify-between p-4 rounded-xl border border-gray-100 bg-gray-50">
+              <div>
+                <p className="text-sm font-semibold text-gray-700">Open registration</p>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  {registrationEnabled
+                    ? 'New members can currently sign up'
+                    : 'Sign-up page shows a "Registration closed" message'}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setRegistrationEnabled(prev => !prev)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                  registrationEnabled ? 'bg-green-600' : 'bg-gray-200'
+                }`}
+              >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                  registrationEnabled ? 'translate-x-6' : 'translate-x-1'
+                }`} />
+              </button>
+            </div>
+            {!registrationEnabled && (
+              <div className="flex items-start gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-xl p-3">
+                <span className="shrink-0 mt-0.5">⚠️</span>
+                <span>Registration is closed. Existing members can still log in. New visitors will see a closed message on the sign-up page.</span>
+              </div>
+            )}
+          </div>
+
           {/* Announcement Banner */}
           <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-5">
             <div>
               <h2 className="text-base font-bold text-gray-900 mb-1">Announcement Banner</h2>
               <p className="text-sm text-gray-500">Show a site-wide message at the top of every page.</p>
             </div>
-
-            {/* Enable toggle */}
             <div className="flex items-center justify-between p-4 rounded-xl border border-gray-100 bg-gray-50">
               <div>
                 <p className="text-sm font-semibold text-gray-700">Show banner</p>
@@ -513,8 +550,6 @@ export default function AdminClient({
                 }`} />
               </button>
             </div>
-
-            {/* Message */}
             <div>
               <label className="text-xs text-gray-500 mb-1 block">Message</label>
               <input
@@ -525,8 +560,6 @@ export default function AdminClient({
                 className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
               />
             </div>
-
-            {/* Color picker */}
             <div>
               <label className="text-xs text-gray-500 mb-2 block">Banner colour</label>
               <div className="flex gap-2">
@@ -547,8 +580,6 @@ export default function AdminClient({
                 ))}
               </div>
             </div>
-
-            {/* Live preview */}
             {announcementText.trim() && (
               <div>
                 <p className="text-xs text-gray-400 mb-2">Preview</p>
