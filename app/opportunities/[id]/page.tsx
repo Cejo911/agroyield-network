@@ -4,7 +4,6 @@ import AppNav from '@/app/components/AppNav'
 import LikeButton from '@/app/components/LikeButton'
 import ReportButton from '@/app/components/ReportButton'
 import OpportunityActions from './OpportunityActions'
-import CommentsSection from '@/app/components/CommentsSection'
 
 export default async function OpportunityDetailPage({
   params,
@@ -25,7 +24,8 @@ export default async function OpportunityDetailPage({
 
   if (!opportunity) notFound()
 
-  const isOwner = !!user && user.id === opportunity.user_id
+  const isOwner  = !!user && user.id === opportunity.user_id
+  const isClosed = opportunity.is_closed ?? false
 
   const deadline = opportunity.deadline
     ? new Date(opportunity.deadline).toLocaleDateString('en-GB', {
@@ -40,11 +40,25 @@ export default async function OpportunityDetailPage({
         <a href="/opportunities" className="text-sm text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 mb-6 inline-block">{'← Back to Opportunities'}</a>
 
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-6">
+
+          {isClosed && (
+            <div className="mb-5 flex items-center gap-2 px-4 py-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+              <span className="text-sm font-semibold text-red-600 dark:text-red-400">🔴 This opportunity is now closed</span>
+            </div>
+          )}
+
           <div className="flex items-start justify-between gap-4 mb-4">
             <div>
-              <span className="inline-block text-xs font-semibold px-2.5 py-1 rounded-full bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 mb-2">
-                {opportunity.type}
-              </span>
+              <div className="flex flex-wrap items-center gap-2 mb-2">
+                <span className="inline-block text-xs font-semibold px-2.5 py-1 rounded-full bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400">
+                  {opportunity.type}
+                </span>
+                {isClosed && (
+                  <span className="text-xs px-2.5 py-1 rounded-full font-semibold bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">
+                    CLOSED
+                  </span>
+                )}
+              </div>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{opportunity.title}</h1>
               {opportunity.organisation && (
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{opportunity.organisation}</p>
@@ -53,8 +67,8 @@ export default async function OpportunityDetailPage({
           </div>
 
           <div className="flex flex-wrap gap-4 text-sm text-gray-500 dark:text-gray-400 mb-6">
-            {opportunity.location && <span>{'📍 '}{opportunity.location}</span>}
-            {deadline && <span>{'⏰ Deadline: '}{deadline}</span>}
+            {opportunity.location && <span>📍 {opportunity.location}</span>}
+            {deadline && <span>⏰ Deadline: {deadline}</span>}
           </div>
 
           <div className="mb-4">
@@ -68,19 +82,18 @@ export default async function OpportunityDetailPage({
             </div>
           )}
 
-          {opportunity.url && (
+          {opportunity.url && !isClosed && (
             <div className="mt-6">
               <a href={opportunity.url} target="_blank" rel="noopener noreferrer" className="inline-block w-full text-center bg-green-600 text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors">{'Apply / Learn More'}</a>
             </div>
           )}
 
-          {isOwner && <OpportunityActions id={id} />}
-          <CommentsSection postId={id} postType="opportunity" />
+          {isOwner && <OpportunityActions id={id} isClosed={isClosed} />}
 
-<div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-800 flex gap-3">
-  <LikeButton postId={id} postType="opportunity" />
-  <ReportButton postId={id} postType="opportunity" />
-</div>
+          <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-800 flex gap-3">
+            <LikeButton postId={id} postType="opportunity" />
+            <ReportButton postId={id} postType="opportunity" />
+          </div>
         </div>
       </main>
     </div>
