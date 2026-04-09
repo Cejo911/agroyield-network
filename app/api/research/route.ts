@@ -26,15 +26,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { data, error } = await supabase
-      .from('research_posts')
-      .insert({
-        user_id: user.id,
-        title: body.title,
-        type: body.type,
-        content: body.content,
-        tags: body.tags?.length ? body.tags : null,
-        is_active: true,
+      const { data, error } = await supabase
+        .from('research_posts')
+        .insert({
+          user_id:   user.id,
+          title:     body.title,
+          type:      body.type,
+          content:   body.content,
+          tags:      body.tags?.length ? body.tags : null,
+          is_locked: body.is_locked ?? false,
+          is_active: true,
       })
       .select('id')
       .single()
