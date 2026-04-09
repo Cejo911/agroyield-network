@@ -11,7 +11,7 @@ export default async function ResearchPage() {
 
   const { data: posts } = await supabase
     .from('research_posts')
-    .select('id, user_id, title, type, content, tags, created_at')
+    .select('id, user_id, title, type, content, tags, is_locked, created_at')
     .eq('is_active', true)
     .order('created_at', { ascending: false })
 
@@ -26,10 +26,7 @@ export default async function ResearchPage() {
               Share findings, ask questions, and collaborate on agricultural research.
             </p>
           </div>
-          <Link
-            href="/research/new"
-            className="bg-green-600 text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors"
-          >
+          <Link href="/research/new" className="bg-green-600 text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors">
             Post research
           </Link>
         </div>
