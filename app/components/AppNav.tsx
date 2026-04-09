@@ -13,6 +13,7 @@ const NAV_LINKS = [
   { href: '/prices',        label: 'Price Tracker' },
   { href: '/marketplace',   label: 'Marketplace' },
   { href: '/research',      label: 'Research' },
+  { href: '/business',      label: 'Business' },
 ]
 
 export default function AppNav() {
