@@ -38,7 +38,7 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
         }
       `}</style>
 
-      {/* Toolbar — hidden on print */}
+      {/* Toolbar */}
       <div className="no-print bg-gray-100 border-b border-gray-200 px-6 py-3 flex items-center justify-between">
         <a href={`/business/invoices/${id}`} className="text-sm text-gray-500 hover:text-gray-700">
           ← Back to Invoice
@@ -46,16 +46,25 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
         <PrintButton />
       </div>
 
-      {/* Invoice content */}
+      {/* Invoice */}
       <div style={{ maxWidth: '794px', margin: '0 auto', padding: '40px 48px', background: '#fff', minHeight: '100vh' }}>
 
-        {/* Header */}
+        {/* Header — logo + business info + document label */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '40px' }}>
-          <div>
-            <div style={{ fontSize: '22px', fontWeight: 700, color: '#111827', marginBottom: '6px' }}>{business?.name}</div>
-            {business?.address && <div style={{ fontSize: '13px', color: '#6b7280' }}>{business.address}</div>}
-            {business?.phone && <div style={{ fontSize: '13px', color: '#6b7280' }}>{business.phone}</div>}
-            {business?.email && <div style={{ fontSize: '13px', color: '#6b7280' }}>{business.email}</div>}
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+            {business?.logo_url && (
+              <img
+                src={business.logo_url}
+                alt="Logo"
+                style={{ width: '64px', height: '64px', objectFit: 'contain', borderRadius: '8px' }}
+              />
+            )}
+            <div>
+              <div style={{ fontSize: '22px', fontWeight: 700, color: '#111827', marginBottom: '6px' }}>{business?.name}</div>
+              {business?.address && <div style={{ fontSize: '13px', color: '#6b7280' }}>{business.address}</div>}
+              {business?.phone && <div style={{ fontSize: '13px', color: '#6b7280' }}>{business.phone}</div>}
+              {business?.email && <div style={{ fontSize: '13px', color: '#6b7280' }}>{business.email}</div>}
+            </div>
           </div>
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontSize: '20px', fontWeight: 700, color: '#9ca3af', letterSpacing: '2px' }}>
@@ -98,7 +107,7 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
 
         <div style={{ borderTop: '2px solid #111827', marginBottom: '16px' }} />
 
-        {/* Items table */}
+        {/* Items */}
         <table style={{ width: '100%', fontSize: '13px', borderCollapse: 'collapse', marginBottom: '24px' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid #e5e7eb' }}>
