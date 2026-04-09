@@ -13,7 +13,6 @@ const COMMODITIES: Record<string, string[]> = {
   livestock:  ['Cattle', 'Goat', 'Sheep', 'Pig', 'Poultry', 'Fish'],
   cash_crops: ['Cocoa', 'Coffee', 'Cotton', 'Rubber', 'Palm Oil', 'Sugarcane'],
 }
-
 const STATES = [
   'Abia','Adamawa','Akwa Ibom','Anambra','Bauchi','Bayelsa','Benue','Borno',
   'Cross River','Delta','Ebonyi','Edo','Ekiti','Enugu','FCT','Gombe','Imo',
@@ -21,7 +20,6 @@ const STATES = [
   'Niger','Ogun','Ondo','Osun','Oyo','Plateau','Rivers','Sokoto','Taraba',
   'Yobe','Zamfara',
 ]
-
 const UNITS = ['kg', 'tonne', 'bag (50kg)', 'bag (100kg)', 'crate', 'bunch', 'piece', 'litre']
 
 const inputCls = 'w-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500'
@@ -53,12 +51,17 @@ export default function SubmitPricePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setSubmitting(true)
     setError('')
 
+    const priceValue = parseFloat(form.price_per_unit)
+    if (!form.price_per_unit || isNaN(priceValue) || priceValue <= 0) {
+      setError('Please enter a valid price.')
+      return
+    }
+
+    setSubmitting(true)
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
-
     if (!user) {
       setError('You must be signed in to submit prices.')
       setSubmitting(false)
@@ -66,15 +69,15 @@ export default function SubmitPricePage() {
     }
 
     const { error: insertError } = await supabase.from('price_reports').insert({
-      user_id: user.id,
-      category: form.category,
-      commodity: form.commodity,
-      price: parseFloat(form.price_per_unit),
-      price_per_unit: parseFloat(form.price_per_unit),
-      unit: form.unit,
-      market_name: form.market_name,
-      state: form.state,
-      notes: form.notes || null,
+      user_id:       user.id,
+      category:      form.category,
+      commodity:     form.commodity,
+      price:         priceValue,
+      price_per_unit: priceValue,
+      unit:          form.unit,
+      market_name:   form.market_name,
+      state:         form.state,
+      notes:         form.notes || null,
     })
 
     if (insertError) {
@@ -102,6 +105,7 @@ export default function SubmitPricePage() {
         )}
 
         <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6 space-y-5">
+
           {/* Category */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -149,7 +153,7 @@ export default function SubmitPricePage() {
                 value={form.price_per_unit}
                 onChange={handleChange}
                 required
-                min="0"
+                min="1"
                 step="0.01"
                 placeholder="e.g. 35000"
                 className={inputCls}
@@ -219,6 +223,7 @@ export default function SubmitPricePage() {
           >
             {submitting ? 'Submitting…' : 'Submit Price Report'}
           </button>
+
         </form>
       </div>
     </div>
