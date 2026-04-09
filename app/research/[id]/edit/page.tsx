@@ -21,10 +21,11 @@ export default function EditResearchPage() {
   const [saving,  setSaving]  = useState(false)
   const [error,   setError]   = useState('')
   const [form, setForm] = useState({
-    title:   '',
-    type:    '',
-    content: '',
-    tags:    [] as string[],
+    title:     '',
+    type:      '',
+    content:   '',
+    tags:      [] as string[],
+    is_locked: false,
   })
 
   useEffect(() => {
@@ -41,10 +42,11 @@ export default function EditResearchPage() {
           if (error || !data) { router.push('/research'); return }
           if (data.user_id !== user.id) { router.push('/research'); return }
           setForm({
-            title:   data.title ?? '',
-            type:    data.type ?? '',
-            content: data.content ?? '',
-            tags:    Array.isArray(data.tags) ? data.tags : [],
+            title:     data.title ?? '',
+            type:      data.type ?? '',
+            content:   data.content ?? '',
+            tags:      Array.isArray(data.tags) ? data.tags : [],
+            is_locked: data.is_locked ?? false,
           })
           setLoading(false)
         })
@@ -70,10 +72,11 @@ export default function EditResearchPage() {
     const { error: updateError } = await supabase
       .from('research_posts')
       .update({
-        title:   form.title.trim(),
-        type:    form.type || null,
-        content: form.content.trim(),
-        tags:    form.tags.length > 0 ? form.tags : null,
+        title:     form.title.trim(),
+        type:      form.type || null,
+        content:   form.content.trim(),
+        tags:      form.tags.length > 0 ? form.tags : null,
+        is_locked: form.is_locked,
       })
       .eq('id', id)
     setSaving(false)
@@ -170,6 +173,20 @@ export default function EditResearchPage() {
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className="flex items-center justify-between p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+            <div>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">🔒 Lock this post</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Public visitors see a preview only. Signed-in members read the full post.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setForm(f => ({ ...f, is_locked: !f.is_locked }))}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${form.is_locked ? 'bg-green-600' : 'bg-gray-200 dark:bg-gray-600'}`}
+            >
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${form.is_locked ? 'translate-x-6' : 'translate-x-1'}`} />
+            </button>
           </div>
 
           <div className="flex gap-3 pt-2">
