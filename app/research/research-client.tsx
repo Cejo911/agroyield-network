@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import LikeButton from '@/app/components/LikeButton'
 
 const TYPES = ['All', 'Finding', 'Question', 'Dataset', 'Review', 'Collaboration']
 const TYPE_COLOURS: Record<string, string> = {
@@ -134,23 +135,27 @@ export default function ResearchClient({
                   <p className="text-xs text-gray-400 dark:text-gray-500 mt-3">{timeAgo(post.created_at)}</p>
                 </Link>
 
-                {isOwner && (
-                  <div className="px-6 pb-4 flex items-center justify-end gap-2 border-t border-gray-100 dark:border-gray-800 pt-3">
-                    {confirmingId === post.id ? (
-                      <>
-                        <button onClick={() => setConfirmingId(null)} className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 px-2 py-1 rounded transition-colors">Cancel</button>
-                        <button onClick={() => handleDelete(post.id)} disabled={deletingId === post.id} className="text-xs bg-red-600 text-white px-3 py-1 rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors">
-                          {deletingId === post.id ? 'Deleting…' : 'Confirm delete'}
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <Link href={`/research/${post.id}/edit`} className="text-xs text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 px-2 py-1 rounded transition-colors">✏️ Edit</Link>
-                        <button onClick={() => setConfirmingId(post.id)} className="text-xs text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 px-2 py-1 rounded transition-colors">🗑️ Delete</button>
-                      </>
-                    )}
-                  </div>
-                )}
+                <div className="px-6 pb-4 flex items-center justify-between border-t border-gray-100 dark:border-gray-800 pt-3">
+                  <LikeButton postId={post.id} postType="research" />
+
+                  {isOwner && (
+                    <div className="flex items-center gap-2">
+                      {confirmingId === post.id ? (
+                        <>
+                          <button onClick={() => setConfirmingId(null)} className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 px-2 py-1 rounded transition-colors">Cancel</button>
+                          <button onClick={() => handleDelete(post.id)} disabled={deletingId === post.id} className="text-xs bg-red-600 text-white px-3 py-1 rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors">
+                            {deletingId === post.id ? 'Deleting…' : 'Confirm delete'}
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <Link href={`/research/${post.id}/edit`} className="text-xs text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 px-2 py-1 rounded transition-colors">✏️ Edit</Link>
+                          <button onClick={() => setConfirmingId(post.id)} className="text-xs text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 px-2 py-1 rounded transition-colors">🗑️ Delete</button>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             )
           })}
