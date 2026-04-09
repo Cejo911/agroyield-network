@@ -34,8 +34,8 @@ export default async function InvoicePrintPage({ params }: { params: { id: strin
 
   const { data: customer } = await supabase
     .from('customers')
-    .eq('id', invoice.customer_id)
     .select('*')
+    .eq('id', invoice.customer_id)
     .single()
 
   const items = invoice.invoice_items || []
