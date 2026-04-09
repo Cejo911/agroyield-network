@@ -71,9 +71,9 @@ export default async function ResearchPostPage({
           </div>
 
           {isOwner && <ResearchActions id={id} />}
+          <CommentsSection postId={id} postType="research" />
         </div>
       </main>
-    <CommentsSection postId={id} postType="research" />
     </div>
   )
 }
