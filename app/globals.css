@@ -1,13 +1,23 @@
 @import "tailwindcss";
-@variant dark (&:where(.dark, .dark *));  /* ← add this */
-
-/* Prevent dark mode flash - sets bg directly on html element */
-html { background-color: #ffffff; }
-html.dark { background-color: #030712; }
+@variant dark (&:where(.dark, .dark *));
 
 :root {
   --background: #ffffff;
   --foreground: #171717;
+}
+
+/* Switch CSS variables based on our .dark class, not system preference */
+.dark {
+  --background: #030712;
+  --foreground: #ededed;
+}
+
+/* Prevent white flash during page navigation */
+html {
+  background-color: #ffffff;
+}
+html.dark {
+  background-color: #030712;
 }
 
 @theme inline {
@@ -15,13 +25,6 @@ html.dark { background-color: #030712; }
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
