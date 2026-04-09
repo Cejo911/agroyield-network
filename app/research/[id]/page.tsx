@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import AppNav from '@/app/components/AppNav'
+import ResearchActions from './ResearchActions'
 
 const TYPE_COLOURS: Record<string, string> = {
   finding:       'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400',
@@ -22,6 +23,7 @@ export default async function ResearchPostPage({
 }) {
   const { id } = await params
   const supabase = await createClient()
+
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
@@ -33,12 +35,15 @@ export default async function ResearchPostPage({
 
   if (!post) notFound()
 
+  const isOwner = user.id === post.user_id
   const tags: string[] = Array.isArray(post.tags) ? post.tags : []
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <AppNav />
       <main className="max-w-2xl mx-auto px-4 py-10">
+        <a href="/research" className="text-sm text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 mb-6 inline-block">{'← Back to Research'}</a>
+
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-8">
           <div className="flex flex-wrap gap-2 mb-4">
             {post.type && (
@@ -63,6 +68,8 @@ export default async function ResearchPostPage({
           <div className="prose prose-sm max-w-none">
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed whitespace-pre-wrap">{post.content}</p>
           </div>
+
+          {isOwner && <ResearchActions id={id} />}
         </div>
       </main>
     </div>
