@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 
 export default async function BusinessDashboard() {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   const { data: business } = await supabase
@@ -41,7 +41,7 @@ export default async function BusinessDashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{business.name}</h1>
-          <p className="text-gray-500 text-sm mt-0.5">{business.address}</p>
+          {business.address && <p className="text-gray-500 text-sm mt-0.5">{business.address}</p>}
         </div>
         <Link href="/business/invoices/new" className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 text-sm font-medium transition-colors">
           + New Invoice
