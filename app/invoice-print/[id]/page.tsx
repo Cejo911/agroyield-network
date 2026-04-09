@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
+import PrintButton from './PrintButton'
 
 const DOC_LABELS: Record<string, string> = {
   invoice: 'INVOICE', proforma: 'PROFORMA INVOICE',
@@ -42,14 +43,7 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
         <a href={`/business/invoices/${id}`} className="text-sm text-gray-500 hover:text-gray-700">
           ← Back to Invoice
         </a>
-        <div className="flex gap-2">
-          <button
-            onClick={() => window.print()}
-            className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700"
-          >
-            🖨 Print / Save as PDF
-          </button>
-        </div>
+        <PrintButton />
       </div>
 
       {/* Invoice content */}
