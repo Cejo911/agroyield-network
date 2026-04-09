@@ -1,8 +1,9 @@
 'use client'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
 
 const CATEGORIES = ['All', 'Grains', 'Tubers', 'Legumes', 'Vegetables', 'Oils', 'Livestock', 'Other']
-
 const CATEGORY_COLOURS: Record<string, string> = {
   grains:     'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400',
   tubers:     'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400',
@@ -15,6 +16,7 @@ const CATEGORY_COLOURS: Record<string, string> = {
 
 type PriceReport = {
   id: string
+  user_id: string
   commodity: string
   category: string | null
   price: number
@@ -24,11 +26,21 @@ type PriceReport = {
   reported_at: string
 }
 
-export default function PricesClient({ reports }: { reports: PriceReport[] }) {
+export default function PricesClient({
+  reports,
+  userId,
+}: {
+  reports: PriceReport[]
+  userId: string
+}) {
+  const router = useRouter()
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('All')
+  const [localReports, setLocalReports] = useState(reports)
+  const [confirmingId, setConfirmingId] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
-  const filtered = reports.filter(r => {
+  const filtered = localReports.filter(r => {
     const matchesSearch =
       !search ||
       r.commodity.toLowerCase().includes(search.toLowerCase()) ||
@@ -42,9 +54,7 @@ export default function PricesClient({ reports }: { reports: PriceReport[] }) {
 
   const formatPrice = (price: number) =>
     new Intl.NumberFormat('en-NG', {
-      style: 'currency',
-      currency: 'NGN',
-      maximumFractionDigits: 0,
+      style: 'currency', currency: 'NGN', maximumFractionDigits: 0,
     }).format(price)
 
   const timeAgo = (dateStr: string) => {
@@ -59,7 +69,16 @@ export default function PricesClient({ reports }: { reports: PriceReport[] }) {
 
   const getCategoryColour = (category: string | null): string => {
     if (!category) return 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
-    return CATEGORY_COLOURS[category] ?? 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+    return CATEGORY_COLOURS[category.toLowerCase()] ?? 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+  }
+
+  const handleDelete = async (id: string) => {
+    setDeletingId(id)
+    const supabase = createClient()
+    await supabase.from('price_reports').delete().eq('id', id)
+    setLocalReports(prev => prev.filter(r => r.id !== id))
+    setDeletingId(null)
+    setConfirmingId(null)
   }
 
   return (
@@ -75,15 +94,12 @@ export default function PricesClient({ reports }: { reports: PriceReport[] }) {
         />
         <div className="flex flex-wrap gap-2">
           {CATEGORIES.map(cat => (
-            <button
-              key={cat}
-              onClick={() => setCategoryFilter(cat)}
+            <button key={cat} onClick={() => setCategoryFilter(cat)}
               className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${
                 categoryFilter === cat
                   ? 'bg-green-600 text-white border-green-600'
                   : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-green-400 dark:hover:border-green-500'
-              }`}
-            >
+              }`}>
               {cat}
             </button>
           ))}
@@ -104,44 +120,71 @@ export default function PricesClient({ reports }: { reports: PriceReport[] }) {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map(report => (
-            <div
-              key={report.id}
-              className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-5"
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-lg">
-                    {report.commodity}
-                  </h3>
-                  {report.category && (
-                    <span
-                      className={`inline-block text-xs px-2 py-0.5 rounded-full font-medium capitalize mt-1 ${getCategoryColour(report.category)}`}
-                    >
-                      {report.category}
-                    </span>
+          {filtered.map(report => {
+            const isOwner = report.user_id === userId
+            const isConfirming = confirmingId === report.id
+            const isDeleting = deletingId === report.id
+
+            return (
+              <div key={report.id} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-5">
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-lg">
+                      {report.commodity}
+                    </h3>
+                    {report.category && (
+                      <span className={`inline-block text-xs px-2 py-0.5 rounded-full font-medium capitalize mt-1 ${getCategoryColour(report.category)}`}>
+                        {report.category}
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xl font-bold text-green-700 dark:text-green-400">
+                      {formatPrice(report.price)}
+                    </p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500">per {report.unit}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-1 text-sm text-gray-500 dark:text-gray-400">
+                  {report.market_name && <p>🏪 {report.market_name}</p>}
+                  {report.state && <p>📍 {report.state}</p>}
+                </div>
+
+                <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
+                  <span className="text-xs text-gray-400 dark:text-gray-500">
+                    {timeAgo(report.reported_at)}
+                  </span>
+
+                  {isOwner && (
+                    <div className="flex items-center gap-2">
+                      {!isConfirming ? (
+                        <>
+                          <button onClick={() => router.push(`/prices/${report.id}/edit`)} className="text-xs text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 font-medium transition-colors">
+                            ✏️ Edit
+                          </button>
+                          <span className="text-gray-300 dark:text-gray-700">|</span>
+                          <button onClick={() => setConfirmingId(report.id)} className="text-xs text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 font-medium transition-colors">
+                            🗑️ Delete
+                          </button>
+                        </>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-gray-500 dark:text-gray-400">Delete?</span>
+                          <button onClick={() => handleDelete(report.id)} disabled={isDeleting} className="text-xs font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 disabled:opacity-50 transition-colors">
+                            {isDeleting ? 'Deleting…' : 'Yes'}
+                          </button>
+                          <button onClick={() => setConfirmingId(null)} disabled={isDeleting} className="text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+                            No
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
-                <div className="text-right">
-                  <p className="text-xl font-bold text-green-700 dark:text-green-400">
-                    {formatPrice(report.price)}
-                  </p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500">per {report.unit}</p>
-                </div>
               </div>
-
-              <div className="space-y-1 text-sm text-gray-500 dark:text-gray-400">
-                {report.market_name && <p>🏪 {report.market_name}</p>}
-                {report.state && <p>📍 {report.state}</p>}
-              </div>
-
-              <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800 text-right">
-                <span className="text-xs text-gray-400 dark:text-gray-500">
-                  {timeAgo(report.reported_at)}
-                </span>
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>
