@@ -76,7 +76,6 @@ export const metadata: Metadata = {
   manifest: '/site.webmanifest',
 }
 
-// themeColor moved here to fix Next.js 15 deprecation warning
 export const viewport: Viewport = {
   themeColor: '#22c55e',
 }
@@ -92,7 +91,7 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col bg-white dark:bg-gray-950">
         <ThemeProvider>
           <AnnouncementBanner />
           {children}
