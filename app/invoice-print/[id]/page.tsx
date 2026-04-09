@@ -145,7 +145,7 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
                   <img
                     src={business.logo_url}
                     alt="logo"
-                    style={{ width: '64px', height: '64px', borderRadius: '10px', objectFit: 'cover', background: '#fff', padding: '4px' }}
+                    style={{ width: '64px', height: '64px', borderRadius: '10px', objectFit: 'contain', background: '#fff', padding: '4px' }}
                   />
                 ) : (
                   <div style={{
