@@ -94,13 +94,19 @@ export default async function InvoiceViewPage({ params }: { params: Promise<{ id
           </div>
         </div>
 
-        {/* Line items */}
+       {/* Line items */}
         <table className="w-full text-sm mb-6">
+          <colgroup>
+            <col className="w-1/2" />
+            <col className="w-16" />
+            <col className="w-32" />
+            <col className="w-32" />
+          </colgroup>
           <thead>
             <tr className="border-b-2 border-gray-200">
               <th className="text-left py-2 font-semibold text-gray-600">Description</th>
-              <th className="text-right py-2 font-semibold text-gray-600">Qty</th>
-              <th className="text-right py-2 font-semibold text-gray-600">Unit Price</th>
+              <th className="text-right py-2 font-semibold text-gray-600 pr-3">Qty</th>
+              <th className="text-right py-2 font-semibold text-gray-600 pr-3">Unit Price</th>
               <th className="text-right py-2 font-semibold text-gray-600">Total</th>
             </tr>
           </thead>
@@ -108,8 +114,8 @@ export default async function InvoiceViewPage({ params }: { params: Promise<{ id
             {items.map((item: any) => (
               <tr key={item.id} className="border-b border-gray-50">
                 <td className="py-2.5 text-gray-700">{item.description}</td>
-                <td className="py-2.5 text-right text-gray-600">{item.quantity}</td>
-                <td className="py-2.5 text-right text-gray-600">{fmt(item.unit_price)}</td>
+                <td className="py-2.5 text-right text-gray-600 pr-3">{item.quantity}</td>
+                <td className="py-2.5 text-right text-gray-600 pr-3">{fmt(item.unit_price)}</td>
                 <td className="py-2.5 text-right font-medium text-gray-800">{fmt(item.line_total)}</td>
               </tr>
             ))}
