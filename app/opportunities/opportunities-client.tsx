@@ -86,8 +86,8 @@ export default function OpportunitiesClient({
             </Link>
 
             <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800 flex items-center gap-3">
-              <LikeButton postId={opportunity.id} userId={userId} postType="opportunity" />
-              <ReportButton postId={opportunity.id} userId={userId} postType="opportunity" />
+              <LikeButton postId={opportunity.id} postType="opportunity" />
+              <ReportButton postId={opportunity.id} postType="opportunity" />
 
               {isOwner && (
                 <div className="ml-auto flex items-center gap-2">
