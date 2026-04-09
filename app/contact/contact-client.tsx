@@ -38,7 +38,6 @@ export default function ContactClient() {
     fontFamily: 'inherit', boxSizing: 'border-box' as const,
     transition: 'border-color 0.2s',
   }
-
   const labelStyle: React.CSSProperties = {
     display: 'block', fontSize: 13, fontWeight: 600,
     color: 'var(--text-muted)', marginBottom: 8,
@@ -89,7 +88,7 @@ export default function ContactClient() {
         }
         .agy-nav { padding: 20px 40px; }
         .agy-nav-links { display: flex; align-items: center; gap: 20px; }
-        .agy-section-hero { padding-top: 160px; padding-bottom: 80px; padding-left: 24px; padding-right: 24px; }
+        .agy-section-hero { padding-top: 80px; padding-bottom: 80px; padding-left: 24px; padding-right: 24px; }
         .agy-main-content { padding: 80px 24px 120px; }
         .agy-form-name-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
         .agy-footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; padding: 28px 40px; }
@@ -98,7 +97,7 @@ export default function ContactClient() {
           .agy-nav { padding: 16px 20px; }
           .agy-nav-links { gap: 10px; }
           .agy-nav-about { display: none; }
-          .agy-section-hero { padding-top: 120px; padding-bottom: 60px; padding-left: 16px; padding-right: 16px; }
+          .agy-section-hero { padding-top: 48px; padding-bottom: 60px; padding-left: 16px; padding-right: 16px; }
           .agy-main-content { padding: 60px 16px 80px; }
           .agy-form-name-row { grid-template-columns: 1fr; }
           .agy-footer { flex-direction: column; align-items: flex-start; padding: 24px 20px; }
@@ -112,7 +111,7 @@ export default function ContactClient() {
       `}</style>
 
       {/* NAV */}
-      <nav className="agy-nav" style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--nav-bg)', backdropFilter: 'blur(16px)', borderBottom: '1px solid var(--nav-border)' }}>
+      <nav className="agy-nav" style={{ position: 'sticky', top: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--nav-bg)', backdropFilter: 'blur(16px)', borderBottom: '1px solid var(--nav-border)' }}>
         <a href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
           <div style={{ width: 34, height: 34, background: 'linear-gradient(135deg, #16a34a, #22c55e)', borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17 }}>🌾</div>
           <span style={{ fontSize: 17, fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>
@@ -153,7 +152,6 @@ export default function ContactClient() {
 
       {/* MAIN CONTENT */}
       <section className="agy-main-content" style={{ maxWidth: 1000, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 48, alignItems: 'start' }}>
-
         {/* LEFT — contact info */}
         <div>
           <h2 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', letterSpacing: -0.5, marginBottom: 8 }}>Contact information</h2>
