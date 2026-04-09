@@ -75,10 +75,10 @@ export default async function OpportunityDetailPage({
 
           {isOwner && <OpportunityActions id={id} />}
 
-          <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-800 flex gap-3">
-            {user && <LikeButton postId={id} userId={user.id} postType="opportunity" />}
-            {user && <ReportButton postId={id} userId={user.id} postType="opportunity" />}
-          </div>
+<div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-800 flex gap-3">
+  <LikeButton postId={id} postType="opportunity" />
+  <ReportButton postId={id} postType="opportunity" />
+</div>
         </div>
       </main>
     </div>
