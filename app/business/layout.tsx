@@ -13,7 +13,18 @@ export default async function BusinessLayout({ children }: { children: React.Rea
         <div className="flex gap-6">
           <aside className="w-48 shrink-0">
             <nav className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 space-y-1 sticky top-6">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-3 pb-1">Business</p>
+
+              {/* Back to main dashboard */}
+              <Link
+                href="/dashboard"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-green-700 hover:bg-green-50 transition-colors"
+              >
+                ← All Modules
+              </Link>
+
+              <div className="border-t border-gray-100 my-1" />
+
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-3 pb-1 pt-1">Business</p>
               <Link href="/business" className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors">🏠 Dashboard</Link>
               <Link href="/business/setup" className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors">⚙️ Setup</Link>
               <Link href="/business/products" className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors">📦 Products</Link>
