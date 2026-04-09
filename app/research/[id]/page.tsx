@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation'
 import AppNav from '@/app/components/AppNav'
 import ResearchActions from './ResearchActions'
 import CommentsSection from '@/app/components/CommentsSection'
+import LikeButton from '@/app/components/LikeButton'
+import ReportButton from '@/app/components/ReportButton'
 
 const TYPE_COLOURS: Record<string, string> = {
   finding:       'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400',
@@ -36,8 +38,8 @@ export default async function ResearchPostPage({
 
   if (!post) notFound()
 
-  const isOwner   = !!user && user.id === post.user_id
-  const isLocked  = post.is_locked ?? false
+  const isOwner     = !!user && user.id === post.user_id
+  const isLocked    = post.is_locked ?? false
   const canReadFull = !isLocked || !!user
   const tags: string[] = Array.isArray(post.tags) ? post.tags : []
   const preview = post.content.slice(0, 220).trimEnd()
@@ -94,6 +96,13 @@ export default async function ResearchPostPage({
           )}
 
           {isOwner && <ResearchActions id={id} />}
+
+          {canReadFull && (
+            <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-800 flex gap-3">
+              <LikeButton postId={id} postType="research" />
+              <ReportButton postId={id} postType="research" />
+            </div>
+          )}
 
           {canReadFull && <CommentsSection postId={id} postType="research" />}
         </div>
