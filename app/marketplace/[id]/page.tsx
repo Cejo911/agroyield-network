@@ -65,7 +65,7 @@ export default async function ListingPage({
             )}
           </div>
 
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">{listing.title}</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3">{listing.title}</h1>
 
           {listing.price !== null && (
             <p className="text-2xl font-bold text-green-700 dark:text-green-400 mb-1">
