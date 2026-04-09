@@ -11,7 +11,7 @@ export default async function ResearchPage() {
 
   const { data: posts } = await supabase
     .from('research_posts')
-    .select('id, title, type, content, tags, created_at')
+    .select('id, user_id, title, type, content, tags, created_at')
     .eq('is_active', true)
     .order('created_at', { ascending: false })
 
@@ -33,7 +33,7 @@ export default async function ResearchPage() {
             Post research
           </Link>
         </div>
-        <ResearchClient posts={posts ?? []} />
+        <ResearchClient posts={(posts ?? []) as any} userId={user.id} />
       </main>
     </div>
   )
