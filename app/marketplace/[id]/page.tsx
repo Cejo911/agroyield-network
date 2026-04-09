@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import AppNav from '@/app/components/AppNav'
 import ListingActions from './ListingActions'
+import CommentsSection from '@/app/components/CommentsSection'
 
 const CATEGORY_COLOURS: Record<string, string> = {
   produce:   'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
@@ -106,6 +107,7 @@ export default async function ListingPage({
 
           {/* Owner actions */}
           {isOwner && <ListingActions id={id} />}
+          <CommentsSection postId={id} postType="listing" />
 
         </div>
       </main>
