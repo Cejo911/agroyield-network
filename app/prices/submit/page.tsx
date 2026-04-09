@@ -5,12 +5,12 @@ import AppNav from '@/app/components/AppNav'
 import { createClient } from '@/lib/supabase/client'
 
 const COMMODITIES: Record<string, string[]> = {
-  grains: ['Maize', 'Rice', 'Sorghum', 'Millet', 'Wheat', 'Barley'],
-  legumes: ['Soybeans', 'Cowpea', 'Groundnut', 'Sesame', 'Beans'],
-  tubers: ['Cassava', 'Yam', 'Sweet Potato', 'Cocoyam', 'Irish Potato'],
+  grains:     ['Maize', 'Rice', 'Sorghum', 'Millet', 'Wheat', 'Barley'],
+  legumes:    ['Soybeans', 'Cowpea', 'Groundnut', 'Sesame', 'Beans'],
+  tubers:     ['Cassava', 'Yam', 'Sweet Potato', 'Cocoyam', 'Irish Potato'],
   vegetables: ['Tomato', 'Pepper', 'Onion', 'Cabbage', 'Carrot', 'Spinach'],
-  fruits: ['Banana', 'Plantain', 'Mango', 'Orange', 'Pineapple', 'Watermelon'],
-  livestock: ['Cattle', 'Goat', 'Sheep', 'Pig', 'Poultry', 'Fish'],
+  fruits:     ['Banana', 'Plantain', 'Mango', 'Orange', 'Pineapple', 'Watermelon'],
+  livestock:  ['Cattle', 'Goat', 'Sheep', 'Pig', 'Poultry', 'Fish'],
   cash_crops: ['Cocoa', 'Coffee', 'Cotton', 'Rubber', 'Palm Oil', 'Sugarcane'],
 }
 
@@ -23,6 +23,8 @@ const STATES = [
 ]
 
 const UNITS = ['kg', 'tonne', 'bag (50kg)', 'bag (100kg)', 'crate', 'bunch', 'piece', 'litre']
+
+const inputCls = 'w-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500'
 
 export default function SubmitPricePage() {
   const router = useRouter()
@@ -84,47 +86,48 @@ export default function SubmitPricePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <AppNav />
-
       <div className="max-w-2xl mx-auto px-4 py-10">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Submit a Price Report</h1>
-        <p className="text-gray-500 mb-8">Help the community by sharing current commodity prices from your local market.</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Submit a Price Report</h1>
+        <p className="text-gray-500 dark:text-gray-400 mb-8">
+          Help the community by sharing current commodity prices from your local market.
+        </p>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+          <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-lg text-sm">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-5">
+        <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6 space-y-5">
           {/* Category */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Category <span className="text-red-500">*</span></label>
-            <select
-              name="category"
-              value={form.category}
-              onChange={handleChange}
-              required
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-            >
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Category <span className="text-red-500">*</span>
+            </label>
+            <select name="category" value={form.category} onChange={handleChange} required className={inputCls}>
               <option value="">Select category</option>
               {Object.keys(COMMODITIES).map(cat => (
-                <option key={cat} value={cat}>{cat.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</option>
+                <option key={cat} value={cat}>
+                  {cat.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                </option>
               ))}
             </select>
           </div>
 
           {/* Commodity */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Commodity <span className="text-red-500">*</span></label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Commodity <span className="text-red-500">*</span>
+            </label>
             <select
               name="commodity"
               value={form.commodity}
               onChange={handleChange}
               required
               disabled={!form.category}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-gray-100"
+              className={`${inputCls} disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:text-gray-400 dark:disabled:text-gray-600`}
             >
               <option value="">Select commodity</option>
               {currentCommodities.map(c => (
@@ -136,7 +139,9 @@ export default function SubmitPricePage() {
           {/* Price + Unit */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Price (₦) <span className="text-red-500">*</span></label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Price (₦) <span className="text-red-500">*</span>
+              </label>
               <input
                 type="number"
                 name="price_per_unit"
@@ -146,18 +151,14 @@ export default function SubmitPricePage() {
                 min="0"
                 step="0.01"
                 placeholder="e.g. 35000"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                className={inputCls}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Unit <span className="text-red-500">*</span></label>
-              <select
-                name="unit"
-                value={form.unit}
-                onChange={handleChange}
-                required
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-              >
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Unit <span className="text-red-500">*</span>
+              </label>
+              <select name="unit" value={form.unit} onChange={handleChange} required className={inputCls}>
                 <option value="">Select unit</option>
                 {UNITS.map(u => (
                   <option key={u} value={u}>{u}</option>
@@ -168,7 +169,9 @@ export default function SubmitPricePage() {
 
           {/* Market */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Market Name <span className="text-red-500">*</span></label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Market Name <span className="text-red-500">*</span>
+            </label>
             <input
               type="text"
               name="market_name"
@@ -176,20 +179,16 @@ export default function SubmitPricePage() {
               onChange={handleChange}
               required
               placeholder="e.g. Mile 12 Market"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+              className={inputCls}
             />
           </div>
 
           {/* State */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">State <span className="text-red-500">*</span></label>
-            <select
-              name="state"
-              value={form.state}
-              onChange={handleChange}
-              required
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-            >
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              State <span className="text-red-500">*</span>
+            </label>
+            <select name="state" value={form.state} onChange={handleChange} required className={inputCls}>
               <option value="">Select state</option>
               {STATES.map(s => (
                 <option key={s} value={s}>{s}</option>
@@ -199,21 +198,23 @@ export default function SubmitPricePage() {
 
           {/* Notes */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Notes <span className="text-gray-400">(optional)</span></label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Notes <span className="text-gray-400 dark:text-gray-500">(optional)</span>
+            </label>
             <textarea
               name="notes"
               value={form.notes}
               onChange={handleChange}
               rows={3}
               placeholder="Any additional context about this price..."
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+              className={`${inputCls} resize-none`}
             />
           </div>
 
           <button
             type="submit"
             disabled={submitting}
-            className="w-full bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-semibold py-3 rounded-lg transition-colors"
+            className="w-full bg-green-600 hover:bg-green-700 disabled:bg-green-400 dark:disabled:bg-green-800 text-white font-semibold py-3 rounded-lg transition-colors"
           >
             {submitting ? 'Submitting…' : 'Submit Price Report'}
           </button>
