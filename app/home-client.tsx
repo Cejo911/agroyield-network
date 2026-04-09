@@ -142,6 +142,11 @@ const modules = [
     desc: 'Publish papers, join open collaborations, and build your academic profile. For researchers who want their work to reach the farmers who need it most.',
     pills: ['Paper Repository', 'Collaborations', 'Citation Tracking'],
   },
+  {
+    icon: '💼', tag: 'Module 06', name: 'Business Suite', wide: true,
+    desc: 'Run your agribusiness end-to-end. Create professional invoices and receipts, manage your product catalogue, track customers, and get a clear picture of your revenue — all without a spreadsheet.',
+    pills: ['Invoicing', 'Customer Management', 'Product Catalogue', 'Revenue Reports'],
+  },
 ]
 
 export default function Home() {
@@ -275,7 +280,7 @@ export default function Home() {
           Everything you need to<br />grow — in one platform.
         </h2>
         <p style={{ fontSize: 17, color: 'var(--text-secondary)', maxWidth: 540, lineHeight: 1.65, marginBottom: 60 }}>
-          Five powerful modules built around the real needs of every person in Nigeria&apos;s agricultural value chain.
+          Six powerful modules built around the real needs of every person in Nigeria&apos;s agricultural value chain.
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
           {modules.map((m) => (
