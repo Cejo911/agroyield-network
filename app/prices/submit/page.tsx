@@ -69,6 +69,7 @@ export default function SubmitPricePage() {
       user_id: user.id,
       category: form.category,
       commodity: form.commodity,
+      price: parseFloat(form.price_per_unit),
       price_per_unit: parseFloat(form.price_per_unit),
       unit: form.unit,
       market_name: form.market_name,
