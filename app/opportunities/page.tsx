@@ -11,7 +11,7 @@ export default async function OpportunitiesPage() {
 
   const { data: opportunities } = await supabase
     .from('opportunities')
-    .select('id, user_id, title, type, organisation, location, description, deadline, created_at')
+    .select('id, user_id, title, type, organisation, location, description, deadline, is_closed, created_at')
     .eq('is_active', true)
     .order('created_at', { ascending: false })
 
@@ -26,10 +26,7 @@ export default async function OpportunitiesPage() {
               Grants, fellowships, jobs and partnerships in agriculture.
             </p>
           </div>
-          <Link
-            href="/opportunities/new"
-            className="bg-green-600 text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors"
-          >
+          <Link href="/opportunities/new" className="bg-green-600 text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors">
             Post opportunity
           </Link>
         </div>
