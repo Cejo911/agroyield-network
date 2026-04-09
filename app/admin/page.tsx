@@ -31,7 +31,6 @@ export default async function AdminPage() {
     ? rawProfile.admin_role
     : 'moderator'
 
-  // Use admin client for settings (bypasses RLS)
   const adminDb = createAdminClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -53,7 +52,6 @@ export default async function AdminPage() {
     adminAny.from('reports').select('*').order('created_at', { ascending: false }),
   ])
 
-  // Build profiles map
   const profilesMap: Record<string, { first_name: string | null; last_name: string | null }> = {}
   for (const m of (members ?? [])) {
     const raw = m as Record<string, unknown>
@@ -65,7 +63,6 @@ export default async function AdminPage() {
     }
   }
 
-  // Build settings map
   const settingsMap: Record<string, string> = {}
   for (const s of (settingsRows ?? [])) {
     const raw = s as Record<string, unknown>
@@ -74,7 +71,6 @@ export default async function AdminPage() {
     }
   }
 
-  // Build report groups
   const groupsMap: Record<string, ReportGroup> = {}
   for (const r of (reports ?? [])) {
     const raw = r as Record<string, unknown>
@@ -129,12 +125,12 @@ export default async function AdminPage() {
   ].length
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <AppNav />
       <div className="max-w-4xl mx-auto px-4 py-10">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-gray-500 mt-1">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Admin Dashboard</h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">
             {currentAdminRole === 'super' ? 'Super Admin' : 'Moderator'} · Manage content and members on AgroYield Network
           </p>
         </div>
@@ -147,9 +143,9 @@ export default async function AdminPage() {
             { label: 'Members',       value: membersCount },
             { label: 'Removed',       value: removedCount },
           ].map(stat => (
-            <div key={stat.label} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 text-center">
-              <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-              <p className="text-xs text-gray-500 mt-0.5">{stat.label}</p>
+            <div key={stat.label} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm p-4 text-center">
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stat.value}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{stat.label}</p>
             </div>
           ))}
         </div>
