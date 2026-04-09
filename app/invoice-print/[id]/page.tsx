@@ -40,9 +40,10 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
     .single()
 
   const items = invoice.invoice_items || []
-  const subtotal = items.reduce((sum: number, item: any) => sum + item.total, 0)
-  const vat = invoice.vat_amount || 0
-  const total = invoice.total_amount || subtotal
+  // Cast to Number to guard against string values coming from the DB
+  const subtotal = items.reduce((sum: number, item: any) => sum + Number(item.total || 0), 0)
+  const vat = Number(invoice.vat_amount || 0)
+  const total = Number(invoice.total_amount || 0) || subtotal
 
   const watermarkLabel =
     invoice.status === 'draft' ? 'DRAFT' :
@@ -63,10 +64,9 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
         @media print {
           body { background: #fff; }
           .no-print { display: none !important; }
-          .invoice-root { box-shadow: none !important; }
+          .page-wrapper { background: #fff !important; padding: 0 !important; min-height: 0 !important; }
+          .invoice-root { box-shadow: none !important; page-break-after: avoid; break-after: avoid; overflow: hidden !important; }
           * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-          html, body { height: auto !important; overflow: hidden !important; }
-          .invoice-root { page-break-after: avoid; break-after: avoid; overflow: hidden !important; }
         }
       `}</style>
 
@@ -79,8 +79,9 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
         </div>
       </div>
 
-      {/* Page wrapper */}
-      <div style={{ background: '#e5e7eb', padding: '32px 0 48px', minHeight: 'calc(100vh - 53px)' }}>
+      {/* Page wrapper — NO minHeight so print doesn't add a blank page */}
+      <div className="page-wrapper" style={{ background: '#e5e7eb', padding: '32px 0 48px' }}>
+
         {/* Invoice sheet */}
         <div
           className="invoice-root"
@@ -96,7 +97,7 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
             boxShadow: '0 4px 32px rgba(0,0,0,0.18)',
           }}
         >
-          {/* Watermark — position: absolute (NOT fixed) */}
+          {/* Watermark */}
           {watermarkLabel && (
             <div style={{
               position: 'absolute',
@@ -116,7 +117,6 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
             </div>
           )}
 
-          {/* Content sits above watermark */}
           <div style={{ position: 'relative', zIndex: 1 }}>
 
             {/* Top accent strip */}
@@ -130,7 +130,6 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
               justifyContent: 'space-between',
               alignItems: 'center',
             }}>
-              {/* Logo + business name */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                 {business?.logo_url ? (
                   <img
@@ -157,8 +156,6 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
                   </div>
                 </div>
               </div>
-
-              {/* Doc type + invoice number */}
               <div style={{ textAlign: 'right' }}>
                 <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: '11px', fontWeight: 600, letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '4px' }}>
                   {invoice.document_type || 'INVOICE'}
@@ -169,7 +166,7 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
               </div>
             </div>
 
-            {/* Bill To + Invoice Details card */}
+            {/* Bill To + Invoice Details */}
             <div style={{ padding: '28px 36px 20px' }}>
               <div style={{
                 display: 'grid',
@@ -178,11 +175,8 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
                 borderRadius: '10px',
                 overflow: 'hidden',
               }}>
-                {/* Bill To */}
                 <div style={{ padding: '20px 24px', borderRight: '1px solid #e5e7eb' }}>
-                  <div style={{ fontSize: '10px', fontWeight: 700, color: '#15803d', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '10px' }}>
-                    Bill To
-                  </div>
+                  <div style={{ fontSize: '10px', fontWeight: 700, color: '#15803d', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '10px' }}>Bill To</div>
                   <div style={{ fontWeight: 700, fontSize: '15px', color: '#111827', marginBottom: '6px' }}>
                     {customer?.name || invoice.customer_name}
                   </div>
@@ -190,12 +184,8 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
                   {customer?.phone && <div style={{ color: '#6b7280', marginBottom: '3px' }}>{customer.phone}</div>}
                   {customer?.email && <div style={{ color: '#15803d', fontSize: '12px' }}>{customer.email}</div>}
                 </div>
-
-                {/* Invoice Details */}
                 <div style={{ padding: '20px 24px', background: '#f0fdf4' }}>
-                  <div style={{ fontSize: '10px', fontWeight: 700, color: '#15803d', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '10px' }}>
-                    Invoice Details
-                  </div>
+                  <div style={{ fontSize: '10px', fontWeight: 700, color: '#15803d', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '10px' }}>Invoice Details</div>
                   {[
                     ['Issue Date', formatDate(invoice.issue_date)],
                     invoice.due_date ? ['Due Date', formatDate(invoice.due_date)] : null,
@@ -204,12 +194,7 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
                   ].filter(Boolean).map(([label, value]: any) => (
                     <div key={label} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '7px' }}>
                       <span style={{ color: '#6b7280', fontSize: '12px' }}>{label}</span>
-                      <span style={{
-                        fontWeight: 600,
-                        fontSize: '12px',
-                        color: label === 'Status' ? statusColor : '#111827',
-                        letterSpacing: label === 'Status' ? '0.5px' : 'normal',
-                      }}>
+                      <span style={{ fontWeight: 600, fontSize: '12px', color: label === 'Status' ? statusColor : '#111827' }}>
                         {value}
                       </span>
                     </div>
@@ -249,8 +234,8 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
                         {item.notes && <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '2px' }}>{item.notes}</div>}
                       </td>
                       <td style={{ padding: '11px 14px', textAlign: 'right', color: '#374151' }}>{item.quantity}</td>
-                      <td style={{ padding: '11px 14px', textAlign: 'right', color: '#374151' }}>{formatCurrency(item.unit_price)}</td>
-                      <td style={{ padding: '11px 14px', textAlign: 'right', fontWeight: 600, color: '#111827' }}>{formatCurrency(item.total)}</td>
+                      <td style={{ padding: '11px 14px', textAlign: 'right', color: '#374151' }}>{formatCurrency(Number(item.unit_price))}</td>
+                      <td style={{ padding: '11px 14px', textAlign: 'right', fontWeight: 600, color: '#111827' }}>{formatCurrency(Number(item.total))}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -259,7 +244,6 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
 
             {/* Totals + Payment Details */}
             <div style={{ padding: '20px 36px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', alignItems: 'start' }}>
-              {/* Payment details */}
               <div>
                 {(business?.bank_name || business?.account_number) && (
                   <div style={{
@@ -268,9 +252,7 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
                     borderRadius: '0 8px 8px 0',
                     padding: '14px 16px',
                   }}>
-                    <div style={{ fontSize: '10px', fontWeight: 700, color: '#15803d', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '8px' }}>
-                      Payment Details
-                    </div>
+                    <div style={{ fontSize: '10px', fontWeight: 700, color: '#15803d', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '8px' }}>Payment Details</div>
                     {business.bank_name && (
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
                         <span style={{ color: '#6b7280', fontSize: '12px' }}>Bank</span>
@@ -299,7 +281,6 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
                 )}
               </div>
 
-              {/* Totals */}
               <div style={{ borderRadius: '10px', overflow: 'hidden', border: '1px solid #e5e7eb' }}>
                 <div style={{ padding: '12px 18px', background: '#f9fafb' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
