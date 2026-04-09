@@ -186,12 +186,14 @@ const normalizePhone = (phone: string): string => {
   return digits
 }
 
+// Shared input class
+const inputCls = 'w-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500'
+
 export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
   const router = useRouter()
   const [loading,         setLoading]         = useState(false)
   const [avatarUploading, setAvatarUploading] = useState(false)
   const [message,         setMessage]         = useState<{ type: 'success' | 'error'; text: string } | null>(null)
-
   const [form, setForm] = useState({
     first_name:  initialData.first_name  || '',
     last_name:   initialData.last_name   || '',
@@ -224,11 +226,10 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
     { key: 'twitter',     label: 'Twitter / X handle',         filled: !!form.twitter },
     { key: 'website',     label: 'Personal website',           filled: !!form.website },
   ]
-
   const missing      = fieldChecks.filter(f => !f.filled)
   const percent      = Math.round(((fieldChecks.length - missing.length) / fieldChecks.length) * 100)
   const barColor     = percent >= 70 ? '#16a34a' : percent >= 40 ? '#ca8a04' : '#dc2626'
-  const percentColor = percent >= 70 ? 'text-green-600' : percent >= 40 ? 'text-yellow-600' : 'text-red-500'
+  const percentColor = percent >= 70 ? 'text-green-600 dark:text-green-400' : percent >= 40 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-500 dark:text-red-400'
 
   // ── Avatar ──
   const initials = [form.first_name, form.last_name]
@@ -310,33 +311,33 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
     <>
       {/* ── Completeness nudge ── */}
       {percent < 100 ? (
-        <div className="mb-8 bg-gray-50 border border-gray-200 rounded-xl p-5">
+        <div className="mb-8 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-semibold text-gray-700">Profile completeness</span>
+            <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Profile completeness</span>
             <span className={`text-sm font-bold ${percentColor}`}>{percent}%</span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
+          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-4">
             <div className="h-2 rounded-full transition-all duration-300"
               style={{ width: `${percent}%`, backgroundColor: barColor }} />
           </div>
-          <p className="text-xs text-gray-500 mb-3">
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
             Fill in the remaining fields to help the community connect with you:
           </p>
           <div className="flex flex-wrap gap-2">
             {missing.map(f => (
               <span key={f.key}
-                className="inline-flex items-center gap-1 text-xs bg-white text-gray-600 border border-gray-300 rounded-full px-3 py-1">
+                className="inline-flex items-center gap-1 text-xs bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700 rounded-full px-3 py-1">
                 + {f.label}
               </span>
             ))}
           </div>
         </div>
       ) : (
-        <div className="mb-8 flex items-center gap-3 bg-green-50 border border-green-200 rounded-xl p-4">
+        <div className="mb-8 flex items-center gap-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4">
           <span className="text-xl">✅</span>
           <div>
-            <p className="text-sm font-semibold text-green-800">Profile complete!</p>
-            <p className="text-xs text-green-600">Your profile is fully set up. Save to apply your changes.</p>
+            <p className="text-sm font-semibold text-green-800 dark:text-green-300">Profile complete!</p>
+            <p className="text-xs text-green-600 dark:text-green-400">Your profile is fully set up. Save to apply your changes.</p>
           </div>
         </div>
       )}
@@ -348,12 +349,12 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
             {form.avatar_url ? (
               <div
                 style={{ backgroundImage: `url(${form.avatar_url})` }}
-                className="w-24 h-24 rounded-full bg-cover bg-center border-4 border-white shadow-md"
+                className="w-24 h-24 rounded-full bg-cover bg-center border-4 border-white dark:border-gray-800 shadow-md"
                 role="img"
                 aria-label="Profile photo"
               />
             ) : (
-              <div className="w-24 h-24 rounded-full bg-green-600 flex items-center justify-center text-white text-2xl font-bold border-4 border-white shadow-md">
+              <div className="w-24 h-24 rounded-full bg-green-600 flex items-center justify-center text-white text-2xl font-bold border-4 border-white dark:border-gray-800 shadow-md">
                 {initials}
               </div>
             )}
@@ -372,41 +373,41 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
               onChange={handleAvatarUpload}
             />
           </div>
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-gray-400 dark:text-gray-500">
             {avatarUploading ? 'Uploading your photo…' : 'Click photo to upload · Max 2MB'}
           </p>
         </div>
 
         {/* ── Basic Info ── */}
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Basic Information</h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">First Name</label>
               <input type="text" value={form.first_name}
                 onChange={e => setForm(prev => ({ ...prev, first_name: e.target.value }))}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                className={inputCls} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Last Name</label>
               <input type="text" value={form.last_name}
                 onChange={e => setForm(prev => ({ ...prev, last_name: e.target.value }))}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                className={inputCls} />
             </div>
           </div>
         </div>
 
         {/* ── Role ── */}
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Your Role</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Your Role</h2>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {ROLES.map(role => (
               <button key={role.value} type="button"
                 onClick={() => setForm(prev => ({ ...prev, role: role.value }))}
                 className={`py-3 px-4 rounded-lg border-2 text-sm font-medium transition-colors ${
                   form.role === role.value
-                    ? 'border-green-600 bg-green-50 text-green-700'
-                    : 'border-gray-200 text-gray-600 hover:border-green-300'
+                    ? 'border-green-600 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                    : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-green-300 dark:hover:border-green-600'
                 }`}>
                 {role.label}
               </button>
@@ -416,25 +417,25 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
 
         {/* ── Bio ── */}
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">About You</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">About You</h2>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Bio</label>
               <textarea value={form.bio} rows={4}
                 onChange={e => setForm(prev => ({ ...prev, bio: e.target.value }))}
                 placeholder="Tell the community a bit about yourself..."
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                className={inputCls} />
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Location (State / Country)</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Location (State / Country)</label>
                 <input type="text" value={form.location}
                   onChange={e => setForm(prev => ({ ...prev, location: e.target.value }))}
                   placeholder="e.g. Lagos, Nigeria"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                  className={inputCls} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Institution / Organisation</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Institution / Organisation</label>
                 <input
                   type="text"
                   value={form.institution}
@@ -442,7 +443,7 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
                   placeholder="e.g. University of Ibadan"
                   list="institutions-list"
                   autoComplete="off"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className={inputCls}
                 />
                 <datalist id="institutions-list">
                   {INSTITUTIONS.map(inst => (
@@ -456,14 +457,14 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
 
         {/* ── Interests ── */}
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Areas of Interest</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Areas of Interest</h2>
           <div className="flex flex-wrap gap-2">
             {INTERESTS.map(interest => (
               <button key={interest} type="button" onClick={() => toggleInterest(interest)}
                 className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
                   form.interests.includes(interest)
                     ? 'bg-green-600 text-white border-green-600'
-                    : 'border-gray-300 text-gray-600 hover:border-green-400'
+                    : 'border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-green-400 dark:hover:border-green-500'
                 }`}>
                 {interest}
               </button>
@@ -473,53 +474,55 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
 
         {/* ── Contact Details ── */}
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-1">
-            Contact Details <span className="text-sm font-normal text-gray-400">(Optional)</span>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">
+            Contact Details <span className="text-sm font-normal text-gray-400 dark:text-gray-500">(Optional)</span>
           </h2>
-          <p className="text-xs text-gray-500 mb-4">Only visible to logged-in members — not shown to guests.</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">Only visible to logged-in members — not shown to guests.</p>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Phone Number</label>
               <input type="tel" value={form.phone}
                 onChange={e => setForm(prev => ({ ...prev, phone: e.target.value }))}
                 placeholder="+234 800 000 0000"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                className={inputCls} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp Number</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">WhatsApp Number</label>
               <input type="tel" value={form.whatsapp}
                 onChange={e => setForm(prev => ({ ...prev, whatsapp: e.target.value }))}
                 placeholder="+234 800 000 0000"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
-              <p className="text-xs text-gray-400 mt-1">Leave blank if same as phone number</p>
+                className={inputCls} />
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Leave blank if same as phone number</p>
             </div>
           </div>
         </div>
 
         {/* ── Links ── */}
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Links <span className="text-sm font-normal text-gray-400">(Optional)</span></h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            Links <span className="text-sm font-normal text-gray-400 dark:text-gray-500">(Optional)</span>
+          </h2>
           <div className="space-y-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">LinkedIn URL</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">LinkedIn URL</label>
               <input type="url" value={form.linkedin}
                 onChange={e => setForm(prev => ({ ...prev, linkedin: e.target.value }))}
                 placeholder="https://linkedin.com/in/yourname"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                className={inputCls} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Twitter / X URL</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Twitter / X URL</label>
               <input type="url" value={form.twitter}
                 onChange={e => setForm(prev => ({ ...prev, twitter: e.target.value }))}
                 placeholder="https://x.com/yourhandle"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                className={inputCls} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Website</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Website</label>
               <input type="url" value={form.website}
                 onChange={e => setForm(prev => ({ ...prev, website: e.target.value }))}
                 placeholder="https://yourwebsite.com"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                className={inputCls} />
             </div>
           </div>
         </div>
@@ -527,7 +530,9 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
         {/* ── Submit ── */}
         {message && (
           <div className={`rounded-lg px-4 py-3 text-sm ${
-            message.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+            message.type === 'success'
+              ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'
+              : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400'
           }`}>
             {message.text}
           </div>
