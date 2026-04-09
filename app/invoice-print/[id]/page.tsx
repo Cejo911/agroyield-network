@@ -15,13 +15,14 @@ function formatCurrency(amount: number) {
   }).format(amount).replace('NGN', '₦')
 }
 
-export default async function InvoicePrintPage({ params }: { params: { id: string } }) {
+export default async function InvoicePrintPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const supabase = await createClient()
 
   const { data: invoice } = await supabase
     .from('invoices')
     .select('*, invoice_items(*)')
-    .eq('id', params.id)
+    .eq('id', id)
     .single()
 
   if (!invoice) notFound()
@@ -73,13 +74,13 @@ export default async function InvoicePrintPage({ params }: { params: { id: strin
       <div className="no-print" style={{ background: '#1f2937', padding: '12px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <span style={{ color: '#9ca3af', fontSize: '13px' }}>Invoice Preview — {invoice.invoice_number}</span>
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          <a href={`/business/invoices/${invoice.id}`} style={{ color: '#9ca3af', fontSize: '13px', textDecoration: 'none' }}>← Back</a>
+          <a href={`/business/invoices/${id}`} style={{ color: '#9ca3af', fontSize: '13px', textDecoration: 'none' }}>← Back</a>
           <PrintButton />
         </div>
       </div>
 
       {/* Page wrapper */}
-      <div style={{ background: '#e5e7eb', padding: '32px 0 48px', minHeight: 'calc(100vh - 53px)' }} className="no-print-bg">
+      <div style={{ background: '#e5e7eb', padding: '32px 0 48px', minHeight: 'calc(100vh - 53px)' }}>
         {/* Invoice sheet */}
         <div
           className="invoice-root"
@@ -263,10 +264,9 @@ export default async function InvoicePrintPage({ params }: { params: { id: strin
                 {(business?.bank_name || business?.account_number) && (
                   <div style={{
                     borderLeft: '3px solid #15803d',
-                    paddingLeft: '14px',
                     background: '#f0fdf4',
                     borderRadius: '0 8px 8px 0',
-                    padding: '14px 16px 14px 16px',
+                    padding: '14px 16px',
                   }}>
                     <div style={{ fontSize: '10px', fontWeight: 700, color: '#15803d', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '8px' }}>
                       Payment Details
@@ -343,8 +343,8 @@ export default async function InvoicePrintPage({ params }: { params: { id: strin
               </span>
             </div>
 
-          </div>{/* end z-index wrapper */}
-        </div>{/* end invoice-root */}
+          </div>
+        </div>
       </div>
     </>
   )
