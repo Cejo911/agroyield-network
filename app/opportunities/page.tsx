@@ -26,11 +26,14 @@ export default async function OpportunitiesPage() {
               Grants, fellowships, jobs and partnerships in agriculture.
             </p>
           </div>
-          <Link href="/opportunities/new" className="bg-green-600 text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors">
+          <Link
+            href="/opportunities/new"
+            className="bg-green-600 text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors"
+          >
             Post opportunity
           </Link>
         </div>
-        <OpportunitiesClient opportunities={opportunities ?? []} userId={user.id} />
+        <OpportunitiesClient opportunities={(opportunities ?? []) as any} userId={user.id} />
       </main>
     </div>
   )
