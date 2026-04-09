@@ -13,6 +13,8 @@ const STATES = [
   'Sokoto', 'Taraba', 'Yobe', 'Zamfara',
 ]
 
+const inputCls = 'w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500'
+
 export default function NewListingPage() {
   const router = useRouter()
   const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES)
@@ -26,7 +28,22 @@ export default function NewListingPage() {
   useEffect(() => {
     fetch('/api/content-types')
       .then(r => r.json())
-      .then(data => { if (data.marketplaceCategories?.length) setCategories(data.marketplaceCategories) })
+      .then(data => {
+        if (data.marketplaceCategories) {
+          let cats = data.marketplaceCategories
+          // Handle if the API returns a JSON string instead of a parsed array
+          if (typeof cats === 'string') {
+            try { cats = JSON.parse(cats) } catch {}
+          }
+          if (Array.isArray(cats) && cats.length) {
+            // Strip any stray brackets or quotes from each value
+            const cleaned = cats
+              .map((c: unknown) => String(c).replace(/^["'\[]+|["'\]]+$/g, '').trim())
+              .filter(Boolean)
+            setCategories(cleaned)
+          }
+        }
+      })
       .catch(() => {})
   }, [])
 
@@ -42,7 +59,6 @@ export default function NewListingPage() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to post listing')
-
       if (data.pending) {
         setMessage({ type: 'success', text: 'Listing submitted for review. An admin will approve it shortly.' })
       } else {
@@ -57,38 +73,47 @@ export default function NewListingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <AppNav />
       <main className="max-w-2xl mx-auto px-4 py-10">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Post a Listing</h1>
-          <p className="text-gray-500 mt-1">List a product, input, equipment or service.</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Post a Listing</h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">List a product, input, equipment or service.</p>
         </div>
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
+
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
+
+            {/* Title */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Title <span className="text-red-500">*</span>
               </label>
-              <input type="text" required value={form.title}
+              <input
+                type="text"
+                required
+                value={form.title}
                 onChange={e => setForm(prev => ({ ...prev, title: e.target.value }))}
                 placeholder="e.g. 50kg bags of yellow maize for sale"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                className={inputCls}
               />
             </div>
 
+            {/* Listing Type */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Listing Type <span className="text-red-500">*</span>
               </label>
               <div className="grid grid-cols-3 gap-3">
                 {TYPES.map(type => (
-                  <button key={type} type="button"
+                  <button
+                    key={type}
+                    type="button"
                     onClick={() => setForm(prev => ({ ...prev, type }))}
                     className={`py-2.5 rounded-lg border text-sm font-medium capitalize transition-colors ${
                       form.type === type
-                        ? 'border-green-600 bg-green-50 text-green-700'
-                        : 'border-gray-200 text-gray-600 hover:border-green-300'
+                        ? 'border-green-600 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                        : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-green-300 dark:hover:border-green-700'
                     }`}>
                     {type}
                   </button>
@@ -96,18 +121,21 @@ export default function NewListingPage() {
               </div>
             </div>
 
+            {/* Category */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Category <span className="text-red-500">*</span>
               </label>
               <div className="flex flex-wrap gap-2">
                 {categories.map(cat => (
-                  <button key={cat} type="button"
+                  <button
+                    key={cat}
+                    type="button"
                     onClick={() => setForm(prev => ({ ...prev, category: cat }))}
                     className={`py-2 px-3 rounded-lg border text-sm font-medium capitalize transition-colors ${
                       form.category === cat
-                        ? 'border-green-600 bg-green-50 text-green-700'
-                        : 'border-gray-200 text-gray-600 hover:border-green-300'
+                        ? 'border-green-600 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                        : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-green-300 dark:hover:border-green-700'
                     }`}>
                     {cat}
                   </button>
@@ -115,19 +143,28 @@ export default function NewListingPage() {
               </div>
             </div>
 
+            {/* Price */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Price (NGN){' '}
-                {form.type === 'trade' && <span className="text-gray-400 font-normal">— optional for trades</span>}
+                {form.type === 'trade' && (
+                  <span className="text-gray-400 dark:text-gray-500 font-normal">— optional for trades</span>
+                )}
               </label>
               <div className="flex gap-3 items-center">
-                <input type="number" min="0" step="0.01" value={form.price}
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.price}
                   onChange={e => setForm(prev => ({ ...prev, price: e.target.value }))}
                   placeholder="e.g. 25000"
-                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className={inputCls}
                 />
-                <label className="flex items-center gap-2 text-sm text-gray-600 whitespace-nowrap">
-                  <input type="checkbox" checked={form.price_negotiable}
+                <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                  <input
+                    type="checkbox"
+                    checked={form.price_negotiable}
                     onChange={e => setForm(prev => ({ ...prev, price_negotiable: e.target.checked }))}
                     className="rounded"
                   />
@@ -136,47 +173,67 @@ export default function NewListingPage() {
               </div>
             </div>
 
+            {/* Description */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-              <textarea value={form.description}
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Description
+              </label>
+              <textarea
+                value={form.description}
                 onChange={e => setForm(prev => ({ ...prev, description: e.target.value }))}
-                rows={4} placeholder="Describe what you are selling, buying or trading..."
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                rows={4}
+                placeholder="Describe what you are selling, buying or trading..."
+                className={inputCls}
               />
             </div>
 
+            {/* State + Contact */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
-                <select value={form.state}
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  State
+                </label>
+                <select
+                  value={form.state}
                   onChange={e => setForm(prev => ({ ...prev, state: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                  className={inputCls}>
                   <option value="">Select state</option>
                   {STATES.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Contact</label>
-                <input type="text" value={form.contact}
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Contact
+                </label>
+                <input
+                  type="text"
+                  value={form.contact}
                   onChange={e => setForm(prev => ({ ...prev, contact: e.target.value }))}
                   placeholder="Phone or email"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className={inputCls}
                 />
               </div>
             </div>
 
+            {/* Message */}
             {message && (
               <div className={`rounded-lg px-4 py-3 text-sm ${
-                message.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+                message.type === 'success'
+                  ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'
+                  : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400'
               }`}>
                 {message.text}
               </div>
             )}
 
-            <button type="submit" disabled={loading || !form.title || !form.type || !form.category}
-              className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 transition-colors">
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={loading || !form.title || !form.type || !form.category}
+              className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white py-3 rounded-lg font-semibold transition-colors">
               {loading ? 'Posting...' : 'Post Listing'}
             </button>
+
           </form>
         </div>
       </main>
