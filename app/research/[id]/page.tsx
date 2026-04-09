@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import AppNav from '@/app/components/AppNav'
 import ResearchActions from './ResearchActions'
+import CommentsSection from '@/app/components/CommentsSection'
 
 const TYPE_COLOURS: Record<string, string> = {
   finding:       'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400',
@@ -72,6 +73,7 @@ export default async function ResearchPostPage({
           {isOwner && <ResearchActions id={id} />}
         </div>
       </main>
+    <CommentsSection postId={id} postType="research" />
     </div>
   )
 }
