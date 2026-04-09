@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { redirect, notFound } from 'next/navigation'
+import { notFound } from 'next/navigation'
 import AppNav from '@/app/components/AppNav'
 import ResearchActions from './ResearchActions'
 import CommentsSection from '@/app/components/CommentsSection'
@@ -14,7 +14,7 @@ const TYPE_COLOURS: Record<string, string> = {
 
 const getTypeColour = (type: string | null): string => {
   if (!type) return 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
-  return TYPE_COLOURS[type] ?? 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+  return TYPE_COLOURS[type.toLowerCase()] ?? 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
 }
 
 export default async function ResearchPostPage({
@@ -26,18 +26,21 @@ export default async function ResearchPostPage({
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
 
   const { data: post } = await supabase
     .from('research_posts')
     .select('*')
     .eq('id', id)
+    .eq('is_active', true)
     .single()
 
   if (!post) notFound()
 
-  const isOwner = user.id === post.user_id
+  const isOwner   = !!user && user.id === post.user_id
+  const isLocked  = post.is_locked ?? false
+  const canReadFull = !isLocked || !!user
   const tags: string[] = Array.isArray(post.tags) ? post.tags : []
+  const preview = post.content.slice(0, 220).trimEnd()
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
@@ -50,6 +53,11 @@ export default async function ResearchPostPage({
             {post.type && (
               <span className={`text-xs px-3 py-1 rounded-full font-medium capitalize ${getTypeColour(post.type)}`}>
                 {post.type}
+              </span>
+            )}
+            {isLocked && (
+              <span className="text-xs px-3 py-1 rounded-full font-medium bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+                🔒 Members only
               </span>
             )}
             {tags.map((tag: string) => (
@@ -66,12 +74,28 @@ export default async function ResearchPostPage({
             })}
           </p>
 
-          <div className="prose prose-sm max-w-none">
-            <p className="text-gray-600 dark:text-gray-400 leading-relaxed whitespace-pre-wrap">{post.content}</p>
-          </div>
+          {canReadFull ? (
+            <div className="prose prose-sm max-w-none">
+              <p className="text-gray-600 dark:text-gray-400 leading-relaxed whitespace-pre-wrap">{post.content}</p>
+            </div>
+          ) : (
+            <div>
+              <div className="relative">
+                <p className="text-gray-600 dark:text-gray-400 leading-relaxed whitespace-pre-wrap text-sm">{preview}{post.content.length > 220 ? '…' : ''}</p>
+                <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-white dark:from-gray-900 to-transparent" />
+              </div>
+              <div className="mt-6 flex flex-col items-center gap-3 py-6 px-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-center">
+                <span className="text-3xl">🔒</span>
+                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">This post is for members only</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Sign in to read the full content and join the discussion.</p>
+                <a href="/login" className="mt-1 bg-green-600 text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors">Sign in to read full post</a>
+              </div>
+            </div>
+          )}
 
           {isOwner && <ResearchActions id={id} />}
-          <CommentsSection postId={id} postType="research" />
+
+          {canReadFull && <CommentsSection postId={id} postType="research" />}
         </div>
       </main>
     </div>
