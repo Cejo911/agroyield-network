@@ -92,6 +92,11 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-white dark:bg-gray-950">
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('theme');if(t==='dark'){document.documentElement.classList.add('dark');document.documentElement.style.backgroundColor='#030712';}else{document.documentElement.style.backgroundColor='#ffffff';}}catch(e){}})()`,
+          }}
+        />
         <ThemeProvider>
           <AnnouncementBanner />
           {children}
