@@ -4,6 +4,7 @@ import AppNav from '@/app/components/AppNav'
 import LikeButton from '@/app/components/LikeButton'
 import ReportButton from '@/app/components/ReportButton'
 import OpportunityActions from './OpportunityActions'
+import CommentsSection from '@/app/components/CommentsSection'
 
 export default async function OpportunityDetailPage({
   params,
@@ -74,6 +75,7 @@ export default async function OpportunityDetailPage({
           )}
 
           {isOwner && <OpportunityActions id={id} />}
+          <CommentsSection postId={id} postType="opportunity" />
 
 <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-800 flex gap-3">
   <LikeButton postId={id} postType="opportunity" />
