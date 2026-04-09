@@ -25,11 +25,12 @@ export type ResearchPost = {
   type: string | null
   content: string
   tags: string[] | null
+  is_locked: boolean
   created_at: string
 }
 
 const getTypeColour = (type: string | null) =>
-  type ? (TYPE_COLOURS[type] ?? 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400') : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+  type ? (TYPE_COLOURS[type.toLowerCase()] ?? 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400') : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
 
 const timeAgo = (dateStr: string) => {
   const diff  = Date.now() - new Date(dateStr).getTime()
@@ -48,10 +49,10 @@ export default function ResearchClient({
   posts: ResearchPost[]
   userId: string
 }) {
-  const [posts, setPosts]           = useState(initial)
-  const [search, setSearch]         = useState('')
-  const [typeFilter, setTypeFilter] = useState('All')
-  const [tagFilter, setTagFilter]   = useState('')
+  const [posts, setPosts]               = useState(initial)
+  const [search, setSearch]             = useState('')
+  const [typeFilter, setTypeFilter]     = useState('All')
+  const [tagFilter, setTagFilter]       = useState('')
   const [confirmingId, setConfirmingId] = useState<string | null>(null)
   const [deletingId, setDeletingId]     = useState<string | null>(null)
 
@@ -121,6 +122,9 @@ export default function ResearchClient({
                     {post.type && (
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${getTypeColour(post.type)}`}>{post.type}</span>
                     )}
+                    {post.is_locked && (
+                      <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">🔒 Members only</span>
+                    )}
                     {(post.tags ?? []).slice(0, 2).map(tag => (
                       <span key={tag} className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-full">{tag}</span>
                     ))}
@@ -134,29 +138,15 @@ export default function ResearchClient({
                   <div className="px-6 pb-4 flex items-center justify-end gap-2 border-t border-gray-100 dark:border-gray-800 pt-3">
                     {confirmingId === post.id ? (
                       <>
-                        <button
-                          onClick={() => setConfirmingId(null)}
-                          className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 px-2 py-1 rounded transition-colors"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={() => handleDelete(post.id)}
-                          disabled={deletingId === post.id}
-                          className="text-xs bg-red-600 text-white px-3 py-1 rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
-                        >
+                        <button onClick={() => setConfirmingId(null)} className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 px-2 py-1 rounded transition-colors">Cancel</button>
+                        <button onClick={() => handleDelete(post.id)} disabled={deletingId === post.id} className="text-xs bg-red-600 text-white px-3 py-1 rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors">
                           {deletingId === post.id ? 'Deleting…' : 'Confirm delete'}
                         </button>
                       </>
                     ) : (
                       <>
                         <Link href={`/research/${post.id}/edit`} className="text-xs text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 px-2 py-1 rounded transition-colors">✏️ Edit</Link>
-                        <button
-                          onClick={() => setConfirmingId(post.id)}
-                          className="text-xs text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 px-2 py-1 rounded transition-colors"
-                        >
-                          🗑️ Delete
-                        </button>
+                        <button onClick={() => setConfirmingId(post.id)} className="text-xs text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 px-2 py-1 rounded transition-colors">🗑️ Delete</button>
                       </>
                     )}
                   </div>
