@@ -22,18 +22,10 @@ export default function ShareProfileLink({ username }: Props) {
         <code className="flex-1 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-gray-600 dark:text-gray-400 truncate">
           {url}
         </code>
-        <button
-          onClick={handleCopy}
-          className="shrink-0 text-sm font-semibold px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors"
-        >
+        <button onClick={handleCopy} className="shrink-0 text-sm font-semibold px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors">
           {copied ? 'Copied!' : 'Copy'}
         </button>
-        
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="shrink-0 text-sm font-semibold px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-        >
+        <a href={url} target="_blank" rel="noopener noreferrer" className="shrink-0 text-sm font-semibold px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
           View
         </a>
       </div>
