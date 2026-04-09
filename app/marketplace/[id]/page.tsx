@@ -17,10 +17,12 @@ const TYPE_COLOURS: Record<string, string> = {
   buy:   'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400',
   trade: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
 }
+
 const getColour = (map: Record<string, string>, key: string | null): string => {
   if (!key) return 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
   return map[key.toLowerCase()] ?? 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
 }
+
 const formatPrice = (price: number) =>
   new Intl.NumberFormat('en-NG', {
     style: 'currency', currency: 'NGN', maximumFractionDigits: 0,
@@ -33,6 +35,7 @@ export default async function ListingPage({
 }) {
   const { id } = await params
   const supabase = await createClient()
+
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
@@ -41,9 +44,11 @@ export default async function ListingPage({
     .select('*')
     .eq('id', id)
     .single()
+
   if (!listing) notFound()
 
-  const isOwner = user.id === listing.user_id
+  const isOwner  = user.id === listing.user_id
+  const isClosed = listing.is_closed ?? false
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
@@ -51,7 +56,12 @@ export default async function ListingPage({
       <main className="max-w-2xl mx-auto px-4 py-10">
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-8">
 
-          {/* Badges */}
+          {isClosed && (
+            <div className="mb-5 flex items-center gap-2 px-4 py-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+              <span className="text-sm font-semibold text-red-600 dark:text-red-400">🔴 This listing is now closed</span>
+            </div>
+          )}
+
           <div className="flex flex-wrap gap-2 mb-4">
             {listing.type && (
               <span className={`text-xs px-3 py-1 rounded-full font-medium capitalize ${getColour(TYPE_COLOURS, listing.type)}`}>
@@ -63,12 +73,15 @@ export default async function ListingPage({
                 {listing.category}
               </span>
             )}
+            {isClosed && (
+              <span className="text-xs px-3 py-1 rounded-full font-semibold bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">
+                CLOSED
+              </span>
+            )}
           </div>
 
-          {/* Title */}
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3">{listing.title}</h1>
 
-          {/* Price */}
           {listing.price !== null && (
             <p className="text-2xl font-bold text-green-700 dark:text-green-400 mb-1">
               {formatPrice(listing.price)}
@@ -81,7 +94,6 @@ export default async function ListingPage({
             <p className="text-lg font-medium text-amber-600 dark:text-amber-400 mb-1">Open to trade offers</p>
           )}
 
-          {/* Meta */}
           <div className="space-y-2 text-sm text-gray-500 dark:text-gray-400 mt-4 mb-6">
             {listing.state && <p>📍 {listing.state}</p>}
             <p>🕒 {new Date(listing.created_at).toLocaleDateString('en-GB', {
@@ -89,7 +101,6 @@ export default async function ListingPage({
             })}</p>
           </div>
 
-          {/* Description */}
           {listing.description && (
             <div className="mb-6">
               <h2 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Description</h2>
@@ -97,18 +108,16 @@ export default async function ListingPage({
             </div>
           )}
 
-          {/* Contact */}
-          {listing.contact && (
+          {listing.contact && !isClosed && (
             <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-800">
               <h2 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Contact Seller</h2>
               <p className="text-gray-700 dark:text-gray-300 font-medium">{listing.contact}</p>
             </div>
           )}
 
-          {/* Owner actions */}
-          {isOwner && <ListingActions id={id} />}
-          <CommentsSection postId={id} postType="listing" />
+          {isOwner && <ListingActions id={id} isClosed={isClosed} />}
 
+          <CommentsSection postId={id} postType="listing" />
         </div>
       </main>
     </div>
