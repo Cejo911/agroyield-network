@@ -34,6 +34,12 @@ const MODULES = [
     icon: '🔬',
     href: '/research',
   },
+  {
+    title: 'Business Suite',
+    description: 'Create invoices, manage customers and products, and track your agribusiness revenue.',
+    icon: '💼',
+    href: '/business',
+  },
 ]
 
 export default async function Dashboard() {
