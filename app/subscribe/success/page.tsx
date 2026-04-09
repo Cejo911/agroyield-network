@@ -40,7 +40,7 @@ function SuccessContent() {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-10 h-10 border-4 border-green-600 dark:border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <div className="w-10 h-10 border-4 border-green-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-gray-600 dark:text-gray-400 text-sm">Confirming your payment…</p>
         </div>
       </div>
@@ -56,7 +56,7 @@ function SuccessContent() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </div>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Payment could not be confirmed</h1>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">Payment could not be confirmed</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">{errorMsg}</p>
           <div className="flex flex-col gap-2">
             <Link
@@ -65,7 +65,7 @@ function SuccessContent() {
             >
               Go to Dashboard
             </Link>
-            <Link href="/pricing" className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 py-2">
+            <Link href="/pricing" className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 py-2">
               Try again
             </Link>
           </div>
@@ -82,7 +82,7 @@ function SuccessContent() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">You&apos;re now Verified!</h1>
+        <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">You&apos;re now Verified!</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
           Your <span className="font-medium text-gray-700 dark:text-gray-300 capitalize">{plan}</span> subscription is active.
         </p>
@@ -105,7 +105,7 @@ export default function SubscribeSuccessPage() {
     <Suspense
       fallback={
         <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
-          <div className="w-10 h-10 border-4 border-green-600 dark:border-green-500 border-t-transparent rounded-full animate-spin" />
+          <div className="w-10 h-10 border-4 border-green-600 border-t-transparent rounded-full animate-spin" />
         </div>
       }
     >
