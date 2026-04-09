@@ -6,7 +6,7 @@ const REASONS = ['Spam', 'Misleading', 'Inappropriate', 'Duplicate', 'Other']
 
 type Props = {
   postId:   string
-  postType: 'opportunity' | 'listing'
+  postType: 'opportunity' | 'listing' | 'research'
 }
 
 export default function ReportButton({ postId, postType }: Props) {
