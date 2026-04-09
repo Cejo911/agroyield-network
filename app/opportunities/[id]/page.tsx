@@ -83,16 +83,12 @@ export default async function OpportunityPage({
               </span>
             </Link>
             <div className="flex items-center gap-3">
-              <Link
-                href="/login"
-                className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-green-700 dark:hover:text-green-400 transition-colors"
-              >
+              <Link href="/login"
+                className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-green-700 dark:hover:text-green-400 transition-colors">
                 Log in
               </Link>
-              <Link
-                href="/register"
-                className="text-sm font-semibold bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-              >
+              <Link href="/register"
+                className="text-sm font-semibold bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
                 Sign up free
               </Link>
             </div>
@@ -102,10 +98,8 @@ export default async function OpportunityPage({
 
       <main className="max-w-2xl mx-auto px-4 py-10">
         {user && (
-          <Link
-            href="/opportunities"
-            className="inline-flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 hover:text-green-700 dark:hover:text-green-400 transition-colors mb-6"
-          >
+          <Link href="/opportunities"
+            className="inline-flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 hover:text-green-700 dark:hover:text-green-400 transition-colors mb-6">
             ← Back to Opportunities
           </Link>
         )}
@@ -127,14 +121,14 @@ export default async function OpportunityPage({
             )}
           </div>
 
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">{opportunity.title}</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">{opportunity.title}</h1>
 
           <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400 mb-6">
             {opportunity.organisation && (
-              <p>🏛 <span className="font-medium">{opportunity.organisation}</span></p>
+              <p>🏛 <span className="font-medium text-gray-800 dark:text-gray-200">{opportunity.organisation}</span></p>
             )}
             {opportunity.location && (
-              <p>📍 <span className="font-medium">{opportunity.location}</span></p>
+              <p>📍 <span className="font-medium text-gray-800 dark:text-gray-200">{opportunity.location}</span></p>
             )}
             {opportunity.deadline && (
               <p>
@@ -166,6 +160,7 @@ export default async function OpportunityPage({
             </div>
           )}
 
+          {/* Apply / Sign-up CTA */}
           <div className="pt-6 border-t border-gray-100 dark:border-gray-800">
             {user ? (
               opportunity.url && (
@@ -184,16 +179,12 @@ export default async function OpportunityPage({
                   Connect with agricultural opportunities across Africa — free to join.
                 </p>
                 <div className="flex gap-3 justify-center">
-                  <Link
-                    href="/register"
-                    className="text-sm font-semibold bg-green-600 text-white px-5 py-2 rounded-lg hover:bg-green-700 transition-colors"
-                  >
+                  <Link href="/register"
+                    className="text-sm font-semibold bg-green-600 text-white px-5 py-2 rounded-lg hover:bg-green-700 transition-colors">
                     Create free account
                   </Link>
-                  <Link
-                    href="/login"
-                    className="text-sm font-medium text-green-700 dark:text-green-400 border border-green-300 dark:border-green-700 px-5 py-2 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors"
-                  >
+                  <Link href="/login"
+                    className="text-sm font-medium text-green-700 dark:text-green-400 border border-green-300 dark:border-green-700 px-5 py-2 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors">
                     Log in
                   </Link>
                 </div>
