@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 
 type Props = {
   postId:   string
-  postType: 'opportunity' | 'listing'
+  postType: 'opportunity' | 'listing' | 'research'
 }
 
 export default function LikeButton({ postId, postType }: Props) {
