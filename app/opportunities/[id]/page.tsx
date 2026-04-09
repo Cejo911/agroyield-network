@@ -36,7 +36,7 @@ export default async function OpportunityDetailPage({
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <AppNav />
       <main className="max-w-2xl mx-auto px-4 py-10">
-        <a href="/opportunities" className="text-sm text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 mb-6 inline-block">← Back to Opportunities</a>
+        <a href="/opportunities" className="text-sm text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 mb-6 inline-block">{'← Back to Opportunities'}</a>
 
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-6">
           <div className="flex items-start justify-between gap-4 mb-4">
@@ -52,12 +52,12 @@ export default async function OpportunityDetailPage({
           </div>
 
           <div className="flex flex-wrap gap-4 text-sm text-gray-500 dark:text-gray-400 mb-6">
-            {opportunity.location && <span>📍 {opportunity.location}</span>}
-            {deadline && <span>⏰ Deadline: {deadline}</span>}
+            {opportunity.location && <span>{'📍 '}{opportunity.location}</span>}
+            {deadline && <span>{'⏰ Deadline: '}{deadline}</span>}
           </div>
 
-          <div className="prose dark:prose-invert prose-sm max-w-none mb-4">
-            <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">{opportunity.description}</p>
+          <div className="mb-4">
+            <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line text-sm">{opportunity.description}</p>
           </div>
 
           {opportunity.requirements && (
@@ -69,14 +69,7 @@ export default async function OpportunityDetailPage({
 
           {opportunity.url && (
             <div className="mt-6">
-              
-                href={opportunity.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-block w-full text-center bg-green-600 text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors"
-              >
-                Apply / Learn More →
-              </a>
+              <a href={opportunity.url} target="_blank" rel="noopener noreferrer" className="inline-block w-full text-center bg-green-600 text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors">{'Apply / Learn More'}</a>
             </div>
           )}
 
