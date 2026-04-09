@@ -60,7 +60,7 @@ export default function About() {
         .agy-nav { padding: 20px 40px; }
         .agy-nav-links { display: flex; align-items: center; gap: 20px; }
         .agy-section-lg { padding: 100px 24px; }
-        .agy-section-hero { padding-top: 160px; padding-bottom: 100px; padding-left: 24px; padding-right: 24px; }
+        .agy-section-hero { padding-top: 80px; padding-bottom: 100px; padding-left: 24px; padding-right: 24px; }
         .agy-section-cta { padding: 80px 24px 100px; }
         .agy-footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; padding: 28px 40px; }
         .agy-footer-links { display: flex; gap: 24px; flex-wrap: wrap; }
@@ -70,7 +70,7 @@ export default function About() {
           .agy-nav { padding: 16px 20px; }
           .agy-nav-links { gap: 10px; }
           .agy-section-lg { padding: 60px 16px; }
-          .agy-section-hero { padding-top: 120px; padding-bottom: 60px; padding-left: 16px; padding-right: 16px; }
+          .agy-section-hero { padding-top: 48px; padding-bottom: 60px; padding-left: 16px; padding-right: 16px; }
           .agy-section-cta { padding: 60px 16px 80px; }
           .agy-footer { flex-direction: column; align-items: flex-start; padding: 24px 20px; }
           .agy-footer-links { gap: 16px; }
@@ -85,7 +85,7 @@ export default function About() {
       `}</style>
 
       {/* NAV */}
-      <nav className="agy-nav" style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--nav-bg)', backdropFilter: 'blur(16px)', borderBottom: '1px solid var(--nav-border)' }}>
+      <nav className="agy-nav" style={{ position: 'sticky', top: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--nav-bg)', backdropFilter: 'blur(16px)', borderBottom: '1px solid var(--nav-border)' }}>
         <a href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
           <div style={{ width: 34, height: 34, background: 'linear-gradient(135deg, #16a34a, #22c55e)', borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17 }}>🌾</div>
           <span style={{ fontSize: 17, fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>
@@ -149,7 +149,6 @@ export default function About() {
             </div>
           ))}
         </div>
-
         {/* Stats */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 1, marginTop: 24, border: '1px solid var(--border-color)', borderRadius: 20, overflow: 'hidden', background: 'var(--stat-gap)' }}>
           {[
