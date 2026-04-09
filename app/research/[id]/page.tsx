@@ -3,15 +3,16 @@ import { redirect, notFound } from 'next/navigation'
 import AppNav from '@/app/components/AppNav'
 
 const TYPE_COLOURS: Record<string, string> = {
-  finding: 'bg-blue-100 text-blue-700',
-  question: 'bg-purple-100 text-purple-700',
-  dataset: 'bg-green-100 text-green-700',
-  review: 'bg-orange-100 text-orange-700',
-  collaboration: 'bg-pink-100 text-pink-700',
+  finding:       'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400',
+  question:      'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400',
+  dataset:       'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
+  review:        'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400',
+  collaboration: 'bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-400',
 }
+
 const getTypeColour = (type: string | null): string => {
-  if (!type) return 'bg-gray-100 text-gray-600'
-  return TYPE_COLOURS[type] ?? 'bg-gray-100 text-gray-600'
+  if (!type) return 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+  return TYPE_COLOURS[type] ?? 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
 }
 
 export default async function ResearchPostPage({
@@ -35,33 +36,14 @@ export default async function ResearchPostPage({
   const tags: string[] = Array.isArray(post.tags) ? post.tags : []
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <AppNav />
       <main className="max-w-2xl mx-auto px-4 py-10">
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-8">
           <div className="flex flex-wrap gap-2 mb-4">
             {post.type && (
               <span className={`text-xs px-3 py-1 rounded-full font-medium capitalize ${getTypeColour(post.type)}`}>
                 {post.type}
               </span>
             )}
-            {tags.map((tag: string) => (
-              <span key={tag} className="text-xs bg-gray-100 text-gray-500 px-3 py-1 rounded-full">
-                {tag}
-              </span>
-            ))}
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">{post.title}</h1>
-          <p className="text-xs text-gray-400 mb-6">
-            {new Date(post.created_at).toLocaleDateString('en-GB', {
-              day: 'numeric', month: 'long', year: 'numeric',
-            })}
-          </p>
-          <div className="prose prose-sm max-w-none">
-            <p className="text-gray-600 leading-relaxed whitespace-pre-wrap">{post.content}</p>
-          </div>
-        </div>
-      </main>
-    </div>
-  )
-}
+            {tags.map((tag: string)
