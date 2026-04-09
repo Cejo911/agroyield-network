@@ -166,13 +166,14 @@ export default function NewInvoicePage() {
         {/* Line Items */}
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
           <h2 className="font-semibold text-gray-800 mb-3">Items</h2>
-          <div className="space-y-2">
+        <div className="space-y-2">
             <div className="grid grid-cols-12 gap-2 text-xs text-gray-500 font-medium px-1">
               <div className="col-span-3">Product</div>
-              <div className="col-span-4">Description</div>
+              <div className="col-span-3">Description</div>
               <div className="col-span-1">Qty</div>
               <div className="col-span-2">Unit Price</div>
               <div className="col-span-2 text-right">Total</div>
+              <div className="col-span-1"></div>
             </div>
             {items.map((item, i) => (
               <div key={i} className="grid grid-cols-12 gap-2 items-center">
@@ -183,7 +184,7 @@ export default function NewInvoicePage() {
                     {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                   </select>
                 </div>
-                <div className="col-span-4">
+                <div className="col-span-3">
                   <input value={item.description} onChange={e => updateItem(i, 'description', e.target.value)}
                     placeholder="Description" required
                     className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-green-500" />
@@ -198,15 +199,19 @@ export default function NewInvoicePage() {
                     onChange={e => updateItem(i, 'unit_price', e.target.value)} placeholder="0.00"
                     className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-green-500" />
                 </div>
-                <div className="col-span-1 text-right text-xs font-medium text-gray-700 flex items-center justify-end gap-1">
-                  <span>{fmt(item.line_total)}</span>
+                <div className="col-span-2 text-right text-xs font-medium text-gray-700">
+                  {fmt(item.line_total)}
+                </div>
+                <div className="col-span-1 flex justify-center">
                   {items.length > 1 && (
-                    <button type="button" onClick={() => removeItem(i)} className="text-red-400 hover:text-red-600 text-base leading-none">×</button>
+                    <button type="button" onClick={() => removeItem(i)}
+                      className="text-red-400 hover:text-red-600 text-base leading-none">×</button>
                   )}
                 </div>
               </div>
             ))}
           </div>
+          
           <button type="button" onClick={addItem} className="mt-3 text-sm text-green-600 hover:underline font-medium">
             + Add line
           </button>
