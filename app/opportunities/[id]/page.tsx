@@ -4,6 +4,7 @@ import AppNav from '@/app/components/AppNav'
 import LikeButton from '@/app/components/LikeButton'
 import ReportButton from '@/app/components/ReportButton'
 import OpportunityActions from './OpportunityActions'
+import CommentsSection from '@/app/components/CommentsSection'
 
 export default async function OpportunityDetailPage({
   params,
@@ -40,7 +41,6 @@ export default async function OpportunityDetailPage({
         <a href="/opportunities" className="text-sm text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 mb-6 inline-block">{'← Back to Opportunities'}</a>
 
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-6">
-
           {isClosed && (
             <div className="mb-5 flex items-center gap-2 px-4 py-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
               <span className="text-sm font-semibold text-red-600 dark:text-red-400">🔴 This opportunity is now closed</span>
@@ -94,6 +94,8 @@ export default async function OpportunityDetailPage({
             <LikeButton postId={id} postType="opportunity" />
             <ReportButton postId={id} postType="opportunity" />
           </div>
+
+          <CommentsSection postId={id} postType="opportunity" />
         </div>
       </main>
     </div>
