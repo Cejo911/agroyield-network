@@ -1,4 +1,3 @@
-// app/invoice-print/[id]/page.tsx
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import PrintButton from './PrintButton'
@@ -40,10 +39,21 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
     .single()
 
   const items = invoice.invoice_items || []
-  // Cast to Number to guard against string values coming from the DB
-  const subtotal = items.reduce((sum: number, item: any) => sum + Number(item.total || 0), 0)
+
+  // Robustly compute each line total — falls back to qty × unit_price
+  // in case the DB column is null or named differently
+  const computedItems = items.map((item: any) => ({
+    ...item,
+    _total:
+      Number(item.total) ||
+      Number(item.amount) ||
+      (Number(item.quantity) * Number(item.unit_price)) ||
+      0,
+  }))
+
+  const subtotal = computedItems.reduce((sum: number, item: any) => sum + item._total, 0)
   const vat = Number(invoice.vat_amount || 0)
-  const total = Number(invoice.total_amount || 0) || subtotal
+  const total = Number(invoice.total_amount) || subtotal + vat
 
   const watermarkLabel =
     invoice.status === 'draft' ? 'DRAFT' :
@@ -79,7 +89,7 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
         </div>
       </div>
 
-      {/* Page wrapper — NO minHeight so print doesn't add a blank page */}
+      {/* Page wrapper */}
       <div className="page-wrapper" style={{ background: '#e5e7eb', padding: '32px 0 48px' }}>
 
         {/* Invoice sheet */}
@@ -227,7 +237,7 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
                   </tr>
                 </thead>
                 <tbody>
-                  {items.map((item: any, idx: number) => (
+                  {computedItems.map((item: any, idx: number) => (
                     <tr key={item.id} style={{ background: idx % 2 === 0 ? '#fff' : '#f9fafb', borderBottom: '1px solid #f3f4f6' }}>
                       <td style={{ padding: '11px 14px', color: '#111827' }}>
                         <div style={{ fontWeight: 500 }}>{item.description}</div>
@@ -235,7 +245,7 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
                       </td>
                       <td style={{ padding: '11px 14px', textAlign: 'right', color: '#374151' }}>{item.quantity}</td>
                       <td style={{ padding: '11px 14px', textAlign: 'right', color: '#374151' }}>{formatCurrency(Number(item.unit_price))}</td>
-                      <td style={{ padding: '11px 14px', textAlign: 'right', fontWeight: 600, color: '#111827' }}>{formatCurrency(Number(item.total))}</td>
+                      <td style={{ padding: '11px 14px', textAlign: 'right', fontWeight: 600, color: '#111827' }}>{formatCurrency(item._total)}</td>
                     </tr>
                   ))}
                 </tbody>
