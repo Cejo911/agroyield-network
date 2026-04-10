@@ -1,180 +1,279 @@
 import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
+import Link from 'next/link'
+
+function fmt(n: number) {
+  return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', minimumFractionDigits: 2 }).format(n).replace('NGN', '₦')
+}
+
+function monthLabel(yyyy_mm: string) {
+  const [y, m] = yyyy_mm.split('-')
+  return new Date(parseInt(y), parseInt(m) - 1).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
+}
 
 export default async function ReportsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  const { data: business } = await supabase.from('businesses').select('id, name').eq('user_id', user!.id).single()
+  if (!user) redirect('/login')
 
-  if (!business) return (
-    <div className="bg-white rounded-xl border p-8 text-center">
-      <p className="text-gray-500">Set up your business profile first.</p>
-      <a href="/business/setup" className="mt-3 inline-block text-green-600 font-medium hover:underline">Go to Setup →</a>
-    </div>
-  )
-
-  const { data: invoices } = await supabase
+  // Invoices
+  const { data: invoicesRaw } = await supabase
     .from('invoices')
-    .select('id, status, total, subtotal, issue_date, customer_id, customers(name)')
-    .eq('business_id', business.id)
-    .eq('is_active', true)
-    .order('issue_date', { ascending: true })
+    .select('status, total_amount, issue_date, invoice_items(description, total, amount)')
+    .eq('user_id', user.id)
 
-  const { data: invoiceItems } = await supabase
-    .from('invoice_items')
-    .select('description, quantity, line_total, product_id, business_products(name), invoice_id')
-    .in('invoice_id', (invoices ?? []).map(i => i.id))
+  // Expenses
+  const { data: expensesRaw } = await supabase
+    .from('business_expenses')
+    .select('amount, date, category')
+    .eq('user_id', user.id)
 
-  const all = invoices ?? []
-  const items = invoiceItems ?? []
+  // Customers
+  const { data: customersRaw } = await supabase
+    .from('customers')
+    .select('id, name')
+    .eq('user_id', user.id)
 
-  const fmt = (n: number) => `₦${n.toLocaleString('en-NG', { minimumFractionDigits: 2 })}`
+  const { data: invoiceCustomers } = await supabase
+    .from('invoices')
+    .select('customer_id, total_amount, status')
+    .eq('user_id', user.id)
+    .eq('status', 'paid')
 
-  // Revenue summary
-  const totalPaid = all.filter(i => i.status === 'paid').reduce((s, i) => s + (i.total ?? 0), 0)
-  const totalOutstanding = all.filter(i => i.status === 'sent').reduce((s, i) => s + (i.total ?? 0), 0)
-  const totalOverdue = all.filter(i => i.status === 'overdue').reduce((s, i) => s + (i.total ?? 0), 0)
-  const totalDraft = all.filter(i => i.status === 'draft').reduce((s, i) => s + (i.total ?? 0), 0)
+  const invoices  = invoicesRaw  || []
+  const expenses  = expensesRaw  || []
+  const customers = customersRaw || []
 
-  // Monthly revenue (paid invoices only)
-  const monthlyMap: Record<string, number> = {}
-  all.filter(i => i.status === 'paid').forEach(inv => {
-    const month = (inv.issue_date ?? '').slice(0, 7) // YYYY-MM
-    monthlyMap[month] = (monthlyMap[month] ?? 0) + (inv.total ?? 0)
+  // Revenue totals
+  const paidInvoices    = invoices.filter(i => i.status === 'paid')
+  const totalRevenue    = paidInvoices.reduce((s, i) => s + Number(i.total_amount || 0), 0)
+  const totalExpenses   = expenses.reduce((s, e) => s + Number(e.amount || 0), 0)
+  const netProfit       = totalRevenue - totalExpenses
+  const profitMargin    = totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) : '0.0'
+  const outstanding     = invoices.filter(i => i.status === 'sent').reduce((s, i) => s + Number(i.total_amount || 0), 0)
+  const overdue         = invoices.filter(i => i.status === 'overdue').reduce((s, i) => s + Number(i.total_amount || 0), 0)
+
+  // Last 6 months P&L
+  const months = Array.from({ length: 6 }, (_, i) => {
+    const d = new Date()
+    d.setMonth(d.getMonth() - (5 - i))
+    return d.toISOString().slice(0, 7)
   })
-  const monthlyData = Object.entries(monthlyMap).sort(([a], [b]) => a.localeCompare(b)).slice(-6)
-  const maxMonthly = Math.max(...monthlyData.map(([, v]) => v), 1)
 
-  // Top products by revenue
-  const productMap: Record<string, { name: string; total: number; count: number }> = {}
-  items.forEach(item => {
-    const key = (item.business_products as any)?.name ?? item.description
-    if (!productMap[key]) productMap[key] = { name: key, total: 0, count: 0 }
-    productMap[key].total += item.line_total ?? 0
-    productMap[key].count += 1
+  const monthlyPL = months.map(m => {
+    const rev = paidInvoices.filter(i => i.issue_date?.slice(0, 7) === m).reduce((s, i) => s + Number(i.total_amount || 0), 0)
+    const exp = expenses.filter(e => e.date?.slice(0, 7) === m).reduce((s, e) => s + Number(e.amount || 0), 0)
+    return { month: m, revenue: rev, expenses: exp, profit: rev - exp }
   })
-  const topProducts = Object.values(productMap).sort((a, b) => b.total - a.total).slice(0, 5)
-  const maxProduct = Math.max(...topProducts.map(p => p.total), 1)
 
-  // Top customers by spend (paid only)
-  const customerMap: Record<string, { name: string; total: number; count: number }> = {}
-  all.filter(i => i.status === 'paid').forEach(inv => {
-    const name = (inv.customers as any)?.name ?? 'Unknown'
-    if (!customerMap[name]) customerMap[name] = { name, total: 0, count: 0 }
-    customerMap[name].total += inv.total ?? 0
-    customerMap[name].count += 1
+  const maxBarValue = Math.max(...monthlyPL.map(m => Math.max(m.revenue, m.expenses)), 1)
+
+  // Expense breakdown by category
+  const expByCategory = expenses.reduce((acc: Record<string, number>, e) => {
+    acc[e.category] = (acc[e.category] || 0) + Number(e.amount || 0)
+    return acc
+  }, {})
+  const topExpenseCategories = Object.entries(expByCategory).sort((a, b) => b[1] - a[1]).slice(0, 5)
+
+  // Top products
+  const productTotals: Record<string, number> = {}
+  paidInvoices.forEach(inv => {
+    const items = (inv.invoice_items as any[]) || []
+    items.forEach((item: any) => {
+      const key = item.description
+      const val = Number(item.total) || Number(item.amount) || 0
+      productTotals[key] = (productTotals[key] || 0) + val
+    })
   })
-  const topCustomers = Object.values(customerMap).sort((a, b) => b.total - a.total).slice(0, 5)
-  const maxCustomer = Math.max(...topCustomers.map(c => c.total), 1)
+  const topProducts = Object.entries(productTotals).sort((a, b) => b[1] - a[1]).slice(0, 5)
+  const maxProduct  = topProducts[0]?.[1] || 1
 
-  // Invoice counts
-  const statusCount = { draft: 0, sent: 0, paid: 0, overdue: 0 }
-  all.forEach(i => { if (i.status in statusCount) (statusCount as any)[i.status]++ })
+  // Top customers
+  const customerSpend: Record<string, number> = {}
+  ;(invoiceCustomers || []).forEach(inv => {
+    if (inv.customer_id) customerSpend[inv.customer_id] = (customerSpend[inv.customer_id] || 0) + Number(inv.total_amount || 0)
+  })
+  const topCustomers = Object.entries(customerSpend).sort((a, b) => b[1] - a[1]).slice(0, 5)
+    .map(([id, total]) => ({ name: customers.find(c => c.id === id)?.name || 'Unknown', total }))
+  const maxCustomer = topCustomers[0]?.total || 1
+
+  // Invoice status counts
+  const statusCounts = ['draft', 'sent', 'paid', 'overdue'].map(s => ({
+    label: s.charAt(0).toUpperCase() + s.slice(1),
+    count: invoices.filter(i => i.status === s).length,
+    color: s === 'paid' ? 'text-green-600' : s === 'overdue' ? 'text-red-600' : s === 'sent' ? 'text-blue-600' : 'text-gray-500',
+  }))
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Business Reports</h1>
-        <p className="text-sm text-gray-500 mt-0.5">{business.name}</p>
+    <div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Reports</h1>
+        <p className="text-gray-500 text-sm mt-0.5">Your business performance at a glance</p>
       </div>
 
-      {/* Revenue Summary */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { label: 'Total Revenue (Paid)', value: fmt(totalPaid), color: 'text-green-600', bg: 'bg-green-50' },
-          { label: 'Outstanding (Sent)', value: fmt(totalOutstanding), color: 'text-blue-600', bg: 'bg-blue-50' },
-          { label: 'Overdue', value: fmt(totalOverdue), color: 'text-red-600', bg: 'bg-red-50' },
-          { label: 'Draft Value', value: fmt(totalDraft), color: 'text-gray-600', bg: 'bg-gray-50' },
-        ].map(s => (
-          <div key={s.label} className={`${s.bg} rounded-xl p-4 border border-white`}>
-            <p className="text-xs text-gray-500 mb-1">{s.label}</p>
-            <p className={`text-lg font-bold ${s.color}`}>{s.value}</p>
+      {/* P&L Summary — hero section */}
+      <div className="bg-gradient-to-r from-green-700 to-green-600 rounded-2xl p-6 mb-6 text-white">
+        <p className="text-green-200 text-xs font-semibold uppercase tracking-wide mb-4">All-Time Profit & Loss</p>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <div>
+            <p className="text-green-200 text-xs mb-1">Total Revenue</p>
+            <p className="text-2xl font-bold">{fmt(totalRevenue)}</p>
           </div>
-        ))}
-      </div>
-
-      {/* Monthly Revenue Chart */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-        <h2 className="font-semibold text-gray-800 mb-4">Monthly Revenue (Last 6 Months — Paid)</h2>
-        {monthlyData.length === 0 ? (
-          <p className="text-sm text-gray-400 italic">No paid invoices yet.</p>
-        ) : (
-          <div className="flex items-end gap-3 h-40">
-            {monthlyData.map(([month, value]) => {
-              const height = Math.round((value / maxMonthly) * 100)
-              const label = new Date(month + '-01').toLocaleString('en-NG', { month: 'short', year: '2-digit' })
-              return (
-                <div key={month} className="flex-1 flex flex-col items-center gap-1">
-                  <span className="text-xs text-gray-500">{fmt(value).replace('₦', '₦')}</span>
-                  <div className="w-full bg-green-500 rounded-t-md transition-all" style={{ height: `${Math.max(height, 4)}%` }} />
-                  <span className="text-xs text-gray-400">{label}</span>
-                </div>
-              )
-            })}
+          <div>
+            <p className="text-green-200 text-xs mb-1">Total Expenses</p>
+            <p className="text-2xl font-bold text-red-200">{fmt(totalExpenses)}</p>
           </div>
-        )}
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Top Products */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-          <h2 className="font-semibold text-gray-800 mb-4">Top Products by Revenue</h2>
-          {topProducts.length === 0 ? (
-            <p className="text-sm text-gray-400 italic">No invoice items yet.</p>
-          ) : (
-            <div className="space-y-3">
-              {topProducts.map(p => (
-                <div key={p.name}>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-700 truncate max-w-[60%]">{p.name}</span>
-                    <span className="text-gray-500 font-medium">{fmt(p.total)}</span>
-                  </div>
-                  <div className="w-full bg-gray-100 rounded-full h-2">
-                    <div className="bg-green-500 h-2 rounded-full" style={{ width: `${(p.total / maxProduct) * 100}%` }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Top Customers */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-          <h2 className="font-semibold text-gray-800 mb-4">Top Customers by Spend (Paid)</h2>
-          {topCustomers.length === 0 ? (
-            <p className="text-sm text-gray-400 italic">No paid invoices with customers yet.</p>
-          ) : (
-            <div className="space-y-3">
-              {topCustomers.map(c => (
-                <div key={c.name}>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-700 truncate max-w-[60%]">{c.name}</span>
-                    <span className="text-gray-500 font-medium">{fmt(c.total)}</span>
-                  </div>
-                  <div className="w-full bg-gray-100 rounded-full h-2">
-                    <div className="bg-blue-400 h-2 rounded-full" style={{ width: `${(c.total / maxCustomer) * 100}%` }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          <div>
+            <p className="text-green-200 text-xs mb-1">Net Profit</p>
+            <p className={`text-2xl font-bold ${netProfit >= 0 ? 'text-white' : 'text-red-300'}`}>{fmt(netProfit)}</p>
+          </div>
+          <div>
+            <p className="text-green-200 text-xs mb-1">Profit Margin</p>
+            <p className={`text-2xl font-bold ${Number(profitMargin) >= 0 ? 'text-white' : 'text-red-300'}`}>{profitMargin}%</p>
+          </div>
         </div>
       </div>
 
-      {/* Invoice Status Summary */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-        <h2 className="font-semibold text-gray-800 mb-4">Invoice Status Summary</h2>
-        <div className="grid grid-cols-4 gap-4 text-center">
-          {[
-            { label: 'Draft', count: statusCount.draft, color: 'bg-gray-100 text-gray-600' },
-            { label: 'Sent', count: statusCount.sent, color: 'bg-blue-50 text-blue-700' },
-            { label: 'Paid', count: statusCount.paid, color: 'bg-green-50 text-green-700' },
-            { label: 'Overdue', count: statusCount.overdue, color: 'bg-red-50 text-red-600' },
-          ].map(s => (
-            <div key={s.label} className={`rounded-xl px-4 py-4 ${s.color}`}>
-              <p className="text-3xl font-bold">{s.count}</p>
-              <p className="text-xs mt-1 font-medium">{s.label}</p>
+      {/* Outstanding / Overdue */}
+      <div className="grid grid-cols-2 gap-4 mb-6 sm:grid-cols-4">
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+          <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-1">Paid</p>
+          <p className="text-xl font-bold text-green-600">{fmt(totalRevenue)}</p>
+        </div>
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+          <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-1">Outstanding</p>
+          <p className="text-xl font-bold text-blue-600">{fmt(outstanding)}</p>
+        </div>
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+          <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-1">Overdue</p>
+          <p className="text-xl font-bold text-red-600">{fmt(overdue)}</p>
+        </div>
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+          <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-1">Total Expenses</p>
+          <p className="text-xl font-bold text-orange-600">{fmt(totalExpenses)}</p>
+        </div>
+      </div>
+
+      {/* Monthly P&L bar chart */}
+      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 mb-6">
+        <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-6">
+          Monthly Revenue vs Expenses (Last 6 Months)
+        </h2>
+        <div className="flex items-end gap-3 h-40">
+          {monthlyPL.map(({ month, revenue, expenses: exp, profit }) => (
+            <div key={month} className="flex-1 flex flex-col items-center gap-1">
+              <div className="w-full flex items-end gap-0.5 h-32">
+                <div
+                  className="flex-1 bg-green-500 rounded-t-sm transition-all"
+                  style={{ height: `${(revenue / maxBarValue) * 100}%`, minHeight: revenue > 0 ? '4px' : '0' }}
+                  title={`Revenue: ${fmt(revenue)}`}
+                />
+                <div
+                  className="flex-1 bg-red-400 rounded-t-sm transition-all"
+                  style={{ height: `${(exp / maxBarValue) * 100}%`, minHeight: exp > 0 ? '4px' : '0' }}
+                  title={`Expenses: ${fmt(exp)}`}
+                />
+              </div>
+              <span className={`text-xs font-medium ${profit >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+                {profit >= 0 ? '+' : ''}{fmt(profit).replace('₦', '₦')}
+              </span>
+              <span className="text-xs text-gray-400">{monthLabel(month)}</span>
             </div>
           ))}
+        </div>
+        <div className="flex gap-4 mt-4">
+          <div className="flex items-center gap-1.5 text-xs text-gray-500"><span className="w-3 h-3 bg-green-500 rounded-sm inline-block" /> Revenue</div>
+          <div className="flex items-center gap-1.5 text-xs text-gray-500"><span className="w-3 h-3 bg-red-400 rounded-sm inline-block" /> Expenses</div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-6 mb-6">
+        {/* Top expense categories */}
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+          <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-4">Top Expense Categories</h2>
+          {topExpenseCategories.length === 0 ? (
+            <p className="text-sm text-gray-400">No expenses recorded yet.</p>
+          ) : (
+            <div className="space-y-3">
+              {topExpenseCategories.map(([cat, total]) => (
+                <div key={cat}>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-gray-600 dark:text-gray-400">{cat}</span>
+                    <span className="font-semibold text-gray-800 dark:text-white">{fmt(total)}</span>
+                  </div>
+                  <div className="h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                    <div className="h-full bg-red-400 rounded-full" style={{ width: `${(total / totalExpenses) * 100}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Top products by revenue */}
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+          <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-4">Top Products by Revenue</h2>
+          {topProducts.length === 0 ? (
+            <p className="text-sm text-gray-400">No paid invoices yet.</p>
+          ) : (
+            <div className="space-y-3">
+              {topProducts.map(([name, total]) => (
+                <div key={name}>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-gray-600 dark:text-gray-400 truncate max-w-[140px]">{name}</span>
+                    <span className="font-semibold text-gray-800 dark:text-white">{fmt(total)}</span>
+                  </div>
+                  <div className="h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                    <div className="h-full bg-green-500 rounded-full" style={{ width: `${(total / maxProduct) * 100}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-6">
+        {/* Top customers */}
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+          <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-4">Top Customers by Spend</h2>
+          {topCustomers.length === 0 ? (
+            <p className="text-sm text-gray-400">No paid invoices yet.</p>
+          ) : (
+            <div className="space-y-3">
+              {topCustomers.map(({ name, total }) => (
+                <div key={name}>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-gray-600 dark:text-gray-400">{name}</span>
+                    <span className="font-semibold text-gray-800 dark:text-white">{fmt(total)}</span>
+                  </div>
+                  <div className="h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                    <div className="h-full bg-blue-400 rounded-full" style={{ width: `${(total / maxCustomer) * 100}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Invoice status summary */}
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+          <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-4">Invoice Summary</h2>
+          <div className="space-y-3">
+            {statusCounts.map(({ label, count, color }) => (
+              <div key={label} className="flex items-center justify-between">
+                <span className="text-sm text-gray-600 dark:text-gray-400">{label}</span>
+                <span className={`text-sm font-bold ${color}`}>{count}</span>
+              </div>
+            ))}
+            <div className="border-t border-gray-100 dark:border-gray-800 pt-3 flex items-center justify-between">
+              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Total Invoices</span>
+              <span className="text-sm font-bold text-gray-800 dark:text-white">{invoices.length}</span>
+            </div>
+          </div>
+          <Link href="/business/invoices" className="mt-4 block text-center text-xs font-semibold text-green-700 hover:text-green-800 transition-colors">
+            View all invoices →
+          </Link>
         </div>
       </div>
     </div>
