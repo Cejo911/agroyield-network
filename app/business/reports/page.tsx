@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import ReportExport from './ReportExport'
 
 function fmt(n: number) {
   return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', minimumFractionDigits: 2 }).format(n).replace('NGN', '₦')
@@ -11,7 +12,14 @@ function monthLabel(yyyy_mm: string) {
   return new Date(parseInt(y), parseInt(m) - 1).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
 }
 
-export default async function ReportsPage() {
+export default async function ReportsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ period?: string }>
+}) {
+  const { period: rawPeriod } = await searchParams
+  const period = ['month', 'quarter', 'year', 'all'].includes(rawPeriod || '') ? rawPeriod! : 'all'
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -45,13 +53,13 @@ export default async function ReportsPage() {
   const customers = customersRaw || []
 
   // Revenue totals
-  const paidInvoices    = invoices.filter(i => i.status === 'paid')
-  const totalRevenue    = paidInvoices.reduce((s, i) => s + Number(i.total_amount || 0), 0)
-  const totalExpenses   = expenses.reduce((s, e) => s + Number(e.amount || 0), 0)
-  const netProfit       = totalRevenue - totalExpenses
-  const profitMargin    = totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) : '0.0'
-  const outstanding     = invoices.filter(i => i.status === 'sent').reduce((s, i) => s + Number(i.total_amount || 0), 0)
-  const overdue         = invoices.filter(i => i.status === 'overdue').reduce((s, i) => s + Number(i.total_amount || 0), 0)
+  const paidInvoices  = invoices.filter(i => i.status === 'paid')
+  const totalRevenue  = paidInvoices.reduce((s, i) => s + Number(i.total_amount || 0), 0)
+  const totalExpenses = expenses.reduce((s, e) => s + Number(e.amount || 0), 0)
+  const netProfit     = totalRevenue - totalExpenses
+  const profitMargin  = totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) : '0.0'
+  const outstanding   = invoices.filter(i => i.status === 'sent').reduce((s, i) => s + Number(i.total_amount || 0), 0)
+  const overdue       = invoices.filter(i => i.status === 'overdue').reduce((s, i) => s + Number(i.total_amount || 0), 0)
 
   // Last 6 months P&L
   const months = Array.from({ length: 6 }, (_, i) => {
@@ -93,7 +101,9 @@ export default async function ReportsPage() {
   ;(invoiceCustomers || []).forEach(inv => {
     if (inv.customer_id) customerSpend[inv.customer_id] = (customerSpend[inv.customer_id] || 0) + Number(inv.total_amount || 0)
   })
-  const topCustomers = Object.entries(customerSpend).sort((a, b) => b[1] - a[1]).slice(0, 5)
+  const topCustomers = Object.entries(customerSpend)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
     .map(([id, total]) => ({ name: customers.find(c => c.id === id)?.name || 'Unknown', total }))
   const maxCustomer = topCustomers[0]?.total || 1
 
@@ -106,9 +116,14 @@ export default async function ReportsPage() {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Reports</h1>
-        <p className="text-gray-500 text-sm mt-0.5">Your business performance at a glance</p>
+
+      {/* Header with export buttons */}
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Reports</h1>
+          <p className="text-gray-500 text-sm mt-0.5">Your business performance at a glance</p>
+        </div>
+        <ReportExport period={period} />
       </div>
 
       {/* P&L Summary — hero section */}
@@ -175,7 +190,7 @@ export default async function ReportsPage() {
                 />
               </div>
               <span className={`text-xs font-medium ${profit >= 0 ? 'text-green-600' : 'text-red-500'}`}>
-                {profit >= 0 ? '+' : ''}{fmt(profit).replace('₦', '₦')}
+                {profit >= 0 ? '+' : ''}{fmt(profit)}
               </span>
               <span className="text-xs text-gray-400">{monthLabel(month)}</span>
             </div>
@@ -276,6 +291,7 @@ export default async function ReportsPage() {
           </Link>
         </div>
       </div>
+
     </div>
   )
 }
