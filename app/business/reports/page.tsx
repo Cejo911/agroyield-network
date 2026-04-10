@@ -27,7 +27,7 @@ export default async function ReportsPage({
   // Invoices
   const { data: invoicesRaw } = await supabase
     .from('invoices')
-    .select('status, total_amount, issue_date, invoice_items(description, total, amount)')
+    .select('status, total, issue_date, invoice_items(description, total, amount)')
     .eq('user_id', user.id)
 
   // Expenses
@@ -44,7 +44,7 @@ export default async function ReportsPage({
 
   const { data: invoiceCustomers } = await supabase
     .from('invoices')
-    .select('customer_id, total_amount, status')
+    .select('customer_id, total, status')
     .eq('user_id', user.id)
     .eq('status', 'paid')
 
@@ -54,12 +54,12 @@ export default async function ReportsPage({
 
   // Revenue totals
   const paidInvoices  = invoices.filter(i => i.status === 'paid')
-  const totalRevenue  = paidInvoices.reduce((s, i) => s + Number(i.total_amount || 0), 0)
+  const totalRevenue  = paidInvoices.reduce((s, i) => s + Number(i.total || 0), 0)
   const totalExpenses = expenses.reduce((s, e) => s + Number(e.amount || 0), 0)
   const netProfit     = totalRevenue - totalExpenses
   const profitMargin  = totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) : '0.0'
-  const outstanding   = invoices.filter(i => i.status === 'sent').reduce((s, i) => s + Number(i.total_amount || 0), 0)
-  const overdue       = invoices.filter(i => i.status === 'overdue').reduce((s, i) => s + Number(i.total_amount || 0), 0)
+  const outstanding   = invoices.filter(i => i.status === 'sent').reduce((s, i) => s + Number(i.total || 0), 0)
+  const overdue       = invoices.filter(i => i.status === 'overdue').reduce((s, i) => s + Number(i.total || 0), 0)
 
   // Last 6 months P&L
   const months = Array.from({ length: 6 }, (_, i) => {
@@ -69,7 +69,7 @@ export default async function ReportsPage({
   })
 
   const monthlyPL = months.map(m => {
-    const rev = paidInvoices.filter(i => i.issue_date?.slice(0, 7) === m).reduce((s, i) => s + Number(i.total_amount || 0), 0)
+    const rev = paidInvoices.filter(i => i.issue_date?.slice(0, 7) === m).reduce((s, i) => s + Number(i.total || 0), 0)
     const exp = expenses.filter(e => e.date?.slice(0, 7) === m).reduce((s, e) => s + Number(e.amount || 0), 0)
     return { month: m, revenue: rev, expenses: exp, profit: rev - exp }
   })
@@ -99,7 +99,7 @@ export default async function ReportsPage({
   // Top customers
   const customerSpend: Record<string, number> = {}
   ;(invoiceCustomers || []).forEach(inv => {
-    if (inv.customer_id) customerSpend[inv.customer_id] = (customerSpend[inv.customer_id] || 0) + Number(inv.total_amount || 0)
+    if (inv.customer_id) customerSpend[inv.customer_id] = (customerSpend[inv.customer_id] || 0) + Number(inv.total || 0)
   })
   const topCustomers = Object.entries(customerSpend)
     .sort((a, b) => b[1] - a[1])
