@@ -51,7 +51,7 @@ export default async function BusinessDashboard({
   // All invoices
   const { data: allInvoicesRaw } = await supabase
     .from('invoices')
-    .select('id, invoice_number, status, total_amount, issue_date, customer_id')
+    .select('id, invoice_number, status, total, issue_date, customer_id')
     .eq('user_id', user.id)
     .order('issue_date', { ascending: false })
 
@@ -82,12 +82,12 @@ export default async function BusinessDashboard({
 
   // P&L calculations
   const paidInvoices   = invoices.filter(i => i.status === 'paid')
-  const revenue        = paidInvoices.reduce((s, i) => s + Number(i.total_amount || 0), 0)
+  const revenue        = paidInvoices.reduce((s, i) => s + Number(i.total || 0), 0)
   const totalExpenses  = expenses.reduce((s, e) => s + Number(e.amount || 0), 0)
   const netProfit      = revenue - totalExpenses
   const profitMargin   = revenue > 0 ? ((netProfit / revenue) * 100).toFixed(1) : '0.0'
-  const outstanding    = invoices.filter(i => i.status === 'sent').reduce((s, i) => s + Number(i.total_amount || 0), 0)
-  const overdueAmt     = invoices.filter(i => i.status === 'overdue').reduce((s, i) => s + Number(i.total_amount || 0), 0)
+  const outstanding    = invoices.filter(i => i.status === 'sent').reduce((s, i) => s + Number(i.total || 0), 0)
+  const overdueAmt     = invoices.filter(i => i.status === 'overdue').reduce((s, i) => s + Number(i.total || 0), 0)
 
   // Invoice status counts (from period-filtered data)
   const draftCount   = invoices.filter(i => i.status === 'draft').length
@@ -312,7 +312,7 @@ export default async function BusinessDashboard({
                     <p className="text-xs text-gray-400">{customerMap[inv.customer_id] || 'Unknown'} · {fmtDate(inv.issue_date)}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs font-bold text-gray-800 dark:text-white">{fmt(Number(inv.total_amount || 0))}</p>
+                    <p className="text-xs font-bold text-gray-800 dark:text-white">{fmt(Number(inv.total || 0))}</p>
                     <span className={`text-xs font-semibold px-1.5 py-0.5 rounded-full ${STATUS_STYLES[inv.status] || STATUS_STYLES.draft}`}>
                       {inv.status}
                     </span>
