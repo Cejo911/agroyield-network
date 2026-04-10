@@ -13,6 +13,10 @@ function fmtDate(d: string) {
 function monthLabel(ym: string) {
   try { const [y, m] = ym.split('-'); return new Date(parseInt(y), parseInt(m) - 1).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }) } catch { return ym }
 }
+// Guard against any column name variation for invoice totals
+function invoiceTotal(inv: any): number {
+  return Number(inv.total_amount || inv.amount || inv.total || 0)
+}
 
 export default async function ReportsPrintPage({
   searchParams,
@@ -33,12 +37,12 @@ export default async function ReportsPrintPage({
     supabase.from('businesses').select('*').eq('user_id', user.id).maybeSingle(),
   ])
 
-  const allInvoices = invoicesRes.data  || []
-  const allExpenses = expensesRes.data  || []
-  const customers   = customersRes.data || []
-  const business    = businessRes.data  || null
+  const allInvoices = (invoicesRes.data  || []) as any[]
+  const allExpenses = (expensesRes.data  || []) as any[]
+  const customers   = (customersRes.data || []) as any[]
+  const business    = businessRes.data   || null
 
-  const customerMap = Object.fromEntries((customers as any[]).map((c) => [c.id, c.name]))
+  const customerMap = Object.fromEntries(customers.map((c) => [c.id, c.name]))
 
   const now = new Date()
   let periodStart: string | null = null
@@ -46,11 +50,11 @@ export default async function ReportsPrintPage({
   if (period === 'quarter') { const d = new Date(); d.setMonth(d.getMonth() - 3); periodStart = d.toISOString().slice(0, 10) }
   if (period === 'year')    periodStart = `${now.getFullYear()}-01-01`
 
-  const invoices = (periodStart ? allInvoices.filter((i: any) => i.issue_date >= periodStart!) : allInvoices) as any[]
-  const expenses = (periodStart ? allExpenses.filter((e: any) => e.date >= periodStart!) : allExpenses) as any[]
+  const invoices = periodStart ? allInvoices.filter((i) => i.issue_date >= periodStart!) : allInvoices
+  const expenses = periodStart ? allExpenses.filter((e) => e.date >= periodStart!) : allExpenses
 
   const paidInvoices  = invoices.filter((i) => i.status === 'paid')
-  const totalRevenue  = paidInvoices.reduce((s, i) => s + Number(i.total_amount || 0), 0)
+  const totalRevenue  = paidInvoices.reduce((s, i) => s + invoiceTotal(i), 0)
   const totalExpenses = expenses.reduce((s, e) => s + Number(e.amount || 0), 0)
   const netProfit     = totalRevenue - totalExpenses
   const profitMargin  = totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) : '0.0'
@@ -62,7 +66,7 @@ export default async function ReportsPrintPage({
   })
 
   const expByCategory: Record<string, number> = {}
-  allExpenses.forEach((e: any) => { expByCategory[e.category] = (expByCategory[e.category] || 0) + Number(e.amount || 0) })
+  allExpenses.forEach((e) => { expByCategory[e.category] = (expByCategory[e.category] || 0) + Number(e.amount || 0) })
   const topCategories = Object.entries(expByCategory).sort((a, b) => b[1] - a[1])
 
   const G  = '#15803d'
@@ -71,13 +75,17 @@ export default async function ReportsPrintPage({
   return (
     <div style={{ minHeight: '100vh', background: '#f3f4f6' }}>
       <style>{`
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; }
+
         @media print {
           * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
           .no-print { display: none !important; }
-          body { background: white !important; margin: 0; padding: 0; }
+          body { background: white !important; }
           .print-wrapper { padding: 0 !important; background: white !important; }
-          .print-page { box-shadow: none !important; width: 100% !important; }
+          .print-page { box-shadow: none !important; width: 100% !important; border-radius: 0 !important; }
+          tr { page-break-inside: avoid; }
+          .section-block { page-break-inside: avoid; }
           @page { size: A4; margin: 8mm; }
         }
       `}</style>
@@ -118,10 +126,10 @@ export default async function ReportsPrintPage({
             </div>
           </div>
 
-          <div style={{ padding: '28px 36px' }}>
+          <div style={{ padding: '24px 36px' }}>
 
             {/* P&L Summary */}
-            <div style={{ marginBottom: '24px' }}>
+            <div className="section-block" style={{ marginBottom: '20px' }}>
               <div style={{ fontSize: '10px', fontWeight: 700, color: G, letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '10px' }}>Profit & Loss Summary</div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
                 {[
@@ -139,7 +147,7 @@ export default async function ReportsPrintPage({
             </div>
 
             {/* Invoice Status + Expenses by Category */}
-            <div style={{ marginBottom: '24px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <div className="section-block" style={{ marginBottom: '20px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
               <div>
                 <div style={{ fontSize: '10px', fontWeight: 700, color: G, letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '10px' }}>Invoice Status</div>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
@@ -153,7 +161,7 @@ export default async function ReportsPrintPage({
                   <tbody>
                     {['draft', 'sent', 'paid', 'overdue'].map((s, idx) => {
                       const filtered = invoices.filter((i) => i.status === s)
-                      const total = filtered.reduce((sum, i) => sum + Number(i.total_amount || 0), 0)
+                      const total = filtered.reduce((sum, i) => sum + invoiceTotal(i), 0)
                       return (
                         <tr key={s} style={{ background: idx % 2 === 0 ? '#fff' : '#f9fafb', borderBottom: '1px solid #f3f4f6' }}>
                           <td style={{ padding: '7px 10px', textTransform: 'capitalize', fontWeight: 500 }}>{s}</td>
@@ -190,7 +198,7 @@ export default async function ReportsPrintPage({
             </div>
 
             {/* Monthly P&L */}
-            <div style={{ marginBottom: '24px' }}>
+            <div className="section-block" style={{ marginBottom: '20px' }}>
               <div style={{ fontSize: '10px', fontWeight: 700, color: G, letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '10px' }}>Monthly P&L — Last 6 Months</div>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
                 <thead>
@@ -202,8 +210,8 @@ export default async function ReportsPrintPage({
                 </thead>
                 <tbody>
                   {months.map((m, idx) => {
-                    const rev  = paidInvoices.filter((i) => i.issue_date?.slice(0, 7) === m).reduce((s, i) => s + Number(i.total_amount || 0), 0)
-                    const exp  = allExpenses.filter((e: any) => e.date?.slice(0, 7) === m).reduce((s, e: any) => s + Number(e.amount || 0), 0)
+                    const rev  = paidInvoices.filter((i) => i.issue_date?.slice(0, 7) === m).reduce((s, i) => s + invoiceTotal(i), 0)
+                    const exp  = allExpenses.filter((e) => e.date?.slice(0, 7) === m).reduce((s, e) => s + Number(e.amount || 0), 0)
                     const prof = rev - exp
                     const mg   = rev > 0 ? `${((prof / rev) * 100).toFixed(1)}%` : '—'
                     return (
@@ -221,7 +229,7 @@ export default async function ReportsPrintPage({
             </div>
 
             {/* Invoice Detail */}
-            <div>
+            <div className="section-block">
               <div style={{ fontSize: '10px', fontWeight: 700, color: G, letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '10px' }}>Invoice Detail</div>
               {invoices.length === 0 ? (
                 <div style={{ padding: '20px', textAlign: 'center', color: '#9ca3af', background: '#f9fafb', borderRadius: '8px' }}>No invoices found for this period.</div>
@@ -248,7 +256,7 @@ export default async function ReportsPrintPage({
                               color: inv.status === 'paid' ? '#15803d' : inv.status === 'overdue' ? '#dc2626' : inv.status === 'sent' ? '#1d4ed8' : '#6b7280',
                             }}>{inv.status?.toUpperCase()}</span>
                           </td>
-                          <td style={{ padding: '6px 10px', textAlign: 'right', fontWeight: 600 }}>{fmt(Number(inv.total_amount || 0))}</td>
+                          <td style={{ padding: '6px 10px', textAlign: 'right', fontWeight: 600 }}>{fmt(invoiceTotal(inv))}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -264,7 +272,7 @@ export default async function ReportsPrintPage({
           </div>
 
           {/* Footer */}
-          <div style={{ background: `linear-gradient(135deg, ${DG}, ${G})`, padding: '12px 36px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ background: `linear-gradient(135deg, ${DG}, ${G})`, padding: '12px 36px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '24px' }}>
             <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '10px' }}>{business?.name} · {business?.address} · {business?.phone}</span>
             <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '10px', fontStyle: 'italic' }}>Generated by AgroYield Business Suite</span>
           </div>
