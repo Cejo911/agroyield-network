@@ -30,6 +30,7 @@ export default async function BusinessLayout({ children }: { children: React.Rea
               <Link href="/business/products" className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors">📦 Products</Link>
               <Link href="/business/customers" className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors">👥 Customers</Link>
               <Link href="/business/invoices" className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors">🧾 Invoices</Link>
+              <Link href="/business/expenses" className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors">💸 Expenses</Link>
               <Link href="/business/reports" className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors">📊 Reports</Link>
             </nav>
           </aside>
