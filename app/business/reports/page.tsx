@@ -126,7 +126,7 @@ export default async function ReportsPage() {
           <p style={{ color: '#6b7280', marginTop: '4px', fontSize: '14px' }}>Financial overview for {business?.name || 'your business'}</p>
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
-          <ReportExport />
+          <ReportExport period="Last 6 Months" />/>
           <Link href="/business/reports/print" target="_blank"
             style={{ background: '#111827', color: '#fff', padding: '9px 18px', borderRadius: '8px', textDecoration: 'none', fontSize: '14px', fontWeight: 600 }}>
             🖨️ Print Report
