@@ -1,11 +1,30 @@
 'use client'
+
 export default function PrintButton() {
+  const handlePrint = () => {
+    // Small delay ensures page is fully rendered before print dialog opens
+    setTimeout(() => window.print(), 300)
+  }
+
   return (
     <button
-      onClick={() => window.print()}
-      style={{ background: '#15803d', color: '#fff', border: 'none', padding: '8px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+      onClick={handlePrint}
+      className="no-print"
+      style={{
+        background: '#16a34a',
+        color: 'white',
+        border: 'none',
+        borderRadius: '8px',
+        padding: '10px 20px',
+        fontSize: '14px',
+        fontWeight: '600',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '6px',
+      }}
     >
-      🖨 Print / Save as PDF
+      🖨️ Print / Save as PDF
     </button>
   )
 }
