@@ -73,7 +73,7 @@ export default async function ReportsPrintPage({
   const cell = '5px 10px'
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f3f4f6' }}>
+    <div style={{ background: '#f3f4f6' }}>
       <style>{`
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', Arial, sans-serif; }
