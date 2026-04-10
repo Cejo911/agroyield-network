@@ -78,15 +78,15 @@ export default async function ReportsPrintPage({
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', Arial, sans-serif; }
         @media print {
-          * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
-          .no-print { display: none !important; }
-          body { background: white !important; }
-          .print-wrapper { padding: 0 !important; background: white !important; }
-          .print-page { box-shadow: none !important; width: 100% !important; border-radius: 0 !important; }
-          .print-footer { page-break-before: avoid; }
-          tr { page-break-inside: avoid; }
-          @page { size: A4; margin: 6mm; }
-        }
+           * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+           .no-print { display: none !important; height: 0 !important; overflow: hidden !important; margin: 0 !important; padding: 0 !important; position: absolute !important; }
+           body { background: white !important; margin: 0 !important; padding: 0 !important; }
+           .print-wrapper { padding: 0 !important; margin: 0 !important; background: white !important; }
+           .print-page { box-shadow: none !important; width: 100% !important; border-radius: 0 !important; margin: 0 !important; }
+           .print-footer { page-break-before: avoid; }
+           tr { page-break-inside: avoid; }
+           @page { size: A4; margin: 6mm; }
+          }
       `}</style>
 
       {/* Toolbar */}
