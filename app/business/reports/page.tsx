@@ -18,7 +18,7 @@ export default async function ReportsPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  // Get business (always by user_id — this is correct)
+  // Get business
   const { data: business } = await supabase
     .from('businesses')
     .select('id, name')
@@ -27,11 +27,16 @@ export default async function ReportsPage() {
 
   const businessId = business?.id || ''
 
-  // Invoices — filter by business_id (NOT user_id)
+  // Invoices — simple select, NO join
   const { data: invoicesRaw } = await supabase
     .from('invoices')
-    .select('status, total, issue_date, invoice_items(description, total, amount)')
+    .select('id, status, total, issue_date')
     .eq('business_id', businessId)
+
+  // Invoice items — separate query for top products
+  const { data: invoiceItemsRaw } = await supabase
+    .from('invoice_items')
+    .select('invoice_id, description, total, amount')
 
   // Expenses
   const { data: expensesRaw } = await supabase
@@ -45,7 +50,7 @@ export default async function ReportsPage() {
     .select('id, name')
     .eq('user_id', user.id)
 
-  // Invoice customers — also filter by business_id
+  // Invoice customers — for top customer spend
   const { data: invoiceCustomers } = await supabase
     .from('invoices')
     .select('customer_id, total, status')
@@ -55,6 +60,7 @@ export default async function ReportsPage() {
   const invoices  = invoicesRaw  || []
   const expenses  = expensesRaw  || []
   const customers = customersRaw || []
+  const invoiceItems = invoiceItemsRaw || []
 
   // Revenue totals
   const paidInvoices  = invoices.filter(i => i.status === 'paid')
@@ -87,16 +93,16 @@ export default async function ReportsPage() {
   }, {})
   const topExpenseCategories = Object.entries(expByCategory).sort((a, b) => b[1] - a[1]).slice(0, 5)
 
-  // Top products
+  // Top products — built from separate invoice_items query
+  const paidInvoiceIds = new Set(paidInvoices.map(i => i.id))
   const productTotals: Record<string, number> = {}
-  paidInvoices.forEach(inv => {
-    const items = (inv.invoice_items as any[]) || []
-    items.forEach((item: any) => {
-      const key = item.description
+  invoiceItems
+    .filter(item => paidInvoiceIds.has(item.invoice_id))
+    .forEach((item: any) => {
+      const key = item.description || 'Unknown'
       const val = Number(item.total) || Number(item.amount) || 0
       productTotals[key] = (productTotals[key] || 0) + val
     })
-  })
   const topProducts = Object.entries(productTotals).sort((a, b) => b[1] - a[1]).slice(0, 5)
   const maxProduct  = topProducts[0]?.[1] || 1
 
@@ -125,7 +131,7 @@ export default async function ReportsPage() {
           <h1 style={{ fontSize: '26px', fontWeight: 700, color: '#111827', margin: 0 }}>Business Reports</h1>
           <p style={{ color: '#6b7280', marginTop: '4px', fontSize: '14px' }}>Financial overview for {business?.name || 'your business'}</p>
         </div>
-<div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', gap: '10px' }}>
           <ReportExport period="Last 6 Months" />
           <Link href="/business/reports/print" target="_blank"
             style={{ background: '#111827', color: '#fff', padding: '9px 18px', borderRadius: '8px', textDecoration: 'none', fontSize: '14px', fontWeight: 600 }}>
@@ -183,7 +189,6 @@ export default async function ReportsPage() {
 
       {/* Top Products & Top Customers */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '28px' }}>
-        {/* Top Products */}
         <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '24px' }}>
           <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#111827', margin: '0 0 16px 0' }}>Top Products / Services</h2>
           {topProducts.length === 0 ? (
@@ -201,7 +206,6 @@ export default async function ReportsPage() {
           ))}
         </div>
 
-        {/* Top Customers */}
         <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '24px' }}>
           <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#111827', margin: '0 0 16px 0' }}>Top Customers</h2>
           {topCustomers.length === 0 ? (
@@ -222,7 +226,6 @@ export default async function ReportsPage() {
 
       {/* Expense Breakdown & Invoice Status */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '28px' }}>
-        {/* Expense Breakdown */}
         <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '24px' }}>
           <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#111827', margin: '0 0 16px 0' }}>Expense Breakdown</h2>
           {topExpenseCategories.length === 0 ? (
@@ -235,7 +238,6 @@ export default async function ReportsPage() {
           ))}
         </div>
 
-        {/* Invoice Status */}
         <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '24px' }}>
           <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#111827', margin: '0 0 16px 0' }}>Invoice Status Summary</h2>
           {statusCounts.map(s => (
