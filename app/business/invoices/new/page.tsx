@@ -185,10 +185,11 @@ export default function NewInvoicePage() {
         const rowTotal = qty * price
         return {
           invoice_id: invoice.id,
+          product_id: (item.product_id && item.product_id !== '__manual__') ? item.product_id : null,
           description: item.description,
           quantity: qty,
           unit_price: price,
-          total: rowTotal,
+          line_total: rowTotal,
         }
       })
 
