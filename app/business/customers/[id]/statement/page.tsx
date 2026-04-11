@@ -26,9 +26,12 @@ export default async function CustomerStatementPage({
   params,
   searchParams,
 }: {
-  params: { id: string }
-  searchParams: { from?: string; to?: string }
+  params: Promise<{ id: string }>
+  searchParams: Promise<{ from?: string; to?: string }>
 }) {
+  const { id } = await params
+  const { from: fromParam, to: toParam } = await searchParams
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -41,10 +44,10 @@ export default async function CustomerStatementPage({
 
   if (!business) redirect('/business/setup')
 
- const { data: customer } = await supabase
+  const { data: customer } = await supabase
     .from('customers')
     .select('id, name, email, phone, address')
-    .eq('id', params.id)
+    .eq('id', id)
     .eq('business_id', business.id)
     .maybeSingle()
 
@@ -53,14 +56,14 @@ export default async function CustomerStatementPage({
   const now = new Date()
   const defaultFrom = `${now.getFullYear()}-01-01`
   const defaultTo = now.toISOString().split('T')[0]
-  const from = searchParams.from || defaultFrom
-  const to = searchParams.to || defaultTo
+  const from = fromParam || defaultFrom
+  const to = toParam || defaultTo
 
   const { data: invoicesRaw } = await supabase
     .from('invoices')
     .select('id, invoice_number, document_type, issue_date, due_date, status, total')
     .eq('business_id', business.id)
-    .eq('customer_id', params.id)
+    .eq('customer_id', id)
     .eq('is_active', true)
     .gte('issue_date', from)
     .lte('issue_date', to)
@@ -84,7 +87,7 @@ export default async function CustomerStatementPage({
           <p className="text-gray-500 text-sm mt-1">{business.name}</p>
         </div>
         <Link
-          href={`/business/customers/${params.id}/statement/print?from=${from}&to=${to}`}
+          href={`/business/customers/${id}/statement/print?from=${from}&to=${to}`}
           target="_blank"
           className="bg-gray-900 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-gray-700"
         >
@@ -92,7 +95,6 @@ export default async function CustomerStatementPage({
         </Link>
       </div>
 
-      {/* Customer Info */}
       <div className="bg-white rounded-xl border border-gray-200 p-5 mb-5">
         <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Customer</h2>
         <p className="text-lg font-bold text-gray-900">{customer.name}</p>
@@ -101,13 +103,11 @@ export default async function CustomerStatementPage({
         {customer.address && <p className="text-sm text-gray-500">{customer.address}</p>}
       </div>
 
-      {/* Date range + share */}
       <div className="bg-white rounded-xl border border-gray-200 p-5 mb-5">
         <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Statement Period</h2>
-        <StatementControls customerId={params.id} from={from} to={to} />
+        <StatementControls customerId={id} from={from} to={to} />
       </div>
 
-      {/* Summary cards */}
       <div className="grid grid-cols-3 gap-4 mb-5">
         <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
           <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">Total Invoiced</p>
@@ -123,7 +123,6 @@ export default async function CustomerStatementPage({
         </div>
       </div>
 
-      {/* Invoices table */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <div className="px-5 py-4 border-b border-gray-100">
           <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Transaction History</h2>
