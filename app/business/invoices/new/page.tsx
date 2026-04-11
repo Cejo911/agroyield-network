@@ -168,13 +168,12 @@ export default function NewInvoicePage() {
           document_type: documentType,
           issue_date: issueDate,
           due_date: dueDate || null,
-          notes: notes || null,
+          notes: vatEnabled && effectiveVat > 0
+            ? `VAT ${effectiveVat}% (₦${vatAmount.toLocaleString('en-NG', { minimumFractionDigits: 2 })}) included.${notes ? ' ' + notes : ''}`
+            : notes || null,
           status: 'draft',
-          subtotal_amount: subtotal,
-          vat_percent: effectiveVat,
-          vat_amount: vatAmount,
-          total_amount: totalAmount,
           total: totalAmount,
+          total_amount: totalAmount,
         })
         .select()
         .single()
@@ -274,58 +273,52 @@ export default function NewInvoicePage() {
 
       {/* Product selector OR manual text input */}
       <div className="col-span-3">
-        {item.product_id === '__manual__' ? (
-          <div className="flex gap-1 items-center">
-            <input
-              type="text"
-              placeholder="Item name"
-              value={item.description}
-              onChange={e => updateItem(idx, 'description', e.target.value)}
-              className={inputClass}
-              autoFocus
-              required
-            />
-            <button
-              type="button"
-              title="Back to product list"
-              onClick={() => setItems(items.map((it, i) => i === idx ? { ...it, product_id: '', description: '', unit_price: '' } : it))}
-              className="text-gray-400 hover:text-gray-600 text-xs px-1"
-            >↩</button>
-          </div>
-        ) : (
-          <select
-            value={item.product_id}
-            onChange={e => selectProduct(idx, e.target.value)}
-            className={selectClass}
-          >
-            <option value="">— Select product —</option>
-            {products.map(p => (
-              <option key={p.id} value={p.id}>{p.name} ({p.unit})</option>
-            ))}
-            <option value="__manual__">✏️ Enter manually</option>
-          </select>
-        )}
-      </div>
-
-      {/* Description — hidden in manual mode (product col already captures it), shown in product mode */}
-      <div className="col-span-3">
-        {item.product_id === '__manual__' ? (
-          <input
-            type="text"
-            placeholder="Additional details (optional)"
-            className={`${inputClass} text-gray-400`}
-            disabled
-          />
-        ) : (
-          <input
-            type="text"
-            placeholder="Description"
-            value={item.description}
-            onChange={e => updateItem(idx, 'description', e.target.value)}
-            className={inputClass}
-            required
-          />
-        )}
+      {/* Product selector OR manual entry — spans wider in manual mode */}
+              {item.product_id === '__manual__' ? (
+                <div className="col-span-6 flex gap-1 items-center">
+                  <input
+                    type="text"
+                    placeholder="Item name / description"
+                    value={item.description}
+                    onChange={e => updateItem(idx, 'description', e.target.value)}
+                    className={inputClass}
+                    autoFocus
+                    required
+                  />
+                  <button
+                    type="button"
+                    title="Back to product list"
+                    onClick={() => setItems(items.map((it, i) => i === idx ? { ...it, product_id: '', description: '', unit_price: '' } : it))}
+                    className="text-gray-400 hover:text-gray-600 text-xs px-1 whitespace-nowrap"
+                  >↩</button>
+                </div>
+              ) : (
+                <>
+                  <div className="col-span-3">
+                    <select
+                      value={item.product_id}
+                      onChange={e => selectProduct(idx, e.target.value)}
+                      className={selectClass}
+                    >
+                      <option value="">— Select product —</option>
+                      {products.map(p => (
+                        <option key={p.id} value={p.id}>{p.name} ({p.unit})</option>
+                      ))}
+                      <option value="__manual__">✏️ Enter manually</option>
+                    </select>
+                  </div>
+                  <div className="col-span-3">
+                    <input
+                      type="text"
+                      placeholder="Description"
+                      value={item.description}
+                      onChange={e => updateItem(idx, 'description', e.target.value)}
+                      className={inputClass}
+                      required
+                    />
+                  </div>
+                </>
+              )}  
       </div>
 
       {/* Qty */}
