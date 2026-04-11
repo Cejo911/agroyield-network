@@ -223,20 +223,20 @@ export default function ProductsPage() {
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between gap-4 flex-wrap">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Products & Inventory</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             {products.length} product{products.length !== 1 ? 's' : ''} · Total inventory value: {fmt(products.reduce((s, p) => s + (p.stock_quantity * (p.cost_price || p.unit_price)), 0))}
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 w-full sm:w-auto">
           <input
             type="text"
             placeholder="Search products…"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 w-56"
+            className="border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 flex-1 sm:w-56"
           />
           <button onClick={openNew} className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors whitespace-nowrap">
             + Add Product
@@ -246,9 +246,9 @@ export default function ProductsPage() {
 
       {/* Low Stock Alert */}
       {lowStockCount > 0 && (
-        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl px-4 py-3 flex items-center gap-3">
-          <span className="text-amber-600 text-lg">⚠️</span>
-          <p className="text-sm text-amber-800 dark:text-amber-300 font-medium">
+        <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-300 dark:border-orange-800 rounded-xl px-4 py-3 flex items-center gap-3">
+          <span className="text-orange-600 text-lg">⚠️</span>
+          <p className="text-sm text-orange-900 dark:text-orange-300 font-medium">
             {lowStockCount} product{lowStockCount !== 1 ? 's' : ''} {lowStockCount !== 1 ? 'are' : 'is'} running low on stock
           </p>
         </div>
@@ -503,7 +503,8 @@ export default function ProductsPage() {
         </div>
       ) : (
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
-          <table className="w-full text-sm">
+          {/* Desktop Table */}
+          <table className="w-full text-sm hidden md:table">
             <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
               <tr>
                 <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-300">Product / Service</th>
@@ -556,6 +557,62 @@ export default function ProductsPage() {
               })}
             </tbody>
           </table>
+
+          {/* Mobile Cards */}
+          <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-800">
+            {filteredProducts.map(p => {
+              const isLow = p.unit !== 'service' && p.stock_quantity <= p.low_stock_threshold
+              const isOut = p.unit !== 'service' && p.stock_quantity === 0
+              return (
+                <div key={p.id} className="p-4 space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-800 dark:text-white truncate">{p.name}</p>
+                      {p.description && <p className="text-xs text-gray-400 mt-0.5 truncate">{p.description}</p>}
+                    </div>
+                    {p.unit !== 'service' && (
+                      <div className="flex items-center gap-1.5 ml-3">
+                        <span className={`text-sm font-bold ${isOut ? 'text-red-600' : isLow ? 'text-amber-600' : 'text-gray-800 dark:text-white'}`}>
+                          {p.stock_quantity}
+                        </span>
+                        <span className="text-xs text-gray-400">{p.unit}</span>
+                        {isOut && <span className="text-[10px] font-bold bg-red-100 dark:bg-red-900/30 text-red-600 px-1.5 py-0.5 rounded-full">OUT</span>}
+                        {isLow && !isOut && <span className="text-[10px] font-bold bg-amber-100 dark:bg-amber-900/30 text-amber-600 px-1.5 py-0.5 rounded-full">LOW</span>}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-4 text-xs">
+                    {p.cost_price > 0 && (
+                      <div>
+                        <span className="text-gray-400">Cost:</span>{' '}
+                        <span className="text-gray-600 dark:text-gray-300">{fmt(p.cost_price)}</span>
+                      </div>
+                    )}
+                    <div>
+                      <span className="text-gray-400">Price:</span>{' '}
+                      <span className="font-medium text-gray-800 dark:text-white">{fmt(p.unit_price)}</span>
+                    </div>
+                    {p.unit === 'service' && (
+                      <span className="text-gray-400">Service</span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-3 pt-1">
+                    {p.unit !== 'service' && (
+                      <>
+                        <button onClick={() => openStockModal(p, 'in')} className="text-xs font-medium text-green-600 hover:underline">+In</button>
+                        <button onClick={() => openStockModal(p, 'out')} className="text-xs font-medium text-orange-600 hover:underline">−Out</button>
+                        <button onClick={() => openHistory(p)} className="text-xs text-gray-500 hover:underline">History</button>
+                      </>
+                    )}
+                    <button onClick={() => openEdit(p)} className="text-xs text-blue-600 hover:underline">Edit</button>
+                    <button onClick={() => handleDelete(p.id)} className="text-xs text-red-500 hover:underline">Remove</button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
         </div>
       )}
     </div>
