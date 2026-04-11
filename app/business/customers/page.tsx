@@ -18,6 +18,7 @@ export default function CustomersPage() {
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [search, setSearch] = useState('')
   const [form, setForm] = useState({ name: '', email: '', phone: '', address: '' })
 
   useEffect(() => { load() }, [])
@@ -72,7 +73,13 @@ export default function CustomersPage() {
     await supabase.from('customers').update({ is_active: false }).eq('id', id)
     setCustomers(prev => prev.filter(c => c.id !== id))
   }
-
+  const filteredCustomers = customers.filter(c =>
+    c.name.toLowerCase().includes(search.toLowerCase()) ||
+    (c.email ?? '').toLowerCase().includes(search.toLowerCase()) ||
+    (c.phone ?? '').toLowerCase().includes(search.toLowerCase())
+  )
+  
+  
   if (loading) return <div className="text-center py-10 text-gray-400">Loading...</div>
 
   if (!businessId) return (
@@ -84,11 +91,20 @@ export default function CustomersPage() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4">
         <h1 className="text-2xl font-bold text-gray-900">Customers</h1>
-        <button onClick={openNew} className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors">
-          + Add Customer
-        </button>
+        <div className="flex items-center gap-3">
+          <input
+            type="text"
+            placeholder="Search customers…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 w-56"
+          />
+          <button onClick={openNew} className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors whitespace-nowrap">
+            + Add Customer
+          </button>
+        </div>
       </div>
 
       {/* Form Modal */}
@@ -137,7 +153,7 @@ export default function CustomersPage() {
       )}
 
       {/* Customer List */}
-      {customers.length === 0 ? (
+      {filteredCustomers.length === 0 ? (
         <div className="bg-white rounded-xl border border-gray-100 p-10 text-center">
           <div className="text-4xl mb-3">👥</div>
           <p className="text-gray-500 mb-4">No customers yet. Add your first customer.</p>
@@ -155,7 +171,7 @@ export default function CustomersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {customers.map(c => (
+              {filteredCustomers.map(c => (
                 <tr key={c.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3 font-medium text-gray-800">{c.name}</td>
                   <td className="px-4 py-3 text-gray-500">
