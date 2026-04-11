@@ -1,7 +1,12 @@
 'use client'
+import { useSearchParams } from 'next/navigation'
+import { Suspense } from 'react'
 import ThemeToggle from '@/app/components/ThemeToggle'
 
-export default function DataDeletion() {
+function DataDeletionContent() {
+  const searchParams = useSearchParams()
+  const code = searchParams.get('code')
+
   return (
     <main style={{ fontFamily: "'Inter', system-ui, sans-serif", background: 'var(--bg-page)', color: 'var(--text-primary)', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <style>{`
@@ -36,11 +41,25 @@ export default function DataDeletion() {
       {/* CONTENT */}
       <div style={{ flex: 1, display: 'flex', justifyContent: 'center', padding: '60px 24px' }}>
         <div style={{ width: '100%', maxWidth: 640 }}>
-          <h1 style={{ fontSize: 32, fontWeight: 900, color: 'var(--text-primary)', letterSpacing: -1, marginBottom: 16 }}>Data Deletion Instructions</h1>
+          <h1 style={{ fontSize: 32, fontWeight: 900, color: 'var(--text-primary)', letterSpacing: -1, marginBottom: 16 }}>Data Deletion</h1>
           <p style={{ fontSize: 14, color: 'var(--text-muted)', marginBottom: 40 }}>Last updated: April 11, 2026</p>
 
           <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 20, padding: '36px 32px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+
+              {/* Show confirmation status if user arrived via Facebook deletion callback */}
+              {code && (
+                <div style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 12, padding: '20px 24px' }}>
+                  <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-accent)', marginBottom: 8 }}>Deletion request received</h2>
+                  <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.7, margin: '0 0 8px 0' }}>
+                    Your data deletion request has been submitted and is being processed. Your data will be permanently removed within 30 days.
+                  </p>
+                  <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>
+                    Confirmation code: <strong style={{ color: 'var(--text-primary)' }}>{code}</strong>
+                  </p>
+                </div>
+              )}
+
               <div>
                 <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 10 }}>Your data, your choice</h2>
                 <p style={{ fontSize: 15, color: 'var(--text-secondary)', lineHeight: 1.8, margin: 0 }}>
@@ -84,5 +103,13 @@ export default function DataDeletion() {
         </div>
       </div>
     </main>
+  )
+}
+
+export default function DataDeletion() {
+  return (
+    <Suspense fallback={null}>
+      <DataDeletionContent />
+    </Suspense>
   )
 }
