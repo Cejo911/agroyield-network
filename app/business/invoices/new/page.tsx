@@ -41,7 +41,7 @@ export default function NewInvoicePage() {
   const [customers, setCustomers] = useState<Customer[]>([])
   const [products, setProducts] = useState<Product[]>([])
   const [customerId, setCustomerId] = useState('')
-  const [documentType, setDocumentType] = useState('INVOICE')
+  const [documentType, setDocumentType] = useState('invoice')
   const [issueDate, setIssueDate] = useState(new Date().toISOString().split('T')[0])
   const [dueDate, setDueDate] = useState('')
   const [notes, setNotes] = useState('')
@@ -226,10 +226,10 @@ export default function NewInvoicePage() {
             <div>
               <label className={labelClass}>Document Type</label>
               <select value={documentType} onChange={e => setDocumentType(e.target.value)} className={selectClass}>
-                <option value="INVOICE">Invoice</option>
-                <option value="RECEIPT">Receipt</option>
-                <option value="PROFORMA">Proforma Invoice</option>
-                <option value="QUOTE">Quote</option>
+                <option value="invoice">Invoice</option>
+                <option value="receipt">Receipt</option>
+                <option value="proforma">Proforma Invoice</option>
+                <option value="delivery_note">Delivery Note</option>
               </select>
             </div>
             <div>
