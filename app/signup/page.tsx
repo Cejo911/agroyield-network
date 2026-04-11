@@ -122,10 +122,9 @@ export default function SignUp() {
     <main style={{ fontFamily: "'Inter', system-ui, sans-serif", background: '#060d09', color: '#f0fdf4', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* NAV */}
       <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 40px', borderBottom: '1px solid rgba(34,197,94,0.08)' }}>
-        <a href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
-          <div style={{ width: 34, height: 34, background: 'linear-gradient(135deg, #16a34a, #22c55e)', borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17 }}>🌾</div>
-          <span style={{ fontSize: 17, fontWeight: 800, color: '#f0fdf4', letterSpacing: '-0.3px' }}>Agro<span style={{ color: '#22c55e' }}>Yield</span></span>
-        </a>
+        <a href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+  <img src="/logo-horizontal-white.png" alt="AgroYield Network" style={{ height: 36, width: 'auto' }} />
+</a>
         <a href="/login" style={{ fontSize: 13, color: '#bbf7d0', textDecoration: 'none' }}>Already have an account? <span style={{ color: '#22c55e', fontWeight: 600 }}>Sign in</span></a>
       </nav>
 
@@ -133,7 +132,9 @@ export default function SignUp() {
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px' }}>
         <div style={{ width: '100%', maxWidth: 480 }}>
           <div style={{ textAlign: 'center', marginBottom: 40 }}>
-            <div style={{ width: 56, height: 56, background: 'linear-gradient(135deg, #16a34a, #22c55e)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, margin: '0 auto 24px' }}>🌾</div>
+            <div style={{ margin: '0 auto 24px', display: 'flex', justifyContent: 'center' }}>
+  <img src="/logo-stacked-white.png" alt="AgroYield Network" style={{ height: 90, width: 'auto' }} />
+</div>         
             <h1 style={{ fontSize: 28, fontWeight: 900, color: '#f0fdf4', letterSpacing: -1, marginBottom: 8 }}>Create your account</h1>
             <p style={{ fontSize: 15, color: '#bbf7d0' }}>Join AgroYield Network as a founding member</p>
           </div>
