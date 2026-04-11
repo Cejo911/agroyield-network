@@ -120,7 +120,7 @@ function buildDigestHtml(params: {
 
           <tr>
             <td style="background:#16a34a;padding:28px 32px;text-align:center;">
-              <img src="https://agroyield.africa/logo-horizontal-white.png" alt="AgroYield Network" style="height:40px;width:auto;" />
+              <img src="https://agroyield.africa/logo-horizontal-white.png" alt="AgroYield Network" style="height:58px;width:auto;" />
               <div style="color:#bbf7d0;font-size:13px;margin-top:6px;">
                 Weekly Digest &middot; ${weekOf}
               </div>
