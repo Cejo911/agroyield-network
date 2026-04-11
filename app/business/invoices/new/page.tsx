@@ -189,7 +189,6 @@ export default function NewInvoicePage() {
           quantity: qty,
           unit_price: price,
           total: rowTotal,
-          amount: rowTotal,
         }
       })
 
