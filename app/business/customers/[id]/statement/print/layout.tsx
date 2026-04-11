@@ -19,6 +19,14 @@ export default function StatementPrintLayout({ children }: { children: React.Rea
             overflow: hidden !important;
             position: absolute !important;
           }
+          @page {
+            margin: 1cm;
+            size: A4;
+          }
+          body {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
         }
       `}</style>
       {children}
