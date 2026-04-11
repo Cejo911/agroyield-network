@@ -53,7 +53,7 @@ export default function Login() {
       {/* NAV */}
       <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 40px', borderBottom: '1px solid rgba(34,197,94,0.08)' }}>
         <a href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-  <img src="/logo-horizontal-white.png" alt="AgroYield Network" style={{ height: 44, width: 'auto' }} />
+  <img src="/logo-horizontal-white.png" alt="AgroYield Network" style={{ height: 58, width: 'auto' }} />
 </a>
         <a href="/" style={{ fontSize: 13, color: '#bbf7d0', textDecoration: 'none' }}>← Back to home</a>
       </nav>
