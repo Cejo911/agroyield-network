@@ -160,7 +160,7 @@ export default function NewInvoicePage() {
         : ''
       const finalNotes = [vatNote, notes].filter(Boolean).join(' ')
 
-      const { data: invoice, error: invoiceError } = await supabase
+     const { data: invoice, error: invoiceError } = await supabase
         .from('invoices')
         .insert({
           user_id: user.id,
@@ -172,6 +172,10 @@ export default function NewInvoicePage() {
           due_date: dueDate || null,
           notes: finalNotes || null,
           status: 'draft',
+          apply_vat: vatEnabled,
+          vat_rate: effectiveVat,
+          vat_amount: vatAmount,
+          subtotal: subtotal,
           total: totalAmount,
         })
         .select()
