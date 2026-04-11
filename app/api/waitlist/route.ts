@@ -41,7 +41,7 @@ export async function POST(request: Request) {
       <table width="560" cellpadding="0" cellspacing="0" style="background:#0c1c11;border:1px solid #1c3825;border-radius:16px;overflow:hidden;max-width:560px;">
         <tr>
           <td style="padding:36px 48px;border-bottom:1px solid #1c3825;">
-            <img src="https://agroyield.africa/logo-horizontal-white.png" alt="AgroYield Network" style="height:58px;width:auto;" />
+            <img src="https://agroyield.africa/logo-horizontal-white.png" alt="AgroYield Network" style="height:70px;width:auto;" />
         </tr>
         <tr>
           <td style="padding:40px 48px;">
@@ -92,7 +92,7 @@ export async function POST(request: Request) {
       <table width="560" cellpadding="0" cellspacing="0" style="background:#0c1c11;border:1px solid #1c3825;border-radius:16px;overflow:hidden;max-width:560px;">
         <tr>
           <td style="padding:36px 48px;border-bottom:1px solid #1c3825;">
-            <img src="https://agroyield.africa/logo-horizontal-white.png" alt="AgroYield Network" style="height:58px;width:auto;" />
+            <img src="https://agroyield.africa/logo-horizontal-white.png" alt="AgroYield Network" style="height:70px;width:auto;" />
           </td>
         </tr>
         <tr>
