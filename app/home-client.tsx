@@ -215,18 +215,19 @@ export default function Home() {
         @media (max-width: 480px) {
           .agy-nav-links { gap: 8px; }
           .agy-nav-contact { display: none; }
-          .agy-footer-links { gap: 12px; }
+          .agy-logo-colored { display: block; }
+        .agy-logo-white   { display: none; }
+        .dark .agy-logo-colored { display: none; }
+        .dark .agy-logo-white   { display: block; }
         }
       `}</style>
 
       {/* NAV */}
       <nav className="agy-nav" style={{ position: 'sticky', top: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--nav-bg)', backdropFilter: 'blur(16px)', borderBottom: '1px solid var(--nav-border)' }}>
-        <a href="#top" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
-          <div style={{ width: 34, height: 34, background: 'linear-gradient(135deg, #16a34a, #22c55e)', borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17 }}>🌾</div>
-          <span style={{ fontSize: 17, fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>
-            Agro<span style={{ color: 'var(--text-accent)' }}>Yield</span>
-          </span>
-        </a>
+        <a href="#top" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+  <img src="/logo-horizontal-colored.png" alt="AgroYield Network" className="agy-logo-colored" style={{ height: 36, width: 'auto' }} />
+  <img src="/logo-horizontal-white.png" alt="AgroYield Network" className="agy-logo-white" style={{ height: 36, width: 'auto' }} />
+</a>
         <div className="agy-nav-links">
           <a href="/about"   className="agy-nav-about"   style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', textDecoration: 'none' }}>About</a>
           <a href="/contact" className="agy-nav-contact" style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', textDecoration: 'none' }}>Contact</a>
