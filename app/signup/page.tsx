@@ -123,7 +123,7 @@ export default function SignUp() {
       {/* NAV */}
       <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 40px', borderBottom: '1px solid rgba(34,197,94,0.08)' }}>
         <a href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-  <img src="/logo-horizontal-white.png" alt="AgroYield Network" style={{ height: 36, width: 'auto' }} />
+  <img src="/logo-horizontal-white.png" alt="AgroYield Network" style={{ height: 58, width: 'auto' }} />
 </a>
         <a href="/login" style={{ fontSize: 13, color: '#bbf7d0', textDecoration: 'none' }}>Already have an account? <span style={{ color: '#22c55e', fontWeight: 600 }}>Sign in</span></a>
       </nav>
