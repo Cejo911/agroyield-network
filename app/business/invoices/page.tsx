@@ -1,19 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-import RecordPaymentButton from './RecordPaymentButton'
-
-const STATUS_COLORS: Record<string, string> = {
-  draft:   'bg-gray-100 text-gray-600',
-  sent:    'bg-blue-50 text-blue-700',
-  paid:    'bg-green-50 text-green-700',
-  overdue: 'bg-red-50 text-red-600',
-}
-const DOC_LABELS: Record<string, string> = {
-  invoice:       'Invoice',
-  proforma:      'Proforma',
-  receipt:       'Receipt',
-  delivery_note: 'Delivery Note',
-}
+import InvoicesTable from './InvoicesTable'
 
 export default async function InvoicesPage() {
   const supabase = await createClient()
@@ -39,15 +26,13 @@ export default async function InvoicesPage() {
     .eq('is_active', true)
     .order('created_at', { ascending: false })
 
-  const fmt = (n: number) => `₦${n.toLocaleString('en-NG', { minimumFractionDigits: 2 })}`
-
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Invoices & Documents</h1>
         <Link
           href="/business/invoices/new"
-          className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors"
+          className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors whitespace-nowrap"
         >
           + New Document
         </Link>
@@ -62,50 +47,7 @@ export default async function InvoicesPage() {
           </Link>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-100">
-              <tr>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">Number</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">Type</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">Customer</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">Date</th>
-                <th className="text-right px-4 py-3 font-medium text-gray-600">Total</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">Status</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {(invoices as any[]).map(inv => (
-                <tr key={inv.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3">
-                    <Link href={`/business/invoices/${inv.id}`} className="font-medium text-green-700 hover:underline">
-                      {inv.invoice_number}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-3 text-gray-500">
-                    {DOC_LABELS[inv.document_type] ?? inv.document_type}
-                  </td>
-                  <td className="px-4 py-3 text-gray-700">
-                    {(inv.customers as any)?.name ?? '—'}
-                  </td>
-                  <td className="px-4 py-3 text-gray-500">{inv.issue_date}</td>
-                  <td className="px-4 py-3 text-right font-medium text-gray-800">
-                    {fmt(inv.total ?? 0)}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${STATUS_COLORS[inv.status] ?? 'bg-gray-100 text-gray-600'}`}>
-                      {inv.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <RecordPaymentButton invoice={inv} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <InvoicesTable invoices={invoices as any[]} />
       )}
     </div>
   )
