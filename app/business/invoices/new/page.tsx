@@ -57,14 +57,12 @@ export default function NewInvoicePage() {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
-
       const { data: biz } = await supabase
         .from('businesses')
         .select('id, name, invoice_prefix, invoice_counter')
         .eq('user_id', user.id)
         .single()
       setBusiness(biz)
-
       if (biz) {
         const { data: prods } = await supabase
           .from('business_products')
@@ -74,7 +72,6 @@ export default function NewInvoicePage() {
           .order('name')
         setProducts(prods || [])
       }
-
       const { data: custs } = await supabase
         .from('customers')
         .select('id, name, email, phone, address')
@@ -99,26 +96,26 @@ export default function NewInvoicePage() {
   }
 
   function selectProduct(idx: number, productId: string) {
-  if (productId === '__manual__') {
+    if (productId === '__manual__') {
+      setItems(items.map((item, i) =>
+        i === idx ? { ...item, product_id: '__manual__', description: '', unit_price: '' } : item
+      ))
+      return
+    }
+    const product = products.find(p => p.id === productId)
+    if (!product) {
+      setItems(items.map((item, i) => i === idx ? { ...item, product_id: '' } : item))
+      return
+    }
     setItems(items.map((item, i) =>
-      i === idx ? { ...item, product_id: '__manual__', description: '', unit_price: '' } : item
+      i === idx ? {
+        ...item,
+        product_id: productId,
+        description: product.name,
+        unit_price: String(product.unit_price),
+      } : item
     ))
-    return
   }
-  const product = products.find(p => p.id === productId)
-  if (!product) {
-    setItems(items.map((item, i) => i === idx ? { ...item, product_id: '' } : item))
-    return
-  }
-  setItems(items.map((item, i) =>
-    i === idx ? {
-      ...item,
-      product_id: productId,
-      description: product.name,
-      unit_price: String(product.unit_price),
-    } : item
-  ))
-}
 
   function lineTotal(item: LineItem) {
     return (parseFloat(item.quantity) || 0) * (parseFloat(item.unit_price) || 0)
@@ -138,7 +135,7 @@ export default function NewInvoicePage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
-    if (!customerId) { setError('Please select a customer.'); return }
+    if (!customerId) { setError('Please select a customer from the list.'); return }
     if (items.some(i => !i.description || !i.unit_price)) {
       setError('Please fill in all line item descriptions and prices.')
       return
@@ -158,6 +155,11 @@ export default function NewInvoicePage() {
         .update({ invoice_counter: newCounter })
         .eq('id', business!.id)
 
+      const vatNote = vatEnabled && effectiveVat > 0
+        ? `VAT ${effectiveVat}% (${formatCurrency(vatAmount)}) included.`
+        : ''
+      const finalNotes = [vatNote, notes].filter(Boolean).join(' ')
+
       const { data: invoice, error: invoiceError } = await supabase
         .from('invoices')
         .insert({
@@ -168,9 +170,7 @@ export default function NewInvoicePage() {
           document_type: documentType,
           issue_date: issueDate,
           due_date: dueDate || null,
-          notes: vatEnabled && effectiveVat > 0
-            ? `VAT ${effectiveVat}% (₦${vatAmount.toLocaleString('en-NG', { minimumFractionDigits: 2 })}) included.${notes ? ' ' + notes : ''}`
-            : notes || null,
+          notes: finalNotes || null,
           status: 'draft',
           total: totalAmount,
           total_amount: totalAmount,
@@ -234,7 +234,6 @@ export default function NewInvoicePage() {
               </select>
             </div>
             <div>
-              <div>
               <label className={labelClass}>Customer</label>
               <select
                 value={customerId}
@@ -256,11 +255,22 @@ export default function NewInvoicePage() {
             </div>
             <div>
               <label className={labelClass}>Issue Date</label>
-              <input type="date" value={issueDate} onChange={e => setIssueDate(e.target.value)} className={inputClass} required />
+              <input
+                type="date"
+                value={issueDate}
+                onChange={e => setIssueDate(e.target.value)}
+                className={inputClass}
+                required
+              />
             </div>
             <div>
               <label className={labelClass}>Due Date <span className="text-gray-400 font-normal">(optional)</span></label>
-              <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} className={inputClass} />
+              <input
+                type="date"
+                value={dueDate}
+                onChange={e => setDueDate(e.target.value)}
+                className={inputClass}
+              />
             </div>
           </div>
         </div>
@@ -269,7 +279,6 @@ export default function NewInvoicePage() {
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
           <h2 className="text-sm font-semibold text-gray-700 mb-4 uppercase tracking-wide">Line Items</h2>
 
-          {/* Column headers */}
           <div className="grid grid-cols-12 gap-2 mb-2 px-1">
             <div className="col-span-3 text-xs font-semibold text-gray-600">Product</div>
             <div className="col-span-3 text-xs font-semibold text-gray-600">Description</div>
@@ -280,32 +289,30 @@ export default function NewInvoicePage() {
           </div>
 
           <div className="space-y-2">
-  {items.map((item, idx) => (
-    <div key={idx} className="grid grid-cols-12 gap-2 items-center">
+            {items.map((item, idx) => (
+              <div key={idx} className="grid grid-cols-12 gap-2 items-center">
 
-      {/* Product selector OR manual text input */}
-      <div className="col-span-3">
-      {/* Product selector OR manual entry — spans wider in manual mode */}
-              {item.product_id === '__manual__' ? (
-                <div className="col-span-6 flex gap-1 items-center">
-                  <input
-                    type="text"
-                    placeholder="Item name / description"
-                    value={item.description}
-                    onChange={e => updateItem(idx, 'description', e.target.value)}
-                    className={inputClass}
-                    autoFocus
-                    required
-                  />
-                  <button
-                    type="button"
-                    title="Back to product list"
-                    onClick={() => setItems(items.map((it, i) => i === idx ? { ...it, product_id: '', description: '', unit_price: '' } : it))}
-                    className="text-gray-400 hover:text-gray-600 text-xs px-1 whitespace-nowrap"
-                  >↩</button>
-                </div>
-              ) : (
-                <>
+                {item.product_id === '__manual__' ? (
+                  <div className="col-span-6 flex gap-1 items-center">
+                    <input
+                      type="text"
+                      placeholder="Item name / description"
+                      value={item.description}
+                      onChange={e => updateItem(idx, 'description', e.target.value)}
+                      className={inputClass}
+                      autoFocus
+                      required
+                    />
+                    <button
+                      type="button"
+                      title="Back to product list"
+                      onClick={() => setItems(items.map((it, i) =>
+                        i === idx ? { ...it, product_id: '', description: '', unit_price: '' } : it
+                      ))}
+                      className="text-gray-400 hover:text-gray-600 text-xs px-1 whitespace-nowrap"
+                    >↩</button>
+                  </div>
+                ) : (
                   <div className="col-span-3">
                     <select
                       value={item.product_id}
@@ -319,6 +326,9 @@ export default function NewInvoicePage() {
                       <option value="__manual__">✏️ Enter manually</option>
                     </select>
                   </div>
+                )}
+
+                {item.product_id !== '__manual__' && (
                   <div className="col-span-3">
                     <input
                       type="text"
@@ -329,55 +339,50 @@ export default function NewInvoicePage() {
                       required
                     />
                   </div>
-                </>
-              )}  
-      </div>
+                )}
 
-      {/* Qty */}
-      <div className="col-span-1">
-        <input
-          type="number"
-          min="1"
-          value={item.quantity}
-          onChange={e => updateItem(idx, 'quantity', e.target.value)}
-          className={inputClass}
-          required
-        />
-      </div>
+                <div className="col-span-1">
+                  <input
+                    type="number"
+                    min="1"
+                    value={item.quantity}
+                    onChange={e => updateItem(idx, 'quantity', e.target.value)}
+                    className={inputClass}
+                    required
+                  />
+                </div>
 
-      {/* Unit Price */}
-      <div className="col-span-2">
-        <input
-          type="number"
-          min="0"
-          step="0.01"
-          placeholder="0.00"
-          value={item.unit_price}
-          onChange={e => updateItem(idx, 'unit_price', e.target.value)}
-          className={inputClass}
-          required
-        />
-      </div>
+                <div className="col-span-2">
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={item.unit_price}
+                    onChange={e => updateItem(idx, 'unit_price', e.target.value)}
+                    className={inputClass}
+                    required
+                  />
+                </div>
 
-      {/* Line total */}
-      <div className="col-span-2 text-right text-sm font-semibold text-gray-900">
-        {formatCurrency(lineTotal(item))}
-      </div>
+                <div className="col-span-2 text-right text-sm font-semibold text-gray-900">
+                  {formatCurrency(lineTotal(item))}
+                </div>
 
-      {/* Remove */}
-      <div className="col-span-1 flex justify-center">
-        {items.length > 1 && (
-          <button
-            type="button"
-            onClick={() => removeItem(idx)}
-            className="text-gray-400 hover:text-red-500 text-xl leading-none"
-          >×</button>
-        )}
-      </div>
+                <div className="col-span-1 flex justify-center">
+                  {items.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeItem(idx)}
+                      className="text-gray-400 hover:text-red-500 text-xl leading-none"
+                    >×</button>
+                  )}
+                </div>
 
-    </div>
-  ))}
-</div>
+              </div>
+            ))}
+          </div>
+
           <button
             type="button"
             onClick={addItem}
@@ -390,7 +395,6 @@ export default function NewInvoicePage() {
         {/* Notes + Summary */}
         <div className="grid grid-cols-2 gap-6">
 
-          {/* Notes & VAT */}
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
             <h2 className="text-sm font-semibold text-gray-700 mb-4 uppercase tracking-wide">Notes</h2>
             <textarea
@@ -401,7 +405,6 @@ export default function NewInvoicePage() {
               className={`${inputClass} resize-none`}
             />
 
-            {/* VAT Toggle */}
             <div className="mt-5 border-t border-gray-100 pt-4">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-xs font-semibold text-gray-700 uppercase tracking-wide">VAT / Tax</span>
@@ -442,7 +445,6 @@ export default function NewInvoicePage() {
             </div>
           </div>
 
-          {/* Summary */}
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
             <h2 className="text-sm font-semibold text-gray-700 mb-4 uppercase tracking-wide">Summary</h2>
             <div className="space-y-3">
