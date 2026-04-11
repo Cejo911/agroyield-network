@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import Image from 'next/image'
 
 export default async function BusinessLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -13,7 +14,16 @@ export default async function BusinessLayout({ children }: { children: React.Rea
         <div className="flex gap-6">
           <aside className="w-48 shrink-0">
             <nav className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 space-y-1 sticky top-6">
-
+          {/* Logo */}
+  <div className="flex justify-center py-2 mb-1">
+    <Image
+      src="/logo-icon-colored.png"
+      alt="AgroYield Network"
+      width={48}
+      height={48}
+    />
+  </div>
+  <div className="border-t border-gray-100 my-1" />  
               {/* Back to main dashboard */}
               <Link
                 href="/dashboard"
