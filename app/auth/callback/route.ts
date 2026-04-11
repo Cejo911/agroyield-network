@@ -12,10 +12,21 @@ export async function GET(request: Request) {
   if (code) {
     const supabase = await createClient()
     const { error } = await supabase.auth.exchangeCodeForSession(code)
-    if (!error) {
+      if (!error) {
+      // Password recovery flow — skip welcome email, go straight to reset page
+      if (next === '/reset-password') {
+        return NextResponse.redirect(`${origin}${next}`)
+      }
+
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         const { data: profile } = await supabase
+          .from('profiles')
+          .select('id, first_name')
+          .eq('id', user.id)
+          .single()
+
+        if (!profile || !profile.first_name) {
           .from('profiles')
           .select('id, first_name')
           .eq('id', user.id)
