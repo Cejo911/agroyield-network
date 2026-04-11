@@ -15,15 +15,15 @@ export default async function BusinessLayout({ children }: { children: React.Rea
           <aside className="w-48 shrink-0">
             <nav className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 space-y-1 sticky top-6">
           {/* Logo */}
-  <div className="flex justify-center py-2 mb-1">
-    <Image
-      src="/logo-icon-colored.png"
-      alt="AgroYield Network"
-      width={64}
-      height={64}
-    />
-  </div>
-  <div className="border-t border-gray-100 my-1" />  
+<div className="px-3 py-2 mb-1">
+  <Image
+    src="/logo-horizontal-colored.png"
+    alt="AgroYield Network"
+    width={140}
+    height={35}
+  />
+</div>
+<div className="border-t border-gray-100 my-1" />
               {/* Back to main dashboard */}
               <Link
                 href="/dashboard"
