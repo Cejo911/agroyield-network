@@ -173,7 +173,6 @@ export default function NewInvoicePage() {
           notes: finalNotes || null,
           status: 'draft',
           total: totalAmount,
-          total_amount: totalAmount,
         })
         .select()
         .single()
