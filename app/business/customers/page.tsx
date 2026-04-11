@@ -180,6 +180,7 @@ export default function CustomersPage() {
                   </td>
                   <td className="px-4 py-3 text-gray-500">{c.address ?? '—'}</td>
                   <td className="px-4 py-3 text-right">
+                    <a href={`/business/customers/${c.id}/statement`} className="text-xs text-green-600 hover:underline mr-3">Statement</a>
                     <button onClick={() => openEdit(c)} className="text-xs text-blue-600 hover:underline mr-3">Edit</button>
                     <button onClick={() => handleDelete(c.id)} className="text-xs text-red-500 hover:underline">Remove</button>
                   </td>
