@@ -71,7 +71,7 @@ export default async function StatementPrintPage({
   const toLabel   = new Date(to).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
 
   return (
-    <div style={{ fontFamily: 'Inter, sans-serif', padding: '32px', maxWidth: '800px', margin: '0 auto', color: '#111827' }}>
+    <div className="print-root" style={{ fontFamily: 'Inter, sans-serif', padding: '32px', maxWidth: '800px', margin: '0 auto', color: '#111827' }}>
 
       <PrintButton />
 
