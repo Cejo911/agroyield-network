@@ -1,0 +1,27 @@
+export default function StatementPrintLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <>
+      <style>{`
+        nav, aside, [class*="sidebar"], [class*="Sidebar"] {
+          display: none !important;
+          width: 0 !important;
+          min-width: 0 !important;
+        }
+        body > div, main, [role="main"] {
+          margin-left: 0 !important;
+          padding-left: 0 !important;
+          width: 100% !important;
+          max-width: 100% !important;
+        }
+        @media print {
+          .no-print {
+            height: 0 !important;
+            overflow: hidden !important;
+            position: absolute !important;
+          }
+        }
+      `}</style>
+      {children}
+    </>
+  )
+}
