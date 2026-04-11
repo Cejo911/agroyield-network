@@ -91,18 +91,18 @@ export default function CustomersPage() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold text-gray-900">Customers</h1>
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Customers</h1>
+        <div className="flex items-center gap-3 w-full sm:w-auto">
           <input
             type="text"
             placeholder="Search customers…"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 w-56"
+            className="border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 flex-1 sm:w-56"
           />
           <button onClick={openNew} className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors whitespace-nowrap">
-            + Add Customer
+            + Add
           </button>
         </div>
       </div>
@@ -160,25 +160,26 @@ export default function CustomersPage() {
           <button onClick={openNew} className="text-green-600 font-medium hover:underline text-sm">+ Add Customer</button>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-100">
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
+          {/* Desktop Table */}
+          <table className="w-full text-sm hidden md:table">
+            <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
               <tr>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">Name</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">Contact</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">Address</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-300">Name</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-300">Contact</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-300">Address</th>
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
               {filteredCustomers.map(c => (
-                <tr key={c.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 font-medium text-gray-800">{c.name}</td>
-                  <td className="px-4 py-3 text-gray-500">
+                <tr key={c.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                  <td className="px-4 py-3 font-medium text-gray-800 dark:text-white">{c.name}</td>
+                  <td className="px-4 py-3 text-gray-500 dark:text-gray-400">
                     {c.email && <p>{c.email}</p>}
                     {c.phone && <p>{c.phone}</p>}
                   </td>
-                  <td className="px-4 py-3 text-gray-500">{c.address ?? '—'}</td>
+                  <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{c.address ?? '—'}</td>
                   <td className="px-4 py-3 text-right">
                     <a href={`/business/customers/${c.id}/statement`} className="text-xs text-green-600 hover:underline mr-3">Statement</a>
                     <button onClick={() => openEdit(c)} className="text-xs text-blue-600 hover:underline mr-3">Edit</button>
@@ -188,6 +189,25 @@ export default function CustomersPage() {
               ))}
             </tbody>
           </table>
+
+          {/* Mobile Cards */}
+          <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-800">
+            {filteredCustomers.map(c => (
+              <div key={c.id} className="p-4 space-y-2">
+                <p className="font-medium text-gray-800 dark:text-white">{c.name}</p>
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
+                  {c.phone && <span>{c.phone}</span>}
+                  {c.email && <span className="truncate max-w-[200px]">{c.email}</span>}
+                  {c.address && <span className="truncate max-w-[200px]">{c.address}</span>}
+                </div>
+                <div className="flex items-center gap-3 pt-1">
+                  <a href={`/business/customers/${c.id}/statement`} className="text-xs font-medium text-green-600 hover:underline">Statement</a>
+                  <button onClick={() => openEdit(c)} className="text-xs text-blue-600 hover:underline">Edit</button>
+                  <button onClick={() => handleDelete(c.id)} className="text-xs text-red-500 hover:underline">Remove</button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>

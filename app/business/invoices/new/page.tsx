@@ -226,7 +226,7 @@ export default function NewInvoicePage() {
         {/* Invoice Details */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
           <h2 className="text-sm font-semibold text-gray-700 mb-4 uppercase tracking-wide">Invoice Details</h2>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>Document Type</label>
               <select value={documentType} onChange={e => setDocumentType(e.target.value)} className={selectClass}>
@@ -282,7 +282,8 @@ export default function NewInvoicePage() {
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
           <h2 className="text-sm font-semibold text-gray-700 mb-4 uppercase tracking-wide">Line Items</h2>
 
-          <div className="grid grid-cols-12 gap-2 mb-2 px-1">
+          {/* Desktop line item headers */}
+          <div className="hidden md:grid grid-cols-12 gap-2 mb-2 px-1">
             <div className="col-span-3 text-xs font-semibold text-gray-600">Product</div>
             <div className="col-span-3 text-xs font-semibold text-gray-600">Description</div>
             <div className="col-span-1 text-xs font-semibold text-gray-600">Qty</div>
@@ -291,97 +292,139 @@ export default function NewInvoicePage() {
             <div className="col-span-1" />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-3 md:space-y-2">
             {items.map((item, idx) => (
-              <div key={idx} className="grid grid-cols-12 gap-2 items-center">
-
-                {item.product_id === '__manual__' ? (
-                  <div className="col-span-6 flex gap-1 items-center">
-                    <input
-                      type="text"
-                      placeholder="Item name / description"
-                      value={item.description}
-                      onChange={e => updateItem(idx, 'description', e.target.value)}
-                      className={inputClass}
-                      autoFocus
-                      required
-                    />
-                    <button
-                      type="button"
-                      title="Back to product list"
-                      onClick={() => setItems(items.map((it, i) =>
-                        i === idx ? { ...it, product_id: '', description: '', unit_price: '' } : it
-                      ))}
-                      className="text-gray-400 hover:text-gray-600 text-xs px-1 whitespace-nowrap"
-                    >↩</button>
-                  </div>
-                ) : (
-                  <div className="col-span-3">
-                    <select
-                      value={item.product_id}
-                      onChange={e => selectProduct(idx, e.target.value)}
-                      className={selectClass}
-                    >
-                      <option value="">— Select product —</option>
-                      {products.map(p => (
-                        <option key={p.id} value={p.id}>{p.name} ({p.unit})</option>
-                      ))}
-                      <option value="__manual__">✏️ Enter manually</option>
-                    </select>
-                  </div>
-                )}
-
-                {item.product_id !== '__manual__' && (
-                  <div className="col-span-3">
-                    <input
-                      type="text"
-                      placeholder="Description"
-                      value={item.description}
-                      onChange={e => updateItem(idx, 'description', e.target.value)}
-                      className={inputClass}
-                      required
-                    />
-                  </div>
-                )}
-
-                <div className="col-span-1">
-                  <input
-                    type="number"
-                    min="1"
-                    value={item.quantity}
-                    onChange={e => updateItem(idx, 'quantity', e.target.value)}
-                    className={inputClass}
-                    required
-                  />
-                </div>
-
-                <div className="col-span-2">
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={item.unit_price}
-                    onChange={e => updateItem(idx, 'unit_price', e.target.value)}
-                    className={inputClass}
-                    required
-                  />
-                </div>
-
-                <div className="col-span-2 text-right text-sm font-semibold text-gray-900">
-                  {formatCurrency(lineTotal(item))}
-                </div>
-
-                <div className="col-span-1 flex justify-center">
-                  {items.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => removeItem(idx)}
-                      className="text-gray-400 hover:text-red-500 text-xl leading-none"
-                    >×</button>
+              <div key={idx}>
+                {/* Desktop row */}
+                <div className="hidden md:grid grid-cols-12 gap-2 items-center">
+                  {item.product_id === '__manual__' ? (
+                    <div className="col-span-6 flex gap-1 items-center">
+                      <input
+                        type="text"
+                        placeholder="Item name / description"
+                        value={item.description}
+                        onChange={e => updateItem(idx, 'description', e.target.value)}
+                        className={inputClass}
+                        autoFocus
+                        required
+                      />
+                      <button
+                        type="button"
+                        title="Back to product list"
+                        onClick={() => setItems(items.map((it, i) =>
+                          i === idx ? { ...it, product_id: '', description: '', unit_price: '' } : it
+                        ))}
+                        className="text-gray-400 hover:text-gray-600 text-xs px-1 whitespace-nowrap"
+                      >↩</button>
+                    </div>
+                  ) : (
+                    <div className="col-span-3">
+                      <select
+                        value={item.product_id}
+                        onChange={e => selectProduct(idx, e.target.value)}
+                        className={selectClass}
+                      >
+                        <option value="">— Select product —</option>
+                        {products.map(p => (
+                          <option key={p.id} value={p.id}>{p.name} ({p.unit})</option>
+                        ))}
+                        <option value="__manual__">✏️ Enter manually</option>
+                      </select>
+                    </div>
                   )}
+
+                  {item.product_id !== '__manual__' && (
+                    <div className="col-span-3">
+                      <input
+                        type="text"
+                        placeholder="Description"
+                        value={item.description}
+                        onChange={e => updateItem(idx, 'description', e.target.value)}
+                        className={inputClass}
+                        required
+                      />
+                    </div>
+                  )}
+
+                  <div className="col-span-1">
+                    <input type="number" min="1" value={item.quantity}
+                      onChange={e => updateItem(idx, 'quantity', e.target.value)}
+                      className={inputClass} required />
+                  </div>
+                  <div className="col-span-2">
+                    <input type="number" min="0" step="0.01" placeholder="0.00"
+                      value={item.unit_price}
+                      onChange={e => updateItem(idx, 'unit_price', e.target.value)}
+                      className={inputClass} required />
+                  </div>
+                  <div className="col-span-2 text-right text-sm font-semibold text-gray-900">
+                    {formatCurrency(lineTotal(item))}
+                  </div>
+                  <div className="col-span-1 flex justify-center">
+                    {items.length > 1 && (
+                      <button type="button" onClick={() => removeItem(idx)}
+                        className="text-gray-400 hover:text-red-500 text-xl leading-none">×</button>
+                    )}
+                  </div>
                 </div>
 
+                {/* Mobile card */}
+                <div className="md:hidden bg-gray-50 dark:bg-gray-800 rounded-lg p-3 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-gray-500">Item {idx + 1}</span>
+                    {items.length > 1 && (
+                      <button type="button" onClick={() => removeItem(idx)}
+                        className="text-xs text-red-500 hover:underline">Remove</button>
+                    )}
+                  </div>
+                  {item.product_id === '__manual__' ? (
+                    <div className="flex gap-1 items-center">
+                      <input type="text" placeholder="Item name / description"
+                        value={item.description}
+                        onChange={e => updateItem(idx, 'description', e.target.value)}
+                        className={inputClass} autoFocus required />
+                      <button type="button" title="Back to product list"
+                        onClick={() => setItems(items.map((it, i) =>
+                          i === idx ? { ...it, product_id: '', description: '', unit_price: '' } : it
+                        ))}
+                        className="text-gray-400 hover:text-gray-600 text-xs px-1">↩</button>
+                    </div>
+                  ) : (
+                    <>
+                      <select value={item.product_id}
+                        onChange={e => selectProduct(idx, e.target.value)}
+                        className={selectClass}>
+                        <option value="">— Select product —</option>
+                        {products.map(p => (
+                          <option key={p.id} value={p.id}>{p.name} ({p.unit})</option>
+                        ))}
+                        <option value="__manual__">✏️ Enter manually</option>
+                      </select>
+                      <input type="text" placeholder="Description"
+                        value={item.description}
+                        onChange={e => updateItem(idx, 'description', e.target.value)}
+                        className={inputClass} required />
+                    </>
+                  )}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[10px] text-gray-500 uppercase">Qty</label>
+                      <input type="number" min="1" value={item.quantity}
+                        onChange={e => updateItem(idx, 'quantity', e.target.value)}
+                        className={inputClass} required />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-gray-500 uppercase">Price (₦)</label>
+                      <input type="number" min="0" step="0.01" placeholder="0.00"
+                        value={item.unit_price}
+                        onChange={e => updateItem(idx, 'unit_price', e.target.value)}
+                        className={inputClass} required />
+                    </div>
+                  </div>
+                  <div className="text-right text-sm font-bold text-gray-800 dark:text-white">
+                    {formatCurrency(lineTotal(item))}
+                  </div>
+                </div>
               </div>
             ))}
           </div>
@@ -396,7 +439,7 @@ export default function NewInvoicePage() {
         </div>
 
         {/* Notes + Summary */}
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
             <h2 className="text-sm font-semibold text-gray-700 mb-4 uppercase tracking-wide">Notes</h2>
@@ -480,7 +523,7 @@ export default function NewInvoicePage() {
           </div>
         )}
 
-        <div className="flex gap-3 justify-end">
+        <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end">
           <button
             type="button"
             onClick={() => router.push('/business/invoices')}

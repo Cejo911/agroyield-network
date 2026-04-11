@@ -127,7 +127,7 @@ export default async function BusinessDashboard({
     <div className="space-y-5">
 
       {/* Page header */}
-      <div className="flex items-center justify-between gap-4 flex-wrap">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           {business.logo_url ? (
             <img src={business.logo_url} alt="logo"
@@ -188,18 +188,18 @@ export default async function BusinessDashboard({
         <p className="text-green-200 text-xs font-semibold uppercase tracking-wider mb-4">
           {{ month: 'This Month', quarter: 'Last 3 Months', year: 'This Year', all: 'All Time' }[period]} — Profit & Loss
         </p>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <p className="text-green-300 text-xs mb-1">Revenue</p>
-            <p className="text-2xl font-bold">{fmt(revenue)}</p>
+            <p className="text-lg sm:text-2xl font-bold">{fmt(revenue)}</p>
           </div>
           <div>
             <p className="text-green-300 text-xs mb-1">Expenses</p>
-            <p className="text-2xl font-bold text-red-300">{fmt(totalExpenses)}</p>
+            <p className="text-lg sm:text-2xl font-bold text-red-300">{fmt(totalExpenses)}</p>
           </div>
           <div>
             <p className="text-green-300 text-xs mb-1">Net Profit</p>
-            <p className={`text-2xl font-bold ${netProfit >= 0 ? 'text-white' : 'text-red-300'}`}>
+            <p className={`text-lg sm:text-2xl font-bold ${netProfit >= 0 ? 'text-white' : 'text-red-300'}`}>
               {netProfit >= 0 ? '' : '-'}{fmt(Math.abs(netProfit))}
             </p>
           </div>
@@ -231,7 +231,7 @@ export default async function BusinessDashboard({
       </div>
 
       {/* Invoice status badges + Outstanding */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
           <div className="flex items-center justify-between mb-3">
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Invoice Status</p>
@@ -286,7 +286,7 @@ export default async function BusinessDashboard({
       </div>
 
       {/* Recent activity feed */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Recent invoices */}
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800">
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
@@ -367,15 +367,15 @@ export default async function BusinessDashboard({
       </div>
 
       {/* Quick actions */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {[
           { href: '/business/invoices/new', icon: '🧾', label: 'New Invoice',  desc: 'Create an invoice or receipt' },
           { href: '/business/expenses',     icon: '💸', label: 'Add Expense',  desc: 'Record a business expense'   },
           { href: '/business/reports',      icon: '📊', label: 'View Reports', desc: 'Revenue, profit & P&L'       },
         ].map(q => (
           <Link key={q.href} href={q.href}
-            className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 hover:border-green-300 dark:hover:border-green-700 hover:shadow-sm transition-all group">
-            <div className="text-2xl mb-2">{q.icon}</div>
+            className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 hover:border-green-300 dark:hover:border-green-700 hover:shadow-sm transition-all group flex sm:block items-center gap-3">
+            <div className="text-2xl sm:mb-2">{q.icon}</div>
             <p className="text-sm font-semibold text-gray-800 dark:text-white group-hover:text-green-700 dark:group-hover:text-green-400 transition-colors">
               {q.label}
             </p>

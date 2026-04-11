@@ -94,7 +94,7 @@ export default function BusinessSetup() {
   )
 
   return (
-    <div className="max-w-2xl">
+    <div className="max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold text-gray-900 mb-6">
         {businessId ? 'Business Settings' : 'Set Up Your Business'}
       </h1>
@@ -103,7 +103,7 @@ export default function BusinessSetup() {
         {/* Logo */}
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 space-y-4">
           <h2 className="font-semibold text-gray-800">Business Logo</h2>
-          <div className="flex items-center gap-5">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
             {form.logo_url ? (
               <img src={form.logo_url} alt="Logo" className="w-20 h-20 object-contain rounded-lg border border-gray-100" />
             ) : (

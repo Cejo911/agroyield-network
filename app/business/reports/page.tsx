@@ -123,25 +123,25 @@ export default async function ReportsPage() {
   }))
 
   return (
-    <div style={{ fontFamily: 'Inter, sans-serif', padding: '24px', maxWidth: '1100px', margin: '0 auto' }}>
+    <div className="max-w-[1100px] mx-auto px-4 py-6" style={{ fontFamily: 'Inter, sans-serif' }}>
 
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-7">
         <div>
           <h1 style={{ fontSize: '26px', fontWeight: 700, color: '#111827', margin: 0 }}>Business Reports</h1>
           <p style={{ color: '#6b7280', marginTop: '4px', fontSize: '14px' }}>Financial overview for {business?.name || 'your business'}</p>
         </div>
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div className="flex gap-2.5 flex-wrap">
           <ReportExport period="Last 6 Months" />
           <Link href="/business/reports/print" target="_blank"
             style={{ background: '#111827', color: '#fff', padding: '9px 18px', borderRadius: '8px', textDecoration: 'none', fontSize: '14px', fontWeight: 600 }}>
-            🖨️ Print Report
+            🖨️ Print
           </Link>
         </div>
       </div>
 
       {/* KPI Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '28px' }}>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-7">
         {[
           { label: 'Total Revenue', value: fmt(totalRevenue), color: '#16a34a', bg: '#f0fdf4' },
           { label: 'Total Expenses', value: fmt(totalExpenses), color: '#dc2626', bg: '#fef2f2' },
@@ -156,7 +156,7 @@ export default async function ReportsPage() {
       </div>
 
       {/* Outstanding & Overdue */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '28px' }}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-7">
         <div style={{ background: '#fffbeb', borderRadius: '12px', padding: '20px' }}>
           <p style={{ fontSize: '12px', color: '#6b7280', margin: '0 0 6px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Outstanding</p>
           <p style={{ fontSize: '22px', fontWeight: 700, color: '#d97706', margin: 0 }}>{fmt(outstanding)}</p>
@@ -188,7 +188,7 @@ export default async function ReportsPage() {
       </div>
 
       {/* Top Products & Top Customers */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '28px' }}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-7">
         <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '24px' }}>
           <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#111827', margin: '0 0 16px 0' }}>Top Products / Services</h2>
           {topProducts.length === 0 ? (
@@ -225,7 +225,7 @@ export default async function ReportsPage() {
       </div>
 
       {/* Expense Breakdown & Invoice Status */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '28px' }}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-7">
         <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '24px' }}>
           <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#111827', margin: '0 0 16px 0' }}>Expense Breakdown</h2>
           {topExpenseCategories.length === 0 ? (

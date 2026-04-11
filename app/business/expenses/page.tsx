@@ -112,7 +112,7 @@ export default function ExpensesPage() {
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Expenses</h1>
           <p className="text-sm text-gray-500 mt-0.5">Track what you spend to know what you earn</p>
@@ -126,7 +126,7 @@ export default function ExpensesPage() {
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
           <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">This Month</p>
           <p className="text-2xl font-bold text-red-600">{fmt(totalMonth)}</p>
@@ -141,12 +141,12 @@ export default function ExpensesPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Expenses list */}
-        <div className="col-span-2">
+        <div className="lg:col-span-2">
           <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800">
             {/* Filter bar */}
-            <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex gap-2 flex-wrap">
+            <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex gap-1.5 overflow-x-auto pb-3 sm:pb-3 sm:flex-wrap">
               {['All', ...CATEGORIES].map(cat => (
                 <button
                   key={cat}
@@ -167,7 +167,9 @@ export default function ExpensesPage() {
                 No expenses yet. Click <strong>+ Add Expense</strong> to record one.
               </div>
             ) : (
-              <table className="w-full">
+              <>
+              {/* Desktop Table */}
+              <table className="w-full hidden md:table">
                 <thead>
                   <tr className="text-xs font-semibold text-gray-500 uppercase tracking-wide border-b border-gray-100 dark:border-gray-800">
                     <th className="text-left px-4 py-3">Date</th>
@@ -192,22 +194,43 @@ export default function ExpensesPage() {
                       </td>
                       <td className="px-4 py-3 text-right text-sm font-semibold text-red-600">{fmt(Number(exp.amount))}</td>
                       <td className="px-4 py-3 text-right">
-                        <button
-                          onClick={() => handleDelete(exp.id)}
-                          disabled={deleting === exp.id}
-                          className="text-gray-300 hover:text-red-500 transition-colors text-lg leading-none"
-                        >×</button>
+                        <button onClick={() => handleDelete(exp.id)} disabled={deleting === exp.id}
+                          className="text-gray-300 hover:text-red-500 transition-colors text-lg leading-none">×</button>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+
+              {/* Mobile Cards */}
+              <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-800">
+                {filtered.map(exp => (
+                  <div key={exp.id} className="p-4 flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{exp.description}</p>
+                      <div className="flex items-center gap-2 mt-1 text-xs text-gray-400">
+                        <span>{fmtDate(exp.date)}</span>
+                        <span className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded-full font-medium">
+                          {exp.category}
+                        </span>
+                      </div>
+                      {exp.notes && <p className="text-xs text-gray-400 mt-0.5">{exp.notes}</p>}
+                    </div>
+                    <div className="flex items-center gap-2 ml-3">
+                      <span className="text-sm font-bold text-red-600">{fmt(Number(exp.amount))}</span>
+                      <button onClick={() => handleDelete(exp.id)} disabled={deleting === exp.id}
+                        className="text-gray-300 hover:text-red-500 text-lg leading-none">×</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              </>
             )}
           </div>
         </div>
 
         {/* Category breakdown */}
-        <div className="col-span-1">
+        <div className="lg:col-span-1">
           <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
             <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 uppercase tracking-wide">By Category</h3>
             {byCategory.length === 0 ? (

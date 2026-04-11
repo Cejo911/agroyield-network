@@ -37,7 +37,7 @@ export default async function InvoiceViewPage({ params }: { params: Promise<{ id
   return (
     <div className="space-y-5 max-w-3xl">
       {/* Header actions */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <a href="/business/invoices" className="text-sm text-gray-500 hover:text-gray-700">← Back to Invoices</a>
         <div className="flex items-center gap-2">
           <a href={`/invoice-print/${id}`} target="_blank"
@@ -49,16 +49,16 @@ export default async function InvoiceViewPage({ params }: { params: Promise<{ id
       </div>
 
       {/* Invoice document */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-8">
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 sm:p-8">
         {/* Document header */}
-        <div className="flex justify-between items-start mb-8">
+        <div className="flex flex-col sm:flex-row sm:justify-between gap-4 sm:items-start mb-8">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">{business?.name}</h1>
             {business?.address && <p className="text-sm text-gray-500 mt-1">{business.address}</p>}
             {business?.phone && <p className="text-sm text-gray-500">{business.phone}</p>}
             {business?.email && <p className="text-sm text-gray-500">{business.email}</p>}
           </div>
-          <div className="text-right">
+          <div className="sm:text-right">
             <div className="text-2xl font-bold text-gray-400">{DOC_LABELS[inv.document_type] ?? inv.document_type}</div>
             <div className="text-lg font-bold text-gray-900 mt-1">{inv.invoice_number}</div>
             <span className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-medium capitalize ${STATUS_COLORS[inv.status] ?? 'bg-gray-100 text-gray-600'}`}>
@@ -68,7 +68,7 @@ export default async function InvoiceViewPage({ params }: { params: Promise<{ id
         </div>
 
         {/* Bill to + dates */}
-        <div className="grid grid-cols-2 gap-8 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 mb-8">
           <div>
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Bill To</p>
             {customer ? (
@@ -94,14 +94,8 @@ export default async function InvoiceViewPage({ params }: { params: Promise<{ id
           </div>
         </div>
 
-       {/* Line items */}
-        <table className="w-full text-sm mb-6">
-          <colgroup>
-            <col className="w-1/2" />
-            <col className="w-16" />
-            <col className="w-32" />
-            <col className="w-32" />
-          </colgroup>
+       {/* Line items — Desktop table */}
+        <table className="w-full text-sm mb-6 hidden sm:table">
           <thead>
             <tr className="border-b-2 border-gray-200">
               <th className="text-left py-2 font-semibold text-gray-600">Description</th>
@@ -122,9 +116,25 @@ export default async function InvoiceViewPage({ params }: { params: Promise<{ id
           </tbody>
         </table>
 
+        {/* Line items — Mobile cards */}
+        <div className="sm:hidden space-y-2 mb-6">
+          <div className="border-b-2 border-gray-200 pb-2">
+            <p className="text-xs font-semibold text-gray-600 uppercase">Items</p>
+          </div>
+          {items.map((item: any) => (
+            <div key={item.id} className="flex items-start justify-between py-2 border-b border-gray-50">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-gray-700">{item.description}</p>
+                <p className="text-xs text-gray-400">{item.quantity} × {fmt(item.unit_price)}</p>
+              </div>
+              <p className="text-sm font-medium text-gray-800 ml-3">{fmt(item.line_total)}</p>
+            </div>
+          ))}
+        </div>
+
         {/* Totals */}
         <div className="flex justify-end">
-          <div className="w-64 space-y-2 text-sm">
+          <div className="w-full sm:w-64 space-y-2 text-sm">
             <div className="flex justify-between text-gray-600">
               <span>Subtotal</span><span>{fmt(inv.subtotal ?? 0)}</span>
             </div>
