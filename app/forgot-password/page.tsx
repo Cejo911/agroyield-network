@@ -1,6 +1,5 @@
 'use client'
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import ThemeToggle from '@/app/components/ThemeToggle'
 
 export default function ForgotPassword() {
@@ -14,19 +13,26 @@ export default function ForgotPassword() {
     setLoading(true)
     setError('')
 
-    const supabase = createClient()
-    const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
-    })
+    try {
+      const res = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
 
-    if (err) {
-      setError(err.message)
+      if (!res.ok) {
+        const data = await res.json()
+        setError(data.error || 'Something went wrong. Please try again.')
+        setLoading(false)
+        return
+      }
+
+      setSent(true)
       setLoading(false)
-      return
+    } catch {
+      setError('Something went wrong. Please try again.')
+      setLoading(false)
     }
-
-    setSent(true)
-    setLoading(false)
   }
 
   const inputStyle: React.CSSProperties = {
