@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import ThemeToggle from './ThemeToggle'
+import Image from 'next/image'
 
 const NAV_LINKS = [
   { href: '/dashboard',     label: 'Dashboard' },
@@ -70,12 +71,32 @@ export default function AppNav() {
       <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
 
         {/* Logo */}
-        <Link href="/dashboard" className="flex items-center gap-2 shrink-0">
-          <span className="text-2xl">🌾</span>
-          <span className="font-bold text-green-700 dark:text-green-400 text-lg hidden sm:block">
-            AgroYield Network
-          </span>
-        </Link>
+        {/* Logo */}
+<Link href="/dashboard" className="flex items-center shrink-0">
+  {/* Icon only on mobile */}
+  <Image
+    src="/logo-icon-colored.png"
+    alt="AgroYield Network"
+    width={32}
+    height={32}
+    className="block sm:hidden"
+  />
+  {/* Horizontal logo on desktop */}
+  <Image
+    src="/logo-horizontal-colored.png"
+    alt="AgroYield Network"
+    width={150}
+    height={38}
+    className="hidden sm:block dark:hidden"
+  />
+  <Image
+    src="/logo-horizontal-white.png"
+    alt="AgroYield Network"
+    width={150}
+    height={38}
+    className="hidden dark:sm:block"
+  />
+</Link>
 
         {/* Desktop nav links */}
         <nav className="hidden lg:flex items-center gap-0.5 flex-1 justify-center">
