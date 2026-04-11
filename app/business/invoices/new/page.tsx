@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
 interface LineItem {
+  product_id: string
   description: string
   quantity: string
   unit_price: string
@@ -24,12 +25,21 @@ interface Business {
   invoice_counter: number | null
 }
 
+interface Product {
+  id: string
+  name: string
+  description: string | null
+  unit: string
+  unit_price: number
+}
+
 export default function NewInvoicePage() {
   const router = useRouter()
   const supabase = createClient()
 
   const [business, setBusiness] = useState<Business | null>(null)
   const [customers, setCustomers] = useState<Customer[]>([])
+  const [products, setProducts] = useState<Product[]>([])
   const [customerId, setCustomerId] = useState('')
   const [documentType, setDocumentType] = useState('INVOICE')
   const [issueDate, setIssueDate] = useState(new Date().toISOString().split('T')[0])
@@ -38,7 +48,7 @@ export default function NewInvoicePage() {
   const [vatPercent, setVatPercent] = useState('7.5')
   const [vatEnabled, setVatEnabled] = useState(true)
   const [items, setItems] = useState<LineItem[]>([
-    { description: '', quantity: '1', unit_price: '' }
+    { product_id: '', description: '', quantity: '1', unit_price: '' }
   ])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -47,12 +57,24 @@ export default function NewInvoicePage() {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
+
       const { data: biz } = await supabase
         .from('businesses')
         .select('id, name, invoice_prefix, invoice_counter')
         .eq('user_id', user.id)
         .single()
       setBusiness(biz)
+
+      if (biz) {
+        const { data: prods } = await supabase
+          .from('business_products')
+          .select('id, name, description, unit, unit_price')
+          .eq('business_id', biz.id)
+          .eq('is_active', true)
+          .order('name')
+        setProducts(prods || [])
+      }
+
       const { data: custs } = await supabase
         .from('customers')
         .select('id, name, email, phone, address')
@@ -65,7 +87,7 @@ export default function NewInvoicePage() {
   }, [])
 
   function addItem() {
-    setItems([...items, { description: '', quantity: '1', unit_price: '' }])
+    setItems([...items, { product_id: '', description: '', quantity: '1', unit_price: '' }])
   }
 
   function removeItem(idx: number) {
@@ -76,10 +98,24 @@ export default function NewInvoicePage() {
     setItems(items.map((item, i) => i === idx ? { ...item, [field]: value } : item))
   }
 
+  function selectProduct(idx: number, productId: string) {
+    const product = products.find(p => p.id === productId)
+    if (!product) {
+      updateItem(idx, 'product_id', '')
+      return
+    }
+    setItems(items.map((item, i) =>
+      i === idx ? {
+        ...item,
+        product_id: productId,
+        description: product.name,
+        unit_price: String(product.unit_price),
+      } : item
+    ))
+  }
+
   function lineTotal(item: LineItem) {
-    const qty = parseFloat(item.quantity) || 0
-    const price = parseFloat(item.unit_price) || 0
-    return qty * price
+    return (parseFloat(item.quantity) || 0) * (parseFloat(item.unit_price) || 0)
   }
 
   const subtotal = items.reduce((sum, item) => sum + lineTotal(item), 0)
@@ -203,24 +239,11 @@ export default function NewInvoicePage() {
             </div>
             <div>
               <label className={labelClass}>Issue Date</label>
-              <input
-                type="date"
-                value={issueDate}
-                onChange={e => setIssueDate(e.target.value)}
-                className={inputClass}
-                required
-              />
+              <input type="date" value={issueDate} onChange={e => setIssueDate(e.target.value)} className={inputClass} required />
             </div>
             <div>
-              <label className={labelClass}>
-                Due Date <span className="text-gray-400 font-normal">(optional)</span>
-              </label>
-              <input
-                type="date"
-                value={dueDate}
-                onChange={e => setDueDate(e.target.value)}
-                className={inputClass}
-              />
+              <label className={labelClass}>Due Date <span className="text-gray-400 font-normal">(optional)</span></label>
+              <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} className={inputClass} />
             </div>
           </div>
         </div>
@@ -229,28 +252,51 @@ export default function NewInvoicePage() {
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
           <h2 className="text-sm font-semibold text-gray-700 mb-4 uppercase tracking-wide">Line Items</h2>
 
+          {/* Column headers */}
           <div className="grid grid-cols-12 gap-2 mb-2 px-1">
-            <div className="col-span-6 text-xs font-semibold text-gray-600">Description</div>
-            <div className="col-span-2 text-xs font-semibold text-gray-600">Qty</div>
+            <div className="col-span-3 text-xs font-semibold text-gray-600">Product</div>
+            <div className="col-span-3 text-xs font-semibold text-gray-600">Description</div>
+            <div className="col-span-1 text-xs font-semibold text-gray-600">Qty</div>
             <div className="col-span-2 text-xs font-semibold text-gray-600">Unit Price (₦)</div>
-            <div className="col-span-1 text-xs font-semibold text-gray-600 text-right">Total</div>
+            <div className="col-span-2 text-xs font-semibold text-gray-600 text-right">Total</div>
             <div className="col-span-1" />
           </div>
 
           <div className="space-y-2">
             {items.map((item, idx) => (
               <div key={idx} className="grid grid-cols-12 gap-2 items-center">
-                <div className="col-span-6">
+
+                {/* Product dropdown */}
+                <div className="col-span-3">
+                  <select
+                    value={item.product_id}
+                    onChange={e => selectProduct(idx, e.target.value)}
+                    className={selectClass}
+                  >
+                    <option value="">— Select product —</option>
+                    {products.map(p => (
+                      <option key={p.id} value={p.id}>
+                        {p.name} ({p.unit})
+                      </option>
+                    ))}
+                    <option value="__manual__">✏️ Enter manually</option>
+                  </select>
+                </div>
+
+                {/* Description — editable, auto-filled from product */}
+                <div className="col-span-3">
                   <input
                     type="text"
-                    placeholder="Item name or description"
+                    placeholder="Description"
                     value={item.description}
                     onChange={e => updateItem(idx, 'description', e.target.value)}
                     className={inputClass}
                     required
                   />
                 </div>
-                <div className="col-span-2">
+
+                {/* Qty */}
+                <div className="col-span-1">
                   <input
                     type="number"
                     min="1"
@@ -260,6 +306,8 @@ export default function NewInvoicePage() {
                     required
                   />
                 </div>
+
+                {/* Unit Price — editable, auto-filled from product */}
                 <div className="col-span-2">
                   <input
                     type="number"
@@ -272,9 +320,13 @@ export default function NewInvoicePage() {
                     required
                   />
                 </div>
-                <div className="col-span-1 text-right text-sm font-semibold text-gray-900">
+
+                {/* Line total */}
+                <div className="col-span-2 text-right text-sm font-semibold text-gray-900">
                   {formatCurrency(lineTotal(item))}
                 </div>
+
+                {/* Remove */}
                 <div className="col-span-1 flex justify-center">
                   {items.length > 1 && (
                     <button
@@ -318,7 +370,7 @@ export default function NewInvoicePage() {
                 <label className="flex items-center gap-2 cursor-pointer">
                   <div
                     onClick={() => setVatEnabled(!vatEnabled)}
-                    className={`relative w-10 h-5 rounded-full transition-colors ${vatEnabled ? 'bg-green-600' : 'bg-gray-300'}`}
+                    className={`relative w-10 h-5 rounded-full transition-colors cursor-pointer ${vatEnabled ? 'bg-green-600' : 'bg-gray-300'}`}
                   >
                     <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${vatEnabled ? 'translate-x-5' : 'translate-x-0.5'}`} />
                   </div>
