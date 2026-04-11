@@ -19,8 +19,8 @@ export default async function BusinessLayout({ children }: { children: React.Rea
   <Image
     src="/logo-horizontal-colored.png"
     alt="AgroYield Network"
-    width={140}
-    height={35}
+    width={170}
+    height={50}
   />
 </div>
 <div className="border-t border-gray-100 my-1" />
