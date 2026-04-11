@@ -58,7 +58,6 @@ export async function GET(request: Request) {
       <table width="560" cellpadding="0" cellspacing="0" style="background:#0c1c11;border:1px solid #1c3825;border-radius:16px;overflow:hidden;max-width:560px;">
         <tr>
           <td style="padding:36px 48px;border-bottom:1px solid #1c3825;">
-            <span style="font-size:18px;font-weight:800;color:#f0fdf4;">🌾 Agro<span style="color:#22c55e;">Yield</span></span>
           </td>
         </tr>
         <tr>

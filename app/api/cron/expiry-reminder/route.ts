@@ -73,8 +73,7 @@ export async function GET(req: Request) {
           <!-- Header -->
           <tr>
             <td style="background:#16a34a;padding:32px;text-align:center;">
-              <p style="margin:0;font-size:24px;font-weight:700;color:#ffffff;letter-spacing:-0.5px;">🌾 AgroYield Network</p>
-              <p style="margin:8px 0 0;font-size:13px;color:#bbf7d0;">agroyield.africa</p>
+              <img src="https://agroyield.africa/logo-horizontal-white.png" alt="AgroYield Network" style="height:40px;width:auto;" />
             </td>
           </tr>
 
