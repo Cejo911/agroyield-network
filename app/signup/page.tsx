@@ -133,7 +133,7 @@ export default function SignUp() {
         <div style={{ width: '100%', maxWidth: 480 }}>
           <div style={{ textAlign: 'center', marginBottom: 40 }}>
             <div style={{ margin: '0 auto 24px', display: 'flex', justifyContent: 'center' }}>
-  <img src="/logo-stacked-white.png" alt="AgroYield Network" style={{ height: 90, width: 'auto' }} />
+  <img src="/logo-stacked-white.png" alt="AgroYield Network" style={{ height: 120, width: 'auto' }} />
 </div>         
             <h1 style={{ fontSize: 28, fontWeight: 900, color: '#f0fdf4', letterSpacing: -1, marginBottom: 8 }}>Create your account</h1>
             <p style={{ fontSize: 15, color: '#bbf7d0' }}>Join AgroYield Network as a founding member</p>
