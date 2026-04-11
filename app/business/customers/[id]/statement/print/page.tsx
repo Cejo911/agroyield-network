@@ -147,4 +147,14 @@ export default async function StatementPrintPage({
           ))}
         </tbody>
         <tfoot>
-          <tr style={{ borderTop: '2px solid #e5e7eb',
+          <tr style={{ borderTop: '2px solid #e5e7eb', background: '#f9fafb' }}>
+            <td colSpan={4} style={{ padding: '12px', fontWeight: 700, fontSize: '14px' }}>Total Outstanding</td>
+            <td style={{ padding: '12px', textAlign: 'right', fontWeight: 800, fontSize: '16px', color: '#dc2626' }}>{fmt(totalOutstanding)}</td>
+            <td />
+          </tr>
+        </tfoot>
+      </table>
+
+    </div>
+  )
+}
