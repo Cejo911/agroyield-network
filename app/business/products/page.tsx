@@ -102,21 +102,31 @@ export default function ProductsPage() {
             <form onSubmit={handleSave} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Product / Service Name *</label>
-                <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                  placeholder="e.g. Maize (50kg bag)" />
+                <input
+                  value={form.name}
+                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                  required
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  placeholder="e.g. Maize (50kg bag)"
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                <input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                  placeholder="Optional details" />
+                <input
+                  value={form.description}
+                  onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  placeholder="Optional details"
+                />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Unit</label>
-                  <select value={form.unit} onChange={e => setForm(f => ({ ...f, unit: e.target.value }))}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                  <select
+                    value={form.unit}
+                    onChange={e => setForm(f => ({ ...f, unit: e.target.value }))}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  >
                     {['unit', 'bag', 'kg', 'litre', 'tonne', 'carton', 'piece', 'service'].map(u => (
                       <option key={u} value={u}>{u}</option>
                     ))}
@@ -124,24 +134,37 @@ export default function ProductsPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Unit Price (₦) *</label>
-                  <input type="number" min="0" step="0.01" value={form.unit_price}
-                    onChange={e => setForm(f => ({ ...f, unit_price: e.target.value }))} required
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                    placeholder="0.00" />
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={form.unit_price}
+                    onChange={e => setForm(f => ({ ...f, unit_price: e.target.value }))}
+                    required
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    placeholder="0.00"
+                  />
                 </div>
               </div>
               <div className="flex gap-3 pt-1">
-                <button type="button" onClick={() => setShowForm(false)}
-                  className="flex-1 border border-gray-200 text-gray-600 py-2 rounded-lg text-sm hover:bg-gray-50 transition-colors">
+                <button
+                  type="button"
+                  onClick={() => setShowForm(false)}
+                  className="flex-1 border border-gray-200 text-gray-600 py-2 rounded-lg text-sm hover:bg-gray-50 transition-colors"
+                >
                   Cancel
                 </button>
-                <button type="submit" disabled={saving}
-                  className="flex-1 bg-green-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50 transition-colors">
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="flex-1 bg-green-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50 transition-colors"
+                >
                   {saving ? 'Saving...' : 'Save Product'}
                 </button>
               </div>
             </form>
-          </div>
+            
+                      </div>
         </div>
       )}
 
