@@ -99,20 +99,26 @@ export default function NewInvoicePage() {
   }
 
   function selectProduct(idx: number, productId: string) {
-    const product = products.find(p => p.id === productId)
-    if (!product) {
-      updateItem(idx, 'product_id', '')
-      return
-    }
+  if (productId === '__manual__') {
     setItems(items.map((item, i) =>
-      i === idx ? {
-        ...item,
-        product_id: productId,
-        description: product.name,
-        unit_price: String(product.unit_price),
-      } : item
+      i === idx ? { ...item, product_id: '__manual__', description: '', unit_price: '' } : item
     ))
+    return
   }
+  const product = products.find(p => p.id === productId)
+  if (!product) {
+    setItems(items.map((item, i) => i === idx ? { ...item, product_id: '' } : item))
+    return
+  }
+  setItems(items.map((item, i) =>
+    i === idx ? {
+      ...item,
+      product_id: productId,
+      description: product.name,
+      unit_price: String(product.unit_price),
+    } : item
+  ))
+}
 
   function lineTotal(item: LineItem) {
     return (parseFloat(item.quantity) || 0) * (parseFloat(item.unit_price) || 0)
@@ -263,83 +269,110 @@ export default function NewInvoicePage() {
           </div>
 
           <div className="space-y-2">
-            {items.map((item, idx) => (
-              <div key={idx} className="grid grid-cols-12 gap-2 items-center">
+  {items.map((item, idx) => (
+    <div key={idx} className="grid grid-cols-12 gap-2 items-center">
 
-                {/* Product dropdown */}
-                <div className="col-span-3">
-                  <select
-                    value={item.product_id}
-                    onChange={e => selectProduct(idx, e.target.value)}
-                    className={selectClass}
-                  >
-                    <option value="">— Select product —</option>
-                    {products.map(p => (
-                      <option key={p.id} value={p.id}>
-                        {p.name} ({p.unit})
-                      </option>
-                    ))}
-                    <option value="__manual__">✏️ Enter manually</option>
-                  </select>
-                </div>
-
-                {/* Description — editable, auto-filled from product */}
-                <div className="col-span-3">
-                  <input
-                    type="text"
-                    placeholder="Description"
-                    value={item.description}
-                    onChange={e => updateItem(idx, 'description', e.target.value)}
-                    className={inputClass}
-                    required
-                  />
-                </div>
-
-                {/* Qty */}
-                <div className="col-span-1">
-                  <input
-                    type="number"
-                    min="1"
-                    value={item.quantity}
-                    onChange={e => updateItem(idx, 'quantity', e.target.value)}
-                    className={inputClass}
-                    required
-                  />
-                </div>
-
-                {/* Unit Price — editable, auto-filled from product */}
-                <div className="col-span-2">
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={item.unit_price}
-                    onChange={e => updateItem(idx, 'unit_price', e.target.value)}
-                    className={inputClass}
-                    required
-                  />
-                </div>
-
-                {/* Line total */}
-                <div className="col-span-2 text-right text-sm font-semibold text-gray-900">
-                  {formatCurrency(lineTotal(item))}
-                </div>
-
-                {/* Remove */}
-                <div className="col-span-1 flex justify-center">
-                  {items.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => removeItem(idx)}
-                      className="text-gray-400 hover:text-red-500 text-xl leading-none"
-                    >×</button>
-                  )}
-                </div>
-              </div>
-            ))}
+      {/* Product selector OR manual text input */}
+      <div className="col-span-3">
+        {item.product_id === '__manual__' ? (
+          <div className="flex gap-1 items-center">
+            <input
+              type="text"
+              placeholder="Item name"
+              value={item.description}
+              onChange={e => updateItem(idx, 'description', e.target.value)}
+              className={inputClass}
+              autoFocus
+              required
+            />
+            <button
+              type="button"
+              title="Back to product list"
+              onClick={() => setItems(items.map((it, i) => i === idx ? { ...it, product_id: '', description: '', unit_price: '' } : it))}
+              className="text-gray-400 hover:text-gray-600 text-xs px-1"
+            >↩</button>
           </div>
+        ) : (
+          <select
+            value={item.product_id}
+            onChange={e => selectProduct(idx, e.target.value)}
+            className={selectClass}
+          >
+            <option value="">— Select product —</option>
+            {products.map(p => (
+              <option key={p.id} value={p.id}>{p.name} ({p.unit})</option>
+            ))}
+            <option value="__manual__">✏️ Enter manually</option>
+          </select>
+        )}
+      </div>
 
+      {/* Description — hidden in manual mode (product col already captures it), shown in product mode */}
+      <div className="col-span-3">
+        {item.product_id === '__manual__' ? (
+          <input
+            type="text"
+            placeholder="Additional details (optional)"
+            className={`${inputClass} text-gray-400`}
+            disabled
+          />
+        ) : (
+          <input
+            type="text"
+            placeholder="Description"
+            value={item.description}
+            onChange={e => updateItem(idx, 'description', e.target.value)}
+            className={inputClass}
+            required
+          />
+        )}
+      </div>
+
+      {/* Qty */}
+      <div className="col-span-1">
+        <input
+          type="number"
+          min="1"
+          value={item.quantity}
+          onChange={e => updateItem(idx, 'quantity', e.target.value)}
+          className={inputClass}
+          required
+        />
+      </div>
+
+      {/* Unit Price */}
+      <div className="col-span-2">
+        <input
+          type="number"
+          min="0"
+          step="0.01"
+          placeholder="0.00"
+          value={item.unit_price}
+          onChange={e => updateItem(idx, 'unit_price', e.target.value)}
+          className={inputClass}
+          required
+        />
+      </div>
+
+      {/* Line total */}
+      <div className="col-span-2 text-right text-sm font-semibold text-gray-900">
+        {formatCurrency(lineTotal(item))}
+      </div>
+
+      {/* Remove */}
+      <div className="col-span-1 flex justify-center">
+        {items.length > 1 && (
+          <button
+            type="button"
+            onClick={() => removeItem(idx)}
+            className="text-gray-400 hover:text-red-500 text-xl leading-none"
+          >×</button>
+        )}
+      </div>
+
+    </div>
+  ))}
+</div>
           <button
             type="button"
             onClick={addItem}
