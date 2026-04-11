@@ -8,25 +8,59 @@ type Product = {
   description: string | null
   unit: string
   unit_price: number
+  cost_price: number
+  stock_quantity: number
+  low_stock_threshold: number
   is_active: boolean
 }
+
+type StockMovement = {
+  id: string
+  product_id: string
+  type: 'in' | 'out'
+  quantity: number
+  cost_price: number
+  reason: string
+  note: string | null
+  invoice_id: string | null
+  created_at: string
+}
+
+const PREDEFINED_UNITS = ['unit', 'bag', 'kg', 'litre', 'tonne', 'carton', 'piece', 'crate', 'bundle', 'dozen', 'service']
 
 export default function ProductsPage() {
   const supabase = createClient()
   const [products, setProducts] = useState<Product[]>([])
   const [businessId, setBusinessId] = useState<string | null>(null)
+  const [userId, setUserId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+
+  // Product form state
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
-  const [search, setSearch] = useState('')
-  const [form, setForm] = useState({ name: '', description: '', unit: 'unit', unit_price: '' })
+  const [form, setForm] = useState({ name: '', description: '', unit: 'unit', customUnit: '', unit_price: '', cost_price: '', low_stock_threshold: '5' })
+  const [useCustomUnit, setUseCustomUnit] = useState(false)
+
+  // Stock movement state
+  const [showStockModal, setShowStockModal] = useState(false)
+  const [stockProduct, setStockProduct] = useState<Product | null>(null)
+  const [stockForm, setStockForm] = useState({ type: 'in' as 'in' | 'out', quantity: '', cost_price: '', reason: 'purchase', note: '' })
+  const [stockSaving, setStockSaving] = useState(false)
+
+  // Stock history state
+  const [showHistory, setShowHistory] = useState(false)
+  const [historyProduct, setHistoryProduct] = useState<Product | null>(null)
+  const [movements, setMovements] = useState<StockMovement[]>([])
+  const [historyLoading, setHistoryLoading] = useState(false)
 
   useEffect(() => { load() }, [])
 
   const load = async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
+    setUserId(user.id)
     const { data: biz } = await supabase.from('businesses').select('id').eq('user_id', user.id).single()
     if (!biz) { setLoading(false); return }
     setBusinessId(biz.id)
@@ -35,34 +69,49 @@ export default function ProductsPage() {
     setLoading(false)
   }
 
+  // ── Product CRUD ──────────────────────────────────────────────
+
   const openNew = () => {
     setEditingId(null)
-    setForm({ name: '', description: '', unit: 'unit', unit_price: '' })
+    setForm({ name: '', description: '', unit: 'unit', customUnit: '', unit_price: '', cost_price: '', low_stock_threshold: '5' })
+    setUseCustomUnit(false)
     setShowForm(true)
   }
 
   const openEdit = (p: Product) => {
     setEditingId(p.id)
-    setForm({ name: p.name, description: p.description ?? '', unit: p.unit, unit_price: String(p.unit_price) })
+    const isPredefined = PREDEFINED_UNITS.includes(p.unit)
+    setForm({
+      name: p.name,
+      description: p.description ?? '',
+      unit: isPredefined ? p.unit : 'custom',
+      customUnit: isPredefined ? '' : p.unit,
+      unit_price: String(p.unit_price),
+      cost_price: String(p.cost_price || ''),
+      low_stock_threshold: String(p.low_stock_threshold),
+    })
+    setUseCustomUnit(!isPredefined)
     setShowForm(true)
   }
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!businessId) return
+    if (!businessId || !userId) return
     setSaving(true)
-    const { data: { user } } = await supabase.auth.getUser()
+    const finalUnit = useCustomUnit ? form.customUnit.trim().toLowerCase() : form.unit
     const payload = {
       name: form.name,
       description: form.description || null,
-      unit: form.unit,
+      unit: finalUnit,
       unit_price: parseFloat(form.unit_price) || 0,
+      cost_price: parseFloat(form.cost_price) || 0,
+      low_stock_threshold: parseFloat(form.low_stock_threshold) || 5,
       updated_at: new Date().toISOString(),
     }
     if (editingId) {
       await supabase.from('business_products').update(payload).eq('id', editingId)
     } else {
-      await supabase.from('business_products').insert({ ...payload, business_id: businessId, user_id: user!.id })
+      await supabase.from('business_products').insert({ ...payload, business_id: businessId, user_id: userId })
     }
     setSaving(false)
     setShowForm(false)
@@ -75,6 +124,81 @@ export default function ProductsPage() {
     setProducts(prev => prev.filter(p => p.id !== id))
   }
 
+  // ── Stock Movement ────────────────────────────────────────────
+
+  const openStockModal = (p: Product, type: 'in' | 'out') => {
+    setStockProduct(p)
+    setStockForm({
+      type,
+      quantity: '',
+      cost_price: type === 'in' ? String(p.cost_price || '') : '',
+      reason: type === 'in' ? 'purchase' : 'sale',
+      note: '',
+    })
+    setShowStockModal(true)
+  }
+
+  const handleStockSave = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!stockProduct || !businessId || !userId) return
+    const qty = parseFloat(stockForm.quantity)
+    if (!qty || qty <= 0) return
+
+    // For stock out, check if sufficient stock
+    if (stockForm.type === 'out' && qty > stockProduct.stock_quantity) {
+      alert(`Insufficient stock. Available: ${stockProduct.stock_quantity} ${stockProduct.unit}`)
+      return
+    }
+
+    setStockSaving(true)
+
+    // Insert stock movement
+    await supabase.from('stock_movements').insert({
+      business_id: businessId,
+      user_id: userId,
+      product_id: stockProduct.id,
+      type: stockForm.type,
+      quantity: qty,
+      cost_price: parseFloat(stockForm.cost_price) || 0,
+      reason: stockForm.reason,
+      note: stockForm.note || null,
+    })
+
+    // Update product stock quantity and cost price (for stock in)
+    const newQty = stockForm.type === 'in'
+      ? stockProduct.stock_quantity + qty
+      : stockProduct.stock_quantity - qty
+
+    const updatePayload: any = { stock_quantity: newQty }
+    if (stockForm.type === 'in' && parseFloat(stockForm.cost_price) > 0) {
+      updatePayload.cost_price = parseFloat(stockForm.cost_price)
+    }
+
+    await supabase.from('business_products').update(updatePayload).eq('id', stockProduct.id)
+
+    setStockSaving(false)
+    setShowStockModal(false)
+    load()
+  }
+
+  // ── Stock History ─────────────────────────────────────────────
+
+  const openHistory = async (p: Product) => {
+    setHistoryProduct(p)
+    setHistoryLoading(true)
+    setShowHistory(true)
+    const { data } = await supabase
+      .from('stock_movements')
+      .select('*')
+      .eq('product_id', p.id)
+      .order('created_at', { ascending: false })
+      .limit(50)
+    setMovements(data ?? [])
+    setHistoryLoading(false)
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────
+
   const fmt = (n: number) => `₦${n.toLocaleString('en-NG', { minimumFractionDigits: 2 })}`
 
   const filteredProducts = products.filter(p =>
@@ -82,26 +206,37 @@ export default function ProductsPage() {
     (p.description ?? '').toLowerCase().includes(search.toLowerCase())
   )
 
+  const lowStockCount = products.filter(p => p.stock_quantity <= p.low_stock_threshold && p.unit !== 'service').length
+
+  const IN_REASONS = ['purchase', 'production', 'return', 'adjustment', 'other']
+  const OUT_REASONS = ['sale', 'damaged', 'expired', 'adjustment', 'other']
+
   if (loading) return <div className="text-center py-10 text-gray-400">Loading...</div>
 
   if (!businessId) return (
-    <div className="bg-white rounded-xl border border-gray-100 p-8 text-center">
-      <p className="text-gray-500">Set up your business profile first.</p>
+    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-8 text-center">
+      <p className="text-gray-500 dark:text-gray-400">Set up your business profile first.</p>
       <a href="/business/setup" className="mt-3 inline-block text-green-600 font-medium hover:underline">Go to Setup →</a>
     </div>
   )
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold text-gray-900">Products & Services</h1>
+      {/* Header */}
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Products & Inventory</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            {products.length} product{products.length !== 1 ? 's' : ''} · Total inventory value: {fmt(products.reduce((s, p) => s + (p.stock_quantity * (p.cost_price || p.unit_price)), 0))}
+          </p>
+        </div>
         <div className="flex items-center gap-3">
           <input
             type="text"
             placeholder="Search products…"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 w-56"
+            className="border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 w-56"
           />
           <button onClick={openNew} className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors whitespace-nowrap">
             + Add Product
@@ -109,46 +244,76 @@ export default function ProductsPage() {
         </div>
       </div>
 
-      {/* Form Modal */}
+      {/* Low Stock Alert */}
+      {lowStockCount > 0 && (
+        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl px-4 py-3 flex items-center gap-3">
+          <span className="text-amber-600 text-lg">⚠️</span>
+          <p className="text-sm text-amber-800 dark:text-amber-300 font-medium">
+            {lowStockCount} product{lowStockCount !== 1 ? 's' : ''} {lowStockCount !== 1 ? 'are' : 'is'} running low on stock
+          </p>
+        </div>
+      )}
+
+      {/* Product Form Modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">{editingId ? 'Edit Product' : 'New Product'}</h2>
+          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
+            <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">{editingId ? 'Edit Product' : 'New Product'}</h2>
             <form onSubmit={handleSave} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Product / Service Name *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Product / Service Name *</label>
                 <input
                   value={form.name}
                   onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                   required
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-green-500"
                   placeholder="e.g. Maize (50kg bag)"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
                 <input
                   value={form.description}
                   onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-green-500"
                   placeholder="Optional details"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Unit</label>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Unit</label>
+                <div className="flex gap-2">
                   <select
-                    value={form.unit}
-                    onChange={e => setForm(f => ({ ...f, unit: e.target.value }))}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    value={useCustomUnit ? 'custom' : form.unit}
+                    onChange={e => {
+                      if (e.target.value === 'custom') {
+                        setUseCustomUnit(true)
+                        setForm(f => ({ ...f, unit: 'custom' }))
+                      } else {
+                        setUseCustomUnit(false)
+                        setForm(f => ({ ...f, unit: e.target.value, customUnit: '' }))
+                      }
+                    }}
+                    className="flex-1 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-green-500"
                   >
-                    {['unit', 'bag', 'kg', 'litre', 'tonne', 'carton', 'piece', 'service'].map(u => (
+                    {PREDEFINED_UNITS.map(u => (
                       <option key={u} value={u}>{u}</option>
                     ))}
+                    <option value="custom">Custom unit…</option>
                   </select>
+                  {useCustomUnit && (
+                    <input
+                      value={form.customUnit}
+                      onChange={e => setForm(f => ({ ...f, customUnit: e.target.value }))}
+                      required
+                      className="flex-1 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-green-500"
+                      placeholder="e.g. basket"
+                    />
+                  )}
                 </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Unit Price (₦) *</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Selling Price (₦) *</label>
                   <input
                     type="number"
                     min="0"
@@ -156,16 +321,40 @@ export default function ProductsPage() {
                     value={form.unit_price}
                     onChange={e => setForm(f => ({ ...f, unit_price: e.target.value }))}
                     required
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-green-500"
                     placeholder="0.00"
                   />
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cost Price (₦)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={form.cost_price}
+                    onChange={e => setForm(f => ({ ...f, cost_price: e.target.value }))}
+                    className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    placeholder="0.00"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Low Stock Alert Threshold</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={form.low_stock_threshold}
+                  onChange={e => setForm(f => ({ ...f, low_stock_threshold: e.target.value }))}
+                  className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  placeholder="5"
+                />
+                <p className="text-xs text-gray-400 mt-1">You&apos;ll be alerted when stock falls to or below this quantity</p>
               </div>
               <div className="flex gap-3 pt-1">
                 <button
                   type="button"
                   onClick={() => setShowForm(false)}
-                  className="flex-1 border border-gray-200 text-gray-600 py-2 rounded-lg text-sm hover:bg-gray-50 transition-colors"
+                  className="flex-1 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 py-2 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                 >
                   Cancel
                 </button>
@@ -178,44 +367,193 @@ export default function ProductsPage() {
                 </button>
               </div>
             </form>
-            
+          </div>
+        </div>
+      )}
+
+      {/* Stock Movement Modal */}
+      {showStockModal && stockProduct && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4">
+          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl w-full max-w-md p-6">
+            <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-1">
+              {stockForm.type === 'in' ? '📥 Stock In' : '📤 Stock Out'}
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+              {stockProduct.name} · Current stock: <strong className="text-gray-800 dark:text-white">{stockProduct.stock_quantity} {stockProduct.unit}</strong>
+            </p>
+            <form onSubmit={handleStockSave} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Quantity ({stockProduct.unit}) *</label>
+                <input
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  value={stockForm.quantity}
+                  onChange={e => setStockForm(f => ({ ...f, quantity: e.target.value }))}
+                  required
+                  className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  placeholder="0"
+                  autoFocus
+                />
+              </div>
+              {stockForm.type === 'in' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cost Price per {stockProduct.unit} (₦)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={stockForm.cost_price}
+                    onChange={e => setStockForm(f => ({ ...f, cost_price: e.target.value }))}
+                    className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    placeholder="0.00"
+                  />
+                </div>
+              )}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Reason *</label>
+                <select
+                  value={stockForm.reason}
+                  onChange={e => setStockForm(f => ({ ...f, reason: e.target.value }))}
+                  className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-green-500"
+                >
+                  {(stockForm.type === 'in' ? IN_REASONS : OUT_REASONS).map(r => (
+                    <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Note</label>
+                <input
+                  value={stockForm.note}
+                  onChange={e => setStockForm(f => ({ ...f, note: e.target.value }))}
+                  className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  placeholder="Optional note"
+                />
+              </div>
+              <div className="flex gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setShowStockModal(false)}
+                  className="flex-1 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 py-2 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={stockSaving}
+                  className={`flex-1 text-white py-2 rounded-lg text-sm font-medium disabled:opacity-50 transition-colors ${
+                    stockForm.type === 'in' ? 'bg-green-600 hover:bg-green-700' : 'bg-orange-600 hover:bg-orange-700'
+                  }`}
+                >
+                  {stockSaving ? 'Saving...' : stockForm.type === 'in' ? 'Record Stock In' : 'Record Stock Out'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Stock History Modal */}
+      {showHistory && historyProduct && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4">
+          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl w-full max-w-lg p-6 max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-800 dark:text-white">Stock History</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{historyProduct.name} · Current: {historyProduct.stock_quantity} {historyProduct.unit}</p>
+              </div>
+              <button onClick={() => setShowHistory(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xl">✕</button>
+            </div>
+            {historyLoading ? (
+              <p className="text-center text-gray-400 py-8">Loading…</p>
+            ) : movements.length === 0 ? (
+              <p className="text-center text-gray-400 py-8">No stock movements recorded yet.</p>
+            ) : (
+              <div className="space-y-2">
+                {movements.map(m => (
+                  <div key={m.id} className="flex items-center justify-between border border-gray-100 dark:border-gray-800 rounded-lg px-3 py-2.5">
+                    <div className="flex items-center gap-3">
+                      <span className={`text-sm font-bold ${m.type === 'in' ? 'text-green-600' : 'text-red-500'}`}>
+                        {m.type === 'in' ? '+' : '−'}{m.quantity}
+                      </span>
+                      <div>
+                        <p className="text-sm font-medium text-gray-800 dark:text-white capitalize">{m.reason}</p>
+                        {m.note && <p className="text-xs text-gray-400">{m.note}</p>}
                       </div>
+                    </div>
+                    <div className="text-right">
+                      {m.cost_price > 0 && <p className="text-xs text-gray-500">{fmt(m.cost_price)}/{historyProduct.unit}</p>}
+                      <p className="text-xs text-gray-400">{new Date(m.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
       {/* Product List */}
       {filteredProducts.length === 0 ? (
-        <div className="bg-white rounded-xl border border-gray-100 p-10 text-center">
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-10 text-center">
           <div className="text-4xl mb-3">📦</div>
-          <p className="text-gray-500 mb-4">No products yet. Add your first product or service.</p>
+          <p className="text-gray-500 dark:text-gray-400 mb-4">No products yet. Add your first product or service.</p>
           <button onClick={openNew} className="text-green-600 font-medium hover:underline text-sm">+ Add Product</button>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-100">
+            <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
               <tr>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">Product / Service</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">Unit</th>
-                <th className="text-right px-4 py-3 font-medium text-gray-600">Unit Price</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-300">Product / Service</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-300">Unit</th>
+                <th className="text-right px-4 py-3 font-medium text-gray-600 dark:text-gray-300">Cost</th>
+                <th className="text-right px-4 py-3 font-medium text-gray-600 dark:text-gray-300">Selling Price</th>
+                <th className="text-center px-4 py-3 font-medium text-gray-600 dark:text-gray-300">Stock</th>
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
-              {filteredProducts.map(p => (
-                <tr key={p.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3">
-                    <p className="font-medium text-gray-800">{p.name}</p>
-                    {p.description && <p className="text-xs text-gray-400 mt-0.5">{p.description}</p>}
-                  </td>
-                  <td className="px-4 py-3 text-gray-500">{p.unit}</td>
-                  <td className="px-4 py-3 text-right font-medium text-gray-800">{fmt(p.unit_price)}</td>
-                  <td className="px-4 py-3 text-right">
-                    <button onClick={() => openEdit(p)} className="text-xs text-blue-600 hover:underline mr-3">Edit</button>
-                    <button onClick={() => handleDelete(p.id)} className="text-xs text-red-500 hover:underline">Remove</button>
-                  </td>
-                </tr>
-              ))}
+            <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
+              {filteredProducts.map(p => {
+                const isLow = p.unit !== 'service' && p.stock_quantity <= p.low_stock_threshold
+                const isOut = p.unit !== 'service' && p.stock_quantity === 0
+                return (
+                  <tr key={p.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                    <td className="px-4 py-3">
+                      <p className="font-medium text-gray-800 dark:text-white">{p.name}</p>
+                      {p.description && <p className="text-xs text-gray-400 mt-0.5">{p.description}</p>}
+                    </td>
+                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{p.unit}</td>
+                    <td className="px-4 py-3 text-right text-gray-500 dark:text-gray-400">{p.cost_price ? fmt(p.cost_price) : '—'}</td>
+                    <td className="px-4 py-3 text-right font-medium text-gray-800 dark:text-white">{fmt(p.unit_price)}</td>
+                    <td className="px-4 py-3 text-center">
+                      {p.unit === 'service' ? (
+                        <span className="text-xs text-gray-400">N/A</span>
+                      ) : (
+                        <div className="flex items-center justify-center gap-2">
+                          <span className={`font-semibold ${isOut ? 'text-red-600' : isLow ? 'text-amber-600' : 'text-gray-800 dark:text-white'}`}>
+                            {p.stock_quantity}
+                          </span>
+                          {isOut && <span className="text-[10px] font-bold bg-red-100 dark:bg-red-900/30 text-red-600 px-1.5 py-0.5 rounded-full">OUT</span>}
+                          {isLow && !isOut && <span className="text-[10px] font-bold bg-amber-100 dark:bg-amber-900/30 text-amber-600 px-1.5 py-0.5 rounded-full">LOW</span>}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-right whitespace-nowrap">
+                      {p.unit !== 'service' && (
+                        <>
+                          <button onClick={() => openStockModal(p, 'in')} className="text-xs text-green-600 hover:underline mr-2">+In</button>
+                          <button onClick={() => openStockModal(p, 'out')} className="text-xs text-orange-600 hover:underline mr-2">−Out</button>
+                          <button onClick={() => openHistory(p)} className="text-xs text-gray-500 hover:underline mr-2">History</button>
+                        </>
+                      )}
+                      <button onClick={() => openEdit(p)} className="text-xs text-blue-600 hover:underline mr-2">Edit</button>
+                      <button onClick={() => handleDelete(p.id)} className="text-xs text-red-500 hover:underline">Remove</button>
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>
