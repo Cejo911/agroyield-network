@@ -13,11 +13,9 @@ export default function StatementPrintLayout({ children }: { children: React.Rea
           width: 100% !important;
           max-width: 100% !important;
         }
-        @media print {
+         @media print {
           .no-print {
-            height: 0 !important;
-            overflow: hidden !important;
-            position: absolute !important;
+            display: none !important;
           }
           @page {
             margin: 1cm;
