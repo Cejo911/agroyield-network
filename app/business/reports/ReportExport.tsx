@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import * as XLSX from 'xlsx'
+import ExcelJS from 'exceljs'
 
 export default function ReportExport({ period }: { period: string }) {
   const [loading, setLoading] = useState<'excel' | null>(null)
@@ -33,7 +33,7 @@ export default function ReportExport({ period }: { period: string }) {
 
     const { invoices, expenses, customers, business } = data
     const customerMap = Object.fromEntries(customers.map((c: any) => [c.id, c.name]))
-    const wb = XLSX.utils.book_new()
+    const wb = new ExcelJS.Workbook()
 
     // ── Sheet 1: P&L Summary ──────────────────────────────────
     const paidInvoices  = invoices.filter((i: any) => i.status === 'paid')
@@ -42,60 +42,55 @@ export default function ReportExport({ period }: { period: string }) {
     const netProfit     = totalRevenue - totalExpenses
     const margin        = totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) : '0.0'
 
-    const summaryRows = [
-      [`${business?.name || 'AgroYield'} — Business Report`],
-      ['Generated:', new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })],
-      [],
-      ['PROFIT & LOSS SUMMARY', ''],
-      ['Total Revenue (Paid Invoices)', totalRevenue],
-      ['Total Expenses',                totalExpenses],
-      ['Net Profit',                    netProfit],
-      ['Profit Margin',                 `${margin}%`],
-      [],
-      ['INVOICE STATUS', ''],
-      ['Draft',   invoices.filter((i: any) => i.status === 'draft').length],
-      ['Sent',    invoices.filter((i: any) => i.status === 'sent').length],
-      ['Paid',    invoices.filter((i: any) => i.status === 'paid').length],
-      ['Overdue', invoices.filter((i: any) => i.status === 'overdue').length],
-      ['Total',   invoices.length],
-    ]
-    const s1 = XLSX.utils.aoa_to_sheet(summaryRows)
-    s1['!cols'] = [{ wch: 36 }, { wch: 22 }]
-    XLSX.utils.book_append_sheet(wb, s1, 'P&L Summary')
+    const s1 = wb.addWorksheet('P&L Summary')
+    s1.columns = [{ width: 36 }, { width: 22 }]
+    s1.addRow([`${business?.name || 'AgroYield'} — Business Report`])
+    s1.addRow(['Generated:', new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })])
+    s1.addRow([])
+    s1.addRow(['PROFIT & LOSS SUMMARY', ''])
+    s1.addRow(['Total Revenue (Paid Invoices)', totalRevenue])
+    s1.addRow(['Total Expenses',                totalExpenses])
+    s1.addRow(['Net Profit',                    netProfit])
+    s1.addRow(['Profit Margin',                 `${margin}%`])
+    s1.addRow([])
+    s1.addRow(['INVOICE STATUS', ''])
+    s1.addRow(['Draft',   invoices.filter((i: any) => i.status === 'draft').length])
+    s1.addRow(['Sent',    invoices.filter((i: any) => i.status === 'sent').length])
+    s1.addRow(['Paid',    invoices.filter((i: any) => i.status === 'paid').length])
+    s1.addRow(['Overdue', invoices.filter((i: any) => i.status === 'overdue').length])
+    s1.addRow(['Total',   invoices.length])
 
     // ── Sheet 2: All Invoices ─────────────────────────────────
-    const invoiceRows = [
-      ['Invoice #', 'Issue Date', 'Customer', 'Status', 'Amount (₦)'],
-      ...invoices.map((inv: any) => [
+    const s2 = wb.addWorksheet('Invoices')
+    s2.columns = [{ width: 14 }, { width: 14 }, { width: 26 }, { width: 12 }, { width: 18 }]
+    s2.addRow(['Invoice #', 'Issue Date', 'Customer', 'Status', 'Amount (₦)'])
+    invoices.forEach((inv: any) => {
+      s2.addRow([
         inv.invoice_number,
         inv.issue_date,
         customerMap[inv.customer_id] || 'Unknown',
         inv.status?.toUpperCase(),
         Number(inv.total_amount || 0),
-      ]),
-      [],
-      ['', '', '', 'TOTAL PAID', totalRevenue],
-    ]
-    const s2 = XLSX.utils.aoa_to_sheet(invoiceRows)
-    s2['!cols'] = [{ wch: 14 }, { wch: 14 }, { wch: 26 }, { wch: 12 }, { wch: 18 }]
-    XLSX.utils.book_append_sheet(wb, s2, 'Invoices')
+      ])
+    })
+    s2.addRow([])
+    s2.addRow(['', '', '', 'TOTAL PAID', totalRevenue])
 
     // ── Sheet 3: All Expenses ─────────────────────────────────
-    const expenseRows = [
-      ['Date', 'Description', 'Category', 'Payment Method', 'Amount (₦)'],
-      ...expenses.map((exp: any) => [
+    const s3 = wb.addWorksheet('Expenses')
+    s3.columns = [{ width: 14 }, { width: 32 }, { width: 26 }, { width: 18 }, { width: 15 }]
+    s3.addRow(['Date', 'Description', 'Category', 'Payment Method', 'Amount (₦)'])
+    expenses.forEach((exp: any) => {
+      s3.addRow([
         exp.date,
         exp.description,
         exp.category,
         exp.payment_method,
         Number(exp.amount || 0),
-      ]),
-      [],
-      ['', '', '', 'TOTAL', totalExpenses],
-    ]
-    const s3 = XLSX.utils.aoa_to_sheet(expenseRows)
-    s3['!cols'] = [{ wch: 14 }, { wch: 32 }, { wch: 26 }, { wch: 18 }, { wch: 15 }]
-    XLSX.utils.book_append_sheet(wb, s3, 'Expenses')
+      ])
+    })
+    s3.addRow([])
+    s3.addRow(['', '', '', 'TOTAL', totalExpenses])
 
     // ── Sheet 4: Monthly P&L (last 12 months) ────────────────
     const months = Array.from({ length: 12 }, (_, i) => {
@@ -103,22 +98,26 @@ export default function ReportExport({ period }: { period: string }) {
       d.setMonth(d.getMonth() - (11 - i))
       return d.toISOString().slice(0, 7)
     })
-    const monthlyRows = [
-      ['Month', 'Revenue (₦)', 'Expenses (₦)', 'Net Profit (₦)', 'Margin %'],
-      ...months.map(m => {
-        const rev  = paidInvoices.filter((i: any) => i.issue_date?.slice(0, 7) === m).reduce((s: number, i: any) => s + Number(i.total_amount || 0), 0)
-        const exp  = expenses.filter((e: any) => e.date?.slice(0, 7) === m).reduce((s: number, e: any) => s + Number(e.amount || 0), 0)
-        const prof = rev - exp
-        return [m, rev, exp, prof, rev > 0 ? `${((prof / rev) * 100).toFixed(1)}%` : '0.0%']
-      }),
-    ]
-    const s4 = XLSX.utils.aoa_to_sheet(monthlyRows)
-    s4['!cols'] = [{ wch: 12 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 12 }]
-    XLSX.utils.book_append_sheet(wb, s4, 'Monthly P&L')
+    const s4 = wb.addWorksheet('Monthly P&L')
+    s4.columns = [{ width: 12 }, { width: 18 }, { width: 18 }, { width: 18 }, { width: 12 }]
+    s4.addRow(['Month', 'Revenue (₦)', 'Expenses (₦)', 'Net Profit (₦)', 'Margin %'])
+    months.forEach(m => {
+      const rev  = paidInvoices.filter((i: any) => i.issue_date?.slice(0, 7) === m).reduce((s: number, i: any) => s + Number(i.total_amount || 0), 0)
+      const exp  = expenses.filter((e: any) => e.date?.slice(0, 7) === m).reduce((s: number, e: any) => s + Number(e.amount || 0), 0)
+      const prof = rev - exp
+      s4.addRow([m, rev, exp, prof, rev > 0 ? `${((prof / rev) * 100).toFixed(1)}%` : '0.0%'])
+    })
 
     // ── Download ──────────────────────────────────────────────
     const filename = `${(business?.name || 'AgroYield').replace(/\s+/g, '_')}_Report_${new Date().toISOString().slice(0, 10)}.xlsx`
-    XLSX.writeFile(wb, filename)
+    const buffer = await wb.xlsx.writeBuffer()
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    a.click()
+    URL.revokeObjectURL(url)
     setLoading(null)
   }
 
