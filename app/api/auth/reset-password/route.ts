@@ -32,13 +32,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true })
     }
 
-    // The link Supabase returns uses their domain — we need to extract the
-    // token_hash and type params and build a link through our own callback
-    const linkUrl = new URL(data.properties.action_link)
-    const token_hash = linkUrl.searchParams.get('token_hash')
-    const type = linkUrl.searchParams.get('type')
-
-    const resetLink = `${origin}/auth/callback?token_hash=${token_hash}&type=${type}&next=/reset-password`
+   // Use the hashed_token from the response and build a link through our callback
+    const token_hash = data.properties.hashed_token
+    const resetLink = `${origin}/auth/callback?token_hash=${token_hash}&type=recovery&next=/reset-password`
 
     // Send branded email via Resend
     await resend.emails.send({
