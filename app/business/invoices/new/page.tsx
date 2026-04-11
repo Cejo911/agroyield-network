@@ -234,8 +234,20 @@ export default function NewInvoicePage() {
               </select>
             </div>
             <div>
+              <div>
               <label className={labelClass}>Customer</label>
-              <select value={customerId} onChange={e => setCustomerId(e.target.value)} className={selectClass} required>
+              <select
+                value={customerId}
+                onChange={e => {
+                  setCustomerId(e.target.value)
+                  ;(e.target as HTMLSelectElement).setCustomValidity('')
+                }}
+                onInvalid={e =>
+                  (e.target as HTMLSelectElement).setCustomValidity('Please select a customer from the list')
+                }
+                className={selectClass}
+                required
+              >
                 <option value="">Select customer…</option>
                 {customers.map(c => (
                   <option key={c.id} value={c.id}>{c.name}</option>
