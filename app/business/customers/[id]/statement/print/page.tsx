@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import PrintButton from './PrintButton'
 
 function fmt(n: number) {
   return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', minimumFractionDigits: 2 })
@@ -17,9 +18,12 @@ export default async function StatementPrintPage({
   params,
   searchParams,
 }: {
-  params: { id: string }
-  searchParams: { from?: string; to?: string }
+  params: Promise<{ id: string }>
+  searchParams: Promise<{ from?: string; to?: string }>
 }) {
+  const { id } = await params
+  const { from: fromParam, to: toParam } = await searchParams
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -32,10 +36,10 @@ export default async function StatementPrintPage({
 
   if (!business) redirect('/business/setup')
 
- const { data: customer } = await supabase
+  const { data: customer } = await supabase
     .from('customers')
     .select('id, name, email, phone, address')
-    .eq('id', params.id)
+    .eq('id', id)
     .eq('business_id', business.id)
     .maybeSingle()
 
@@ -44,14 +48,14 @@ export default async function StatementPrintPage({
   const now = new Date()
   const defaultFrom = `${now.getFullYear()}-01-01`
   const defaultTo = now.toISOString().split('T')[0]
-  const from = searchParams.from || defaultFrom
-  const to = searchParams.to || defaultTo
+  const from = fromParam || defaultFrom
+  const to = toParam || defaultTo
 
   const { data: invoicesRaw } = await supabase
     .from('invoices')
     .select('id, invoice_number, document_type, issue_date, due_date, status, total')
     .eq('business_id', business.id)
-    .eq('customer_id', params.id)
+    .eq('customer_id', id)
     .eq('is_active', true)
     .gte('issue_date', from)
     .lte('issue_date', to)
@@ -69,23 +73,13 @@ export default async function StatementPrintPage({
   return (
     <div style={{ fontFamily: 'Inter, sans-serif', padding: '32px', maxWidth: '800px', margin: '0 auto', color: '#111827' }}>
 
-      {/* Print button */}
-      <div className="no-print" style={{ marginBottom: '20px' }}>
-        <button
-          onClick={() => window.print()}
-          style={{ background: '#111827', color: '#fff', border: 'none', padding: '9px 20px', borderRadius: '8px', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}
-        >
-          🖨️ Print / Save as PDF
-        </button>
-      </div>
+      <PrintButton />
 
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '28px', borderBottom: '2px solid #e5e7eb', paddingBottom: '20px' }}>
         <div>
           <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#111827', margin: 0 }}>CUSTOMER STATEMENT</h1>
-          <p style={{ fontSize: '13px', color: '#6b7280', margin: '4px 0 0 0' }}>
-            Period: {fromLabel} — {toLabel}
-          </p>
+          <p style={{ fontSize: '13px', color: '#6b7280', margin: '4px 0 0 0' }}>Period: {fromLabel} — {toLabel}</p>
           <p style={{ fontSize: '12px', color: '#9ca3af', margin: '2px 0 0 0' }}>Printed: {printDate}</p>
         </div>
         <div style={{ textAlign: 'right' }}>
@@ -153,14 +147,4 @@ export default async function StatementPrintPage({
           ))}
         </tbody>
         <tfoot>
-          <tr style={{ borderTop: '2px solid #e5e7eb', background: '#f9fafb' }}>
-            <td colSpan={4} style={{ padding: '12px', fontWeight: 700, fontSize: '14px' }}>Total Outstanding</td>
-            <td style={{ padding: '12px', textAlign: 'right', fontWeight: 800, fontSize: '16px', color: '#dc2626' }}>{fmt(totalOutstanding)}</td>
-            <td />
-          </tr>
-        </tfoot>
-      </table>
-
-    </div>
-  )
-}
+          <tr style={{ borderTop: '2px solid #e5e7eb',
