@@ -44,7 +44,7 @@ export default function DataDeletion() {
               <div>
                 <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 10 }}>Your data, your choice</h2>
                 <p style={{ fontSize: 15, color: 'var(--text-secondary)', lineHeight: 1.8, margin: 0 }}>
-                  AgroYield Network respects your right to control your personal data. If you signed up using Facebook Login or any other method, you can request complete deletion of your account and all associated data at any time.
+                  AgroYield Network respects your right to control your personal data. Whether you signed up using email, Google, LinkedIn, or Facebook, you can request complete deletion of your account and all associated data at any time.
                 </p>
               </div>
 
@@ -63,9 +63,14 @@ export default function DataDeletion() {
               </div>
 
               <div>
-                <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 10 }}>Revoking Facebook permissions</h2>
+                <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 10 }}>Revoking third-party permissions</h2>
                 <p style={{ fontSize: 15, color: 'var(--text-secondary)', lineHeight: 1.8, margin: 0 }}>
-                  You can also revoke AgroYield Network's access to your Facebook data at any time by going to your Facebook Settings → Apps and Websites → finding AgroYield Networks → and clicking Remove.
+                  You can also revoke AgroYield Network's access to your third-party account data at any time:
+                </p>
+                <p style={{ fontSize: 15, color: 'var(--text-secondary)', lineHeight: 2.2, margin: '12px 0 0 0' }}>
+                  <strong style={{ color: 'var(--text-primary)' }}>Facebook:</strong> Settings → Apps and Websites → find AgroYield Networks → Remove<br />
+                  <strong style={{ color: 'var(--text-primary)' }}>Google:</strong> myaccount.google.com → Security → Third-party apps → find AgroYield Networks → Remove access<br />
+                  <strong style={{ color: 'var(--text-primary)' }}>LinkedIn:</strong> Settings → Data privacy → Other applications → find AgroYield Networks → Remove
                 </p>
               </div>
 
