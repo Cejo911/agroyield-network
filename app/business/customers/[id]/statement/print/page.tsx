@@ -80,7 +80,7 @@ export default async function StatementPrintPage({
         <div>
           <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#111827', margin: 0 }}>CUSTOMER STATEMENT</h1>
           <p style={{ fontSize: '13px', color: '#6b7280', margin: '4px 0 0 0' }}>Period: {fromLabel} — {toLabel}</p>
-          <p style={{ fontSize: '12px', color: '#9ca3af', margin: '2px 0 0 0' }}>Printed: {printDate}</p>
+          <p style={{ fontSize: '12px', color: '#6b7280', margin: '2px 0 0 0' }}>Printed: {printDate}</p>
         </div>
         <div style={{ textAlign: 'right' }}>
           <p style={{ fontWeight: 700, fontSize: '15px', margin: 0 }}>{business.name}</p>
