@@ -25,14 +25,8 @@ export async function GET(request: Request) {
           .select('id, first_name')
           .eq('id', user.id)
           .single()
-
-        if (!profile || !profile.first_name) {
-          .from('profiles')
-          .select('id, first_name')
-          .eq('id', user.id)
-          .single()
-
-        if (!profile || !profile.first_name) {
+        
+        if (profile && !profile.first_name) {
           try {
             await resend.emails.send({
               from: 'AgroYield Network <noreply@agroyield.africa>',
