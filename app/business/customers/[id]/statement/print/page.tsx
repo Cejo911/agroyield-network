@@ -32,10 +32,11 @@ export default async function StatementPrintPage({
 
   if (!business) redirect('/business/setup')
 
-  const { data: customer } = await supabase
+ const { data: customer } = await supabase
     .from('customers')
     .select('id, name, email, phone, address')
     .eq('id', params.id)
+    .eq('business_id', business.id)
     .maybeSingle()
 
   if (!customer) redirect('/business/customers')
