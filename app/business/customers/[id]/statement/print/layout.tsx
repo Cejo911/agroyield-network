@@ -3,14 +3,6 @@ export default function PrintLayout({ children }: { children: React.ReactNode })
     <html lang="en">
       <head>
         <style>{`
-          * {
-            box-sizing: border-box;
-          }
-          body {
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-          }
           @media print {
             .no-print {
               display: none !important;
