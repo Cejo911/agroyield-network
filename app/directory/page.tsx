@@ -58,7 +58,8 @@ export default async function DirectoryPage() {
   )
 
   // Build mentee IDs (unique users who have requested/had mentorship sessions)
-  const menteeIds: string[] = [...new Set((menteeData ?? []).map((s: { mentee_id: string }) => s.mentee_id))]
+  const menteeIdsRaw: string[] = (menteeData ?? []).map((s: { mentee_id: string }) => s.mentee_id)
+  const menteeIds: string[] = Array.from(new Set(menteeIdsRaw))
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
