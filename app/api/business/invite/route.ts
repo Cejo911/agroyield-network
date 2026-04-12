@@ -14,6 +14,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Service role client to bypass RLS and FK checks on auth.users
+    const admin = createAdmin(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
     const { business_id, email, role, resend: isResend } = await request.json()
 
     if (!business_id || !email || !role) {
@@ -45,7 +51,7 @@ export async function POST(request: Request) {
 
     if (isResend) {
       // Re-sending an existing invitation — just fetch the token
-      const { data: existing } = await supabase
+      const { data: existing } = await admin
         .from('business_team')
         .select('invite_token, status')
         .eq('business_id', business_id)
@@ -59,7 +65,7 @@ export async function POST(request: Request) {
       inviteToken = existing.invite_token
     } else {
       // Check for existing invitation
-      const { data: existing } = await supabase
+      const { data: existing } = await admin
         .from('business_team')
         .select('id, status')
         .eq('business_id', business_id)
@@ -75,12 +81,12 @@ export async function POST(request: Request) {
         }
         // If revoked, delete old record and create fresh
         if (existing.status === 'revoked') {
-          await supabase.from('business_team').delete().eq('id', existing.id)
+          await admin.from('business_team').delete().eq('id', existing.id)
         }
       }
 
-      // Create the invitation
-      const { data: invite, error: insertError } = await supabase
+      // Create the invitation using admin client (bypasses FK check on auth.users)
+      const { data: invite, error: insertError } = await admin
         .from('business_team')
         .insert({
           business_id,
