@@ -8,7 +8,7 @@ const NAV_ITEMS = [
   { href: '/business/products', label: 'Products', icon: '📦' },
   { href: '/business/invoices', label: 'Invoices', icon: '🧾' },
   { href: '/business/expenses', label: 'Expenses', icon: '💸' },
-  { href: '/business/customers', label: 'Clients', icon: '👥' },
+  { href: '/business/assets', label: 'Assets', icon: '🏗️' },
 ]
 
 export default function MobileNav() {
