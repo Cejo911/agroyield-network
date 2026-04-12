@@ -136,7 +136,7 @@ export default function PriceIntelligence({
       setAlertForm({ ...alertForm, target_price: '' })
     }
     setSavingAlert(false)
-
+  }
   async function deleteAlert(id: string) {
     setDeletingAlert(id)
     await supabase.from('price_alerts').delete().eq('id', id)
