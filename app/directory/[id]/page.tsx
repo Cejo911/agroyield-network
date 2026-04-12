@@ -65,16 +65,6 @@ export default async function PublicProfilePage({
                 </span>
               )}
 
-              {/* Follower / Following counts */}
-              <div className="flex gap-4 mt-2 text-sm">
-                <a href={`/directory/${id}/followers`} style={{ cursor: 'pointer', textDecoration: 'none' }} className="text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:underline">
-                  <strong className="text-gray-900 dark:text-white">{followerCount ?? 0}</strong>{' '}Followers
-                </a>
-                <a href={`/directory/${id}/following`} style={{ cursor: 'pointer', textDecoration: 'none' }} className="text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:underline">
-                  <strong className="text-gray-900 dark:text-white">{followingCount ?? 0}</strong>{' '}Following
-                </a>
-              </div>
-
               {/* Badges */}
               <div className="flex flex-wrap gap-1.5 mt-2">
                 {mentorProfile && (
@@ -105,6 +95,24 @@ export default async function PublicProfilePage({
                 )}
               </div>
             </div>
+          </div>
+
+          {/* Follower / Following counts */}
+          <div className="flex gap-3 mb-6">
+            <Link
+              href={`/directory/${id}/followers`}
+              className="flex-1 text-center bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg py-3 hover:border-green-400 dark:hover:border-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
+            >
+              <p className="text-xl font-bold text-gray-900 dark:text-white">{followerCount ?? 0}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Followers</p>
+            </Link>
+            <Link
+              href={`/directory/${id}/following`}
+              className="flex-1 text-center bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg py-3 hover:border-green-400 dark:hover:border-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
+            >
+              <p className="text-xl font-bold text-gray-900 dark:text-white">{followingCount ?? 0}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Following</p>
+            </Link>
           </div>
 
           {/* Details */}
