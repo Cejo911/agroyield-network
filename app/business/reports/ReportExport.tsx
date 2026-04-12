@@ -2,20 +2,24 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import ExcelJS from 'exceljs'
+import { getBusinessAccess } from '@/lib/business-access'
 
 export default function ReportExport({ period }: { period: string }) {
   const [loading, setLoading] = useState<'excel' | null>(null)
   const supabase = createClient()
 
-  async function fetchData() {
+    async function fetchData() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return null
 
+    const access = await getBusinessAccess(supabase, user.id)
+    if (!access) return null
+
     const [invoicesRes, expensesRes, customersRes, businessRes] = await Promise.all([
-      supabase.from('invoices').select('*').eq('user_id', user.id).order('issue_date', { ascending: false }),
-      supabase.from('business_expenses').select('*').eq('user_id', user.id).order('date', { ascending: false }),
-      supabase.from('customers').select('id, name').eq('user_id', user.id),
-      supabase.from('businesses').select('*').eq('user_id', user.id).single(),
+      supabase.from('invoices').select('*').eq('business_id', access.businessId).order('issue_date', { ascending: false }),
+      supabase.from('business_expenses').select('*').eq('business_id', access.businessId).order('date', { ascending: false }),
+      supabase.from('customers').select('id, name').eq('business_id', access.businessId),
+      supabase.from('businesses').select('*').eq('id', access.businessId).single(),
     ])
 
     return {
