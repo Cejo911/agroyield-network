@@ -89,6 +89,7 @@ export default function CommunityClient({ posts, profileMap, likeCountMap, userL
     setContent('')
     setLinkUrl('')
     setPollOptions(['', ''])
+    setPostType('discussion')
     setShowForm(false)
     router.refresh()
   }
@@ -227,7 +228,7 @@ export default function CommunityClient({ posts, profileMap, likeCountMap, userL
 
           {/* Actions */}
           <div className="flex gap-3">
-            <button type="button" onClick={() => setShowForm(false)}
+            <button type="button" onClick={() => { setPostType('discussion'); setShowForm(false) }}
               className="flex-1 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-sm font-medium py-2 rounded-lg">
               Cancel
             </button>
