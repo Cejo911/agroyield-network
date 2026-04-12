@@ -33,23 +33,7 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* Ensure all form inputs have visible text across the business module */
-input[type="text"],
-input[type="number"],
-input[type="email"],
-input[type="tel"],
-input[type="date"],
-input[type="password"],
-select,
-textarea {
-  color: #111827;
-}
-
-input::placeholder,
-textarea::placeholder {
-  color: #9ca3af;
-}
-
+/* Ensure all form inputs have visible text — light and dark mode */
 input[type="text"],
 input[type="number"],
 input[type="email"],
@@ -60,4 +44,22 @@ select,
 textarea {
   color: #111827;
   border-color: #d1d5db;
+}
+
+.dark input[type="text"],
+.dark input[type="number"],
+.dark input[type="email"],
+.dark input[type="tel"],
+.dark input[type="date"],
+.dark input[type="password"],
+.dark select,
+.dark textarea {
+  color: #f9fafb;
+  border-color: #374151;
+  background-color: #1f2937;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #9ca3af;
 }
