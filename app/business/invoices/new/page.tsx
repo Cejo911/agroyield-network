@@ -210,22 +210,22 @@ export default function NewInvoicePage() {
     }
   }
 
-  const inputClass = "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
-  const selectClass = "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
-  const labelClass = "block text-xs font-semibold text-gray-700 mb-1"
+  const inputClass = "w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-800"
+  const selectClass = "w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-800"
+  const labelClass = "block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1"
 
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">New Invoice</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">New Invoice</h1>
         <p className="text-gray-500 text-sm mt-1">Create a new invoice or receipt</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
 
         {/* Invoice Details */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-          <h2 className="text-sm font-semibold text-gray-700 mb-4 uppercase tracking-wide">Invoice Details</h2>
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-6">
+          <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 uppercase tracking-wide">Invoice Details</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>Document Type</label>
@@ -279,16 +279,16 @@ export default function NewInvoicePage() {
         </div>
 
         {/* Line Items */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-          <h2 className="text-sm font-semibold text-gray-700 mb-4 uppercase tracking-wide">Line Items</h2>
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-6">
+          <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 uppercase tracking-wide">Line Items</h2>
 
           {/* Desktop line item headers */}
           <div className="hidden md:grid grid-cols-12 gap-2 mb-2 px-1">
-            <div className="col-span-3 text-xs font-semibold text-gray-600">Product</div>
-            <div className="col-span-3 text-xs font-semibold text-gray-600">Description</div>
-            <div className="col-span-1 text-xs font-semibold text-gray-600">Qty</div>
-            <div className="col-span-2 text-xs font-semibold text-gray-600">Unit Price (₦)</div>
-            <div className="col-span-2 text-xs font-semibold text-gray-600 text-right">Total</div>
+            <div className="col-span-3 text-xs font-semibold text-gray-600 dark:text-gray-400">Product</div>
+            <div className="col-span-3 text-xs font-semibold text-gray-600 dark:text-gray-400">Description</div>
+            <div className="col-span-1 text-xs font-semibold text-gray-600 dark:text-gray-400">Qty</div>
+            <div className="col-span-2 text-xs font-semibold text-gray-600 dark:text-gray-400">Unit Price (₦)</div>
+            <div className="col-span-2 text-xs font-semibold text-gray-600 dark:text-gray-400 text-right">Total</div>
             <div className="col-span-1" />
           </div>
 
@@ -357,7 +357,7 @@ export default function NewInvoicePage() {
                       onChange={e => updateItem(idx, 'unit_price', e.target.value)}
                       className={inputClass} required />
                   </div>
-                  <div className="col-span-2 text-right text-sm font-semibold text-gray-900">
+                  <div className="col-span-2 text-right text-sm font-semibold text-gray-900 dark:text-white">
                     {formatCurrency(lineTotal(item))}
                   </div>
                   <div className="col-span-1 flex justify-center">
@@ -441,8 +441,8 @@ export default function NewInvoicePage() {
         {/* Notes + Summary */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-            <h2 className="text-sm font-semibold text-gray-700 mb-4 uppercase tracking-wide">Notes</h2>
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-6">
+            <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 uppercase tracking-wide">Notes</h2>
             <textarea
               value={notes}
               onChange={e => setNotes(e.target.value)}
@@ -451,9 +451,9 @@ export default function NewInvoicePage() {
               className={`${inputClass} resize-none`}
             />
 
-            <div className="mt-5 border-t border-gray-100 pt-4">
+            <div className="mt-5 border-t border-gray-100 dark:border-gray-800 pt-4">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-semibold text-gray-700 uppercase tracking-wide">VAT / Tax</span>
+                <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">VAT / Tax</span>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <div
                     onClick={() => setVatEnabled(!vatEnabled)}
@@ -461,7 +461,7 @@ export default function NewInvoicePage() {
                   >
                     <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${vatEnabled ? 'translate-x-5' : 'translate-x-0.5'}`} />
                   </div>
-                  <span className="text-xs text-gray-600">{vatEnabled ? 'Applied' : 'Not applied'}</span>
+                  <span className="text-xs text-gray-600 dark:text-gray-400">{vatEnabled ? 'Applied' : 'Not applied'}</span>
                 </label>
               </div>
 
@@ -475,9 +475,9 @@ export default function NewInvoicePage() {
                       step="0.1"
                       value={vatPercent}
                       onChange={e => setVatPercent(e.target.value)}
-                      className="w-24 border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
+                      className="w-24 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-800"
                     />
-                    <span className="text-sm text-gray-700 font-medium">%</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">%</span>
                   </div>
                   <button
                     type="button"
@@ -491,17 +491,17 @@ export default function NewInvoicePage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-            <h2 className="text-sm font-semibold text-gray-700 mb-4 uppercase tracking-wide">Summary</h2>
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-6">
+            <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 uppercase tracking-wide">Summary</h2>
             <div className="space-y-3">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Subtotal</span>
-                <span className="font-semibold text-gray-900">{formatCurrency(subtotal)}</span>
+                <span className="text-gray-600 dark:text-gray-400">Subtotal</span>
+                <span className="font-semibold text-gray-900 dark:text-white">{formatCurrency(subtotal)}</span>
               </div>
               {vatEnabled && effectiveVat > 0 && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">VAT ({effectiveVat}%)</span>
-                  <span className="font-semibold text-gray-900">{formatCurrency(vatAmount)}</span>
+                  <span className="text-gray-600 dark:text-gray-400">VAT ({effectiveVat}%)</span>
+                  <span className="font-semibold text-gray-900 dark:text-white">{formatCurrency(vatAmount)}</span>
                 </div>
               )}
               {!vatEnabled && (
@@ -509,8 +509,8 @@ export default function NewInvoicePage() {
                   <span className="text-gray-400 italic">No VAT applied</span>
                 </div>
               )}
-              <div className="border-t border-gray-200 pt-3 flex justify-between items-center">
-                <span className="font-bold text-gray-900">Total</span>
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-3 flex justify-between items-center">
+                <span className="font-bold text-gray-900 dark:text-white">Total</span>
                 <span className="font-bold text-green-700 text-xl">{formatCurrency(totalAmount)}</span>
               </div>
             </div>
@@ -518,7 +518,7 @@ export default function NewInvoicePage() {
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-lg px-4 py-3 text-sm">
             {error}
           </div>
         )}
@@ -527,7 +527,7 @@ export default function NewInvoicePage() {
           <button
             type="button"
             onClick={() => router.push('/business/invoices')}
-            className="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50"
+            className="px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800"
           >
             Cancel
           </button>

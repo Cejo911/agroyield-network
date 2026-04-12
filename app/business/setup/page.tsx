@@ -82,27 +82,27 @@ export default function BusinessSetup() {
 
   const field = (label: string, key: keyof typeof form, type = 'text', placeholder = '') => (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{label}</label>
       <input
         type={type}
         value={form[key]}
         onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
         placeholder={placeholder}
-        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+        className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-green-500"
       />
     </div>
   )
 
   return (
     <div className="max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
         {businessId ? 'Business Settings' : 'Set Up Your Business'}
       </h1>
       <form onSubmit={handleSubmit} className="space-y-6">
 
         {/* Logo */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 space-y-4">
-          <h2 className="font-semibold text-gray-800">Business Logo</h2>
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm p-5 space-y-4">
+          <h2 className="font-semibold text-gray-800 dark:text-white">Business Logo</h2>
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
             {form.logo_url ? (
               <img src={form.logo_url} alt="Logo" className="w-20 h-20 object-contain rounded-lg border border-gray-100" />
@@ -123,7 +123,7 @@ export default function BusinessSetup() {
                 type="button"
                 onClick={() => fileRef.current?.click()}
                 disabled={uploading}
-                className="block border border-gray-200 text-gray-600 px-4 py-2 rounded-lg text-sm hover:bg-gray-50 transition-colors disabled:opacity-50"
+                className="block border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 px-4 py-2 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
               >
                 {uploading ? 'Uploading...' : form.logo_url ? 'Change Logo' : 'Upload Logo'}
               </button>
@@ -142,8 +142,8 @@ export default function BusinessSetup() {
         </div>
 
         {/* Business Details */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 space-y-4">
-          <h2 className="font-semibold text-gray-800">Business Details</h2>
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm p-5 space-y-4">
+          <h2 className="font-semibold text-gray-800 dark:text-white">Business Details</h2>
           {field('Business Name *', 'name', 'text', 'e.g. Chidi Farms Ltd')}
           {field('Address', 'address', 'text', 'Street, City, State')}
           {field('Phone', 'phone', 'tel', '+234...')}
@@ -151,16 +151,16 @@ export default function BusinessSetup() {
         </div>
 
         {/* Bank Details */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 space-y-4">
-          <h2 className="font-semibold text-gray-800">Bank Details</h2>
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm p-5 space-y-4">
+          <h2 className="font-semibold text-gray-800 dark:text-white">Bank Details</h2>
           {field('Bank Name', 'bank_name', 'text', 'e.g. Access Bank')}
           {field('Account Name', 'account_name', 'text', 'Name on account')}
           {field('Account Number', 'account_number', 'text', '0123456789')}
         </div>
 
         {/* Invoice Settings */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 space-y-4">
-          <h2 className="font-semibold text-gray-800">Invoice Settings</h2>
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm p-5 space-y-4">
+          <h2 className="font-semibold text-gray-800 dark:text-white">Invoice Settings</h2>
           {field('Invoice Prefix', 'invoice_prefix', 'text', 'e.g. INV, AGY, CF')}
           <p className="text-xs text-gray-400">
             Invoices will be numbered: {form.invoice_prefix || 'INV'}-0001, {form.invoice_prefix || 'INV'}-0002...
