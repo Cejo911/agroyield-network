@@ -3,11 +3,16 @@ import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { Resend } from 'resend'
 import { createNotification } from '@/lib/notifications'
+import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(request: Request) {
   try {
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown'
+    const { success } = rateLimit(ip, { limit: 10, windowMs: 60_000 })
+    if (!success) return rateLimitResponse()
+
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 

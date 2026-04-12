@@ -1,6 +1,7 @@
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
 import { NextResponse } from 'next/server'
+import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 const adminClient = createAdminClient(
@@ -10,6 +11,10 @@ const adminClient = createAdminClient(
 
 export async function POST(request: Request) {
   try {
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown'
+    const { success } = rateLimit(ip, { limit: 3, windowMs: 60_000 })
+    if (!success) return rateLimitResponse()
+
     const { email } = await request.json()
     if (!email) {
       return NextResponse.json({ error: 'Email is required' }, { status: 400 })

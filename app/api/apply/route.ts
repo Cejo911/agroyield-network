@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
+import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -10,6 +11,10 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown'
+  const { success } = rateLimit(ip, { limit: 5, windowMs: 60_000 })
+  if (!success) return rateLimitResponse()
+
   const { opportunity_id } = await request.json()
 
   if (!opportunity_id) {

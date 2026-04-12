@@ -76,7 +76,7 @@ Make the platform feel professional and work for Nigerian SMEs on mobile.
 
 > **Why:** Public API routes (invite, contact, auth) have no rate limiting. Abuse risk before launch.
 > **Scope:** IP-based rate limiter on all public and sensitive API routes.
-> **Status:** ⬜ Not started
+> **Status:** ✅ Completed (12 Apr 2026) — In-memory rate limiter on 10 routes: reset-password (3/min), contact (5/min), waitlist (5/min), apply (5/min), follow (20/min), invite (10/min), subscribe (5/min), payment (5/min), like (30/min), notifications (20/min).
 
 ---
 

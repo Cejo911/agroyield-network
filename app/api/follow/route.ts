@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { createNotification } from '@/lib/notifications'
+import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
 
 // GET /api/follow?userId=xxx
 export async function GET(request: NextRequest) {
@@ -36,6 +37,10 @@ export async function GET(request: NextRequest) {
 
 // POST /api/follow — toggle follow/unfollow
 export async function POST(request: NextRequest) {
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown'
+  const { success } = rateLimit(ip, { limit: 20, windowMs: 60_000 })
+  if (!success) return rateLimitResponse()
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
