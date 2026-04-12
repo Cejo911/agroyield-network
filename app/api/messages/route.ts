@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createAdmin } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 
 // POST: Start or find a conversation, optionally send first message
@@ -15,14 +16,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Cannot message yourself' }, { status: 400 })
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const supabaseAny = supabase as any
+  // Service role client to bypass RLS for cross-user conversation creation
+  const admin = createAdmin(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
 
   // Always store smaller UUID as participant_a for consistent lookups
   const [p1, p2] = [user.id, recipientId].sort()
 
-  // Check if conversation already exists
-  const { data: existing } = await supabaseAny
+  // Check if conversation already exists (either direction)
+  const { data: existing } = await admin
     .from('conversations')
     .select('id')
     .eq('participant_a', p1)
@@ -35,7 +39,7 @@ export async function POST(request: Request) {
     conversationId = existing.id
   } else {
     // Create new conversation
-    const { data: newConvo, error: convoErr } = await supabaseAny
+    const { data: newConvo, error: convoErr } = await admin
       .from('conversations')
       .insert({ participant_a: p1, participant_b: p2 })
       .select('id')
@@ -47,9 +51,9 @@ export async function POST(request: Request) {
     conversationId = newConvo.id
   }
 
-  // Optionally send first message
+  // Send first message if provided
   if (body?.trim()) {
-    const { error: msgErr } = await supabaseAny
+    const { error: msgErr } = await admin
       .from('messages')
       .insert({
         conversation_id: conversationId,
@@ -63,7 +67,7 @@ export async function POST(request: Request) {
     }
 
     // Update conversation last_message_at and preview
-    await supabaseAny
+    await admin
       .from('conversations')
       .update({
         last_message_at: new Date().toISOString(),

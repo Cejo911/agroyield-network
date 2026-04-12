@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createAdmin } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 
 // POST: Send a message to an existing conversation
@@ -12,11 +13,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Missing conversationId or body' }, { status: 400 })
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const supabaseAny = supabase as any
+  // Service role client to bypass RLS for cross-user operations
+  const admin = createAdmin(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
 
   // Verify user is a participant
-  const { data: convo } = await supabaseAny
+  const { data: convo } = await admin
     .from('conversations')
     .select('id, participant_a, participant_b')
     .eq('id', conversationId)
@@ -27,7 +31,7 @@ export async function POST(request: Request) {
   }
 
   // Insert message
-  const { data: message, error: msgErr } = await supabaseAny
+  const { data: message, error: msgErr } = await admin
     .from('messages')
     .insert({
       conversation_id: conversationId,
@@ -43,7 +47,7 @@ export async function POST(request: Request) {
   }
 
   // Update conversation last_message_at and preview
-  await supabaseAny
+  await admin
     .from('conversations')
     .update({
       last_message_at: new Date().toISOString(),
