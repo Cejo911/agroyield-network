@@ -51,7 +51,14 @@ export default function ExpensesPage() {
   const [saving,    setSaving]    = useState(false)
   const [filterCat, setFilterCat] = useState('All')
   const [search,    setSearch]    = useState('')
+  const [sortBy,    setSortBy]    = useState<'date' | 'amount'>('date')
+  const [sortDir,   setSortDir]   = useState<'asc' | 'desc'>('desc')
   const [deleting,  setDeleting]  = useState<string | null>(null)
+
+  function toggleSort(col: 'date' | 'amount') {
+    if (sortBy === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    else { setSortBy(col); setSortDir('desc') }
+  }
 
   async function load() {
     const { data: { user } } = await supabase.auth.getUser()
@@ -141,6 +148,10 @@ export default function ExpensesPage() {
       )
     }
     return true
+  }).sort((a, b) => {
+    const mult = sortDir === 'asc' ? 1 : -1
+    if (sortBy === 'date') return mult * (a.date.localeCompare(b.date))
+    return mult * (Number(a.amount) - Number(b.amount))
   })
 
   const totalAll   = expenses.reduce((s, e) => s + Number(e.amount), 0)
@@ -244,10 +255,18 @@ export default function ExpensesPage() {
               <table className="w-full hidden md:table">
                 <thead>
                   <tr className="text-xs font-semibold text-gray-500 uppercase tracking-wide border-b border-gray-100 dark:border-gray-800">
-                    <th className="text-left px-4 py-3">Date</th>
+                    <th className="text-left px-4 py-3">
+                      <button onClick={() => toggleSort('date')} className="inline-flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+                        Date {sortBy === 'date' && <span className="text-green-600">{sortDir === 'asc' ? '↑' : '↓'}</span>}
+                      </button>
+                    </th>
                     <th className="text-left px-4 py-3">Description</th>
                     <th className="text-left px-4 py-3">Category</th>
-                    <th className="text-right px-4 py-3">Amount</th>
+                    <th className="text-right px-4 py-3">
+                      <button onClick={() => toggleSort('amount')} className="inline-flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-300 transition-colors ml-auto">
+                        Amount {sortBy === 'amount' && <span className="text-green-600">{sortDir === 'asc' ? '↑' : '↓'}</span>}
+                      </button>
+                    </th>
                     <th className="px-4 py-3" />
                   </tr>
                 </thead>
@@ -281,7 +300,20 @@ export default function ExpensesPage() {
                 </tbody>
               </table>
 
-              {/* Mobile Cards */}
+              {/* Mobile Sort + Cards */}
+              <div className="md:hidden px-4 py-2 flex items-center gap-2 border-b border-gray-100 dark:border-gray-800">
+                <span className="text-[10px] text-gray-400 uppercase tracking-wide font-semibold">Sort:</span>
+                {(['date', 'amount'] as const).map(col => (
+                  <button key={col} onClick={() => toggleSort(col)}
+                    className={`text-xs px-2.5 py-1 rounded-full transition-colors ${
+                      sortBy === col
+                        ? 'bg-green-700 text-white'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+                    }`}>
+                    {col.charAt(0).toUpperCase() + col.slice(1)} {sortBy === col && (sortDir === 'asc' ? '↑' : '↓')}
+                  </button>
+                ))}
+              </div>
               <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-800">
                 {filtered.map(exp => (
                   <div key={exp.id} className="p-4 flex items-start justify-between">
