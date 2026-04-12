@@ -14,6 +14,7 @@ const NAV_LINKS = [
   { href: '/prices',        label: 'Price Tracker' },
   { href: '/marketplace',   label: 'Marketplace' },
   { href: '/research',      label: 'Research' },
+  { href: '/mentorship',    label: 'Mentorship' },
   { href: '/business',      label: 'Business' },
 ]
 
