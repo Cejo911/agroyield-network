@@ -86,8 +86,10 @@ export default function MentorBrowser({ mentors, userId }: { mentors: Mentor[]; 
             className="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300"
           >
             <option value="All">All Availability</option>
-            <option value="available">Available</option>
-            <option value="limited">Limited</option>
+            <option value="Open">Open</option>
+            <option value="Limited">Limited</option>
+            <option value="Waitlist">Waitlist</option>
+            <option value="Closed">Closed</option>
           </select>
         </div>
       </div>
@@ -153,12 +155,13 @@ export default function MentorBrowser({ mentors, userId }: { mentors: Mentor[]; 
                       </span>
                     )}
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                      m.availability === 'available' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' :
-                      m.availability === 'limited'   ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400' :
-                                                       'bg-gray-100 dark:bg-gray-800 text-gray-500'
-                    }`}>
-                      {m.availability === 'available' ? 'Available' : m.availability === 'limited' ? 'Limited' : 'Unavailable'}
-                    </span>
+  m.availability === 'Open'    ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' :
+  m.availability === 'Limited' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400' :
+  m.availability === 'Waitlist' ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400' :
+                                  'bg-gray-100 dark:bg-gray-800 text-gray-500'
+}`}>
+  {m.availability === 'Open' ? 'Open' : m.availability === 'Limited' ? 'Limited' : m.availability === 'Waitlist' ? 'Waitlist' : 'Closed'}
+</span>
                   </div>
                 </div>
               </Link>

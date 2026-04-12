@@ -100,12 +100,13 @@ export default function MentorDetail({ mentor, reviews, avgRating, sessionCount,
                 {sessionCount} session{sessionCount !== 1 ? 's' : ''} completed
               </div>
               <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
-                mentor.availability === 'available' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' :
-                mentor.availability === 'limited'   ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400' :
-                                                     'bg-gray-100 dark:bg-gray-800 text-gray-500'
-              }`}>
-                {mentor.availability === 'available' ? 'Available' : mentor.availability === 'limited' ? 'Limited Availability' : 'Unavailable'}
-              </span>
+  mentor.availability === 'Open'    ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' :
+  mentor.availability === 'Limited' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400' :
+  mentor.availability === 'Waitlist' ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400' :
+                                      'bg-gray-100 dark:bg-gray-800 text-gray-500'
+}`}>
+  {mentor.availability === 'Open' ? 'Open' : mentor.availability === 'Limited' ? 'Limited' : mentor.availability === 'Waitlist' ? 'Waitlist' : 'Closed'}
+</span>
             </div>
           </div>
         </div>
@@ -155,7 +156,7 @@ export default function MentorDetail({ mentor, reviews, avgRating, sessionCount,
         )}
 
         {/* Request session button */}
-        {!isOwnProfile && mentor.availability !== 'unavailable' && (
+        {!isOwnProfile && mentor.availability !== 'Closed' && (
           <div className="mt-6 pt-5 border-t border-gray-100 dark:border-gray-800">
             {existingSession ? (
               <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 text-sm text-yellow-800 dark:text-yellow-300">

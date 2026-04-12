@@ -30,7 +30,7 @@ export default function BecomeMentorPage() {
     bio: '',
     years_experience: '',
     max_mentees: '5',
-    availability: 'available',
+    availability: 'Open',
     session_format: ['video', 'chat'] as string[],
     languages: 'English',
     location: '',
@@ -56,7 +56,7 @@ export default function BecomeMentorPage() {
           bio: existing.bio || '',
           years_experience: String(existing.years_experience || ''),
           max_mentees: String(existing.max_mentees || 5),
-          availability: existing.availability || 'available',
+          availability: existing.availability || 'Open',
           session_format: existing.session_format || ['video', 'chat'],
           languages: (existing.languages || ['English']).join(', '),
           location: existing.location || '',
@@ -105,13 +105,21 @@ export default function BecomeMentorPage() {
       updated_at: new Date().toISOString(),
     }
 
+    let error
     if (isEdit) {
-      await supabase.from('mentor_profiles').update(payload).eq('user_id', user.id)
+      const result = await supabase.from('mentor_profiles').update(payload).eq('user_id', user.id)
+      error = result.error
     } else {
-      await supabase.from('mentor_profiles').insert(payload)
+      const result = await supabase.from('mentor_profiles').insert(payload)
+      error = result.error
     }
 
     setSaving(false)
+
+    if (error) {
+      alert(`Failed to save mentor profile: ${error.message}`)
+      return
+    }
     router.push('/mentorship')
   }
 
@@ -222,9 +230,10 @@ export default function BecomeMentorPage() {
               onChange={e => setForm({ ...form, availability: e.target.value })}
               className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-green-500"
             >
-              <option value="available">Available — accepting new mentees</option>
-              <option value="limited">Limited — only accepting select requests</option>
-              <option value="unavailable">Unavailable — not accepting requests right now</option>
+              <option value="Open">Open — accepting new mentees</option>
+              <option value="Limited">Limited — only accepting select requests</option>
+              <option value="Waitlist">Waitlist — full, but accepting waitlist</option>
+              <option value="Closed">Closed — not accepting requests right now</option>
             </select>
           </div>
 
