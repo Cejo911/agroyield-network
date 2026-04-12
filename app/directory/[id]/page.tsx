@@ -67,12 +67,12 @@ export default async function PublicProfilePage({
 
               {/* Follower / Following counts */}
               <div className="flex gap-4 mt-2 text-sm">
-                <span className="text-gray-600 dark:text-gray-400">
+                <Link href={`/directory/${id}/followers`} className="text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors">
                   <strong className="text-gray-900 dark:text-white">{followerCount ?? 0}</strong> Followers
-                </span>
-                <span className="text-gray-600 dark:text-gray-400">
+                </Link>
+                <Link href={`/directory/${id}/following`} className="text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors">
                   <strong className="text-gray-900 dark:text-white">{followingCount ?? 0}</strong> Following
-                </span>
+                </Link>
               </div>
 
               {/* Badges */}
@@ -113,6 +113,18 @@ export default async function PublicProfilePage({
               <p>
                 <span className="mr-1">🏛</span>
                 <span className="font-medium text-gray-700 dark:text-gray-300">{profile.institution}</span>
+              </p>
+            )}
+            {profile.institution_2 && (
+              <p>
+                <span className="mr-1">🏛</span>
+                <span className="font-medium text-gray-700 dark:text-gray-300">{profile.institution_2}</span>
+              </p>
+            )}
+            {profile.institution_3 && (
+              <p>
+                <span className="mr-1">🏛</span>
+                <span className="font-medium text-gray-700 dark:text-gray-300">{profile.institution_3}</span>
               </p>
             )}
             {profile.location && (

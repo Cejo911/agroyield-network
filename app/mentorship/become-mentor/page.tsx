@@ -42,11 +42,11 @@ export default function BecomeMentorPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
 
-      const { data: existing } = await supabase
-        .from('mentor_profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle()
+      // Fetch mentor profile and user profile in parallel
+      const [{ data: existing }, { data: profile }] = await Promise.all([
+        supabase.from('mentor_profiles').select('*').eq('user_id', user.id).maybeSingle(),
+        supabase.from('profiles').select('linkedin, location').eq('id', user.id).single(),
+      ])
 
       if (existing) {
         setIsEdit(true)
@@ -59,9 +59,16 @@ export default function BecomeMentorPage() {
           availability: existing.availability || 'Open',
           session_format: existing.session_format || ['video', 'chat'],
           languages: (existing.languages || ['English']).join(', '),
-          location: existing.location || '',
-          linkedin_url: existing.linkedin_url || '',
+          location: existing.location || profile?.location || '',
+          linkedin_url: existing.linkedin_url || profile?.linkedin || '',
         })
+      } else {
+        // Pre-fill from profile for new mentors
+        setForm(f => ({
+          ...f,
+          location: profile?.location || '',
+          linkedin_url: profile?.linkedin || '',
+        }))
       }
       setLoading(false)
     }

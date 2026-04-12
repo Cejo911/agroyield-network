@@ -169,6 +169,8 @@ type ProfileFormProps = {
     bio:           string | null
     location:      string | null
     institution:   string | null
+    institution_2: string | null
+    institution_3: string | null
     interests:     string[] | null
     linkedin:      string | null
     twitter:       string | null
@@ -205,6 +207,8 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
     bio:           initialData.bio           || '',
     location:      initialData.location      || '',
     institution:   initialData.institution   || '',
+    institution_2: initialData.institution_2 || '',
+    institution_3: initialData.institution_3 || '',
     interests:     initialData.interests     || [] as string[],
     linkedin:      initialData.linkedin      || '',
     twitter:       initialData.twitter       || '',
@@ -483,6 +487,32 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
                     <option key={inst} value={inst} />
                   ))}
                 </datalist>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 mt-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Other Institution / Programme</label>
+                <input
+                  type="text"
+                  value={form.institution_2}
+                  onChange={e => setForm(prev => ({ ...prev, institution_2: e.target.value }))}
+                  placeholder="e.g. Stanford LEAD Program"
+                  list="institutions-list"
+                  autoComplete="off"
+                  className={inputCls}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Other Institution / Programme</label>
+                <input
+                  type="text"
+                  value={form.institution_3}
+                  onChange={e => setForm(prev => ({ ...prev, institution_3: e.target.value }))}
+                  placeholder="e.g. Harvard Finance Specialization"
+                  list="institutions-list"
+                  autoComplete="off"
+                  className={inputCls}
+                />
               </div>
             </div>
           </div>

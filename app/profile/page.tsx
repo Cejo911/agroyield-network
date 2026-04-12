@@ -67,6 +67,8 @@ export default async function ProfilePage() {
               bio:           profile?.bio           ?? null,
               location:      profile?.location      ?? null,
               institution:   profile?.institution   ?? null,
+              institution_2: (rawProfile?.institution_2 as string) ?? null,
+              institution_3: (rawProfile?.institution_3 as string) ?? null,
               interests:     profile?.interests     ?? null,
               linkedin:      profile?.linkedin      ?? null,
               twitter:       profile?.twitter       ?? null,

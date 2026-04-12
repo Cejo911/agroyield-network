@@ -54,6 +54,8 @@ export async function POST(req: Request) {
       bio:           body.bio           || null,
       location:      body.location      || null,
       institution:   body.institution   || null,
+      institution_2: body.institution_2 || null,
+      institution_3: body.institution_3 || null,
       interests:     body.interests?.length ? body.interests : null,
       linkedin:      body.linkedin      || null,
       twitter:       body.twitter       || null,
