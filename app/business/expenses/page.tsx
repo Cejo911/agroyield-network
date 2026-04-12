@@ -50,6 +50,7 @@ export default function ExpensesPage() {
   const [form,      setForm]      = useState<typeof empty>(empty)
   const [saving,    setSaving]    = useState(false)
   const [filterCat, setFilterCat] = useState('All')
+  const [search,    setSearch]    = useState('')
   const [deleting,  setDeleting]  = useState<string | null>(null)
 
   async function load() {
@@ -127,7 +128,20 @@ export default function ExpensesPage() {
     load()
   }
 
-  const filtered = filterCat === 'All' ? expenses : expenses.filter(e => e.category === filterCat)
+  const filtered = expenses.filter(e => {
+    if (filterCat !== 'All' && e.category !== filterCat) return false
+    if (search.trim()) {
+      const q = search.toLowerCase()
+      return (
+        e.description.toLowerCase().includes(q) ||
+        e.category.toLowerCase().includes(q) ||
+        (e.notes || '').toLowerCase().includes(q) ||
+        String(e.amount).includes(q) ||
+        e.payment_method.toLowerCase().includes(q)
+      )
+    }
+    return true
+  })
 
   const totalAll   = expenses.reduce((s, e) => s + Number(e.amount), 0)
   const thisMonth  = new Date().toISOString().slice(0, 7)
@@ -184,8 +198,24 @@ export default function ExpensesPage() {
         {/* Expenses list */}
         <div className="lg:col-span-2">
           <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800">
-            {/* Filter bar */}
-            <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex gap-1.5 overflow-x-auto pb-3 sm:pb-3 sm:flex-wrap">
+            {/* Search + Filter bar */}
+            <div className="px-4 pt-3 pb-1">
+              <div className="relative">
+                <span className="absolute inset-y-0 left-3 flex items-center text-gray-400 pointer-events-none">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
+                  </svg>
+                </span>
+                <input
+                  type="text"
+                  placeholder="Search expenses…"
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+            <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-800 flex gap-1.5 overflow-x-auto pb-3 sm:pb-3 sm:flex-wrap">
               {['All', ...CATEGORIES].map(cat => (
                 <button
                   key={cat}
@@ -203,7 +233,10 @@ export default function ExpensesPage() {
 
             {filtered.length === 0 ? (
               <div className="text-center py-12 text-gray-400 text-sm">
-                No expenses yet. Click <strong>+ Add Expense</strong> to record one.
+                {search.trim() || filterCat !== 'All'
+                  ? 'No expenses match your search.'
+                  : <>No expenses yet. Click <strong>+ Add Expense</strong> to record one.</>
+                }
               </div>
             ) : (
               <>
