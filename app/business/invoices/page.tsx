@@ -1,16 +1,14 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import InvoicesTable from './InvoicesTable'
+import { getBusinessAccess } from '@/lib/business-access'
 
 export default async function InvoicesPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const { data: business } = await supabase
-    .from('businesses')
-    .select('id')
-    .eq('user_id', user!.id)
-    .single()
+  const access = await getBusinessAccess(supabase, user!.id)
+  const business = access ? { id: access.businessId } : null
 
   if (!business) return (
     <div className="bg-white rounded-xl border p-8 text-center">

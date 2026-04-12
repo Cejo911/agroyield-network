@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { getBusinessAccess } from '@/lib/business-access'
 
 interface LineItem {
   product_id: string
@@ -58,10 +59,12 @@ export default function NewInvoicePage() {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
+      const access = await getBusinessAccess(supabase, user.id)
+      if (!access) return
       const { data: biz } = await supabase
         .from('businesses')
         .select('id, name, invoice_prefix, invoice_counter')
-        .eq('user_id', user.id)
+        .eq('id', access.businessId)
         .single()
       setBusiness(biz)
       if (biz) {
@@ -76,7 +79,7 @@ export default function NewInvoicePage() {
       const { data: custs } = await supabase
         .from('customers')
         .select('id, name, email, phone, address')
-        .eq('user_id', user.id)
+        .eq('business_id', access.businessId)
         .eq('is_active', true)
         .order('name')
       setCustomers(custs || [])

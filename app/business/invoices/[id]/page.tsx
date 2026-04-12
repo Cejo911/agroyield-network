@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import InvoiceActions from './InvoiceActions'
+import { getBusinessAccess } from '@/lib/business-access'
 
 const DOC_LABELS: Record<string, string> = {
   invoice: 'INVOICE', proforma: 'PROFORMA INVOICE',
@@ -19,11 +20,14 @@ export default async function InvoiceViewPage({ params }: { params: Promise<{ id
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
+  const access = await getBusinessAccess(supabase, user!.id)
+  if (!access) notFound()
+
   const { data: inv } = await supabase
     .from('invoices')
     .select('*, customers(name, email, phone, address), invoice_items(*, business_products(name, unit))')
     .eq('id', id)
-    .eq('user_id', user!.id)
+    .eq('business_id', access.businessId)
     .single()
 
   if (!inv) notFound()

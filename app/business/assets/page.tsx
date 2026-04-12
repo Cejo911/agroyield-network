@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { getBusinessAccess } from '@/lib/business-access'
 
 type Asset = {
   id: string
@@ -93,13 +94,13 @@ export default function AssetsPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
     setUserId(user.id)
-    const { data: biz } = await supabase.from('businesses').select('id').eq('user_id', user.id).single()
-    if (!biz) { setLoading(false); return }
-    setBusinessId(biz.id)
+    const access = await getBusinessAccess(supabase, user.id)
+    if (!access) { setLoading(false); return }
+    setBusinessId(access.businessId)
     const { data } = await supabase
       .from('business_assets')
       .select('*')
-      .eq('business_id', biz.id)
+      .eq('business_id', access.businessId)
       .order('created_at', { ascending: false })
     setAssets(data ?? [])
     setLoading(false)

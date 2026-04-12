@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import StatementControls from './StatementControls'
+import { getBusinessAccess } from '@/lib/business-access'
 
 function fmt(n: number) {
   return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', minimumFractionDigits: 2 })
@@ -36,11 +37,12 @@ export default async function CustomerStatementPage({
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: business } = await supabase
+  const access = await getBusinessAccess(supabase, user.id)
+  const { data: business } = access ? await supabase
     .from('businesses')
     .select('id, name')
-    .eq('user_id', user.id)
-    .maybeSingle()
+    .eq('id', access.businessId)
+    .maybeSingle() : { data: null }
 
   if (!business) redirect('/business/setup')
 

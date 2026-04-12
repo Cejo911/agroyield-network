@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import PrintButton from './PrintButton'
+import { getBusinessAccess } from '@/lib/business-access'
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('en-GB', {
@@ -18,6 +19,9 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
   const { id } = await params
   const supabase = await createClient()
 
+  const { data: { user } } = await supabase.auth.getUser()
+  const access = user ? await getBusinessAccess(supabase, user.id) : null
+
   const { data: invoice } = await supabase
     .from('invoices')
     .select('*, invoice_items(*)')
@@ -25,11 +29,13 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
     .single()
 
   if (!invoice) notFound()
+  // Verify the current user has access to this invoice's business
+  if (access && invoice.business_id !== access.businessId) notFound()
 
   const { data: business } = await supabase
     .from('businesses')
     .select('*')
-    .eq('user_id', invoice.user_id)
+    .eq('id', invoice.business_id)
     .single()
 
   const { data: customer } = await supabase

@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import PrintButton from './PrintButton'
+import { getBusinessAccess } from '@/lib/business-access'
 
 export const dynamic = 'force-dynamic'
 
@@ -29,11 +30,14 @@ export default async function ReportsPrintPage({
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) redirect('/login')
 
+  const access = await getBusinessAccess(supabase, user.id)
+  const bizId = access?.businessId || ''
+
   const [invoicesRes, expensesRes, customersRes, businessRes] = await Promise.all([
-    supabase.from('invoices').select('*').eq('user_id', user.id).order('issue_date', { ascending: false }),
-    supabase.from('business_expenses').select('*').eq('user_id', user.id).order('date', { ascending: false }),
-    supabase.from('customers').select('id, name').eq('user_id', user.id),
-    supabase.from('businesses').select('*').eq('user_id', user.id).maybeSingle(),
+    supabase.from('invoices').select('*').eq('business_id', bizId).order('issue_date', { ascending: false }),
+    supabase.from('business_expenses').select('*').eq('business_id', bizId).order('date', { ascending: false }),
+    supabase.from('customers').select('id, name').eq('business_id', bizId),
+    supabase.from('businesses').select('*').eq('id', bizId).maybeSingle(),
   ])
 
   const allInvoices = (invoicesRes.data  || []) as any[]

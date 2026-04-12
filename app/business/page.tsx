@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import PeriodToggle from './PeriodToggle'
+import { getBusinessAccess } from '@/lib/business-access'
 
 function fmt(n: number) {
   return new Intl.NumberFormat('en-NG', {
@@ -41,38 +42,43 @@ export default async function BusinessDashboard({
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  // Business access (owner or team member)
+  const access = await getBusinessAccess(supabase, user.id)
+
   // Business profile
-  const { data: business } = await supabase
+  const business = access ? await supabase
     .from('businesses')
     .select('id, name, logo_url, address, phone')
-    .eq('user_id', user.id)
-    .single()
+    .eq('id', access.businessId)
+    .single().then(r => r.data) : null
+
+  const bizId = access?.businessId || ''
 
   // All invoices
   const { data: allInvoicesRaw } = await supabase
     .from('invoices')
     .select('id, invoice_number, status, total, issue_date, customer_id')
-    .eq('user_id', user.id)
+    .eq('business_id', bizId)
     .order('issue_date', { ascending: false })
 
   // All expenses
   const { data: allExpensesRaw } = await supabase
     .from('business_expenses')
     .select('id, description, category, amount, date')
-    .eq('user_id', user.id)
+    .eq('business_id', bizId)
     .order('date', { ascending: false })
 
   // Customers (for onboarding check + name lookup)
   const { data: customersRaw } = await supabase
     .from('customers')
     .select('id, name')
-    .eq('user_id', user.id)
+    .eq('business_id', bizId)
 
   // Products — for low stock alerts
   const { data: productsRaw } = await supabase
     .from('business_products')
     .select('id, name, stock_quantity, low_stock_threshold, unit')
-    .eq('business_id', business?.id || '')
+    .eq('business_id', bizId)
     .eq('is_active', true)
 
   const lowStockProducts = (productsRaw || []).filter(

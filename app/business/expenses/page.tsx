@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { getBusinessAccess } from '@/lib/business-access'
 
 const CATEGORIES = [
   'Input Costs',
@@ -54,13 +55,13 @@ export default function ExpensesPage() {
   async function load() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-    const { data: biz } = await supabase.from('businesses').select('id').eq('user_id', user.id).single()
-    if (!biz) return
-    setBusiness(biz)
+    const access = await getBusinessAccess(supabase, user.id)
+    if (!access) return
+    setBusiness({ id: access.businessId })
     const { data } = await supabase
       .from('business_expenses')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('business_id', access.businessId)
       .order('date', { ascending: false })
     setExpenses(data || [])
     setLoading(false)

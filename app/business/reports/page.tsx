@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import ReportExport from './ReportExport'
+import { getBusinessAccess } from '@/lib/business-access'
 
 function fmt(n: number) {
   return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', minimumFractionDigits: 2 })
@@ -18,14 +19,16 @@ export default async function ReportsPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  // Business access (owner or team member)
+  const access = await getBusinessAccess(supabase, user.id)
+  const businessId = access?.businessId || ''
+
   // Get business
-  const { data: business } = await supabase
+  const { data: business } = access ? await supabase
     .from('businesses')
     .select('id, name')
-    .eq('user_id', user.id)
-    .maybeSingle()
-
-  const businessId = business?.id || ''
+    .eq('id', businessId)
+    .maybeSingle() : { data: null }
 
   // Invoices — simple select, NO join
   const { data: invoicesRaw } = await supabase
@@ -42,13 +45,13 @@ export default async function ReportsPage() {
   const { data: expensesRaw } = await supabase
     .from('business_expenses')
     .select('amount, date, category')
-    .eq('user_id', user.id)
+    .eq('business_id', businessId)
 
   // Customers
   const { data: customersRaw } = await supabase
     .from('customers')
     .select('id, name')
-    .eq('user_id', user.id)
+    .eq('business_id', businessId)
 
   // Invoice customers — for top customer spend
   const { data: invoiceCustomers } = await supabase

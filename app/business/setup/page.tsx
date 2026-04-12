@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { getBusinessAccess } from '@/lib/business-access'
 
 export default function BusinessSetup() {
   const supabase = createClient()
@@ -23,7 +24,10 @@ export default function BusinessSetup() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
       setUserId(user.id)
-      const { data } = await supabase.from('businesses').select('*').eq('user_id', user.id).single()
+      const access = await getBusinessAccess(supabase, user.id)
+      const { data } = access
+        ? await supabase.from('businesses').select('*').eq('id', access.businessId).single()
+        : { data: null }
       if (data) {
         setBusinessId(data.id)
         setForm({

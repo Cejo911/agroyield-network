@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { getBusinessAccess, canManageTeam } from '@/lib/business-access'
 
 interface TeamMember {
   id: string
@@ -54,19 +55,14 @@ export default function TeamPage() {
     if (!user) return
     setUserId(user.id)
 
-    const { data: biz } = await supabase
-      .from('businesses')
-      .select('id')
-      .eq('user_id', user.id)
-      .single()
-
-    if (!biz) { setLoading(false); return }
-    setBusinessId(biz.id)
+    const access = await getBusinessAccess(supabase, user.id)
+    if (!access) { setLoading(false); return }
+    setBusinessId(access.businessId)
 
     const { data } = await supabase
       .from('business_team')
       .select('*')
-      .eq('business_id', biz.id)
+      .eq('business_id', access.businessId)
       .order('invited_at', { ascending: false })
 
     setMembers(data || [])

@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { getBusinessAccess } from '@/lib/business-access'
 
 type Customer = {
   id: string
@@ -26,10 +27,10 @@ export default function CustomersPage() {
   const load = async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-    const { data: biz } = await supabase.from('businesses').select('id').eq('user_id', user.id).single()
-    if (!biz) { setLoading(false); return }
-    setBusinessId(biz.id)
-    const { data } = await supabase.from('customers').select('*').eq('business_id', biz.id).eq('is_active', true).order('name')
+    const access = await getBusinessAccess(supabase, user.id)
+    if (!access) { setLoading(false); return }
+    setBusinessId(access.businessId)
+    const { data } = await supabase.from('customers').select('*').eq('business_id', access.businessId).eq('is_active', true).order('name')
     setCustomers(data ?? [])
     setLoading(false)
   }
