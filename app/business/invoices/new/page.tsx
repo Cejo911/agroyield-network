@@ -111,7 +111,7 @@ export default function NewInvoicePage() {
       i === idx ? {
         ...item,
         product_id: productId,
-        description: product.name,
+        description: product.description || product.name,
         unit_price: String(product.unit_price),
       } : item
     ))
