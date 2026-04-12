@@ -30,7 +30,15 @@ interface Expense {
 
 interface Business { id: string }
 
-const empty = { date: new Date().toISOString().split('T')[0], category: CATEGORIES[0], description: '', amount: '', payment_method: 'Cash', notes: '' }
+const SPREAD_PRESETS = [
+  { label: 'No spread', months: 0 },
+  { label: '3 months (quarterly)', months: 3 },
+  { label: '6 months (half-year)', months: 6 },
+  { label: '12 months (annual)', months: 12 },
+  { label: 'Custom', months: -1 },
+]
+
+const empty = { date: new Date().toISOString().split('T')[0], category: CATEGORIES[0], description: '', amount: '', payment_method: 'Cash', notes: '', spreadMonths: 0, customMonths: '' }
 
 export default function ExpensesPage() {
   const supabase = createClient()
@@ -65,16 +73,46 @@ export default function ExpensesPage() {
     if (!business) return
     setSaving(true)
     const { data: { user } } = await supabase.auth.getUser()
-    await supabase.from('business_expenses').insert({
-      user_id:        user!.id,
-      business_id:    business.id,
-      date:           form.date,
-      category:       form.category,
-      description:    form.description,
-      amount:         parseFloat(form.amount as string),
-      payment_method: form.payment_method,
-      notes:          form.notes || null,
-    })
+    const totalAmount = parseFloat(form.amount as string)
+    const months = form.spreadMonths === -1 ? (parseInt(form.customMonths) || 0) : form.spreadMonths
+
+    if (months > 1) {
+      // Spread: create one entry per month with split amount
+      const monthlyAmount = Math.round((totalAmount / months) * 100) / 100
+      // Handle rounding — put any remainder on the first entry
+      const remainder = Math.round((totalAmount - monthlyAmount * months) * 100) / 100
+      const startDate = new Date(form.date)
+      const entries = []
+
+      for (let i = 0; i < months; i++) {
+        const entryDate = new Date(startDate.getFullYear(), startDate.getMonth() + i, Math.min(startDate.getDate(), 28))
+        const amount = i === 0 ? monthlyAmount + remainder : monthlyAmount
+        entries.push({
+          user_id:        user!.id,
+          business_id:    business.id,
+          date:           entryDate.toISOString().split('T')[0],
+          category:       form.category,
+          description:    form.description,
+          amount,
+          payment_method: form.payment_method,
+          notes:          `${i + 1}/${months} — Spread over ${months} months (total: ₦${totalAmount.toLocaleString('en-NG', { minimumFractionDigits: 2 })})${form.notes ? ' · ' + form.notes : ''}`,
+        })
+      }
+      await supabase.from('business_expenses').insert(entries)
+    } else {
+      // Single expense — normal insert
+      await supabase.from('business_expenses').insert({
+        user_id:        user!.id,
+        business_id:    business.id,
+        date:           form.date,
+        category:       form.category,
+        description:    form.description,
+        amount:         totalAmount,
+        payment_method: form.payment_method,
+        notes:          form.notes || null,
+      })
+    }
+
     setSaving(false)
     setShowModal(false)
     setForm(empty)
@@ -184,7 +222,14 @@ export default function ExpensesPage() {
                     <tr key={exp.id} className={`border-b border-gray-50 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors ${idx % 2 === 0 ? '' : 'bg-gray-50/40 dark:bg-gray-800/20'}`}>
                       <td className="px-4 py-3 text-sm text-gray-500 whitespace-nowrap">{fmtDate(exp.date)}</td>
                       <td className="px-4 py-3">
-                        <div className="text-sm font-medium text-gray-800 dark:text-gray-200">{exp.description}</div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{exp.description}</span>
+                          {exp.notes?.includes('Spread over') && (
+                            <span className="text-[10px] font-semibold bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 px-1.5 py-0.5 rounded-full whitespace-nowrap">
+                              {exp.notes.split('—')[0]?.trim()}
+                            </span>
+                          )}
+                        </div>
                         {exp.notes && <div className="text-xs text-gray-400 mt-0.5">{exp.notes}</div>}
                       </td>
                       <td className="px-4 py-3">
@@ -207,7 +252,14 @@ export default function ExpensesPage() {
                 {filtered.map(exp => (
                   <div key={exp.id} className="p-4 flex items-start justify-between">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{exp.description}</p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{exp.description}</p>
+                        {exp.notes?.includes('Spread over') && (
+                          <span className="text-[10px] font-semibold bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 px-1.5 py-0.5 rounded-full whitespace-nowrap shrink-0">
+                            {exp.notes.split('—')[0]?.trim()}
+                          </span>
+                        )}
+                      </div>
                       <div className="flex items-center gap-2 mt-1 text-xs text-gray-400">
                         <span>{fmtDate(exp.date)}</span>
                         <span className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded-full font-medium">
@@ -304,6 +356,55 @@ export default function ExpensesPage() {
                 <input type="text" placeholder="Any additional details" value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })}
                   className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-green-500" />
               </div>
+
+              {/* Spread over months */}
+              <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Spread over multiple months?</label>
+                  <span className="text-[10px] text-gray-400 dark:text-gray-500">e.g. annual rent</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {SPREAD_PRESETS.map(p => (
+                    <button
+                      key={p.label}
+                      type="button"
+                      onClick={() => setForm({ ...form, spreadMonths: p.months, customMonths: '' })}
+                      className={`text-xs px-2.5 py-1 rounded-full transition-colors ${
+                        form.spreadMonths === p.months
+                          ? 'bg-green-700 text-white'
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+                {form.spreadMonths === -1 && (
+                  <input
+                    type="number"
+                    min="2"
+                    max="60"
+                    placeholder="Number of months"
+                    value={form.customMonths}
+                    onChange={e => setForm({ ...form, customMonths: e.target.value })}
+                    className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                )}
+                {(() => {
+                  const months = form.spreadMonths === -1 ? (parseInt(form.customMonths) || 0) : form.spreadMonths
+                  const amount = parseFloat(form.amount as string) || 0
+                  if (months > 1 && amount > 0) {
+                    const monthly = Math.round((amount / months) * 100) / 100
+                    return (
+                      <p className="text-xs text-green-700 dark:text-green-400 font-medium">
+                        → {fmt(monthly)}/month × {months} months = {fmt(amount)}
+                      </p>
+                    )
+                  }
+                  return null
+                })()}
+              </div>
+
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setShowModal(false)}
                   className="flex-1 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-sm font-medium py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
