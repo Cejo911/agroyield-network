@@ -30,16 +30,19 @@ type Props = {
   profiles: Profile[]
   currentUserId: string
   followingIds: string[]
+  followerIds: string[]
   followerCountMap: Record<string, number>
   mentorIds: string[]
 }
 
-export default function DirectoryClient({ profiles, currentUserId, followingIds, followerCountMap, mentorIds }: Props) {
+export default function DirectoryClient({ profiles, currentUserId, followingIds, followerIds, followerCountMap, mentorIds }: Props) {
   const [search,         setSearch]         = useState('')
   const [roleFilter,     setRoleFilter]     = useState('All')
   const [interestFilter, setInterestFilter] = useState('')
+  const [connectionFilter, setConnectionFilter] = useState('All')
 
   const followingSet = new Set(followingIds)
+  const followerSet = new Set(followerIds)
 
   const mentorSet = new Set(mentorIds)
 
@@ -56,7 +59,12 @@ export default function DirectoryClient({ profiles, currentUserId, followingIds,
     const matchesInterest =
       !interestFilter ||
       p.interests?.includes(interestFilter)
-    return matchesSearch && matchesRole && matchesInterest
+    const matchesConnection =
+      connectionFilter === 'All' ||
+      (connectionFilter === 'Following' && followingSet.has(p.id)) ||
+      (connectionFilter === 'Followers' && followerSet.has(p.id)) ||
+      (connectionFilter === 'Mentors' && mentorSet.has(p.id))
+    return matchesSearch && matchesRole && matchesInterest && matchesConnection
   })
 
   return (
@@ -93,6 +101,25 @@ export default function DirectoryClient({ profiles, currentUserId, followingIds,
           <option value="">All areas of interest</option>
           {INTERESTS.map(i => <option key={i} value={i}>{i}</option>)}
         </select>
+        {/* Connection filters */}
+        <div className="flex flex-wrap gap-2">
+          {['All', 'Following', 'Followers', 'Mentors'].map(opt => (
+            <button
+              key={opt}
+              onClick={() => setConnectionFilter(opt)}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                connectionFilter === opt
+                  ? 'bg-green-600 text-white border-green-600'
+                  : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-green-400 dark:hover:border-green-500'
+              }`}
+            >
+              {opt === 'All' ? 'All Connections' : opt}
+              {opt === 'Following' && ` (${followingIds.length})`}
+              {opt === 'Followers' && ` (${followerIds.length})`}
+              {opt === 'Mentors' && ` (${mentorIds.length})`}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Results count */}
