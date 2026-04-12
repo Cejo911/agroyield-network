@@ -1,6 +1,6 @@
 # AgroYield Network — Project Status
 
-> **Last updated:** 12 April 2026 (Checkpoint 3)> **Last updated:** 12 April 2026 (Checkpoint 4)
+> **Last updated:** 12 April 2026 (Checkpoint 4)> **Last updated:** 12 April 2026 (Checkpoint 4)
 > **Maintained by:** Okoli (okolichijiokei@gmail.com)
 > **Launch Target:** 5 July 2026 (~12 weeks remaining)
 > **Purpose:** Permanent reference for any developer or Claude session to get up to speed instantly.
@@ -68,9 +68,10 @@
 | View commodity prices (filter by commodity, state, market) | ✅ Done | `app/prices/`                                                                                             |
 | Submit a price report                                      | ✅ Done | `app/prices/submit/page.tsx`                                                                              |
 | Edit price report                                          | ✅ Done | `app/prices/[id]/edit/page.tsx`                                                                           |
-| Price alerts                                               | ✅ Done | `app/prices/price-intelligence.tsx` — create/delete alerts with commodity, state, condition, target price |
+| Price alerts with notifications                            | ✅ Done | `app/prices/price-intelligence.tsx` — create/delete alerts; triggers in-app notification when a matching price report is submitted |
 | Price trend charts                                         | ✅ Done | Recharts LineChart (avg/min/max) with commodity + state selectors                                         |
 | Cross-state comparison                                     | ✅ Done | Horizontal BarChart with auto-generated insights                                                          |
+| Poster attribution on cards                                | ✅ Done | Each price card shows poster name, avatar, and link to profile                                            |
 
 ### Module 4 — Marketplace
 
@@ -224,7 +225,7 @@ The middleware at `middleware.ts` redirects unauthenticated users to `/login` fo
 
 `/dashboard`, `/profile`, `/directory`, `/opportunities`, `/prices`, `/marketplace`, `/research`, `/mentorship`, `/grants`, `/insights`, `/connections`
 
-Note: `/mentorship`, `/grants`, `/insights`, `/connections` are pre-registered for future modules.
+Note: `/grants`, `/insights`, `/connections` are pre-registered for future modules.
 
 ---
 
@@ -235,10 +236,13 @@ Note: `/mentorship`, `/grants`, `/insights`, `/connections` are pre-registered f
 - Added: Mentorship module — browse mentors, create/edit profiles, session booking (request/accept/decline/complete/cancel), star ratings + reviews
 - Added: Mentorship card on dashboard (7 modules total), updated loading skeleton to match
 - Added: Price Intelligence tab — Recharts trend charts (avg/min/max), cross-state comparison with auto-insights, price alerts CRUD
+- Added: Price alerts trigger in-app notifications when a matching price report is submitted (`app/api/prices/route.ts`)
+- Added: Poster attribution on price report cards — name, avatar, link to profile
 - Added: Tab-based UI on Price Tracker (Reports / Intelligence toggle)
 - Added: `mentor_profiles`, `mentorship_sessions`, `mentorship_reviews`, `price_alerts` tables with RLS
-- Added: Mentorship link in AppNav
+- Added: Mentorship link in AppNav, `price_alert` + `mentorship` icons in NotificationBell
 - Added: Loading + error boundaries for mentorship route group
+- Changed: Price report submission now routes through `/api/prices` (server-side) instead of direct client insert
 
 ### Checkpoint 3 — April 12, 2026 (Phase 1 + Phase 2 complete)
 

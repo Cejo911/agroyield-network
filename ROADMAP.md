@@ -94,7 +94,7 @@ Features that drive daily engagement and create network effects.
 
 > **Why:** Transforms the price tracker from a data dump into a daily-use tool.
 > **Scope:** Price trend charts per commodity/state. Cross-state comparisons. Price alerts ("notify me when maize drops below ₦X in Oyo"). Weekly market digest.
-> **Status:** ✅ Completed (12 Apr 2026) — Recharts-powered price trend charts (avg/min/max), cross-state comparison bar charts with auto-insights, price alerts CRUD (above/below threshold). Tab-based UI (Reports / Intelligence).
+> **Status:** ✅ Completed (12 Apr 2026) — Recharts-powered price trend charts (avg/min/max), cross-state comparison bar charts with auto-insights, price alerts CRUD with live notification triggers, poster attribution on cards. Tab-based UI (Reports / Intelligence).
 
 ### 3.3 — Grant Application Tracker
 
