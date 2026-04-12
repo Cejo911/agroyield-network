@@ -124,13 +124,18 @@ export default function PriceIntelligence({
       unit: alertForm.unit,
     }).select().single()
 
-    if (!error && data) {
+    if (error) {
+      console.error('Alert insert error:', error)
+      alert(`Failed to create alert: ${error.message}`)
+      setSavingAlert(false)
+      return
+    }
+    if (data) {
       setAlerts(prev => [data, ...prev])
       setShowAlertForm(false)
       setAlertForm({ ...alertForm, target_price: '' })
     }
     setSavingAlert(false)
-  }
 
   async function deleteAlert(id: string) {
     setDeletingAlert(id)

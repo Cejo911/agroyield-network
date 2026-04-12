@@ -88,13 +88,13 @@ Features that drive daily engagement and create network effects.
 
 > **Why:** High-value networking feature. Creates sticky relationships. Already in middleware matcher.
 > **Scope:** Mentor profiles with expertise/availability. Mentee matching. Session booking (Google Calendar integration available). Session notes. Ratings.
-> **Status:** ⬜ Not started
+> **Status:** ✅ Completed (12 Apr 2026) — Mentor profiles, browse/search with expertise + availability filters, session booking (request/accept/decline/complete/cancel), star ratings + reviews. Loading + error boundaries. Notification on session request.
 
 ### 3.2 — Smart Price Intelligence
 
 > **Why:** Transforms the price tracker from a data dump into a daily-use tool.
 > **Scope:** Price trend charts per commodity/state. Cross-state comparisons. Price alerts ("notify me when maize drops below ₦X in Oyo"). Weekly market digest.
-> **Status:** ⬜ Not started
+> **Status:** ✅ Completed (12 Apr 2026) — Recharts-powered price trend charts (avg/min/max), cross-state comparison bar charts with auto-insights, price alerts CRUD (above/below threshold). Tab-based UI (Reports / Intelligence).
 
 ### 3.3 — Grant Application Tracker
 
