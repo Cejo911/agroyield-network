@@ -11,7 +11,7 @@ export default async function DirectoryPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const supabaseAny = supabase as any
 
-  const [{ data: profiles }, { data: followingData }, { data: follows }, { data: mentors }, { data: followerData }] = await Promise.all([
+  const [{ data: profiles }, { data: followingData }, { data: follows }, { data: mentors }, { data: followerData }, { data: menteeData }] = await Promise.all([
     supabase
       .from('profiles')
       .select('id, first_name, last_name, role, bio, location, institution, interests, is_verified, is_elite, is_admin, admin_role, avatar_url')
@@ -34,6 +34,9 @@ export default async function DirectoryPage() {
       .from('follows')
       .select('follower_id')
       .eq('following_id', user.id),
+    supabaseAny
+      .from('mentorship_sessions')
+      .select('mentee_id'),
   ])
 
   const followingIds: string[] = (followingData ?? []).map(
@@ -54,6 +57,9 @@ export default async function DirectoryPage() {
     (f: { follower_id: string }) => f.follower_id
   )
 
+  // Build mentee IDs (unique users who have requested/had mentorship sessions)
+  const menteeIds: string[] = [...new Set((menteeData ?? []).map((s: { mentee_id: string }) => s.mentee_id))]
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <AppNav />
@@ -71,6 +77,7 @@ export default async function DirectoryPage() {
           followerIds={followerIds}
           followerCountMap={followerCountMap}
           mentorIds={mentorIds}
+          menteeIds={menteeIds}
         />
       </main>
     </div>

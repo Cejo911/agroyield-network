@@ -33,9 +33,10 @@ type Props = {
   followerIds: string[]
   followerCountMap: Record<string, number>
   mentorIds: string[]
+  menteeIds: string[]
 }
 
-export default function DirectoryClient({ profiles, currentUserId, followingIds, followerIds, followerCountMap, mentorIds }: Props) {
+export default function DirectoryClient({ profiles, currentUserId, followingIds, followerIds, followerCountMap, mentorIds, menteeIds }: Props) {
   const [search,         setSearch]         = useState('')
   const [roleFilter,     setRoleFilter]     = useState('All')
   const [interestFilter, setInterestFilter] = useState('')
@@ -43,8 +44,8 @@ export default function DirectoryClient({ profiles, currentUserId, followingIds,
 
   const followingSet = new Set(followingIds)
   const followerSet = new Set(followerIds)
-
   const mentorSet = new Set(mentorIds)
+  const menteeSet = new Set(menteeIds)
 
   const filtered = profiles.filter(p => {
     const fullName    = `${p.first_name ?? ''} ${p.last_name ?? ''}`.toLowerCase()
@@ -63,7 +64,8 @@ export default function DirectoryClient({ profiles, currentUserId, followingIds,
       connectionFilter === 'All' ||
       (connectionFilter === 'Following' && followingSet.has(p.id)) ||
       (connectionFilter === 'Followers' && followerSet.has(p.id)) ||
-      (connectionFilter === 'Mentors' && mentorSet.has(p.id))
+      (connectionFilter === 'Mentors' && mentorSet.has(p.id)) ||
+      (connectionFilter === 'Mentees' && menteeSet.has(p.id))
     return matchesSearch && matchesRole && matchesInterest && matchesConnection
   })
 
@@ -103,7 +105,7 @@ export default function DirectoryClient({ profiles, currentUserId, followingIds,
         </select>
         {/* Connection filters */}
         <div className="flex flex-wrap gap-2">
-          {['All', 'Following', 'Followers', 'Mentors'].map(opt => (
+          {['All', 'Following', 'Followers', 'Mentors', 'Mentees'].map(opt => (
             <button
               key={opt}
               onClick={() => setConnectionFilter(opt)}
@@ -117,6 +119,7 @@ export default function DirectoryClient({ profiles, currentUserId, followingIds,
               {opt === 'Following' && ` (${followingIds.length})`}
               {opt === 'Followers' && ` (${followerIds.length})`}
               {opt === 'Mentors' && ` (${mentorIds.length})`}
+              {opt === 'Mentees' && ` (${menteeIds.length})`}
             </button>
           ))}
         </div>
