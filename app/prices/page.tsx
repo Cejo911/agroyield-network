@@ -11,12 +11,28 @@ export default async function PricesPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  // Fetch all reports with poster profile info
-  const { data: reports } = await supabase
+  // Fetch all reports
+  const { data: rawReports } = await supabase
     .from('price_reports')
-    .select('id, user_id, commodity, category, price, unit, market_name, state, reported_at, profiles:user_id(first_name, last_name, username, avatar_url)')
+    .select('id, user_id, commodity, category, price, unit, market_name, state, reported_at')
     .order('reported_at', { ascending: false })
     .limit(500)
+
+  // Fetch profiles for all unique report authors
+  const uniqueUserIds = [...new Set((rawReports ?? []).map(r => r.user_id))]
+  const { data: profiles } = uniqueUserIds.length > 0
+    ? await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, username, avatar_url')
+        .in('id', uniqueUserIds)
+    : { data: [] }
+
+  // Merge profiles into reports
+  const profileMap = new Map((profiles ?? []).map(p => [p.id, p]))
+  const reports = (rawReports ?? []).map(r => ({
+    ...r,
+    profiles: profileMap.get(r.user_id) || null,
+  }))
 
   // Fetch user's price alerts
   const { data: alerts } = await supabase
@@ -42,10 +58,10 @@ export default async function PricesPage() {
           </Link>
         </div>
         <PricesTabs
-          reportsTab={<PricesClient reports={(reports ?? []).map((r: any) => ({ ...r, profiles: Array.isArray(r.profiles) ? r.profiles[0] || null : r.profiles }))} userId={user.id} />}
+          reportsTab={<PricesClient reports={reports} userId={user.id} />}
           intelligenceTab={
             <PriceIntelligence
-              reports={(reports ?? []) as any}
+              reports={reports as any}
               alerts={(alerts ?? []) as any}
               userId={user.id}
             />
