@@ -100,6 +100,41 @@ export default async function BusinessDashboard({
   const outstanding    = invoices.filter(i => i.status === 'sent').reduce((s, i) => s + Number(i.total || 0), 0)
   const overdueAmt     = invoices.filter(i => i.status === 'overdue').reduce((s, i) => s + Number(i.total || 0), 0)
 
+  // ── Business Health Score ──────────────────────────────────────
+  const totalInvoiced = invoices.reduce((s, i) => s + Number(i.total || 0), 0)
+  const totalProducts = (productsRaw || []).length
+  const invoiceCount = invoices.length
+
+  // 1. Profitability (30pts)
+  const margin = revenue > 0 ? (netProfit / revenue) * 100 : 0
+  const profitScore = margin > 20 ? 30 : margin > 10 ? 20 : margin > 0 ? 10 : 0
+
+  // 2. Cash collection (25pts) — % of invoices (by count) that are paid
+  const collectionRate = invoiceCount > 0 ? (paidInvoices.length / invoiceCount) * 100 : 0
+  const collectionScore = collectionRate > 80 ? 25 : collectionRate > 60 ? 15 : collectionRate > 40 ? 10 : 0
+
+  // 3. Overdue exposure (20pts) — overdue amount as % of total invoiced
+  const overdueRate = totalInvoiced > 0 ? (overdueAmt / totalInvoiced) * 100 : 0
+  const overdueScore = overdueRate < 10 ? 20 : overdueRate < 25 ? 12 : overdueRate < 50 ? 5 : 0
+
+  // 4. Expense control (15pts) — expenses as % of revenue
+  const expenseRate = revenue > 0 ? (totalExpenses / revenue) * 100 : (totalExpenses > 0 ? 200 : 50)
+  const expenseScore = expenseRate < 60 ? 15 : expenseRate < 80 ? 10 : expenseRate < 100 ? 5 : 0
+
+  // 5. Stock health (10pts) — low stock as % of total products
+  const lowStockRate = totalProducts > 0 ? (lowStockProducts.length / totalProducts) * 100 : 0
+  const stockScore = totalProducts === 0 ? 10 : (lowStockRate < 10 ? 10 : lowStockRate < 25 ? 6 : lowStockRate < 50 ? 3 : 0)
+
+  const healthScore = profitScore + collectionScore + overdueScore + expenseScore + stockScore
+  const healthColor = healthScore >= 75 ? 'green' : healthScore >= 50 ? 'amber' : 'red'
+
+  const healthInsights: string[] = []
+  if (profitScore < 20) healthInsights.push(margin < 0 ? 'Expenses exceed revenue — review costs' : 'Profit margin is thin — aim for 20%+')
+  if (collectionScore < 15) healthInsights.push('Most invoices are unpaid — follow up on collections')
+  if (overdueScore < 12) healthInsights.push(`₦${overdueAmt.toLocaleString()} in overdue invoices — chase payments`)
+  if (expenseScore < 10) healthInsights.push('Expenses are high relative to revenue')
+  if (stockScore < 6) healthInsights.push(`${lowStockProducts.length} products running low on stock`)
+
   // Invoice status counts (from period-filtered data)
   const draftCount   = invoices.filter(i => i.status === 'draft').length
   const sentCount    = invoices.filter(i => i.status === 'sent').length
@@ -216,6 +251,80 @@ export default async function BusinessDashboard({
           </div>
         </div>
       </div>
+
+      {/* Business Health Score */}
+      {(allInvoices.length > 0 || allExpenses.length > 0) && (
+        <div className={`rounded-xl border p-4 ${
+          healthColor === 'green'
+            ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+            : healthColor === 'amber'
+            ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800'
+            : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+        }`}>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold ${
+                healthColor === 'green'
+                  ? 'bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200'
+                  : healthColor === 'amber'
+                  ? 'bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-200'
+                  : 'bg-red-200 dark:bg-red-800 text-red-800 dark:text-red-200'
+              }`}>
+                {healthScore}
+              </div>
+              <div>
+                <p className={`text-sm font-bold ${
+                  healthColor === 'green' ? 'text-green-800 dark:text-green-300'
+                  : healthColor === 'amber' ? 'text-amber-800 dark:text-amber-300'
+                  : 'text-red-800 dark:text-red-300'
+                }`}>
+                  {healthColor === 'green' ? 'Healthy Business' : healthColor === 'amber' ? 'Needs Attention' : 'At Risk'}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Business Health Score · {{ month: 'This Month', quarter: 'Last 3 Months', year: 'This Year', all: 'All Time' }[period]}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Score breakdown bar */}
+          <div className="flex gap-0.5 h-2 rounded-full overflow-hidden mb-2">
+            {[
+              { score: profitScore, max: 30, color: 'bg-green-500' },
+              { score: collectionScore, max: 25, color: 'bg-blue-500' },
+              { score: overdueScore, max: 20, color: 'bg-purple-500' },
+              { score: expenseScore, max: 15, color: 'bg-amber-500' },
+              { score: stockScore, max: 10, color: 'bg-cyan-500' },
+            ].map((s, i) => (
+              <div key={i} className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                <div className={`h-full ${s.color} rounded-full`} style={{ width: `${(s.score / s.max) * 100}%` }} />
+              </div>
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-gray-500 dark:text-gray-400">
+            <span>🟢 Profit {profitScore}/30</span>
+            <span>🔵 Collections {collectionScore}/25</span>
+            <span>🟣 Overdue {overdueScore}/20</span>
+            <span>🟡 Expenses {expenseScore}/15</span>
+            <span>🩵 Stock {stockScore}/10</span>
+          </div>
+
+          {/* Insights */}
+          {healthInsights.length > 0 && (
+            <div className="mt-3 pt-3 border-t border-gray-200/50 dark:border-gray-700/50 space-y-1">
+              {healthInsights.map((insight, i) => (
+                <p key={i} className={`text-xs ${
+                  healthColor === 'green' ? 'text-green-700 dark:text-green-400'
+                  : healthColor === 'amber' ? 'text-amber-700 dark:text-amber-400'
+                  : 'text-red-700 dark:text-red-400'
+                }`}>
+                  → {insight}
+                </p>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Colour-coded stat cards */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
