@@ -44,22 +44,51 @@ export async function POST(request: Request) {
         .eq('id', postId)
         .single()
 
-      // Don't notify yourself
+      const linkMap: Record<string, string> = {
+        research: `/research/${postId}`,
+        opportunity: `/opportunities/${postId}`,
+        listing: `/marketplace/${postId}`,
+        price_report: `/prices`,
+      }
+      const link = linkMap[postType] || '/'
+
+      // Notify the post author (if it's not the commenter)
       if (post && post.user_id !== user.id) {
-        const linkMap: Record<string, string> = {
-          research: `/research/${postId}`,
-          opportunity: `/opportunities/${postId}`,
-          listing: `/marketplace/${postId}`,
-          price_report: `/prices`,
-        }
         await createNotification(admin, {
           userId:   post.user_id,
           type:     'comment',
           title:    `${actorName} commented on "${post.title}"`,
-          link:     linkMap[postType] || '/',
+          link,
           actorId:  user.id,
           entityId: postId,
         })
+      }
+
+      // Notify other participants in the thread (excluding commenter + post author)
+      if (post) {
+        const { data: previousCommenters } = await admin
+          .from('comments')
+          .select('user_id')
+          .eq('post_id', postId)
+          .eq('post_type', postType)
+          .eq('is_active', true)
+          .neq('user_id', user.id)         // exclude the person commenting
+          .neq('user_id', post.user_id)    // exclude post author (already notified)
+
+        if (previousCommenters) {
+          // Deduplicate user IDs
+          const uniqueIds = [...new Set(previousCommenters.map(c => c.user_id))]
+          for (const uid of uniqueIds) {
+            await createNotification(admin, {
+              userId:   uid,
+              type:     'comment',
+              title:    `${actorName} also commented on "${post.title}"`,
+              link,
+              actorId:  user.id,
+              entityId: postId,
+            })
+          }
+        }
       }
     }
 
