@@ -40,7 +40,7 @@ These must be done before anything else. They fix what's broken and make existin
 
 > **Why:** Same as LinkedIn. Major auth provider in Nigeria.
 > **Scope:** Enable provider in Supabase, add button to login/signup pages, test callback.
-> **Status:** ⬜ Not started
+> **Status:** ⏸️ Blocked — Meta Business Verification required; proceeding without (12 Apr 2026)
 
 ---
 
@@ -58,7 +58,7 @@ Make the platform feel professional and work for Nigerian SMEs on mobile.
 
 > **Why:** SMEs need to send professional PDF invoices via WhatsApp and email. Current print layout is good but not a shareable PDF.
 > **Scope:** Server-side PDF generation. Branded template with logo, bank details, QR code. Download button. Email as attachment via Resend. WhatsApp share link.
-> **Status:** ⬜ Not started
+> **Status:** ✅ Completed (12 Apr 2026) — PDF download (html2canvas + jsPDF), WhatsApp share, email share. Expenses search bar + column sorting added.
 
 ### 2.3 — PWA / Offline Capability
 
