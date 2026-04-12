@@ -52,7 +52,7 @@ Make the platform feel professional and work for Nigerian SMEs on mobile.
 
 > **Why:** New users land on an empty dashboard with no guidance. Nigerian SMEs encountering business software for the first time need hand-holding.
 > **Scope:** 3-step wizard after first login: (1) Complete profile, (2) Choose modules, (3) Set up first business OR explore directory. Progress indicators. Contextual tooltips on first visit to each module.
-> **Status:** ⬜ Not started
+> **Status:** ✅ Completed (12 Apr 2026)
 
 ### 2.2 — Invoice PDF Generation & Sharing
 
