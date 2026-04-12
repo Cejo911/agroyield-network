@@ -65,27 +65,27 @@ export async function POST(request: NextRequest) {
       )
 
       // Query all active alerts for this commodity (across all users)
-      let alertQuery = admin
+      // Fetch alerts matching commodity — filter state in JS to avoid PostgREST quoting issues
+      const { data: matchingAlerts, error: alertQueryErr } = await admin
         .from('price_alerts')
         .select('id, user_id, commodity, state, condition, target_price, unit')
         .eq('commodity', body.commodity)
         .eq('is_active', true)
 
-      // If the report has a state, also match alerts for that specific state OR alerts with no state (any state)
-      if (body.state) {
-        alertQuery = alertQuery.or(`state.eq.${body.state},state.is.null`)
+      if (alertQueryErr) {
+        console.error('Alert query error:', alertQueryErr.message)
       }
 
-      const { data: matchingAlerts } = await alertQuery
-
       if (matchingAlerts && matchingAlerts.length > 0) {
+        // Filter by state in JS: match alerts with no state (any) or matching state
+        const stateFiltered = body.state
+          ? matchingAlerts.filter(a => !a.state || a.state === body.state)
+          : matchingAlerts
+
         const fmt = (n: number) =>
           new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 }).format(n)
 
-        for (const alert of matchingAlerts) {
-          // Skip alerting the person who submitted the report (they already know the price)
-          if (alert.user_id === user.id) continue
-
+        for (const alert of stateFiltered) {
           const triggered =
             (alert.condition === 'below' && price <= alert.target_price) ||
             (alert.condition === 'above' && price >= alert.target_price)
