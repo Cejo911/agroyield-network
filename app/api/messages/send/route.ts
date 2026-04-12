@@ -18,11 +18,11 @@ export async function POST(request: Request) {
   // Verify user is a participant
   const { data: convo } = await supabaseAny
     .from('conversations')
-    .select('id, participant_1, participant_2')
+    .select('id, participant_a, participant_b')
     .eq('id', conversationId)
     .single()
 
-  if (!convo || (convo.participant_1 !== user.id && convo.participant_2 !== user.id)) {
+  if (!convo || (convo.participant_a !== user.id && convo.participant_b !== user.id)) {
     return NextResponse.json({ error: 'Not a participant' }, { status: 403 })
   }
 
@@ -42,10 +42,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: msgErr.message }, { status: 500 })
   }
 
-  // Update conversation last_message_at
+  // Update conversation last_message_at and preview
   await supabaseAny
     .from('conversations')
-    .update({ last_message_at: new Date().toISOString() })
+    .update({
+      last_message_at: new Date().toISOString(),
+      last_message_preview: body.trim().slice(0, 100),
+    })
     .eq('id', conversationId)
 
   return NextResponse.json({ message })

@@ -15,16 +15,16 @@ export default async function ConversationPage({ params }: { params: Promise<{ i
   // Fetch conversation
   const { data: convo } = await supabaseAny
     .from('conversations')
-    .select('id, participant_1, participant_2')
+    .select('id, participant_a, participant_b')
     .eq('id', id)
     .single()
 
   if (!convo) notFound()
 
   // Verify user is participant
-  if (convo.participant_1 !== user.id && convo.participant_2 !== user.id) notFound()
+  if (convo.participant_a !== user.id && convo.participant_b !== user.id) notFound()
 
-  const otherId = convo.participant_1 === user.id ? convo.participant_2 : convo.participant_1
+  const otherId = convo.participant_a === user.id ? convo.participant_b : convo.participant_a
 
   // Fetch other user's profile and messages in parallel
   const [{ data: profile }, { data: messages }] = await Promise.all([

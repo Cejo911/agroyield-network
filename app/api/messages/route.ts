@@ -18,15 +18,15 @@ export async function POST(request: Request) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const supabaseAny = supabase as any
 
-  // Always store smaller UUID as participant_1 for consistent lookups
+  // Always store smaller UUID as participant_a for consistent lookups
   const [p1, p2] = [user.id, recipientId].sort()
 
   // Check if conversation already exists
   const { data: existing } = await supabaseAny
     .from('conversations')
     .select('id')
-    .eq('participant_1', p1)
-    .eq('participant_2', p2)
+    .eq('participant_a', p1)
+    .eq('participant_b', p2)
     .maybeSingle()
 
   let conversationId: string
@@ -37,7 +37,7 @@ export async function POST(request: Request) {
     // Create new conversation
     const { data: newConvo, error: convoErr } = await supabaseAny
       .from('conversations')
-      .insert({ participant_1: p1, participant_2: p2 })
+      .insert({ participant_a: p1, participant_b: p2 })
       .select('id')
       .single()
 
@@ -62,10 +62,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: msgErr.message }, { status: 500 })
     }
 
-    // Update conversation last_message_at
+    // Update conversation last_message_at and preview
     await supabaseAny
       .from('conversations')
-      .update({ last_message_at: new Date().toISOString() })
+      .update({
+        last_message_at: new Date().toISOString(),
+        last_message_preview: body.trim().slice(0, 100),
+      })
       .eq('id', conversationId)
 
     // Fire notification (fire and forget)

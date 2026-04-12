@@ -21,11 +21,11 @@ export async function GET(request: Request) {
   // Verify user is participant
   const { data: convo } = await supabaseAny
     .from('conversations')
-    .select('participant_1, participant_2')
+    .select('participant_a, participant_b')
     .eq('id', conversationId)
     .single()
 
-  if (!convo || (convo.participant_1 !== user.id && convo.participant_2 !== user.id)) {
+  if (!convo || (convo.participant_a !== user.id && convo.participant_b !== user.id)) {
     return NextResponse.json({ error: 'Not a participant' }, { status: 403 })
   }
 

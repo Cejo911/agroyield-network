@@ -15,13 +15,13 @@ export default async function MessagesPage() {
   const [{ data: convosAsP1 }, { data: convosAsP2 }] = await Promise.all([
     supabaseAny
       .from('conversations')
-      .select('id, participant_1, participant_2, last_message_at')
-      .eq('participant_1', user.id)
+      .select('id, participant_a, participant_b, last_message_at, last_message_preview')
+      .eq('participant_a', user.id)
       .order('last_message_at', { ascending: false }),
     supabaseAny
       .from('conversations')
-      .select('id, participant_1, participant_2, last_message_at')
-      .eq('participant_2', user.id)
+      .select('id, participant_a, participant_b, last_message_at, last_message_preview')
+      .eq('participant_b', user.id)
       .order('last_message_at', { ascending: false }),
   ])
 
@@ -32,7 +32,7 @@ export default async function MessagesPage() {
 
   // Get other participant IDs
   const otherIds = allConvos.map(c =>
-    c.participant_1 === user.id ? c.participant_2 : c.participant_1
+    c.participant_a === user.id ? c.participant_b : c.participant_a
   )
 
   // Fetch profiles and last messages + unread counts in parallel
@@ -107,7 +107,7 @@ export default async function MessagesPage() {
         ) : (
           <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 divide-y divide-gray-100 dark:divide-gray-800 overflow-hidden">
             {allConvos.map(convo => {
-              const otherId = convo.participant_1 === user.id ? convo.participant_2 : convo.participant_1
+              const otherId = convo.participant_a === user.id ? convo.participant_b : convo.participant_a
               const profile = profileMap[otherId]
               const name = profile ? `${profile.first_name ?? ''} ${profile.last_name ?? ''}`.trim() : 'User'
               const initial = (name[0] || '?').toUpperCase()
