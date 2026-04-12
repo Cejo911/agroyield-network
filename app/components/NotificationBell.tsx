@@ -104,6 +104,8 @@ export default function NotificationBell() {
       case 'comment':        return '💬'
       case 'follow':         return '🤝'
       case 'overdue':        return '⏰'
+      case 'price_alert':    return '📊'
+      case 'mentorship':     return '🎓'
       case 'system':         return '📢'
       default:               return '🔔'
     }

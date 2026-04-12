@@ -11,10 +11,10 @@ export default async function PricesPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  // Fetch all reports (increased limit for better chart data)
+  // Fetch all reports with poster profile info
   const { data: reports } = await supabase
     .from('price_reports')
-    .select('id, user_id, commodity, category, price, unit, market_name, state, reported_at')
+    .select('id, user_id, commodity, category, price, unit, market_name, state, reported_at, profiles:user_id(first_name, last_name, username, avatar_url)')
     .order('reported_at', { ascending: false })
     .limit(500)
 
@@ -42,7 +42,7 @@ export default async function PricesPage() {
           </Link>
         </div>
         <PricesTabs
-          reportsTab={<PricesClient reports={reports ?? []} userId={user.id} />}
+          reportsTab={<PricesClient reports={(reports ?? []).map((r: any) => ({ ...r, profiles: Array.isArray(r.profiles) ? r.profiles[0] || null : r.profiles }))} userId={user.id} />}
           intelligenceTab={
             <PriceIntelligence
               reports={(reports ?? []) as any}

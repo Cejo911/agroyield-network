@@ -82,6 +82,16 @@ export async function POST(request: NextRequest) {
           ? matchingAlerts.filter(a => !a.state || a.state === body.state)
           : matchingAlerts
 
+        // Fetch poster's name for the notification
+        const { data: posterProfile } = await admin
+          .from('profiles')
+          .select('first_name, last_name')
+          .eq('id', user.id)
+          .single()
+        const posterName = posterProfile
+          ? [posterProfile.first_name, posterProfile.last_name].filter(Boolean).join(' ')
+          : 'Someone'
+
         const fmt = (n: number) =>
           new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 }).format(n)
 
@@ -98,7 +108,7 @@ export async function POST(request: NextRequest) {
               userId: alert.user_id,
               type: 'price_alert',
               title: `${body.commodity} ${direction} ${fmt(price)}/${body.unit}`,
-              body: `A price report in ${stateLabel} hit your alert target of ${fmt(alert.target_price)}/${alert.unit}.`,
+              body: `${posterName} reported a price in ${stateLabel} that hit your alert target of ${fmt(alert.target_price)}/${alert.unit}.`,
               link: '/prices',
               actorId: user.id,
               entityId: alert.id,

@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
 const CATEGORIES = ['All', 'Grains', 'Tubers', 'Legumes', 'Vegetables', 'Oils', 'Livestock', 'Other']
@@ -24,6 +25,12 @@ type PriceReport = {
   market_name: string | null
   state: string | null
   reported_at: string
+  profiles: {
+    first_name: string | null
+    last_name: string | null
+    username: string | null
+    avatar_url: string | null
+  } | null
 }
 
 export default function PricesClient({
@@ -152,9 +159,31 @@ export default function PricesClient({
                 </div>
 
                 <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
-                  <span className="text-xs text-gray-400 dark:text-gray-500">
-                    {timeAgo(report.reported_at)}
-                  </span>
+                  <div className="flex items-center gap-2 min-w-0">
+                    {report.profiles ? (
+                      <Link
+                        href={report.profiles.username ? `/u/${report.profiles.username}` : `/directory/${report.user_id}`}
+                        className="flex items-center gap-1.5 group min-w-0"
+                      >
+                        {report.profiles.avatar_url ? (
+                          <img src={report.profiles.avatar_url} alt="" className="w-5 h-5 rounded-full object-cover shrink-0" />
+                        ) : (
+                          <span className="w-5 h-5 rounded-full bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 text-[10px] font-bold flex items-center justify-center shrink-0">
+                            {(report.profiles.first_name?.[0] || '?').toUpperCase()}
+                          </span>
+                        )}
+                        <span className="text-xs text-gray-500 dark:text-gray-400 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors truncate">
+                          {[report.profiles.first_name, report.profiles.last_name].filter(Boolean).join(' ') || 'Anonymous'}
+                        </span>
+                      </Link>
+                    ) : (
+                      <span className="text-xs text-gray-400 dark:text-gray-500">Anonymous</span>
+                    )}
+                    <span className="text-gray-300 dark:text-gray-700">·</span>
+                    <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0">
+                      {timeAgo(report.reported_at)}
+                    </span>
+                  </div>
 
                   {isOwner && (
                     <div className="flex items-center gap-2">
