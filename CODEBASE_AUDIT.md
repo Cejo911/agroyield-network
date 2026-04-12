@@ -1,8 +1,8 @@
 # AgroYield Network — Codebase Audit & Record
 
-**Date:** 11 April 2026  
-**Domain:** agroyield.africa  
-**Launch Target:** 5 July 2026  
+**Date:** 12 April 2026 (Checkpoint 2)
+**Domain:** agroyield.africa
+**Launch Target:** 5 July 2026
 **Tech Stack:** Next.js 16.2 · React 19 · Supabase (DB + Auth) · Vercel · Resend · Paystack · Tailwind CSS 4 · TypeScript
 
 ---
@@ -15,13 +15,15 @@ agroyield-network/
 │   ├── layout.tsx            # Root layout (Geist fonts, ThemeProvider, AnnouncementBanner)
 │   ├── page.tsx              # Landing page (server component → HomeClient)
 │   ├── home-client.tsx       # Landing page client (hero, countdown, waitlist, modules grid)
-│   ├── globals.css           # Global styles
+│   ├── globals.css           # Global styles + dark mode form overrides
 │   ├── error.tsx             # Global error boundary
 │   ├── not-found.tsx         # 404 page
 │   ├── loading.tsx           # Global loading state
 │   │
 │   ├── login/page.tsx        # Email + password + Google OAuth sign-in
 │   ├── signup/page.tsx       # Email + password + Google OAuth sign-up (registration toggle)
+│   ├── forgot-password/page.tsx  # Password reset request
+│   ├── reset-password/page.tsx   # Password reset form
 │   ├── verify/page.tsx       # Verification (paid badge) purchase page
 │   ├── verify/success/       # Post-verification success page
 │   │
@@ -79,119 +81,147 @@ agroyield-network/
 │   │   └── loading.tsx
 │   │
 │   ├── business/             # Business Suite (SME management)
-│   │   ├── layout.tsx        # Side navigation (Dashboard, Setup, Products, Customers, Invoices, Expenses, Reports)
-│   │   ├── page.tsx          # Business dashboard (P&L hero, invoice status, onboarding checklist, recent activity)
+│   │   ├── layout.tsx        # Sidebar nav (Dashboard, Setup, Products, Customers, Invoices, Expenses, Assets, Reports, Team)
+│   │   ├── page.tsx          # Business dashboard (P&L, health score, low stock alerts, onboarding checklist, recent activity)
+│   │   ├── MobileNav.tsx     # Mobile bottom nav (Home, Products, Invoices, Expenses, Assets)
 │   │   ├── PeriodToggle.tsx  # Month/Quarter/Year/All filter
+│   │   ├── SidebarThemeToggle.tsx  # Theme toggle for sidebar
 │   │   ├── setup/page.tsx    # Business profile setup
-│   │   ├── products/page.tsx # Product catalogue
-│   │   ├── customers/page.tsx # Customer management
-│   │   ├── customers/[id]/statement/ # Customer statement views
+│   │   ├── products/page.tsx # Product catalogue with stock tracking
+│   │   ├── customers/
+│   │   │   ├── page.tsx      # Customer management
+│   │   │   └── [id]/statement/ # Customer statement + print
 │   │   ├── invoices/
-│   │   │   ├── page.tsx      # Invoice listing with table
+│   │   │   ├── page.tsx      # Invoice listing with table + mobile cards
 │   │   │   ├── InvoicesTable.tsx
-│   │   │   ├── RecordPaymentButton.tsx
-│   │   │   ├── new/page.tsx  # Create new invoice
-│   │   │   └── [id]/         # Invoice detail + actions
-│   │   ├── expenses/page.tsx # Expense tracking
-│   │   └── reports/          # Financial reports (with print layouts)
+│   │   │   ├── RecordPaymentButton.tsx  # Direct payment recording (with stock deduction)
+│   │   │   ├── new/page.tsx  # Create invoice (multi-type, VAT, stock warnings)
+│   │   │   └── [id]/
+│   │   │       ├── page.tsx  # Invoice detail
+│   │   │       └── InvoiceActions.tsx  # Status changes + stock deduction/restore
+│   │   ├── expenses/page.tsx # Expense tracking + spread feature
+│   │   ├── assets/page.tsx   # Fixed asset register (4 categories, conditions, lifecycle)
+│   │   ├── reports/
+│   │   │   ├── page.tsx      # Reports (P&L, inventory valuation, top products/customers, Excel export)
+│   │   │   ├── ReportExport.tsx  # Excel export component
+│   │   │   └── print/page.tsx    # Print layout
+│   │   ├── team/page.tsx     # Team management (invite, roles, revoke)
+│   │   └── accept-invite/page.tsx  # Accept team invitation flow
 │   │
-│   ├── invoice-print/[id]/   # Public invoice print view (with PrintButton)
+│   ├── invoice-print/[id]/   # Public invoice print view
 │   │
 │   ├── pricing/
-│   │   ├── page.tsx          # Pricing page (reads prices from settings table via service role)
-│   │   └── pricing-client.tsx # Client pricing display + Paystack checkout
+│   │   ├── page.tsx          # Pricing page
+│   │   └── pricing-client.tsx # Paystack checkout
 │   │
-│   ├── subscribe/success/page.tsx  # Post-payment success page
+│   ├── subscribe/success/page.tsx  # Post-payment success
 │   │
 │   ├── admin/
-│   │   ├── page.tsx          # Admin dashboard (stats, manage content/members/reports/settings)
-│   │   └── admin-client.tsx  # Admin client (tabs for opportunities, listings, members, reports, settings)
+│   │   ├── page.tsx          # Admin dashboard
+│   │   └── admin-client.tsx  # Admin client (moderation, members, reports, settings)
 │   │
-│   ├── about/page.tsx        # About page (mission, vision, timeline, advisory board)
+│   ├── about/page.tsx
 │   ├── contact/
-│   │   ├── page.tsx          # Contact page (metadata)
-│   │   └── contact-client.tsx # Contact form
-│   ├── privacy/page.tsx      # Privacy policy
-│   ├── terms/page.tsx        # Terms of service
-│   │
+│   │   ├── page.tsx
+│   │   └── contact-client.tsx
+│   ├── privacy/page.tsx
+│   ├── terms/page.tsx
+│   ├── data-deletion/page.tsx
 │   ├── u/[slug]/page.tsx     # Public profile by username slug
 │   │
 │   ├── components/
-│   │   ├── AppNav.tsx        # Authenticated navigation (desktop + mobile responsive, user dropdown, admin link)
-│   │   ├── AnnouncementBanner.tsx  # Top announcement banner
-│   │   ├── ThemeProvider.tsx # Dark/light theme context
-│   │   ├── ThemeToggle.tsx   # Theme toggle button
-│   │   ├── VerifiedBadge.tsx # Green verification badge
-│   │   ├── EliteBadge.tsx    # Gold elite badge
-│   │   ├── LikeButton.tsx    # Like/unlike component
-│   │   ├── ReportButton.tsx  # Report content button
-│   │   └── CommentsSection.tsx # Comments component
+│   │   ├── AppNav.tsx        # Authenticated navigation (desktop + mobile, user dropdown, admin link)
+│   │   ├── AnnouncementBanner.tsx
+│   │   ├── ThemeProvider.tsx
+│   │   ├── ThemeToggle.tsx
+│   │   ├── VerifiedBadge.tsx
+│   │   ├── EliteBadge.tsx
+│   │   ├── LikeButton.tsx
+│   │   ├── ReportButton.tsx
+│   │   └── CommentsSection.tsx
 │   │
-│   └── api/                  # API Routes
-│       ├── profile/route.ts          # Profile upsert (auto-generates username slug)
-│       ├── waitlist/route.ts         # Waitlist signup + confirmation email (Resend)
-│       ├── contact/route.ts          # Contact form submission + email (Resend)
-│       ├── search/route.ts           # Cross-module search (profiles, opportunities, listings, research)
-│       ├── follow/route.ts           # Follow/unfollow
-│       ├── like/route.ts             # Like/unlike
-│       ├── apply/route.ts            # Apply to opportunity
-│       ├── report/route.ts           # Report content
-│       ├── opportunities/route.ts    # CRUD for opportunities
-│       ├── marketplace/route.ts      # CRUD for marketplace listings
-│       ├── research/route.ts         # CRUD for research posts
-│       ├── prices/route.ts           # CRUD for price reports
-│       ├── pricing/route.ts          # Read pricing from settings
-│       ├── subscribe/route.ts        # Subscription initiation
-│       ├── content-types/route.ts    # Content type definitions
-│       ├── registration-status/route.ts  # Check if registration is open
+│   └── api/
+│       ├── profile/route.ts
+│       ├── waitlist/route.ts
+│       ├── contact/route.ts
+│       ├── search/route.ts
+│       ├── follow/route.ts
+│       ├── like/route.ts
+│       ├── apply/route.ts
+│       ├── report/route.ts
+│       ├── opportunities/route.ts
+│       ├── marketplace/route.ts
+│       ├── research/route.ts
+│       ├── prices/route.ts
+│       ├── pricing/route.ts
+│       ├── subscribe/route.ts
+│       ├── content-types/route.ts
+│       ├── registration-status/route.ts
+│       ├── business/
+│       │   ├── invite/route.ts        # Team invitation (Resend email)
+│       │   └── accept-invite/route.ts  # Accept invitation (service role)
 │       ├── payment/
-│       │   ├── initiate/route.ts     # Paystack payment initialization
-│       │   ├── verify/route.ts       # Paystack payment verification
-│       │   └── webhook/route.ts      # Paystack webhook handler
-│       ├── webhooks/paystack/route.ts # Alternative Paystack webhook
+│       │   ├── initiate/route.ts
+│       │   ├── verify/route.ts
+│       │   └── webhook/route.ts
+│       ├── webhooks/paystack/route.ts
+│       ├── auth/
+│       │   ├── reset-password/route.ts
+│       │   └── facebook-deletion/route.ts
 │       ├── admin/
-│       │   ├── listing/route.ts      # Admin listing management
-│       │   ├── member/route.ts       # Admin member management
-│       │   ├── opportunity/route.ts  # Admin opportunity management
-│       │   ├── reports/route.ts      # Admin reports view
-│       │   └── settings/route.ts     # Admin settings management
+│       │   ├── listing/route.ts
+│       │   ├── member/route.ts
+│       │   ├── opportunity/route.ts
+│       │   ├── reports/route.ts
+│       │   └── settings/route.ts
 │       └── cron/
-│           ├── weekly-digest/route.ts    # Weekly email digest
-│           ├── expire-subscriptions/route.ts  # Auto-expire subscriptions
-│           └── expiry-reminder/route.ts  # Subscription expiry reminders
+│           ├── weekly-digest/route.ts
+│           ├── expire-subscriptions/route.ts
+│           └── expiry-reminder/route.ts
 │
 ├── lib/supabase/
 │   ├── client.ts             # Browser Supabase client
 │   └── server.ts             # Server Supabase client (cookie-based)
 │
-├── middleware.ts              # Auth middleware (protects dashboard, profile, directory, etc.)
+├── middleware.ts              # Auth middleware
 ├── next.config.ts
 ├── tsconfig.json
 ├── package.json
 ├── postcss.config.mjs
-└── eslint.config.mjs
+├── eslint.config.mjs
+├── PROJECT_STATUS.md          # Project status tracker
+├── CODEBASE_AUDIT.md          # This file
+└── AgroYield-Strategic-Review.docx  # Strategic product review document
 ```
 
 ---
 
-## 2. Supabase Database Tables (Inferred from Queries)
+## 2. Supabase Database Tables
 
 | Table | Key Columns | Purpose |
 |-------|-------------|---------|
 | `profiles` | id, first_name, last_name, role, bio, location, institution, interests, linkedin, twitter, website, avatar_url, phone, whatsapp, username, is_verified, is_elite, is_admin, admin_role, email, created_at, updated_at | User profiles |
 | `follows` | follower_id, following_id | Follow relationships |
-| `opportunities` | id, user_id, title, type, organisation, location, description, deadline, is_closed, is_active, created_at | Grants, jobs, fellowships |
-| `marketplace_listings` | id, user_id, title, category, type, price, price_negotiable, description, state, is_closed, is_active, created_at | Buy/sell/trade listings |
-| `research_posts` | id, user_id, title, type, content, tags, abstract, is_locked, is_active, created_at | Research publications |
-| `price_reports` | id, user_id, commodity, category, price, unit, market_name, state, reported_at | Commodity price data |
-| `waitlist_signups` | email, source | Pre-launch waitlist |
-| `contact_messages` | name, email, subject, message | Contact form submissions |
+| `opportunities` | id, user_id, title, type, organisation, location, description, deadline, is_closed, is_active, is_pending_review, created_at | Grants, jobs, fellowships |
+| `marketplace_listings` | id, user_id, title, category, type, price, price_negotiable, description, state, is_closed, is_active, is_pending_review, created_at | Buy/sell/trade |
+| `research_posts` | id, user_id, title, type, content, tags, abstract, is_locked, is_active, created_at | Research board |
+| `price_reports` | id, user_id, commodity, category, price, unit, market_name, state, reported_at | Commodity prices |
 | `businesses` | id, user_id, name, logo_url, address, phone | Business profiles |
-| `invoices` | id, user_id, invoice_number, status (draft/sent/paid/overdue), total, issue_date, customer_id | Invoices |
-| `customers` | id, user_id, name | Business customers |
-| `business_expenses` | id, user_id, description, category, amount, date | Business expenses |
-| `settings` | key, value | Platform settings (prices, registration toggle) |
-| `reports` | post_id, post_type, reason, created_at | Content reports |
+| `business_products` | id, business_id, user_id, name, description, unit, unit_price, cost_price, stock_quantity, low_stock_threshold, is_active | Product catalogue |
+| `customers` | id, business_id, user_id, name, email, phone, address | Business customers |
+| `invoices` | id, business_id, user_id, invoice_number, status, total, subtotal, vat_amount, issue_date, due_date, customer_id, type, notes | Invoices |
+| `invoice_items` | id, invoice_id, product_id, description, quantity, unit_price, amount | Line items |
+| `business_expenses` | id, business_id, user_id, description, category, amount, date, notes | Expenses |
+| `business_assets` | id, business_id, user_id, name, category, description, serial_number, tag_number, purchase_date, purchase_price, current_value, location, condition, assigned_to, photo_url, status, notes | Fixed assets |
+| `business_team` | id, business_id, invited_by, email, role, status, user_id, invite_token, invited_at, accepted_at | Team invitations & members |
+| `stock_movements` | id, business_id, user_id, product_id, quantity, type, reason, note, invoice_id, created_at | Stock audit trail |
+| `subscriptions` | id, user_id, plan, status, paystack_reference, started_at, expires_at | Paystack subscriptions |
+| `comments` | id, user_id, post_id, post_type, content, created_at | Comments on all content |
+| `likes` | id, user_id, post_id, post_type | Likes |
+| `reports` | id, user_id, post_id, post_type, reason, created_at | Content reports |
+| `waitlist_signups` | email, source | Pre-launch waitlist |
+| `contact_messages` | name, email, subject, message | Contact form |
+| `settings` | key, value | Platform config (rate limits, moderation mode, pricing) |
 
 ---
 
@@ -199,142 +229,61 @@ agroyield-network/
 
 | Method | Status | Notes |
 |--------|--------|-------|
-| Email + Password | **Working** | Sign up with first/last name, email confirmation via Supabase + Resend welcome email |
-| Google OAuth | **Working** | Configured via Google Console, uses `signInWithOAuth` |
-| LinkedIn OAuth | **Pending** | Credentials not yet wired into Supabase or the app |
-| Facebook OAuth | **Pending** | Credentials not yet wired into Supabase or the app |
+| Email + Password | ✅ Working | Sign up with first/last name, email confirmation required |
+| Google OAuth | ✅ Working | Via Google Console, `signInWithOAuth` |
+| LinkedIn OAuth | ⏳ Pending | Credentials in portal, not wired into app |
+| Facebook OAuth | ⏳ Pending | Credentials in portal, not wired into app |
 
-Auth callback (`/auth/callback`) handles all OAuth providers: exchanges code for session, checks if profile exists, sends welcome email for new users, redirects to profile setup or dashboard.
-
----
-
-## 4. Core Modules — Current State
-
-### Module 1: Connections & Directory ✅ Working
-- Member directory with search/filter by role, location, institution
-- Follow/unfollow functionality
-- Individual member profile pages
-- Public profile via `/u/[slug]`
-- Profile completeness tracker (13 fields)
-
-### Module 2: Opportunities ✅ Working
-- Post, edit, close opportunities (grants, fellowships, jobs, partnerships)
-- Apply to opportunities
-- Admin moderation (activate/deactivate)
-
-### Module 3: Price Tracker ✅ Working
-- Community-submitted commodity prices
-- Filter by commodity, state, market
-- Report a price with market name, state, unit
-
-### Module 4: Marketplace ✅ Working
-- Post listings (produce, equipment, inputs)
-- Category & type filtering
-- Price negotiation flag
-- Admin moderation
-
-### Module 5: Research Board ✅ Working
-- Post research (papers, questions, collaborations)
-- Tags and type filtering
-- Lock/unlock posts
-- Admin moderation
-
-### Module 6: Business Suite ✅ Working
-- Business profile setup (name, logo, address, phone)
-- Product catalogue management
-- Customer management with statement generation
-- Invoice creation, editing, status tracking (draft → sent → paid/overdue)
-- Invoice printing (dedicated print layouts)
-- Expense tracking by category
-- Financial reports with P&L, profit margin
-- Period filtering (month/quarter/year/all)
-- Onboarding checklist (4 steps)
+Auth callback (`/auth/callback`) handles all OAuth providers: exchanges code for session, checks if profile exists, sends welcome email, redirects to profile setup or dashboard.
 
 ---
 
-## 5. Payments (Paystack) ✅ Working
-- Verification subscription (monthly/annual)
-- Paystack payment initialization and verification
-- Webhook handling for async payment confirmation
-- Cron jobs for subscription expiry and reminders
-- Admin-configurable pricing via settings table
+## 4. Key Patterns & Architecture Notes
+
+### Data Fetching
+- Server components for initial page loads (Supabase server client with cookies)
+- Client components (`'use client'`) for interactive features
+- Service role client (`SUPABASE_SERVICE_ROLE_KEY`) for admin operations and bypassing RLS in API routes
+
+### UI Patterns
+- Desktop table + mobile cards: `hidden md:table` for desktop, `md:hidden` for mobile cards
+- Dark mode: class-based via `next-themes` with `attribute="class"`, global CSS overrides for form elements
+- Status badges: consistent colour-coded badges across modules
+- Currency: `Intl.NumberFormat('en-NG')` with NGN → ₦ replacement
+- Dates: `en-GB` locale (2-digit day, short month, numeric year)
+
+### Business Suite Specifics
+- Stock movements linked to invoices via `invoice_id` for audit trail
+- Invoice types: invoice, receipt, proforma_invoice, delivery_note
+- Health Score: 5 factors (profitability 30pts, cash collection 25pts, overdue exposure 20pts, expense control 15pts, stock health 10pts)
+- Expense spread: splits amount across N months, handles rounding remainder on first entry
+- Team roles: owner (full), accountant (invoices/expenses/reports), staff (view-only)
+
+### Email Templates
+- Branded dark-theme HTML (background: #060d09, accent: #22c55e)
+- Logo: `https://agroyield.africa/logo-horizontal-white.png`
+- From: `noreply@agroyield.africa` (contact confirmations, invites, digests)
 
 ---
 
-## 6. Admin Dashboard ✅ Working
-- Stats overview (opportunities, listings, members, removed)
-- Content moderation (activate/deactivate opportunities and listings)
-- Member management (verify, elite badge, admin role assignment)
-- Report review (grouped by post with reason counts)
-- Platform settings (registration toggle, pricing)
-- Role-based access (super admin vs moderator)
+## 5. Middleware (Protected Routes)
 
----
+Routes protected by auth middleware at `middleware.ts`:
 
-## 7. Email System (Resend) ✅ Working
-- Welcome email on account creation
-- Waitlist confirmation + admin notification
-- Contact form confirmation + admin notification
-- Weekly digest cron
-- Subscription expiry reminders
-- All emails use branded HTML templates (dark green theme)
-- Sender: `noreply@agroyield.africa`
-
----
-
-## 8. Additional Features
-
-| Feature | Status |
-|---------|--------|
-| Dark/Light theme | ✅ Working (ThemeProvider + localStorage) |
-| SEO (OpenGraph, Twitter cards, metadata) | ✅ Working |
-| Mobile responsive navigation | ✅ Working |
-| Cross-module search | ✅ Working |
-| Like system | ✅ Working |
-| Comments system | ✅ Working |
-| Content reporting | ✅ Working |
-| Verified badge (paid) | ✅ Working |
-| Elite badge (admin-awarded) | ✅ Working |
-| Public profile links (`/u/slug`) | ✅ Working |
-| Announcement banner | ✅ Working |
-| Registration open/close toggle | ✅ Working |
-| Invoice printing | ✅ Working |
-
----
-
-## 9. Middleware (Protected Routes)
-
-Routes protected by auth middleware:
 `/dashboard`, `/profile`, `/directory`, `/opportunities`, `/prices`, `/marketplace`, `/research`, `/mentorship`, `/grants`, `/insights`, `/connections`
 
-Note: `/mentorship`, `/grants`, `/insights`, `/connections` are in the matcher but pages don't exist yet — ready for future modules.
+---
+
+## 6. Dependencies
+
+**Production:** `@supabase/ssr`, `@supabase/supabase-js`, `next`, `react`, `react-dom`, `next-themes`, `resend`, `exceljs`
+**Dev:** `@tailwindcss/postcss`, `typescript`, `eslint`, `eslint-config-next`
 
 ---
 
-## 10. Pending Work
+## 7. Audit History
 
-1. **LinkedIn OAuth** — needs Supabase provider config + UI buttons on login/signup
-2. **Facebook OAuth** — needs Supabase provider config + UI buttons on login/signup
-3. **Mentorship Module** — not yet scoped or built
-4. **Connections & Insights Feed** — described on landing page but no feed/messaging implementation yet
-5. **Price Alerts** — described on landing page but not implemented
-
----
-
-## 11. Environment Variables Required
-
-```
-NEXT_PUBLIC_SUPABASE_URL
-NEXT_PUBLIC_SUPABASE_ANON_KEY
-SUPABASE_SERVICE_ROLE_KEY
-RESEND_API_KEY
-PAYSTACK_SECRET_KEY
-NEXT_PUBLIC_APP_URL
-```
-
----
-
-## 12. Dependencies
-
-**Production:** `@supabase/ssr`, `@supabase/supabase-js`, `next`, `react`, `react-dom`, `next-themes`, `resend`, `xlsx`  
-**Dev:** `tailwindcss`, `@tailwindcss/postcss`, `typescript`, `eslint`, `eslint-config-next`
+| Date | Auditor | Summary |
+|------|---------|---------|
+| April 11, 2026 | Claude | Initial audit — 6 modules working, business suite core complete |
+| April 12, 2026 | Claude | Checkpoint 2 — added assets, expense spread, health score, team access, dark mode fixes, strategic review |
