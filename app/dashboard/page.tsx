@@ -36,6 +36,12 @@ const MODULES = [
     href: '/research',
   },
   {
+    title: 'Mentorship',
+    description: 'Connect with experienced mentors or share your expertise with the next generation.',
+    icon: '🤝',
+    href: '/mentorship',
+  },
+  {
     title: 'Business Suite',
     description: 'Create invoices, manage customers and products, and track your agribusiness revenue.',
     icon: '💼',
