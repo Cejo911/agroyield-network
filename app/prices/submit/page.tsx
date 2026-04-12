@@ -2,7 +2,6 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import AppNav from '@/app/components/AppNav'
-import { createClient } from '@/lib/supabase/client'
 
 const COMMODITIES: Record<string, string[]> = {
   grains:     ['Maize', 'Rice', 'Sorghum', 'Millet', 'Wheat', 'Barley'],
@@ -60,28 +59,31 @@ export default function SubmitPricePage() {
     }
 
     setSubmitting(true)
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      setError('You must be signed in to submit prices.')
-      setSubmitting(false)
-      return
-    }
 
-    const { error: insertError } = await supabase.from('price_reports').insert({
-      user_id:       user.id,
-      category:      form.category,
-      commodity:     form.commodity,
-      price:         priceValue,
-      price_per_unit: priceValue,
-      unit:          form.unit,
-      market_name:   form.market_name,
-      state:         form.state,
-      notes:         form.notes || null,
-    })
+    try {
+      const res = await fetch('/api/prices', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          category:    form.category,
+          commodity:   form.commodity,
+          price:       priceValue,
+          unit:        form.unit,
+          market_name: form.market_name,
+          state:       form.state,
+          notes:       form.notes || null,
+        }),
+      })
 
-    if (insertError) {
-      setError(insertError.message)
+      const result = await res.json()
+
+      if (!res.ok) {
+        setError(result.error || 'Failed to submit price report.')
+        setSubmitting(false)
+        return
+      }
+    } catch {
+      setError('Network error. Please try again.')
       setSubmitting(false)
       return
     }

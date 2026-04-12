@@ -1,11 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createAdmin } from '@supabase/supabase-js'
+import { createNotification } from '@/lib/notifications'
+import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
 
 export async function GET() {
   return NextResponse.json({ status: 'ok' })
 }
 
 export async function POST(request: NextRequest) {
+  // Rate limit: 10 submissions per minute
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown'
+  const { success: allowed } = rateLimit(ip, { limit: 10, windowMs: 60_000 })
+  if (!allowed) return rateLimitResponse()
+
   try {
     const supabase = await createClient()
 
@@ -26,22 +34,87 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const price = parseFloat(body.price)
+
     const { data, error } = await supabase
       .from('price_reports')
       .insert({
         user_id: user.id,
         commodity: body.commodity,
         category: body.category || null,
-        price: body.price,
+        price,
+        price_per_unit: price,
         unit: body.unit,
         market_name: body.market_name || null,
         state: body.state || null,
+        notes: body.notes || null,
       })
       .select('id')
       .single()
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    // ── CHECK PRICE ALERTS ──
+    // Find active alerts matching this commodity where the price crosses the threshold
+    try {
+      const admin = createAdmin(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+      )
+
+      // Query all active alerts for this commodity (across all users)
+      let alertQuery = admin
+        .from('price_alerts')
+        .select('id, user_id, commodity, state, condition, target_price, unit')
+        .eq('commodity', body.commodity)
+        .eq('is_active', true)
+
+      // If the report has a state, also match alerts for that specific state OR alerts with no state (any state)
+      if (body.state) {
+        alertQuery = alertQuery.or(`state.eq.${body.state},state.is.null`)
+      }
+
+      const { data: matchingAlerts } = await alertQuery
+
+      if (matchingAlerts && matchingAlerts.length > 0) {
+        const fmt = (n: number) =>
+          new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 }).format(n)
+
+        for (const alert of matchingAlerts) {
+          // Skip alerting the person who submitted the report (they already know the price)
+          if (alert.user_id === user.id) continue
+
+          const triggered =
+            (alert.condition === 'below' && price <= alert.target_price) ||
+            (alert.condition === 'above' && price >= alert.target_price)
+
+          if (triggered) {
+            const direction = alert.condition === 'below' ? 'dropped to' : 'rose to'
+            const stateLabel = body.state || 'Nigeria'
+
+            await createNotification(admin, {
+              userId: alert.user_id,
+              type: 'price_alert',
+              title: `${body.commodity} ${direction} ${fmt(price)}/${body.unit}`,
+              body: `A price report in ${stateLabel} hit your alert target of ${fmt(alert.target_price)}/${alert.unit}.`,
+              link: '/prices',
+              actorId: user.id,
+              entityId: alert.id,
+            })
+
+            // Deactivate the alert so it doesn't fire repeatedly
+            await admin
+              .from('price_alerts')
+              .update({ is_active: false })
+              .eq('id', alert.id)
+          }
+        }
+      }
+    } catch (alertErr) {
+      // Don't fail the price submission if alert checking fails
+      console.error('Alert check error:', alertErr)
     }
 
     return NextResponse.json({ success: true, id: data.id })
