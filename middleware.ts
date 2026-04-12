@@ -42,6 +42,7 @@ export const config = {
     '/research/:path*',
     '/mentorship/:path*',
     '/grants/:path*',
+    '/community/:path*',
     '/insights/:path*',
     '/connections/:path*',
   ]

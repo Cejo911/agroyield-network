@@ -53,6 +53,12 @@ const MODULES = [
     icon: '💼',
     href: '/business',
   },
+  {
+    title: 'Community',
+    description: 'Share ideas, ask questions, celebrate wins, and connect with the agri community.',
+    icon: '🌍',
+    href: '/community',
+  },
 ]
 
 export default async function Dashboard() {

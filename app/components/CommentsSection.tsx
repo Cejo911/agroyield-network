@@ -15,7 +15,7 @@ type Comment = {
 
 type Props = {
   postId: string
-  postType: 'research' | 'opportunity' | 'listing' | 'price_report'
+  postType: 'research' | 'opportunity' | 'listing' | 'price_report' | 'community'
 }
 
 const timeAgo = (dateStr: string) => {
