@@ -65,7 +65,7 @@ export default function NewOpportunityPage() {
               <input
                 type="text" required value={form.title}
                 onChange={e => setForm(prev => ({ ...prev, title: e.target.value }))}
-                placeholder="e.g. AGRA Small Grants Programme 2026"
+                placeholder="e.g. AGCOMS Small Grants Programme 2026"
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
               />
             </div>
@@ -94,7 +94,7 @@ export default function NewOpportunityPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Organisation</label>
                 <input type="text" value={form.organisation}
                   onChange={e => setForm(prev => ({ ...prev, organisation: e.target.value }))}
-                  placeholder="e.g. AGRA, FAO, USAID"
+                  placeholder="e.g. AGCOMS, AGRA, FAO, USAID"
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                 />
               </div>

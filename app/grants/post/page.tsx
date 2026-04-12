@@ -84,7 +84,7 @@ export default function PostGrantPage() {
             </label>
             <input type="text" required value={form.title}
               onChange={e => setForm({ ...form, title: e.target.value })}
-              placeholder="e.g. AGRA Youth in Agriculture Grant 2026"
+              placeholder="e.g. AGCOMS Youth in Agriculture Grant 2026"
               className={inputCls} />
           </div>
 
@@ -95,7 +95,7 @@ export default function PostGrantPage() {
             </label>
             <input type="text" required value={form.funder}
               onChange={e => setForm({ ...form, funder: e.target.value })}
-              placeholder="e.g. Alliance for a Green Revolution in Africa"
+              placeholder="e.g. AGCOMS Agricultural Revolution in Africa"
               className={inputCls} />
           </div>
 
