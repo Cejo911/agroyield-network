@@ -22,7 +22,7 @@ These must be done before anything else. They fix what's broken and make existin
 
 > **Why:** Without this, every feature is invisible. A user gets a comment, a payment, an overdue invoice — they'll never know unless they check manually.
 > **Scope:** `notifications` table. `NotificationBell` component in AppNav. Trigger notifications from key events (invoice paid, team invite, comment, follow, overdue). Badge count. Mark as read.
-> **Status:** ⬜ Not started
+> **Status:** ✅ Completed (12 Apr 2026)
 
 ### 1.3 — Loading & Error Boundaries
 
