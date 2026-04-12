@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
+import { createNotification } from '@/lib/notifications'
 
 export async function GET(request: Request) {
   try {
@@ -95,6 +96,28 @@ export async function GET(request: Request) {
       console.error('Accept error:', updateError)
       return NextResponse.json({ error: 'Failed to accept invitation' }, { status: 500 })
     }
+
+    // Notify the business owner that the invite was accepted
+    if (business?.user_id) {
+      const { data: accepterProfile } = await admin
+        .from('profiles')
+        .select('first_name, last_name')
+        .eq('id', user.id)
+        .single()
+      const accepterName = accepterProfile
+        ? `${accepterProfile.first_name} ${accepterProfile.last_name}`.trim()
+        : 'A team member'
+      await createNotification(admin, {
+        userId:   business.user_id,
+        type:     'team_invite',
+        title:    `${accepterName} accepted your invitation`,
+        body:     `They've joined ${business.name} as ${invite.role === 'accountant' ? 'an Accountant' : 'a Staff member'}`,
+        link:     '/business/team',
+        actorId:  user.id,
+        entityId: invite.business_id,
+      })
+    }
+
 
     return NextResponse.json({ success: true, details })
 

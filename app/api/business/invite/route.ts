@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { Resend } from 'resend'
+import { createNotification } from '@/lib/notifications'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -181,7 +182,24 @@ export async function POST(request: Request) {
 </body>
 </html>`
     })
-
+    
+    // Notify the invitee if they already have an AgroYield account
+    const { data: inviteeProfile } = await admin
+      .from('profiles')
+      .select('id')
+      .eq('email', email.toLowerCase())
+      .single()
+    if (inviteeProfile) {
+      await createNotification(admin, {
+        userId:   inviteeProfile.id,
+        type:     'team_invite',
+        title:    `${inviterName} invited you to join ${business.name}`,
+        body:     `You've been invited as ${role === 'accountant' ? 'an Accountant' : 'a Staff member'}`,
+        link:     '/business/accept-invite?token=' + inviteToken,
+        actorId:  user.id,
+        entityId: business_id,
+      })
+    }
     return NextResponse.json({ success: true })
 
   } catch (error) {

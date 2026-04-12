@@ -82,6 +82,12 @@ export default function CommentsSection({ postId, postType }: Props) {
     if (!error && data) {
       setComments(prev => [...prev, data])
       setContent('')
+      // Notify post author (fire and forget)
+      fetch('/api/notifications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'comment', postId, postType }),
+      }).catch(() => {})
     }
   }
 

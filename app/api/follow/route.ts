@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient as createAdmin } from '@supabase/supabase-js'
+import { createNotification } from '@/lib/notifications'
 
 // GET /api/follow?userId=xxx
 export async function GET(request: NextRequest) {
@@ -57,6 +59,26 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ following: false })
   } else {
     await supabase.from('follows').insert({ follower_id: user.id, following_id: userId })
+
+    // Notify the person being followed
+    const admin = createAdmin(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('first_name, last_name')
+      .eq('id', user.id)
+      .single()
+    const followerName = profile ? `${profile.first_name} ${profile.last_name}`.trim() : 'Someone'
+    await createNotification(admin, {
+      userId:   userId,
+      type:     'follow',
+      title:    `${followerName} started following you`,
+      link:     `/directory/${user.id}`,
+      actorId:  user.id,
+    })
+
     return NextResponse.json({ following: true })
   }
 }
