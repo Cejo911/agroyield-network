@@ -163,19 +163,23 @@ const INSTITUTIONS = [
 type ProfileFormProps = {
   userId: string
   initialData: {
-    first_name:  string | null
-    last_name:   string | null
-    role:        string | null
-    bio:         string | null
-    location:    string | null
-    institution: string | null
-    interests:   string[] | null
-    linkedin:    string | null
-    twitter:     string | null
-    website:     string | null
-    avatar_url:  string | null
-    phone:       string | null
-    whatsapp:    string | null
+    first_name:    string | null
+    last_name:     string | null
+    role:          string | null
+    bio:           string | null
+    location:      string | null
+    institution:   string | null
+    interests:     string[] | null
+    linkedin:      string | null
+    twitter:       string | null
+    facebook:      string | null
+    tiktok:        string | null
+    website:       string | null
+    avatar_url:    string | null
+    phone:         string | null
+    whatsapp:      string | null
+    gender:        string | null
+    date_of_birth: string | null
   }
 }
 
@@ -195,19 +199,23 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
   const [avatarUploading, setAvatarUploading] = useState(false)
   const [message,         setMessage]         = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [form, setForm] = useState({
-    first_name:  initialData.first_name  || '',
-    last_name:   initialData.last_name   || '',
-    role:        initialData.role        || '',
-    bio:         initialData.bio         || '',
-    location:    initialData.location    || '',
-    institution: initialData.institution || '',
-    interests:   initialData.interests   || [] as string[],
-    linkedin:    initialData.linkedin    || '',
-    twitter:     initialData.twitter     || '',
-    website:     initialData.website     || '',
-    avatar_url:  initialData.avatar_url  || '',
-    phone:       initialData.phone       || '',
-    whatsapp:    initialData.whatsapp    || '',
+    first_name:    initialData.first_name    || '',
+    last_name:     initialData.last_name     || '',
+    role:          initialData.role          || '',
+    bio:           initialData.bio           || '',
+    location:      initialData.location      || '',
+    institution:   initialData.institution   || '',
+    interests:     initialData.interests     || [] as string[],
+    linkedin:      initialData.linkedin      || '',
+    twitter:       initialData.twitter       || '',
+    facebook:      initialData.facebook      || '',
+    tiktok:        initialData.tiktok        || '',
+    website:       initialData.website       || '',
+    avatar_url:    initialData.avatar_url    || '',
+    phone:         initialData.phone         || '',
+    whatsapp:      initialData.whatsapp      || '',
+    gender:        initialData.gender        || '',
+    date_of_birth: initialData.date_of_birth || '',
   })
 
   // ── Completeness ──
@@ -415,6 +423,31 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
           </div>
         </div>
 
+        {/* ── Personal ── */}
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Personal Details</h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Gender</label>
+              <select value={form.gender}
+                onChange={e => setForm(prev => ({ ...prev, gender: e.target.value }))}
+                className={inputCls}>
+                <option value="">Select gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+                <option value="prefer_not_to_say">Prefer not to say</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date of Birth</label>
+              <input type="date" value={form.date_of_birth}
+                onChange={e => setForm(prev => ({ ...prev, date_of_birth: e.target.value }))}
+                className={inputCls} />
+            </div>
+          </div>
+        </div>
+
         {/* ── Bio ── */}
         <div>
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">About You</h2>
@@ -515,6 +548,20 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
               <input type="url" value={form.twitter}
                 onChange={e => setForm(prev => ({ ...prev, twitter: e.target.value }))}
                 placeholder="https://x.com/yourhandle"
+                className={inputCls} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Facebook URL</label>
+              <input type="url" value={form.facebook}
+                onChange={e => setForm(prev => ({ ...prev, facebook: e.target.value }))}
+                placeholder="https://facebook.com/yourname"
+                className={inputCls} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">TikTok URL</label>
+              <input type="url" value={form.tiktok}
+                onChange={e => setForm(prev => ({ ...prev, tiktok: e.target.value }))}
+                placeholder="https://tiktok.com/@yourhandle"
                 className={inputCls} />
             </div>
             <div>

@@ -23,20 +23,25 @@ type Profile = {
   is_elite: boolean
   is_admin: boolean
   admin_role: string | null
+  avatar_url: string | null
 }
 
 type Props = {
   profiles: Profile[]
   currentUserId: string
   followingIds: string[]
+  followerCountMap: Record<string, number>
+  mentorIds: string[]
 }
 
-export default function DirectoryClient({ profiles, currentUserId, followingIds }: Props) {
+export default function DirectoryClient({ profiles, currentUserId, followingIds, followerCountMap, mentorIds }: Props) {
   const [search,         setSearch]         = useState('')
   const [roleFilter,     setRoleFilter]     = useState('All')
   const [interestFilter, setInterestFilter] = useState('')
 
   const followingSet = new Set(followingIds)
+
+  const mentorSet = new Set(mentorIds)
 
   const filtered = profiles.filter(p => {
     const fullName    = `${p.first_name ?? ''} ${p.last_name ?? ''}`.toLowerCase()
@@ -121,19 +126,37 @@ export default function DirectoryClient({ profiles, currentUserId, followingIds 
 
               <Link href={`/directory/${profile.id}`} className="block">
                 {/* Avatar */}
-                <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center text-green-700 dark:text-green-400 font-bold text-lg mb-4">
-                  {profile.first_name?.[0]?.toUpperCase() ?? '?'}
-                </div>
+                {profile.avatar_url ? (
+                  <img src={profile.avatar_url} alt="" className="w-12 h-12 rounded-full object-cover mb-4" />
+                ) : (
+                  <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center text-green-700 dark:text-green-400 font-bold text-lg mb-4">
+                    {profile.first_name?.[0]?.toUpperCase() ?? '?'}
+                  </div>
+                )}
 
                 <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-green-700 dark:group-hover:text-green-400 transition-colors pr-20">
                   {profile.first_name} {profile.last_name}
                 </h3>
 
-                {/* Role pill */}
-                {profile.role && (
-                  <span className="inline-block mt-1 text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full font-medium capitalize">
-                    {profile.role}
-                  </span>
+                {/* Role pill + Mentor badge */}
+                <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                  {profile.role && (
+                    <span className="inline-block text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full font-medium capitalize">
+                      {profile.role}
+                    </span>
+                  )}
+                  {mentorSet.has(profile.id) && (
+                    <span className="inline-flex items-center gap-0.5 text-xs bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full font-medium border border-green-200 dark:border-green-800">
+                      🎓 Mentor
+                    </span>
+                  )}
+                </div>
+
+                {/* Follower count */}
+                {(followerCountMap[profile.id] || 0) > 0 && (
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                    {followerCountMap[profile.id]} follower{followerCountMap[profile.id] !== 1 ? 's' : ''}
+                  </p>
                 )}
 
                 {/* Badges */}

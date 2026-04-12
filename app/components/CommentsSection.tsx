@@ -9,6 +9,8 @@ type Comment = {
   content: string
   user_name: string | null
   created_at: string
+  likeCount: number
+  liked: boolean
 }
 
 type Props = {
@@ -46,21 +48,81 @@ export default function CommentsSection({ postId, postType }: Props) {
           user.email?.split('@')[0] ??
           'User'
         setUserName(name)
+
+        // Fetch comments then enrich with like data
+        supabase
+          .from('comments')
+          .select('id, user_id, content, user_name, created_at')
+          .eq('post_id', postId)
+          .eq('post_type', postType)
+          .eq('is_active', true)
+          .order('created_at', { ascending: true })
+          .then(async ({ data: rawComments }) => {
+            const commentList = rawComments ?? []
+            if (commentList.length === 0) {
+              setComments([])
+              setLoading(false)
+              return
+            }
+            // Batch fetch likes for all comments
+            const commentIds = commentList.map(c => c.id)
+            const [{ data: allLikes }, { data: userLikes }] = await Promise.all([
+              supabase.from('likes').select('post_id').eq('post_type', 'comment').in('post_id', commentIds),
+              supabase.from('likes').select('post_id').eq('post_type', 'comment').eq('user_id', user.id).in('post_id', commentIds),
+            ])
+            // Count likes per comment
+            const countMap: Record<string, number> = {}
+            for (const l of (allLikes ?? [])) countMap[l.post_id] = (countMap[l.post_id] || 0) + 1
+            const likedSet = new Set((userLikes ?? []).map(l => l.post_id))
+
+            setComments(commentList.map(c => ({
+              ...c,
+              likeCount: countMap[c.id] || 0,
+              liked: likedSet.has(c.id),
+            })))
+            setLoading(false)
+          })
+      } else {
+        // Not logged in — fetch comments without like data
+        supabase
+          .from('comments')
+          .select('id, user_id, content, user_name, created_at')
+          .eq('post_id', postId)
+          .eq('post_type', postType)
+          .eq('is_active', true)
+          .order('created_at', { ascending: true })
+          .then(({ data }) => {
+            setComments((data ?? []).map(c => ({ ...c, likeCount: 0, liked: false })))
+            setLoading(false)
+          })
       }
     })
-
-    supabase
-      .from('comments')
-      .select('id, user_id, content, user_name, created_at')
-      .eq('post_id', postId)
-      .eq('post_type', postType)
-      .eq('is_active', true)
-      .order('created_at', { ascending: true })
-      .then(({ data }) => {
-        setComments(data ?? [])
-        setLoading(false)
-      })
   }, [postId, postType])
+
+  const toggleCommentLike = async (commentId: string) => {
+    if (!userId) return
+    // Optimistic update
+    setComments(prev => prev.map(c =>
+      c.id === commentId
+        ? { ...c, liked: !c.liked, likeCount: c.liked ? c.likeCount - 1 : c.likeCount + 1 }
+        : c
+    ))
+    try {
+      const res = await fetch('/api/like', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ postId: commentId, postType: 'comment' }),
+      })
+      if (!res.ok) throw new Error()
+    } catch {
+      // Revert on error
+      setComments(prev => prev.map(c =>
+        c.id === commentId
+          ? { ...c, liked: !c.liked, likeCount: c.liked ? c.likeCount - 1 : c.likeCount + 1 }
+          : c
+      ))
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -80,7 +142,7 @@ export default function CommentsSection({ postId, postType }: Props) {
       .single()
     setSubmitting(false)
     if (!error && data) {
-      setComments(prev => [...prev, data])
+      setComments(prev => [...prev, { ...data, likeCount: 0, liked: false }])
       setContent('')
       // Notify post author (fire and forget)
       fetch('/api/notifications', {
@@ -137,14 +199,29 @@ export default function CommentsSection({ postId, postType }: Props) {
                   <span className="text-xs text-gray-400 dark:text-gray-500">{timeAgo(comment.created_at)}</span>
                 </div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">{comment.content}</p>
-                {comment.user_id === userId && (
-                  <button
-                    onClick={() => handleDelete(comment.id)}
-                    className="text-xs text-gray-400 hover:text-red-500 dark:hover:text-red-400 mt-1 transition-colors"
-                  >
-                    Delete
-                  </button>
-                )}
+                <div className="flex items-center gap-3 mt-1">
+                  {userId && (
+                    <button
+                      onClick={() => toggleCommentLike(comment.id)}
+                      className={`text-xs flex items-center gap-1 transition-colors ${
+                        comment.liked ? 'text-red-500' : 'text-gray-400 hover:text-red-400 dark:hover:text-red-400'
+                      }`}
+                    >
+                      {comment.liked ? '♥' : '♡'}{comment.likeCount > 0 && ` ${comment.likeCount}`}
+                    </button>
+                  )}
+                  {!userId && comment.likeCount > 0 && (
+                    <span className="text-xs text-gray-400">♥ {comment.likeCount}</span>
+                  )}
+                  {comment.user_id === userId && (
+                    <button
+                      onClick={() => handleDelete(comment.id)}
+                      className="text-xs text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                    >
+                      Delete
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           ))}

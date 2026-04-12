@@ -61,19 +61,23 @@ export default async function ProfilePage() {
           <ProfileForm
             userId={user.id}
             initialData={{
-              first_name:  profile?.first_name  ?? null,
-              last_name:   profile?.last_name   ?? null,
-              role:        profile?.role        ?? null,
-              bio:         profile?.bio         ?? null,
-              location:    profile?.location    ?? null,
-              institution: profile?.institution ?? null,
-              interests:   profile?.interests   ?? null,
-              linkedin:    profile?.linkedin    ?? null,
-              twitter:     profile?.twitter     ?? null,
-              website:     profile?.website     ?? null,
-              avatar_url:  avatarUrl,
-              phone:       phone,
-              whatsapp:    whatsapp,
+              first_name:    profile?.first_name    ?? null,
+              last_name:     profile?.last_name     ?? null,
+              role:          profile?.role          ?? null,
+              bio:           profile?.bio           ?? null,
+              location:      profile?.location      ?? null,
+              institution:   profile?.institution   ?? null,
+              interests:     profile?.interests     ?? null,
+              linkedin:      profile?.linkedin      ?? null,
+              twitter:       profile?.twitter       ?? null,
+              facebook:      (rawProfile?.facebook as string) ?? null,
+              tiktok:        (rawProfile?.tiktok as string) ?? null,
+              website:       profile?.website       ?? null,
+              avatar_url:    avatarUrl,
+              phone:         phone,
+              whatsapp:      whatsapp,
+              gender:        (rawProfile?.gender as string) ?? null,
+              date_of_birth: (rawProfile?.date_of_birth as string) ?? null,
             }}
           />
         </div>
