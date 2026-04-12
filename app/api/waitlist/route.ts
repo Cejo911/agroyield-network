@@ -59,8 +59,8 @@ export async function POST(request: Request) {
                   <p style="font-size:14px;color:#bbf7d0;line-height:2;margin:0;">
                     🤝 &nbsp;Connections &amp; Insights Feed<br>
                     🎯 &nbsp;Grants, Events &amp; Mentorship<br>
-                    📊 &nbsp;Live Commodity Price Tracker<br>
-                    🛒 &nbsp;Agri Marketplace<br>
+                    🏷️ &nbsp;Live Commodity Price Tracker<br>
+                    🤝 &nbsp;Agri Marketplace<br>
                     📚 &nbsp;Research Board
                   </p>
                 </td>

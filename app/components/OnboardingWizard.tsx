@@ -11,10 +11,11 @@ const ROLES = [
 ]
 
 const MODULES = [
-  { key: 'directory',     label: 'Directory',      icon: '👥', desc: 'Connect with the community' },
-  { key: 'opportunities', label: 'Opportunities',   icon: '🌱', desc: 'Grants, jobs & fellowships' },
-  { key: 'prices',        label: 'Price Tracker',   icon: '📊', desc: 'Commodity prices across Nigeria' },
-  { key: 'marketplace',   label: 'Marketplace',     icon: '🛒', desc: 'Buy & sell agri products' },
+  { key: 'community',     label: 'Community',       icon: '🌍', desc: 'Discussions, polls & ideas' },
+  { key: 'directory',     label: 'Directory',       icon: '📇', desc: 'Connect with the community' },
+  { key: 'opportunities', label: 'Opportunities',   icon: '🚀', desc: 'Jobs, fellowships & training' },
+  { key: 'prices',        label: 'Price Tracker',   icon: '🏷️', desc: 'Commodity prices near you' },
+  { key: 'marketplace',   label: 'Marketplace',     icon: '🤝', desc: 'Buy & sell agri products' },
   { key: 'research',      label: 'Research Board',  icon: '🔬', desc: 'Share & discover research' },
   { key: 'business',      label: 'Business Suite',  icon: '💼', desc: 'Invoices, inventory & reports' },
 ]

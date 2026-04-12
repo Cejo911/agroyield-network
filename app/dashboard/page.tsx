@@ -6,58 +6,58 @@ import OnboardingWizard from '@/app/components/OnboardingWizard'
 
 const MODULES = [
   {
-    title: 'Directory',
-    description: 'Find and connect with students, researchers, farmers and agripreneurs across Africa.',
-    icon: '👥',
-    href: '/directory',
+    title: 'Community',
+    description: 'Join the conversation — discussions, polls, wins, and ideas from the community.',
+    icon: '🌍',
+    href: '/community',
   },
   {
     title: 'Opportunities',
-    description: 'Jobs, fellowships, internships, partnerships, and training in the agricultural sector.',
-    icon: '🌱',
+    description: 'Discover jobs, fellowships, and training opportunities across agriculture.',
+    icon: '🚀',
     href: '/opportunities',
   },
   {
     title: 'Grant Tracker',
-    description: 'Discover funding opportunities and track your grant applications from draft to award.',
+    description: 'Find funding and track your applications from draft to award.',
     icon: '💰',
     href: '/grants',
   },
   {
-    title: 'Price Tracker',
-    description: 'Real-time commodity prices reported by members across Nigeria.',
-    icon: '📊',
-    href: '/prices',
-  },
-  {
     title: 'Marketplace',
-    description: 'Buy, sell and trade agricultural products, inputs and equipment.',
-    icon: '🛒',
+    description: 'Buy, sell, and trade products, inputs, and equipment with verified members.',
+    icon: '🤝',
     href: '/marketplace',
   },
   {
+    title: 'Price Tracker',
+    description: 'Check today\'s commodity prices reported by members near you.',
+    icon: '🏷️',
+    href: '/prices',
+  },
+  {
+    title: 'Directory',
+    description: 'Find and connect with people who share your agricultural interests.',
+    icon: '📇',
+    href: '/directory',
+  },
+  {
+    title: 'Mentorship',
+    description: 'Learn from experienced mentors or guide the next generation.',
+    icon: '🧭',
+    href: '/mentorship',
+  },
+  {
     title: 'Research Board',
-    description: 'Share findings, collaborate on studies, and access agricultural research.',
+    description: 'Explore and collaborate on agricultural research and findings.',
     icon: '🔬',
     href: '/research',
   },
   {
-    title: 'Mentorship',
-    description: 'Connect with experienced mentors or share your expertise with the next generation.',
-    icon: '🎓',
-    href: '/mentorship',
-  },
-  {
     title: 'Business Suite',
-    description: 'Create invoices, manage customers and products, and track your agribusiness revenue.',
+    description: 'Manage invoices, customers, and revenue for your agribusiness.',
     icon: '💼',
     href: '/business',
-  },
-  {
-    title: 'Community',
-    description: 'Share ideas, ask questions, celebrate wins, and connect with the agri community.',
-    icon: '🌍',
-    href: '/community',
   },
 ]
 

@@ -128,12 +128,12 @@ const modules = [
     pills: ['Grants & Funding', 'Events', 'Mentorship'],
   },
   {
-    icon: '📊', tag: 'Module 03', name: 'Price Tracker', wide: false,
+    icon: '🏷️', tag: 'Module 03', name: 'Price Tracker', wide: false,
     desc: 'Real-time commodity prices across Nigerian markets — from Mile 12 to Bodija. Set price alerts for your crops and never sell below market rate again.',
     pills: ['Live Prices', 'Price Alerts', 'Market History'],
   },
   {
-    icon: '🛒', tag: 'Module 04', name: 'Marketplace', wide: false,
+    icon: '🤝', tag: 'Module 04', name: 'Marketplace', wide: false,
     desc: 'List your produce, equipment, seeds, and agri-inputs. Connect directly with verified buyers and sellers across Nigeria — no middlemen, no market commissions.',
     pills: ['Produce Listings', 'Equipment', 'Direct Inquiries'],
   },

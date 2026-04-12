@@ -91,8 +91,8 @@ export async function GET(request: Request) {
                   <p style="font-size:14px;color:#bbf7d0;line-height:2;margin:0;">
                     🤝 &nbsp;<strong style="color:#f0fdf4;">Member Directory</strong> — find researchers, farmers &amp; agripreneurs<br>
                     🎯 &nbsp;<strong style="color:#f0fdf4;">Opportunities</strong> — grants, mentorship &amp; events<br>
-                    📊 &nbsp;<strong style="color:#f0fdf4;">Price Tracker</strong> — live commodity prices across Nigeria<br>
-                    🛒 &nbsp;<strong style="color:#f0fdf4;">Marketplace</strong> — buy, sell &amp; trade agri products<br>
+                    🏷️ &nbsp;<strong style="color:#f0fdf4;">Price Tracker</strong> — live commodity prices across Nigeria<br>
+                    🤝 &nbsp;<strong style="color:#f0fdf4;">Marketplace</strong> — buy, sell &amp; trade agri products<br>
                     📚 &nbsp;<strong style="color:#f0fdf4;">Research Board</strong> — publish &amp; collaborate on research
                   </p>
                 </td>

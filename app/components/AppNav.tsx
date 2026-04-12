@@ -9,15 +9,15 @@ import Image from 'next/image'
 
 const NAV_LINKS = [
   { href: '/dashboard',     label: 'Dashboard' },
-  { href: '/directory',     label: 'Directory' },
+  { href: '/community',     label: 'Community' },
   { href: '/opportunities', label: 'Opportunities' },
   { href: '/grants',        label: 'Grants' },
-  { href: '/prices',        label: 'Price Tracker' },
   { href: '/marketplace',   label: 'Marketplace' },
+  { href: '/prices',        label: 'Price Tracker' },
+  { href: '/directory',     label: 'Directory' },
   { href: '/research',      label: 'Research' },
   { href: '/mentorship',    label: 'Mentorship' },
   { href: '/business',      label: 'Business' },
-  { href: '/community',    label: 'Community' },
 ]
 
 export default function AppNav() {
