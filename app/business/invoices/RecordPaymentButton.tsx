@@ -33,6 +33,45 @@ export default function RecordPaymentButton({ invoice }: { invoice: any }) {
     e.preventDefault()
     setLoading(true)
     const supabase = createClient()
+
+    // If invoice was draft (stock not yet deducted), deduct now
+    if (invoice.status === 'draft') {
+      const { data: items } = await supabase
+        .from('invoice_items')
+        .select('product_id, quantity')
+        .eq('invoice_id', invoice.id)
+        .not('product_id', 'is', null)
+
+      if (items) {
+        for (const item of items) {
+          const { data: product } = await supabase
+            .from('business_products')
+            .select('stock_quantity, cost_price')
+            .eq('id', item.product_id)
+            .single()
+
+          if (!product) continue
+
+          await supabase.from('stock_movements').insert({
+            business_id: invoice.business_id,
+            user_id: invoice.user_id,
+            product_id: item.product_id,
+            type: 'out',
+            quantity: item.quantity,
+            cost_price: product.cost_price || 0,
+            reason: 'sale',
+            note: 'Auto-deducted: payment recorded directly',
+            invoice_id: invoice.id,
+          })
+
+          await supabase
+            .from('business_products')
+            .update({ stock_quantity: product.stock_quantity - item.quantity })
+            .eq('id', item.product_id)
+        }
+      }
+    }
+
     const { error } = await supabase
       .from('invoices')
       .update({

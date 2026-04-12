@@ -31,6 +31,7 @@ interface Product {
   description: string | null
   unit: string
   unit_price: number
+  stock_quantity: number
 }
 
 export default function NewInvoicePage() {
@@ -66,7 +67,7 @@ export default function NewInvoicePage() {
       if (biz) {
         const { data: prods } = await supabase
           .from('business_products')
-          .select('id, name, description, unit, unit_price')
+          .select('id, name, description, unit, unit_price, stock_quantity')
           .eq('business_id', biz.id)
           .eq('is_active', true)
           .order('name')
@@ -120,6 +121,23 @@ export default function NewInvoicePage() {
   function lineTotal(item: LineItem) {
     return (parseFloat(item.quantity) || 0) * (parseFloat(item.unit_price) || 0)
   }
+
+  // Check which line items exceed available stock
+  function getStockWarnings(): { idx: number; name: string; available: number; requested: number }[] {
+    const warnings: { idx: number; name: string; available: number; requested: number }[] = []
+    items.forEach((item, idx) => {
+      if (!item.product_id || item.product_id === '__manual__') return
+      const product = products.find(p => p.id === item.product_id)
+      if (!product) return
+      const qty = parseFloat(item.quantity) || 0
+      if (qty > product.stock_quantity) {
+        warnings.push({ idx, name: product.name, available: product.stock_quantity, requested: qty })
+      }
+    })
+    return warnings
+  }
+
+  const stockWarnings = getStockWarnings()
 
   const subtotal = items.reduce((sum, item) => sum + lineTotal(item), 0)
   const effectiveVat = vatEnabled ? (parseFloat(vatPercent) || 0) : 0
@@ -349,7 +367,11 @@ export default function NewInvoicePage() {
                   <div className="col-span-1">
                     <input type="number" min="1" value={item.quantity}
                       onChange={e => updateItem(idx, 'quantity', e.target.value)}
-                      className={inputClass} required />
+                      className={`${inputClass} ${stockWarnings.some(w => w.idx === idx) ? 'ring-2 ring-amber-400' : ''}`} required />
+                    {item.product_id && item.product_id !== '__manual__' && (() => {
+                      const p = products.find(pr => pr.id === item.product_id)
+                      return p ? <span className={`text-[10px] ${(parseFloat(item.quantity) || 0) > p.stock_quantity ? 'text-amber-600 dark:text-amber-400 font-semibold' : 'text-gray-400'}`}>{p.stock_quantity} avail</span> : null
+                    })()}
                   </div>
                   <div className="col-span-2">
                     <input type="number" min="0" step="0.01" placeholder="0.00"
@@ -408,10 +430,14 @@ export default function NewInvoicePage() {
                   )}
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="text-[10px] text-gray-500 uppercase">Qty</label>
+                      <label className="text-[10px] text-gray-500 dark:text-gray-400 uppercase">Qty</label>
                       <input type="number" min="1" value={item.quantity}
                         onChange={e => updateItem(idx, 'quantity', e.target.value)}
-                        className={inputClass} required />
+                        className={`${inputClass} ${stockWarnings.some(w => w.idx === idx) ? 'ring-2 ring-amber-400' : ''}`} required />
+                      {item.product_id && item.product_id !== '__manual__' && (() => {
+                        const p = products.find(pr => pr.id === item.product_id)
+                        return p ? <span className={`text-[10px] ${(parseFloat(item.quantity) || 0) > p.stock_quantity ? 'text-amber-600 dark:text-amber-400 font-semibold' : 'text-gray-400'}`}>{p.stock_quantity} avail</span> : null
+                      })()}
                     </div>
                     <div>
                       <label className="text-[10px] text-gray-500 uppercase">Price (₦)</label>
@@ -516,6 +542,18 @@ export default function NewInvoicePage() {
             </div>
           </div>
         </div>
+
+        {stockWarnings.length > 0 && (
+          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-800 rounded-lg px-4 py-3 text-sm">
+            <p className="font-semibold text-amber-800 dark:text-amber-300 mb-1">⚠️ Insufficient stock</p>
+            {stockWarnings.map(w => (
+              <p key={w.idx} className="text-amber-700 dark:text-amber-400">
+                <strong>{w.name}</strong>: requesting {w.requested}, only {w.available} in stock
+              </p>
+            ))}
+            <p className="text-amber-600 dark:text-amber-500 text-xs mt-1">You can still save this invoice as a draft. Stock is deducted when you mark it as sent.</p>
+          </div>
+        )}
 
         {error && (
           <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-lg px-4 py-3 text-sm">

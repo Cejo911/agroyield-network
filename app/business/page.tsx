@@ -68,6 +68,17 @@ export default async function BusinessDashboard({
     .select('id, name')
     .eq('user_id', user.id)
 
+  // Products — for low stock alerts
+  const { data: productsRaw } = await supabase
+    .from('business_products')
+    .select('id, name, stock_quantity, low_stock_threshold, unit')
+    .eq('business_id', business?.id || '')
+    .eq('is_active', true)
+
+  const lowStockProducts = (productsRaw || []).filter(
+    p => (p.stock_quantity || 0) <= (p.low_stock_threshold || 5)
+  )
+
   const allInvoices = allInvoicesRaw || []
   const allExpenses = allExpensesRaw || []
   const customers   = customersRaw   || []
@@ -284,6 +295,34 @@ export default async function BusinessDashboard({
           </div>
         </div>
       </div>
+
+      {/* Low Stock Alerts */}
+      {lowStockProducts.length > 0 && (
+        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide">
+              ⚠️ Low Stock Alert — {lowStockProducts.length} item{lowStockProducts.length !== 1 ? 's' : ''}
+            </p>
+            <Link href="/business/products" className="text-xs font-semibold text-amber-600 dark:text-amber-400 hover:text-amber-800 transition-colors">
+              Manage Stock →
+            </Link>
+          </div>
+          <div className="space-y-1.5">
+            {lowStockProducts.slice(0, 5).map(p => (
+              <div key={p.id} className="flex items-center justify-between text-sm">
+                <span className="text-amber-800 dark:text-amber-300 font-medium">{p.name}</span>
+                <span className={`font-bold ${(p.stock_quantity || 0) === 0 ? 'text-red-600 dark:text-red-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                  {p.stock_quantity || 0} {p.unit}
+                  {(p.stock_quantity || 0) === 0 && ' — OUT OF STOCK'}
+                </span>
+              </div>
+            ))}
+            {lowStockProducts.length > 5 && (
+              <p className="text-xs text-amber-500 mt-1">+{lowStockProducts.length - 5} more items below threshold</p>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Recent activity feed */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

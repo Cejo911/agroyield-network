@@ -57,6 +57,15 @@ export default async function ReportsPage() {
     .eq('business_id', businessId)
     .eq('status', 'paid')
 
+  // Products — for inventory valuation
+  const { data: productsRaw } = await supabase
+    .from('business_products')
+    .select('name, stock_quantity, cost_price, unit_price, low_stock_threshold, is_active')
+    .eq('business_id', businessId)
+    .eq('is_active', true)
+
+  const products = productsRaw || []
+
   const invoices  = invoicesRaw  || []
   const expenses  = expensesRaw  || []
   const customers = customersRaw || []
@@ -70,6 +79,12 @@ export default async function ReportsPage() {
   const profitMargin  = totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) : '0.0'
   const outstanding   = invoices.filter(i => i.status === 'sent').reduce((s, i) => s + Number(i.total || 0), 0)
   const overdue       = invoices.filter(i => i.status === 'overdue').reduce((s, i) => s + Number(i.total || 0), 0)
+
+  // Inventory valuation
+  const inventoryCostValue = products.reduce((s, p) => s + (p.stock_quantity || 0) * (p.cost_price || 0), 0)
+  const inventoryRetailValue = products.reduce((s, p) => s + (p.stock_quantity || 0) * (p.unit_price || 0), 0)
+  const totalStockItems = products.reduce((s, p) => s + (p.stock_quantity || 0), 0)
+  const lowStockProducts = products.filter(p => (p.stock_quantity || 0) <= (p.low_stock_threshold || 5))
 
   // Last 6 months P&L
   const months = Array.from({ length: 6 }, (_, i) => {
@@ -165,6 +180,43 @@ export default async function ReportsPage() {
           <p style={{ fontSize: '12px', color: '#6b7280', margin: '0 0 6px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Overdue</p>
           <p style={{ fontSize: '22px', fontWeight: 700, color: '#dc2626', margin: 0 }}>{fmt(overdue)}</p>
         </div>
+      </div>
+
+      {/* Inventory Valuation */}
+      <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '24px', marginBottom: '28px' }}>
+        <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#111827', margin: '0 0 16px 0' }}>Inventory Valuation</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div style={{ background: '#f0fdf4', borderRadius: '10px', padding: '16px' }}>
+            <p style={{ fontSize: '11px', color: '#6b7280', margin: '0 0 4px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Retail Value</p>
+            <p style={{ fontSize: '18px', fontWeight: 700, color: '#16a34a', margin: 0 }}>{fmt(inventoryRetailValue)}</p>
+          </div>
+          <div style={{ background: '#eff6ff', borderRadius: '10px', padding: '16px' }}>
+            <p style={{ fontSize: '11px', color: '#6b7280', margin: '0 0 4px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Cost Value</p>
+            <p style={{ fontSize: '18px', fontWeight: 700, color: '#2563eb', margin: 0 }}>{fmt(inventoryCostValue)}</p>
+          </div>
+          <div style={{ background: '#f9fafb', borderRadius: '10px', padding: '16px' }}>
+            <p style={{ fontSize: '11px', color: '#6b7280', margin: '0 0 4px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Items in Stock</p>
+            <p style={{ fontSize: '18px', fontWeight: 700, color: '#374151', margin: 0 }}>{totalStockItems.toLocaleString()}</p>
+          </div>
+          <div style={{ background: lowStockProducts.length > 0 ? '#fffbeb' : '#f9fafb', borderRadius: '10px', padding: '16px' }}>
+            <p style={{ fontSize: '11px', color: '#6b7280', margin: '0 0 4px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Low Stock Items</p>
+            <p style={{ fontSize: '18px', fontWeight: 700, color: lowStockProducts.length > 0 ? '#d97706' : '#374151', margin: 0 }}>{lowStockProducts.length}</p>
+          </div>
+        </div>
+        {lowStockProducts.length > 0 && (
+          <div style={{ marginTop: '16px', borderTop: '1px solid #f3f4f6', paddingTop: '12px' }}>
+            <p style={{ fontSize: '12px', fontWeight: 600, color: '#d97706', margin: '0 0 8px 0' }}>⚠️ Low Stock Alert</p>
+            {lowStockProducts.slice(0, 5).map(p => (
+              <div key={p.name} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: '13px' }}>
+                <span style={{ color: '#374151' }}>{p.name}</span>
+                <span style={{ color: '#d97706', fontWeight: 600 }}>{p.stock_quantity} remaining</span>
+              </div>
+            ))}
+            {lowStockProducts.length > 5 && (
+              <p style={{ fontSize: '12px', color: '#9ca3af', marginTop: '4px' }}>+{lowStockProducts.length - 5} more</p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Monthly P&L Chart */}
