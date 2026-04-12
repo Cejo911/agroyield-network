@@ -106,6 +106,7 @@ export default function NotificationBell() {
       case 'overdue':        return '⏰'
       case 'price_alert':    return '📊'
       case 'mentorship':     return '🎓'
+      case 'grant_deadline': return '📅'
       case 'system':         return '📢'
       default:               return '🔔'
     }
