@@ -10,6 +10,7 @@ import Image from 'next/image'
 const NAV_LINKS = [
   { href: '/dashboard',     label: 'Dashboard' },
   { href: '/community',     label: 'Community' },
+  { href: '/messages',      label: 'Messages' },
   { href: '/opportunities', label: 'Opportunities' },
   { href: '/grants',        label: 'Grants' },
   { href: '/marketplace',   label: 'Marketplace' },

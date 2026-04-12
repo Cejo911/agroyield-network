@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import MessageButton from '@/app/components/MessageButton'
 
 interface Props {
   mentor: any
@@ -152,6 +153,17 @@ export default function MentorDetail({ mentor, reviews, avgRating, sessionCount,
             <a href={mentor.linkedin_url} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline">
               View LinkedIn Profile →
             </a>
+          </div>
+        )}
+
+        {/* Message mentor */}
+        {!isOwnProfile && (
+          <div className="mt-4">
+            <MessageButton
+              recipientId={mentor.user_id}
+              label="Message Mentor"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-lg border border-green-600 text-green-600 hover:bg-green-600 hover:text-white transition-colors disabled:opacity-50"
+            />
           </div>
         )}
 

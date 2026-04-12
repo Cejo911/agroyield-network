@@ -3,6 +3,7 @@ import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import AppNav from '@/app/components/AppNav'
 import FollowButton from '../follow-button'
+import MessageButton from '@/app/components/MessageButton'
 
 export default async function PublicProfilePage({
   params,
@@ -56,7 +57,10 @@ export default async function PublicProfilePage({
                   {profile.first_name} {profile.last_name}
                 </h1>
                 {!isOwnProfile && (
-                  <FollowButton userId={id} initialIsFollowing={isFollowing} />
+                  <div className="flex items-center gap-2">
+                    <MessageButton recipientId={id} />
+                    <FollowButton userId={id} initialIsFollowing={isFollowing} />
+                  </div>
                 )}
               </div>
               {profile.role && (

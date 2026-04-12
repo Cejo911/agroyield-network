@@ -3,6 +3,7 @@ import { redirect, notFound } from 'next/navigation'
 import AppNav from '@/app/components/AppNav'
 import ListingActions from './ListingActions'
 import CommentsSection from '@/app/components/CommentsSection'
+import MessageButton from '@/app/components/MessageButton'
 
 const CATEGORY_COLOURS: Record<string, string> = {
   produce:   'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
@@ -108,10 +109,17 @@ export default async function ListingPage({
             </div>
           )}
 
-          {listing.contact && !isClosed && (
+          {!isOwner && !isClosed && (
             <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-800">
               <h2 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Contact Seller</h2>
-              <p className="text-gray-700 dark:text-gray-300 font-medium">{listing.contact}</p>
+              {listing.contact && (
+                <p className="text-gray-700 dark:text-gray-300 font-medium mb-3">{listing.contact}</p>
+              )}
+              <MessageButton
+                recipientId={listing.user_id}
+                label="Message Seller"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-lg border border-green-600 text-green-600 hover:bg-green-600 hover:text-white transition-colors disabled:opacity-50"
+              />
             </div>
           )}
 
