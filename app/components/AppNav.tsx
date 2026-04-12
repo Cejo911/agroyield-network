@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import ThemeToggle from './ThemeToggle'
+import NotificationBell from './NotificationBell'
 import Image from 'next/image'
 
 const NAV_LINKS = [
@@ -128,7 +129,7 @@ export default function AppNav() {
           )}
 
           <ThemeToggle />
-
+          <NotificationBell />
           {/* User avatar dropdown */}
           <div className="relative" ref={dropdownRef}>
             <button
@@ -240,7 +241,11 @@ export default function AppNav() {
                 Get Verified ✓
               </Link>
             )}
-
+            <div className="flex items-center justify-between px-3 py-2">
+              <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Notifications</span>
+              <NotificationBell />
+            </div>
+            
             <div className="flex items-center justify-between px-3 py-2">
               <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Dark mode</span>
               <ThemeToggle />
