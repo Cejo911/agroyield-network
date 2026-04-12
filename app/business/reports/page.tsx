@@ -138,18 +138,18 @@ export default async function ReportsPage() {
   }))
 
   return (
-    <div className="max-w-[1100px] mx-auto px-4 py-6" style={{ fontFamily: 'Inter, sans-serif' }}>
+    <div className="max-w-[1100px] mx-auto px-4 py-6">
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-7">
         <div>
-          <h1 style={{ fontSize: '26px', fontWeight: 700, color: '#111827', margin: 0 }}>Business Reports</h1>
-          <p style={{ color: '#6b7280', marginTop: '4px', fontSize: '14px' }}>Financial overview for {business?.name || 'your business'}</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Business Reports</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Financial overview for {business?.name || 'your business'}</p>
         </div>
         <div className="flex gap-2.5 flex-wrap">
           <ReportExport period="Last 6 Months" />
           <Link href="/business/reports/print" target="_blank"
-            style={{ background: '#111827', color: '#fff', padding: '9px 18px', borderRadius: '8px', textDecoration: 'none', fontSize: '14px', fontWeight: 600 }}>
+            className="bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-4 py-2 rounded-lg text-sm font-semibold no-underline hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors">
             🖨️ Print
           </Link>
         </div>
@@ -158,118 +158,118 @@ export default async function ReportsPage() {
       {/* KPI Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-7">
         {[
-          { label: 'Total Revenue', value: fmt(totalRevenue), color: '#16a34a', bg: '#f0fdf4' },
-          { label: 'Total Expenses', value: fmt(totalExpenses), color: '#dc2626', bg: '#fef2f2' },
-          { label: 'Net Profit', value: fmt(netProfit), color: netProfit >= 0 ? '#16a34a' : '#dc2626', bg: netProfit >= 0 ? '#f0fdf4' : '#fef2f2' },
-          { label: 'Profit Margin', value: `${profitMargin}%`, color: '#2563eb', bg: '#eff6ff' },
+          { label: 'Total Revenue', value: fmt(totalRevenue), valueClass: 'text-green-600', bgClass: 'bg-green-50 dark:bg-green-900/20' },
+          { label: 'Total Expenses', value: fmt(totalExpenses), valueClass: 'text-red-600', bgClass: 'bg-red-50 dark:bg-red-900/20' },
+          { label: 'Net Profit', value: fmt(netProfit), valueClass: netProfit >= 0 ? 'text-green-600' : 'text-red-600', bgClass: netProfit >= 0 ? 'bg-green-50 dark:bg-green-900/20' : 'bg-red-50 dark:bg-red-900/20' },
+          { label: 'Profit Margin', value: `${profitMargin}%`, valueClass: 'text-blue-600', bgClass: 'bg-blue-50 dark:bg-blue-900/20' },
         ].map(card => (
-          <div key={card.label} style={{ background: card.bg, borderRadius: '12px', padding: '20px' }}>
-            <p style={{ fontSize: '12px', color: '#6b7280', margin: '0 0 6px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{card.label}</p>
-            <p style={{ fontSize: '22px', fontWeight: 700, color: card.color, margin: 0 }}>{card.value}</p>
+          <div key={card.label} className={`${card.bgClass} rounded-xl p-5`}>
+            <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">{card.label}</p>
+            <p className={`text-xl font-bold ${card.valueClass}`}>{card.value}</p>
           </div>
         ))}
       </div>
 
       {/* Outstanding & Overdue */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-7">
-        <div style={{ background: '#fffbeb', borderRadius: '12px', padding: '20px' }}>
-          <p style={{ fontSize: '12px', color: '#6b7280', margin: '0 0 6px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Outstanding</p>
-          <p style={{ fontSize: '22px', fontWeight: 700, color: '#d97706', margin: 0 }}>{fmt(outstanding)}</p>
+        <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-5">
+          <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">Outstanding</p>
+          <p className="text-xl font-bold text-amber-600">{fmt(outstanding)}</p>
         </div>
-        <div style={{ background: '#fef2f2', borderRadius: '12px', padding: '20px' }}>
-          <p style={{ fontSize: '12px', color: '#6b7280', margin: '0 0 6px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Overdue</p>
-          <p style={{ fontSize: '22px', fontWeight: 700, color: '#dc2626', margin: 0 }}>{fmt(overdue)}</p>
+        <div className="bg-red-50 dark:bg-red-900/20 rounded-xl p-5">
+          <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">Overdue</p>
+          <p className="text-xl font-bold text-red-600">{fmt(overdue)}</p>
         </div>
       </div>
 
       {/* Inventory Valuation */}
-      <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '24px', marginBottom: '28px' }}>
-        <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#111827', margin: '0 0 16px 0' }}>Inventory Valuation</h2>
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6 mb-7">
+        <h2 className="text-base font-bold text-gray-900 dark:text-white mb-4">Inventory Valuation</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div style={{ background: '#f0fdf4', borderRadius: '10px', padding: '16px' }}>
-            <p style={{ fontSize: '11px', color: '#6b7280', margin: '0 0 4px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Retail Value</p>
-            <p style={{ fontSize: '18px', fontWeight: 700, color: '#16a34a', margin: 0 }}>{fmt(inventoryRetailValue)}</p>
+          <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
+            <p className="text-[11px] text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Retail Value</p>
+            <p className="text-lg font-bold text-green-600">{fmt(inventoryRetailValue)}</p>
           </div>
-          <div style={{ background: '#eff6ff', borderRadius: '10px', padding: '16px' }}>
-            <p style={{ fontSize: '11px', color: '#6b7280', margin: '0 0 4px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Cost Value</p>
-            <p style={{ fontSize: '18px', fontWeight: 700, color: '#2563eb', margin: 0 }}>{fmt(inventoryCostValue)}</p>
+          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+            <p className="text-[11px] text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Cost Value</p>
+            <p className="text-lg font-bold text-blue-600">{fmt(inventoryCostValue)}</p>
           </div>
-          <div style={{ background: '#f9fafb', borderRadius: '10px', padding: '16px' }}>
-            <p style={{ fontSize: '11px', color: '#6b7280', margin: '0 0 4px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Items in Stock</p>
-            <p style={{ fontSize: '18px', fontWeight: 700, color: '#374151', margin: 0 }}>{totalStockItems.toLocaleString()}</p>
+          <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+            <p className="text-[11px] text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Total Items in Stock</p>
+            <p className="text-lg font-bold text-gray-700 dark:text-white">{totalStockItems.toLocaleString()}</p>
           </div>
-          <div style={{ background: lowStockProducts.length > 0 ? '#fffbeb' : '#f9fafb', borderRadius: '10px', padding: '16px' }}>
-            <p style={{ fontSize: '11px', color: '#6b7280', margin: '0 0 4px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Low Stock Items</p>
-            <p style={{ fontSize: '18px', fontWeight: 700, color: lowStockProducts.length > 0 ? '#d97706' : '#374151', margin: 0 }}>{lowStockProducts.length}</p>
+          <div className={`${lowStockProducts.length > 0 ? 'bg-amber-50 dark:bg-amber-900/20' : 'bg-gray-50 dark:bg-gray-800'} rounded-lg p-4`}>
+            <p className="text-[11px] text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Low Stock Items</p>
+            <p className={`text-lg font-bold ${lowStockProducts.length > 0 ? 'text-amber-600' : 'text-gray-700 dark:text-white'}`}>{lowStockProducts.length}</p>
           </div>
         </div>
         {lowStockProducts.length > 0 && (
-          <div style={{ marginTop: '16px', borderTop: '1px solid #f3f4f6', paddingTop: '12px' }}>
-            <p style={{ fontSize: '12px', fontWeight: 600, color: '#d97706', margin: '0 0 8px 0' }}>⚠️ Low Stock Alert</p>
+          <div className="mt-4 border-t border-gray-100 dark:border-gray-800 pt-3">
+            <p className="text-xs font-semibold text-amber-600 mb-2">⚠️ Low Stock Alert</p>
             {lowStockProducts.slice(0, 5).map(p => (
-              <div key={p.name} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: '13px' }}>
-                <span style={{ color: '#374151' }}>{p.name}</span>
-                <span style={{ color: '#d97706', fontWeight: 600 }}>{p.stock_quantity} remaining</span>
+              <div key={p.name} className="flex justify-between py-1 text-sm">
+                <span className="text-gray-700 dark:text-gray-300">{p.name}</span>
+                <span className="text-amber-600 font-semibold">{p.stock_quantity} remaining</span>
               </div>
             ))}
             {lowStockProducts.length > 5 && (
-              <p style={{ fontSize: '12px', color: '#9ca3af', marginTop: '4px' }}>+{lowStockProducts.length - 5} more</p>
+              <p className="text-xs text-gray-400 mt-1">+{lowStockProducts.length - 5} more</p>
             )}
           </div>
         )}
       </div>
 
       {/* Monthly P&L Chart */}
-      <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '24px', marginBottom: '28px' }}>
-        <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#111827', margin: '0 0 20px 0' }}>Monthly Revenue vs Expenses (Last 6 Months)</h2>
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', height: '160px' }}>
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6 mb-7">
+        <h2 className="text-base font-bold text-gray-900 dark:text-white mb-5">Monthly Revenue vs Expenses (Last 6 Months)</h2>
+        <div className="flex gap-3 items-end h-40">
           {monthlyPL.map(m => (
-            <div key={m.month} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', height: '100%', justifyContent: 'flex-end' }}>
-              <div style={{ display: 'flex', gap: '3px', alignItems: 'flex-end', width: '100%' }}>
-                <div style={{ flex: 1, background: '#16a34a', height: `${Math.max((m.revenue / maxBarValue) * 130, m.revenue > 0 ? 4 : 0)}px`, borderRadius: '4px 4px 0 0', minHeight: m.revenue > 0 ? '4px' : '0' }} title={fmt(m.revenue)} />
-                <div style={{ flex: 1, background: '#ef4444', height: `${Math.max((m.expenses / maxBarValue) * 130, m.expenses > 0 ? 4 : 0)}px`, borderRadius: '4px 4px 0 0', minHeight: m.expenses > 0 ? '4px' : '0' }} title={fmt(m.expenses)} />
+            <div key={m.month} className="flex-1 flex flex-col items-center gap-1 h-full justify-end">
+              <div className="flex gap-0.5 items-end w-full">
+                <div className="flex-1 bg-green-600 rounded-t" style={{ height: `${Math.max((m.revenue / maxBarValue) * 130, m.revenue > 0 ? 4 : 0)}px` }} title={fmt(m.revenue)} />
+                <div className="flex-1 bg-red-500 rounded-t" style={{ height: `${Math.max((m.expenses / maxBarValue) * 130, m.expenses > 0 ? 4 : 0)}px` }} title={fmt(m.expenses)} />
               </div>
-              <p style={{ fontSize: '10px', color: '#6b7280', margin: 0, textAlign: 'center' }}>{monthLabel(m.month)}</p>
+              <p className="text-[10px] text-gray-500 dark:text-gray-400 text-center">{monthLabel(m.month)}</p>
             </div>
           ))}
         </div>
-        <div style={{ display: 'flex', gap: '16px', marginTop: '12px' }}>
-          <span style={{ fontSize: '12px', color: '#16a34a' }}>■ Revenue</span>
-          <span style={{ fontSize: '12px', color: '#ef4444' }}>■ Expenses</span>
+        <div className="flex gap-4 mt-3">
+          <span className="text-xs text-green-600">■ Revenue</span>
+          <span className="text-xs text-red-500">■ Expenses</span>
         </div>
       </div>
 
       {/* Top Products & Top Customers */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-7">
-        <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '24px' }}>
-          <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#111827', margin: '0 0 16px 0' }}>Top Products / Services</h2>
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6">
+          <h2 className="text-base font-bold text-gray-900 dark:text-white mb-4">Top Products / Services</h2>
           {topProducts.length === 0 ? (
-            <p style={{ color: '#9ca3af', fontSize: '14px' }}>No data yet</p>
+            <p className="text-sm text-gray-400">No data yet</p>
           ) : topProducts.map(([name, total]) => (
-            <div key={name} style={{ marginBottom: '12px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                <span style={{ fontSize: '13px', color: '#374151', fontWeight: 500 }}>{name}</span>
-                <span style={{ fontSize: '13px', color: '#111827', fontWeight: 600 }}>{fmt(total)}</span>
+            <div key={name} className="mb-3">
+              <div className="flex justify-between mb-1">
+                <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">{name}</span>
+                <span className="text-sm text-gray-900 dark:text-white font-semibold">{fmt(total)}</span>
               </div>
-              <div style={{ background: '#f3f4f6', borderRadius: '4px', height: '6px' }}>
-                <div style={{ background: '#2563eb', borderRadius: '4px', height: '6px', width: `${(total / maxProduct) * 100}%` }} />
+              <div className="h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full">
+                <div className="h-1.5 bg-blue-600 rounded-full" style={{ width: `${(total / maxProduct) * 100}%` }} />
               </div>
             </div>
           ))}
         </div>
 
-        <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '24px' }}>
-          <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#111827', margin: '0 0 16px 0' }}>Top Customers</h2>
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6">
+          <h2 className="text-base font-bold text-gray-900 dark:text-white mb-4">Top Customers</h2>
           {topCustomers.length === 0 ? (
-            <p style={{ color: '#9ca3af', fontSize: '14px' }}>No data yet</p>
+            <p className="text-sm text-gray-400">No data yet</p>
           ) : topCustomers.map(c => (
-            <div key={c.name} style={{ marginBottom: '12px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                <span style={{ fontSize: '13px', color: '#374151', fontWeight: 500 }}>{c.name}</span>
-                <span style={{ fontSize: '13px', color: '#111827', fontWeight: 600 }}>{fmt(c.total)}</span>
+            <div key={c.name} className="mb-3">
+              <div className="flex justify-between mb-1">
+                <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">{c.name}</span>
+                <span className="text-sm text-gray-900 dark:text-white font-semibold">{fmt(c.total)}</span>
               </div>
-              <div style={{ background: '#f3f4f6', borderRadius: '4px', height: '6px' }}>
-                <div style={{ background: '#16a34a', borderRadius: '4px', height: '6px', width: `${(c.total / maxCustomer) * 100}%` }} />
+              <div className="h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full">
+                <div className="h-1.5 bg-green-600 rounded-full" style={{ width: `${(c.total / maxCustomer) * 100}%` }} />
               </div>
             </div>
           ))}
@@ -278,30 +278,30 @@ export default async function ReportsPage() {
 
       {/* Expense Breakdown & Invoice Status */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-7">
-        <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '24px' }}>
-          <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#111827', margin: '0 0 16px 0' }}>Expense Breakdown</h2>
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6">
+          <h2 className="text-base font-bold text-gray-900 dark:text-white mb-4">Expense Breakdown</h2>
           {topExpenseCategories.length === 0 ? (
-            <p style={{ color: '#9ca3af', fontSize: '14px' }}>No expenses recorded</p>
+            <p className="text-sm text-gray-400">No expenses recorded</p>
           ) : topExpenseCategories.map(([cat, total]) => (
-            <div key={cat} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f3f4f6' }}>
-              <span style={{ fontSize: '13px', color: '#374151' }}>{cat}</span>
-              <span style={{ fontSize: '13px', fontWeight: 600, color: '#dc2626' }}>{fmt(total)}</span>
+            <div key={cat} className="flex justify-between py-2 border-b border-gray-50 dark:border-gray-800">
+              <span className="text-sm text-gray-700 dark:text-gray-300">{cat}</span>
+              <span className="text-sm font-semibold text-red-600">{fmt(total)}</span>
             </div>
           ))}
         </div>
 
-        <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '24px' }}>
-          <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#111827', margin: '0 0 16px 0' }}>Invoice Status Summary</h2>
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6">
+          <h2 className="text-base font-bold text-gray-900 dark:text-white mb-4">Invoice Status Summary</h2>
           {statusCounts.map(s => (
-            <div key={s.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #f3f4f6' }}>
-              <span style={{ fontSize: '13px', color: '#374151' }}>{s.label}</span>
-              <span style={{ fontSize: '20px', fontWeight: 700 }} className={s.color}>{s.count}</span>
+            <div key={s.label} className="flex justify-between items-center py-2.5 border-b border-gray-50 dark:border-gray-800">
+              <span className="text-sm text-gray-700 dark:text-gray-300">{s.label}</span>
+              <span className={`text-xl font-bold ${s.color}`}>{s.count}</span>
             </div>
           ))}
-          <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #e5e7eb' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: '13px', color: '#374151', fontWeight: 600 }}>Total Invoices</span>
-              <span style={{ fontSize: '20px', fontWeight: 700, color: '#111827' }}>{invoices.length}</span>
+          <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex justify-between">
+              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Total Invoices</span>
+              <span className="text-xl font-bold text-gray-900 dark:text-white">{invoices.length}</span>
             </div>
           </div>
         </div>
