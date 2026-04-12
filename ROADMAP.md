@@ -64,13 +64,13 @@ Make the platform feel professional and work for Nigerian SMEs on mobile.
 
 > **Why:** Many target users have unreliable internet. A farmer at a rural market needs offline access.
 > **Scope:** Service worker, manifest.json, install prompt. Cache business dashboard, products, customers for offline viewing. Queue creates/updates for sync.
-> **Status:** ⬜ Not started
+> **Status:** ✅ Completed (12 Apr 2026) — @ducanh2912/next-pwa, web manifest, PWA icons (192/512), service worker with NetworkFirst for API + CacheFirst for static assets. Install-to-home-screen enabled.
 
 ### 2.4 — WhatsApp Notifications
 
 > **Why:** Email open rates in Nigeria ~15-20%. WhatsApp >90%. Your users live on WhatsApp.
 > **Scope:** WhatsApp Business API integration (Twilio / Africa's Talking). Opt-in from profile. Send invoice PDFs, payment confirmations, overdue alerts via WhatsApp.
-> **Status:** ⬜ Not started
+> **Status:** ⏸️ Blocked — Requires Meta Business Verification (same blocker as Facebook OAuth). WhatsApp share links already available on invoices. Revisit after Meta approval or via Termii.
 
 ### 2.5 — API Rate Limiting
 

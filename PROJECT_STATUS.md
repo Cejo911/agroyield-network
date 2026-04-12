@@ -1,6 +1,6 @@
 # AgroYield Network — Project Status
 
-> **Last updated:** 12 April 2026 (Checkpoint 2)
+> **Last updated:** 12 April 2026 (Checkpoint 3)
 > **Maintained by:** Okoli (okolichijiokei@gmail.com)
 > **Launch Target:** 5 July 2026 (~12 weeks remaining)
 > **Purpose:** Permanent reference for any developer or Claude session to get up to speed instantly.
@@ -31,8 +31,8 @@
 | Email + password sign-up | ✅ Done | `app/signup/page.tsx` |
 | Email + password sign-in | ✅ Done | `app/login/page.tsx` |
 | Google OAuth | ✅ Done | Login + signup pages, callback at `app/auth/callback/route.ts` |
-| LinkedIn OAuth | ⏳ Pending | Credentials in LinkedIn developer portal, not wired into Next.js auth |
-| Facebook OAuth | ⏳ Pending | Credentials in Facebook developer portal, not wired into Next.js auth |
+| LinkedIn OAuth | ✅ Done | `app/login/page.tsx`, `app/signup/page.tsx` — provider: `linkedin_oidc` |
+| Facebook OAuth | ⏸️ Blocked | Button added to login/signup pages, but Meta Business Verification incomplete |
 | Welcome email on first login | ✅ Done | Sent via Resend in `app/auth/callback/route.ts` |
 | Registration open/close toggle | ✅ Done | Controlled via `settings` table |
 | Forgot password | ✅ Done | `app/forgot-password/page.tsx`, `app/api/auth/reset-password/route.ts` |
@@ -133,6 +133,14 @@
 
 | Feature | Status | Location |
 |---------|--------|----------|
+| Notifications system | ✅ Done | `NotificationBell.tsx` in AppNav, `lib/notifications.ts`, triggers on follow/invite/accept/comment |
+| Onboarding wizard | ✅ Done | `OnboardingWizard.tsx` — 3-step modal after first login, `has_onboarded` flag on profiles |
+| Loading boundaries | ✅ Done | `loading.tsx` for business, profile, pricing, admin route groups |
+| Error boundaries | ✅ Done | `ErrorBoundary.tsx` shared component + `error.tsx` for 8 route groups |
+| Invoice PDF & sharing | ✅ Done | `InvoiceShareActions.tsx` — PDF download (html2canvas + jsPDF), WhatsApp share, email share |
+| Expenses search & sort | ✅ Done | Search bar + column sorting (date, amount) on `app/business/expenses/page.tsx` |
+| PWA / offline capability | ✅ Done | `@ducanh2912/next-pwa`, web manifest, service worker, install-to-home-screen |
+| API rate limiting | ✅ Done | `lib/rate-limit.ts` — IP-based limiter on 10 routes (3–30 req/min per route) |
 | Dark / light theme | ✅ Done | `ThemeProvider.tsx`, `ThemeToggle.tsx`, `SidebarThemeToggle.tsx` |
 | SEO (OpenGraph, Twitter cards, metadata) | ✅ Done | `app/layout.tsx`, per-page metadata |
 | Mobile responsive navigation | ✅ Done | `AppNav.tsx` (desktop), `MobileNav.tsx` (business mobile bottom nav) |
@@ -153,19 +161,16 @@
 
 ## Known Issues & Technical Debt (as of April 12, 2026)
 
-### Critical (must fix before team access works properly)
+### Resolved (Checkpoint 3)
 
-1. **Team Access RLS gap** — All 12+ business module files query with `.eq('user_id', user.id)`. Invited team members (accountant/staff) cannot see the business data. Need a helper function `getAccessibleBusinessId()` that checks both `businesses` and `business_team` tables, and update all business queries + RLS policies.
+1. ~~**Team Access RLS gap**~~ — ✅ Fixed. `getBusinessAccess()` helper in `lib/business-access.ts`. All 12+ business files updated. RLS policy `user_has_business_access()` deployed.
+2. ~~**No notifications system**~~ — ✅ Fixed. NotificationBell component, 30s polling, triggers on follow/invite/accept/comment.
+3. ~~**No loading/error boundaries**~~ — ✅ Fixed. `loading.tsx` (4 groups) and `error.tsx` (8 groups) with shared ErrorBoundary.
+4. ~~**No API rate limiting**~~ — ✅ Fixed. `lib/rate-limit.ts` on 10 routes.
+5. ~~**LinkedIn OAuth**~~ — ✅ Wired into login/signup pages.
+6. **Facebook OAuth** — ⏸️ Blocked by Meta Business Verification. Buttons added, awaiting approval.
 
-### High Priority
-
-2. **No notifications system** — No in-app notifications, no bell icon, no real-time alerts. Features are invisible to users.
-3. **No loading/error boundaries** — Most routes lack `loading.tsx` and `error.tsx` files. Only `/research` has loading state.
-4. **No API rate limiting** — API routes (invite, contact, auth) have no rate limiting beyond content posting limits.
-5. **LinkedIn OAuth** — Configured but not wired into Next.js auth flow.
-6. **Facebook OAuth** — Configured but not wired into Next.js auth flow.
-
-### Medium Priority
+### Medium Priority (remaining)
 
 7. **Duplicate `@supabase/ssr` in package.json** — Listed twice (`^0.5.0` and `^0.10.0`). Keep `^0.10.0` only.
 8. **Frequent `as any` casts** — Throughout codebase for Supabase queries. Fix by generating types with `supabase gen types typescript`.
@@ -200,6 +205,7 @@
 | `waitlist_signups` | Pre-launch waitlist entries |
 | `contact_messages` | Contact form submissions |
 | `settings` | Platform-wide settings (pricing, rate limits, moderation mode) |
+| `notifications` | In-app notifications (follow, invite, comment, system) with read_at tracking |
 | `reports` | Content reports from users |
 | `comments` | Comments on all content types |
 | `likes` | Like interactions |
@@ -217,6 +223,23 @@ Note: `/mentorship`, `/grants`, `/insights`, `/connections` are pre-registered f
 ---
 
 ## Changelog
+
+### Checkpoint 3 — April 12, 2026 (Phase 1 + Phase 2 complete)
+- Added: Team Access RLS fix — `getBusinessAccess()` helper, updated 12+ files, RLS policy `user_has_business_access()`
+- Added: Notifications system — `NotificationBell.tsx`, `lib/notifications.ts`, triggers on follow/invite/accept/comment
+- Added: Loading boundaries (4 route groups) + Error boundaries (8 route groups) with shared `ErrorBoundary.tsx`
+- Added: LinkedIn OAuth on login/signup pages
+- Added: Facebook OAuth buttons (blocked by Meta Business Verification)
+- Added: Onboarding wizard — 3-step modal for new users (`has_onboarded` flag on profiles)
+- Added: Invoice PDF download, WhatsApp share, email share (`InvoiceShareActions.tsx`)
+- Added: Expenses search bar + column sorting (date/amount)
+- Added: PWA support — `@ducanh2912/next-pwa`, web manifest, service worker, install-to-home-screen
+- Added: API rate limiting — `lib/rate-limit.ts` on 10 routes (3–30 req/min)
+- Fixed: Notification FK constraint (dropped references to `public.users`, uses `auth.users` IDs)
+- Fixed: ErrorBoundary missing `<a` tag
+- Fixed: 4 stale `biz.id` references → `access.businessId`
+- Removed: Redundant PrintButton from invoice toolbar
+- Updated: `next.config.ts` with PWA config + `--webpack` build flag for Next.js 16
 
 ### Checkpoint 2 — April 12, 2026
 - Added: Fixed asset register (`business_assets` table, full CRUD page)
