@@ -1,6 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
-import PrintButton from './PrintButton'
 import { getBusinessAccess } from '@/lib/business-access'
 import InvoiceShareActions from './InvoiceShareActions'
 
@@ -93,7 +92,6 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
           <a href={`/business/invoices/${id}`} style={{ color: '#9ca3af', fontSize: '13px', textDecoration: 'none' }}>← Back</a>
           <InvoiceShareActions invoiceId={id} invoiceNumber={invoice.invoice_number} />
-          <PrintButton />
         </div>
       </div>
 
