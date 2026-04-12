@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Image from 'next/image'
 import MobileNav from './MobileNav'
+import SidebarThemeToggle from './SidebarThemeToggle'
 
 export default async function BusinessLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -44,6 +45,8 @@ export default async function BusinessLayout({ children }: { children: React.Rea
               <Link href="/business/invoices" className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/20 hover:text-green-700 transition-colors">🧾 Invoices</Link>
               <Link href="/business/expenses" className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/20 hover:text-green-700 transition-colors">💸 Expenses</Link>
               <Link href="/business/reports" className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/20 hover:text-green-700 transition-colors">📊 Reports</Link>
+
+              <SidebarThemeToggle />
             </nav>
           </aside>
           <main className="flex-1 min-w-0">{children}</main>

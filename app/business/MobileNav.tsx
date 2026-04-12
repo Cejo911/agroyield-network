@@ -1,6 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import ThemeToggle from '@/app/components/ThemeToggle'
 
 const NAV_ITEMS = [
   { href: '/business', label: 'Home', icon: '🏠' },
@@ -35,6 +36,9 @@ export default function MobileNav() {
             </Link>
           )
         })}
+        <div className="flex flex-col items-center gap-0.5 px-1 py-1">
+          <ThemeToggle />
+        </div>
       </div>
     </nav>
   )
