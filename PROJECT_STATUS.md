@@ -1,6 +1,6 @@
 # AgroYield Network — Project Status
 
-> **Last updated:** 12 April 2026 (Checkpoint 4)> **Last updated:** 12 April 2026 (Checkpoint 4)
+> **Last updated:** 12 April 2026 (Checkpoint 5)
 > **Maintained by:** Okoli (okolichijiokei@gmail.com)
 > **Launch Target:** 5 July 2026 (~12 weeks remaining)
 > **Purpose:** Permanent reference for any developer or Claude session to get up to speed instantly.
@@ -124,13 +124,43 @@
 | Team Access — role management (owner/accountant/staff)               | ✅ Done | Revoke, resend, change role                                                      |
 | Dark mode across all business pages                                  | ✅ Done | Including forms (globals.css fix)                                                |
 
-### Pending Modules
+### Module 7 — Mentorship
 
-| Module                      | Status         | Notes                                                                                          |
-| --------------------------- | -------------- | ---------------------------------------------------------------------------------------------- |
-| Mentorship                  | ✅ Done        | `app/mentorship/` — browse mentors, create profile, request/manage sessions, ratings + reviews |
-| Grants tracker              | ❌ Not started | Route `/grants` in middleware matcher                                                          |
-| Connections & Insights feed | ❌ Not started | Routes in middleware matcher, described on landing page                                        |
+| Feature                                              | Status  | Location                                                        |
+| ---------------------------------------------------- | ------- | --------------------------------------------------------------- |
+| Browse mentors with expertise + availability filters | ✅ Done | `app/mentorship/mentor-browser.tsx`                             |
+| Mentor profile creation/editing                      | ✅ Done | `app/mentorship/become-mentor/page.tsx`                         |
+| Session booking (request/accept/decline/complete)    | ✅ Done | `app/mentorship/[id]/mentor-detail.tsx`                         |
+| Star ratings + reviews after sessions                | ✅ Done | `app/mentorship/[id]/mentor-detail.tsx`                         |
+| LinkedIn auto-populate from profile                  | ✅ Done | Fetches profile LinkedIn on mentor form load                    |
+| Availability enum (Open/Limited/Waitlist/Closed)     | ✅ Done | Custom PostgreSQL enum `mentor_availability`                    |
+
+### Module 8 — Grant Tracker
+
+| Feature                                        | Status  | Location                                         |
+| ---------------------------------------------- | ------- | ------------------------------------------------ |
+| Browse grants with category + status filters   | ✅ Done | `app/grants/grants-client.tsx`                   |
+| Admin grant posting                            | ✅ Done | `app/grants/post/page.tsx`                       |
+| Application tracker (status pipeline)          | ✅ Done | `app/grants/[id]/grant-detail.tsx`               |
+| Document checklist (6 defaults + custom)       | ✅ Done | `app/grants/[id]/grant-detail.tsx`               |
+| Auto-populate profile info                     | ✅ Done | Pulls name, email, institution, LinkedIn         |
+| My Applications dashboard with stats           | ✅ Done | `app/grants/my-applications/page.tsx`            |
+| Deadline reminder notifications                | ✅ Done | `app/api/grants/deadline-reminders/route.ts`     |
+| How-to-use guide                               | ✅ Done | Green info box on grant detail page              |
+
+### Module 9 — Community Feed
+
+| Feature                                                              | Status  | Location                                             |
+| -------------------------------------------------------------------- | ------- | ---------------------------------------------------- |
+| Post creation (5 types: discussion, question, poll, news, milestone) | ✅ Done | `app/community/community-client.tsx`                 |
+| Post type filtering                                                  | ✅ Done | `app/community/community-client.tsx`                 |
+| Poll voting with results                                             | ✅ Done | `app/api/community/vote/route.ts`                    |
+| Like toggle (reuses existing like system)                            | ✅ Done | `app/community/community-client.tsx`                 |
+| Comments on posts                                                    | ✅ Done | `app/community/[id]/page.tsx` + CommentsSection      |
+| Post detail page                                                     | ✅ Done | `app/community/[id]/page.tsx`                        |
+| Pinned post support                                                  | ✅ Done | `is_pinned` column, sorted to top                    |
+| Delete own posts (soft delete)                                       | ✅ Done | Sets `is_active = false`                             |
+| Loading + error boundaries                                           | ✅ Done | `app/community/loading.tsx`, `error.tsx`             |
 
 ### Platform Features
 
@@ -216,6 +246,9 @@
 | `reports`              | Content reports from users                                                   |
 | `comments`             | Comments on all content types                                                |
 | `likes`                | Like interactions                                                            |
+| `grants`               | Grant/funding opportunities posted by admins                                 |
+| `grant_applications`   | User grant application tracker (status, documents, notes)                    |
+| `community_posts`      | Community feed posts (discussion, question, poll, news, milestone)           |
 
 ---
 
@@ -223,13 +256,35 @@
 
 The middleware at `middleware.ts` redirects unauthenticated users to `/login` for:
 
-`/dashboard`, `/profile`, `/directory`, `/opportunities`, `/prices`, `/marketplace`, `/research`, `/mentorship`, `/grants`, `/insights`, `/connections`
+`/dashboard`, `/profile`, `/directory`, `/opportunities`, `/prices`, `/marketplace`, `/research`, `/mentorship`, `/grants`, `/community`, `/insights`, `/connections`
 
-Note: `/grants`, `/insights`, `/connections` are pre-registered for future modules.
+Note: `/insights`, `/connections` are pre-registered for future modules.
 
 ---
 
 ## Changelog
+
+### Checkpoint 5 — April 12, 2026 (Phase 3.3 complete — 9 modules live)
+
+- Added: Grant Tracker module — browse grants, admin posting, application tracker with 5-stage status pipeline (draft → submitted → shortlisted → rejected → awarded), document checklist (6 defaults + custom), auto-populated profile info, My Applications dashboard with stats, deadline reminder notifications, how-to-use guide
+- Added: Community Feed module — 5 post types (discussion, question, poll, news, milestone), poll voting API, like toggle (reuses existing system), comments via CommentsSection, post detail page, type filters, pinned posts, delete own posts (soft delete), loading/error boundaries
+- Added: Community as 9th dashboard card (3×3 grid complete), Community in AppNav
+- Added: Connection filters in Directory — Following, Followers, Mentors, Mentees tabs with counts
+- Added: `institution_2` and `institution_3` fields on profiles (for programmes like Stanford LEAD, Harvard specialisations)
+- Added: LinkedIn auto-populate on mentor form from existing profile data
+- Changed: NavBar reordered for engagement — Community at position 2, transactional tools clustered, Business at recency slot
+- Changed: Dashboard grid reordered following F-pattern attention hierarchy — Community top-left, Business bottom-right
+- Changed: All dashboard card descriptions rewritten with action-oriented, value-first copy
+- Changed: Module icons updated sitewide for distinctness — Opportunities 🌱→🚀, Marketplace 🛒→🤝, Prices 📊→🏷️, Directory 👥→📇, Mentorship 🎓→🧭
+- Changed: Icons updated across dashboard, landing page, onboarding wizard, welcome email, waitlist email, notification bell, marketplace empty state
+- Fixed: Mentor availability enum values across browser + detail pages (Open/Limited/Waitlist/Closed)
+- Fixed: Mentor badge not showing on directory detail (query selected non-existent `id` column, changed to `user_id`)
+- Fixed: `mentor_profiles` FK constraint pointing to `public.users` instead of `auth.users`
+- Fixed: `grants` FK constraint pointing to `public.users` instead of `auth.users`
+- Fixed: `grant_applications` FK constraint pointing to `public.users` instead of `auth.users`
+- Fixed: Community comment count query using wrong column names (`entity_id`/`entity_type` → `post_id`/`post_type`)
+- Fixed: TypeScript `Set<unknown>` not assignable to `string[]` in directory and community pages
+- Tables added: `grants`, `grant_applications`, `community_posts` with RLS policies
 
 ### Checkpoint 4 — April 12, 2026 (Phase 3.1 + Phase 3.2 complete)
 

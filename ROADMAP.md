@@ -99,8 +99,20 @@ Features that drive daily engagement and create network effects.
 ### 3.3 — Grant Application Tracker
 
 > **Why:** Unique value prop. Turns AgroYield into an indispensable tool for anyone seeking agri funding.
-> **Scope:** `/grants` module. Track applications (applied → review → interview → approved/rejected). Document checklist. Auto-populate from profile. Deadline reminders.
-> **Status:** ⬜ Not started
+> **Scope:** `/grants` module. Track applications (draft → submitted → shortlisted → rejected → awarded). Document checklist with defaults. Auto-populate from profile. Deadline reminders via notifications. Admin grant posting. Category/status filtering. How-to-use guide.
+> **Status:** ✅ Completed (12 Apr 2026) — Full grant listing, application tracker with status pipeline, document checklist (6 defaults + custom), auto-populated profile info, deadline reminders API, admin post form, category + status filters, My Applications dashboard with stats.
+
+### 3.3b — Community Feed
+
+> **Why:** Daily engagement driver. Creates social stickiness — users return to check discussions, vote on polls, and celebrate milestones. Positioned as the #1 card on the dashboard.
+> **Scope:** `/community` module. 5 post types (discussion, question, poll, news, milestone). Poll voting with results. Like/comment using existing infrastructure. Post detail page. Filter by type. Pin support.
+> **Status:** ✅ Completed (12 Apr 2026) — Post creation (5 types), poll voting API, like toggle, comments via CommentsSection, post detail page, type filters, pinned posts, loading/error boundaries. 9th dashboard card.
+
+### 3.3c — UX Optimisation (Nav + Dashboard)
+
+> **Why:** Reduce cognitive fatigue and maximise engagement. Serial position effect places high-value items at primacy/recency positions. F-pattern scanning optimises dashboard grid layout.
+> **Scope:** Reorder NavBar (Community to position 2, cluster transactional tools). Reorder dashboard 3×3 grid (Community top-left, Business bottom-right). Rewrite all card descriptions to action-oriented copy. Replace module icons for distinctness (🌱→🚀, 🛒→🤝, 📊→🏷️, 👥→📇, 🎓→🧭). Update sitewide: dashboard, landing page, onboarding wizard, email templates, notification bell.
+> **Status:** ✅ Completed (12 Apr 2026)
 
 ### 3.4 — Multi-Business Support
 
@@ -163,7 +175,7 @@ Harden the platform, add differentiators, test with real users.
 These are valuable but can wait until after July 5.
 
 - [ ] Direct messaging between members
-- [ ] Connections & Insights feed (posts, polls, articles)
+- [x] ~~Connections & Insights feed (posts, polls, articles)~~ — Delivered as Community Feed (Phase 3.3b)
 - [ ] Data products (aggregated price intelligence for corporates/NGOs)
 - [ ] Mentorship marketplace (paid sessions with commission)
 - [ ] Mobile app consideration (React Native or enhanced PWA)
