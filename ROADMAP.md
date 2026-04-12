@@ -28,13 +28,13 @@ These must be done before anything else. They fix what's broken and make existin
 
 > **Why:** Users currently see white screens when pages load or queries fail.
 > **Scope:** Add `loading.tsx` (skeleton screens) and `error.tsx` (friendly retry UI) to every route group. Create shared skeleton components.
-> **Status:** ⬜ Not started
+> **Status:** ✅ Completed (12 Apr 2026)
 
 ### 1.4 — Wire LinkedIn OAuth
 
 > **Why:** Already configured in developer portal. Quick win for professional users.
 > **Scope:** Enable provider in Supabase, add button to login/signup pages, test callback.
-> **Status:** ⬜ Not started
+> **Status:** ✅ Completed (12 Apr 2026)
 
 ### 1.5 — Wire Facebook OAuth
 

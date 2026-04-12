@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import AppNav from '@/app/components/AppNav'
+import OnboardingWizard from '@/app/components/OnboardingWizard'
 
 const MODULES = [
   {
@@ -49,7 +50,7 @@ export default async function Dashboard() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('first_name, role')
+    .select('first_name, last_name, role, has_onboarded')
     .eq('id', user.id)
     .single()
 
@@ -59,6 +60,14 @@ export default async function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <AppNav />
+      {profile && !profile.has_onboarded && (
+        <OnboardingWizard
+          userId={user.id}
+          firstName={profile.first_name || ''}
+          lastName={profile.last_name || ''}
+          email={user.email || ''}
+        />
+      )}
       <main className="max-w-6xl mx-auto px-4 py-10">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
