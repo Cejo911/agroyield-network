@@ -13,9 +13,15 @@ const MODULES = [
   },
   {
     title: 'Opportunities',
-    description: 'Grants, fellowships, jobs, and partnerships in the agricultural sector.',
+    description: 'Jobs, fellowships, internships, partnerships, and training in the agricultural sector.',
     icon: '🌱',
     href: '/opportunities',
+  },
+  {
+    title: 'Grant Tracker',
+    description: 'Discover funding opportunities and track your grant applications from draft to award.',
+    icon: '💰',
+    href: '/grants',
   },
   {
     title: 'Price Tracker',
@@ -38,7 +44,7 @@ const MODULES = [
   {
     title: 'Mentorship',
     description: 'Connect with experienced mentors or share your expertise with the next generation.',
-    icon: '🤝',
+    icon: '🎓',
     href: '/mentorship',
   },
   {
