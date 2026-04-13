@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import ReportButton from '@/app/components/ReportButton'
 import { createClient } from '@/lib/supabase/client'
 
 const CATEGORIES = ['All', 'Grains', 'Tubers', 'Legumes', 'Vegetables', 'Oils', 'Livestock', 'Other']
@@ -185,7 +186,7 @@ export default function PricesClient({
                     </span>
                   </div>
 
-                  {isOwner && (
+                  {isOwner ? (
                     <div className="flex items-center gap-2">
                       {!isConfirming ? (
                         <>
@@ -209,6 +210,8 @@ export default function PricesClient({
                         </div>
                       )}
                     </div>
+                  ) : (
+                    <ReportButton postId={report.id} postType="price_report" />
                   )}
                 </div>
               </div>

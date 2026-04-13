@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
 
     const { postId, postType, reason } = await request.json() as {
       postId:   string
-      postType: 'opportunity' | 'listing'
+      postType: 'opportunity' | 'listing' | 'research' | 'price_report'
       reason:   string
     }
 
@@ -88,7 +88,11 @@ export async function POST(request: NextRequest) {
     // Auto-hide if threshold reached
     const autoHidden = totalReports >= threshold
     if (autoHidden) {
-      const table = postType === 'opportunity' ? 'opportunities' : 'marketplace_listings'
+      const table =
+        postType === 'opportunity'  ? 'opportunities'
+      : postType === 'price_report' ? 'price_reports'
+      : postType === 'research'     ? 'research_posts'
+      :                               'marketplace_listings'
       await adminAny.from(table).update({ is_active: false }).eq('id', postId)
     }
 
@@ -100,10 +104,16 @@ export async function POST(request: NextRequest) {
         (emailSetting as Record<string, unknown> | null)?.value as string | undefined
 
       if (notificationEmail) {
-        const postLabel = postType === 'opportunity' ? 'Opportunity' : 'Marketplace listing'
-        const postPath  = postType === 'opportunity'
-          ? `opportunities/${postId}`
-          : `marketplace/${postId}`
+        const postLabel =
+          postType === 'opportunity'  ? 'Opportunity'
+        : postType === 'price_report' ? 'Price report'
+        : postType === 'research'     ? 'Research post'
+        :                               'Marketplace listing'
+        const postPath =
+          postType === 'opportunity'  ? `opportunities/${postId}`
+        : postType === 'price_report' ? `prices`
+        : postType === 'research'     ? `research/${postId}`
+        :                               `marketplace/${postId}`
         const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://agroyield.africa'
 
         await resend.emails.send({
