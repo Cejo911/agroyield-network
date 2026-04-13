@@ -1,8 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import AppNav from '@/app/components/AppNav'
 import FollowButton from '@/app/directory/follow-button'
+import MessageButton from '@/app/components/MessageButton'
+import BackButton from '@/app/components/BackButton'
 import VerifiedBadge from '@/app/components/VerifiedBadge'
 import EliteBadge from '@/app/components/EliteBadge'
 
@@ -102,8 +105,7 @@ export default async function PublicProfilePage(
       {user ? <AppNav /> : (
         <nav className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
           <a href="/" className="flex items-center gap-2 no-underline">
-            <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center text-white text-sm">🌾</div>
-            <span className="font-bold text-gray-900">Agro<span className="text-green-600">Yield</span></span>
+            <img src="/logo-horizontal-colored.png" alt="AgroYield Network" style={{ height: 34, width: 'auto' }} />
           </a>
           <div className="flex items-center gap-3">
             <a href="/login" className="text-sm text-gray-600 hover:text-gray-900 font-medium">Log in</a>
@@ -113,6 +115,8 @@ export default async function PublicProfilePage(
       )}
 
       <main className="max-w-2xl mx-auto px-4 py-10">
+        {/* Back button */}
+        {user && <BackButton fallbackHref="/directory" label="Back" />}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 mb-6">
           <div className="flex flex-col sm:flex-row sm:items-start gap-6">
 
@@ -146,7 +150,10 @@ export default async function PublicProfilePage(
                   {location && <p className="text-sm text-gray-500 mt-0.5">📍 {location}</p>}
                 </div>
                 {!isOwnProfile && user && (
-                  <FollowButton userId={profileId} initialIsFollowing={isFollowing} />
+                  <div className="flex items-center gap-2">
+                    <MessageButton recipientId={profileId} />
+                    <FollowButton userId={profileId} initialIsFollowing={isFollowing} />
+                  </div>
                 )}
                 {isOwnProfile && (
                   <a href="/profile"
@@ -157,14 +164,14 @@ export default async function PublicProfilePage(
               </div>
 
               <div className="flex gap-6 mt-4">
-                <div>
+                <Link href={`/directory/${profileId}/followers`} className="hover:text-green-600 transition-colors">
                   <span className="text-lg font-bold text-gray-900">{followersCount}</span>
                   <span className="text-sm text-gray-500 ml-1">followers</span>
-                </div>
-                <div>
+                </Link>
+                <Link href={`/directory/${profileId}/following`} className="hover:text-green-600 transition-colors">
                   <span className="text-lg font-bold text-gray-900">{followingCount}</span>
                   <span className="text-sm text-gray-500 ml-1">following</span>
-                </div>
+                </Link>
               </div>
             </div>
           </div>
