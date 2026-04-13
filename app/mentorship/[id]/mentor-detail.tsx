@@ -24,6 +24,7 @@ export default function MentorDetail({ mentor, reviews, avgRating, sessionCount,
   const [format, setFormat] = useState(mentor.session_format?.[0] || 'video')
   const [sending, setSending] = useState(false)
   const [sent, setSent] = useState(false)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
   const name = `${mentor.profiles?.first_name ?? ''} ${mentor.profiles?.last_name ?? ''}`.trim() || 'Mentor'
   const initials = name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()
@@ -32,30 +33,36 @@ export default function MentorDetail({ mentor, reviews, avgRating, sessionCount,
   async function handleRequest(e: React.FormEvent) {
     e.preventDefault()
     setSending(true)
+    setErrorMsg(null)
 
-    const { error } = await supabase.from('mentorship_sessions').insert({
+    const { error } = await supabase.from('mentorship_requests').insert({
       mentor_id: mentor.user_id,
       mentee_id: userId,
       topic: topic.trim(),
       message: message.trim() || null,
-      session_format: format,
+      goals: `Preferred format: ${format}`,
       status: 'pending',
     })
 
-    if (!error) {
-      // Send notification to mentor
-      await fetch('/api/mentorship/sessions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'notify',
-          mentorId: mentor.user_id,
-          topic: topic.trim(),
-        }),
-      }).catch(() => {})
-
-      setSent(true)
+    if (error) {
+      console.error('Mentorship session insert error:', error)
+      setErrorMsg(error.message || 'Could not send request. Please try again.')
+      setSending(false)
+      return
     }
+
+    // Send notification to mentor (non-critical)
+    await fetch('/api/mentorship/sessions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'notify',
+        mentorId: mentor.user_id,
+        topic: topic.trim(),
+      }),
+    }).catch(() => {})
+
+    setSent(true)
     setSending(false)
   }
 
@@ -225,6 +232,11 @@ export default function MentorDetail({ mentor, reviews, avgRating, sessionCount,
                     ))}
                   </select>
                 </div>
+                {errorMsg && (
+                  <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3 text-sm text-red-700 dark:text-red-400">
+                    {errorMsg}
+                  </div>
+                )}
                 <div className="flex gap-3">
                   <button type="button" onClick={() => setShowRequest(false)}
                     className="flex-1 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-sm font-medium py-2 rounded-lg">
