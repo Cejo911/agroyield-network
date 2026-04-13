@@ -15,6 +15,16 @@ export default async function MarketplacePage() {
     .eq('is_active', true)
     .order('created_at', { ascending: false })
 
+  const listingList = (listings ?? []) as any[]
+  const userIds = [...new Set(listingList.map((l: any) => l.user_id))]
+
+  const { data: profiles } = userIds.length > 0
+    ? await supabase.from('profiles').select('id, first_name, last_name, avatar_url, username').in('id', userIds)
+    : { data: [] }
+
+  const profileMap: Record<string, any> = {}
+  for (const p of (profiles ?? []) as any[]) profileMap[p.id] = p
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <AppNav />
@@ -33,7 +43,7 @@ export default async function MarketplacePage() {
             Post listing
           </Link>
         </div>
-        <MarketplaceClient listings={(listings ?? []) as any} userId={user.id} />
+        <MarketplaceClient listings={listingList} profileMap={profileMap} userId={user.id} />
       </main>
     </div>
   )
