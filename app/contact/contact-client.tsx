@@ -108,15 +108,17 @@ export default function ContactClient() {
           .agy-footer-links { gap: 12px; }
         }
         .agy-input-focus:focus { border-color: var(--text-accent) !important; }
+        .auth-logo-colored { display: block; }
+        .auth-logo-white   { display: none; }
+        .dark .auth-logo-colored { display: none; }
+        .dark .auth-logo-white   { display: block; }
       `}</style>
 
       {/* NAV */}
       <nav className="agy-nav" style={{ position: 'sticky', top: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--nav-bg)', backdropFilter: 'blur(16px)', borderBottom: '1px solid var(--nav-border)' }}>
-        <a href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
-          <div style={{ width: 34, height: 34, background: 'linear-gradient(135deg, #16a34a, #22c55e)', borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17 }}>🌾</div>
-          <span style={{ fontSize: 17, fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>
-            Agro<span style={{ color: 'var(--text-accent)' }}>Yield</span>
-          </span>
+        <a href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+          <img src="/logo-horizontal-colored.png" alt="AgroYield Network" className="auth-logo-colored" style={{ height: 58, width: 'auto' }} />
+          <img src="/logo-horizontal-white.png"   alt="AgroYield Network" className="auth-logo-white"   style={{ height: 58, width: 'auto' }} />
         </a>
         <div className="agy-nav-links">
           <a href="/about" className="agy-nav-about" style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', textDecoration: 'none' }}>About</a>

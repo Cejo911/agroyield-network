@@ -1,19 +1,44 @@
 export default function TermsOfService() {
   return (
-    <main style={{ fontFamily: "'Inter', system-ui, sans-serif", background: '#060d09', color: '#f0fdf4', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <main style={{ fontFamily: "'Inter', system-ui, sans-serif", background: 'var(--bg-page)', color: 'var(--text-primary)', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <style>{`
+        :root {
+          --bg-page: #ffffff;
+          --text-primary: #111827;
+          --text-secondary: #374151;
+          --text-accent: #16a34a;
+          --text-footer: #9ca3af;
+          --nav-border: rgba(0,0,0,0.06);
+          --date-muted: #6b7280;
+        }
+        .dark {
+          --bg-page: #060d09;
+          --text-primary: #f0fdf4;
+          --text-secondary: #bbf7d0;
+          --text-accent: #22c55e;
+          --text-footer: #4b7a5c;
+          --nav-border: rgba(34,197,94,0.08);
+          --date-muted: #4b7a5c;
+        }
+        .auth-logo-colored { display: block; }
+        .auth-logo-white   { display: none; }
+        .dark .auth-logo-colored { display: none; }
+        .dark .auth-logo-white   { display: block; }
+      `}</style>
+
       {/* NAV */}
-      <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 40px', borderBottom: '1px solid rgba(34,197,94,0.08)' }}>
-        <a href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
-          <div style={{ width: 34, height: 34, background: 'linear-gradient(135deg, #16a34a, #22c55e)', borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17 }}>🌾</div>
-          <span style={{ fontSize: 17, fontWeight: 800, color: '#f0fdf4', letterSpacing: '-0.3px' }}>Agro<span style={{ color: '#22c55e' }}>Yield</span></span>
+      <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 40px', borderBottom: '1px solid var(--nav-border)' }}>
+        <a href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+          <img src="/logo-horizontal-colored.png" alt="AgroYield Network" className="auth-logo-colored" style={{ height: 58, width: 'auto' }} />
+          <img src="/logo-horizontal-white.png"   alt="AgroYield Network" className="auth-logo-white"   style={{ height: 58, width: 'auto' }} />
         </a>
-        <a href="/" style={{ fontSize: 13, color: '#bbf7d0', textDecoration: 'none' }}>← Back to home</a>
+        <a href="/" style={{ fontSize: 13, color: 'var(--text-secondary)', textDecoration: 'none' }}>← Back to home</a>
       </nav>
 
       {/* CONTENT */}
       <div style={{ flex: 1, maxWidth: 760, margin: '0 auto', padding: '60px 24px' }}>
-        <h1 style={{ fontSize: 36, fontWeight: 900, color: '#f0fdf4', letterSpacing: -1, marginBottom: 8 }}>Terms of Service</h1>
-        <p style={{ fontSize: 14, color: '#4b7a5c', marginBottom: 48 }}>Last updated: April 7, 2026</p>
+        <h1 style={{ fontSize: 36, fontWeight: 900, color: 'var(--text-primary)', letterSpacing: -1, marginBottom: 8 }}>Terms of Service</h1>
+        <p style={{ fontSize: 14, color: 'var(--date-muted)', marginBottom: 48 }}>Last updated: April 7, 2026</p>
 
         {[
           {
@@ -66,17 +91,17 @@ export default function TermsOfService() {
           },
         ].map(section => (
           <div key={section.title} style={{ marginBottom: 40 }}>
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#22c55e', marginBottom: 12 }}>{section.title}</h2>
-            <p style={{ fontSize: 15, color: '#bbf7d0', lineHeight: 1.8, margin: 0 }}>{section.body}</p>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-accent)', marginBottom: 12 }}>{section.title}</h2>
+            <p style={{ fontSize: 15, color: 'var(--text-secondary)', lineHeight: 1.8, margin: 0 }}>{section.body}</p>
           </div>
         ))}
       </div>
 
       {/* FOOTER */}
-      <footer style={{ borderTop: '1px solid rgba(34,197,94,0.08)', padding: '24px 40px', textAlign: 'center' }}>
-        <p style={{ fontSize: 12, color: '#4b7a5c', margin: 0 }}>
+      <footer style={{ borderTop: '1px solid var(--nav-border)', padding: '24px 40px', textAlign: 'center' }}>
+        <p style={{ fontSize: 12, color: 'var(--text-footer)', margin: 0 }}>
           © 2026 AgroYield Network · Nigeria ·{' '}
-          <a href="/privacy" style={{ color: '#4b7a5c', textDecoration: 'underline' }}>Privacy Policy</a>
+          <a href="/privacy" style={{ color: 'var(--text-footer)', textDecoration: 'underline' }}>Privacy Policy</a>
         </p>
       </footer>
     </main>
