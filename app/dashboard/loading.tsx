@@ -12,7 +12,7 @@ export default function DashboardLoading() {
         </div>
         {/* Module cards grid skeleton */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Array.from({ length: 7 }).map((_, i) => (
+          {Array.from({ length: 9 }).map((_, i) => (
             <div key={i} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-6 animate-pulse">
               <div className="h-10 w-10 bg-gray-200 dark:bg-gray-700 rounded-xl mb-4" />
               <div className="h-5 w-32 bg-gray-200 dark:bg-gray-700 rounded mb-2" />
