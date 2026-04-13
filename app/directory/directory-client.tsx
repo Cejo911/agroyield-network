@@ -9,6 +9,13 @@ const INTERESTS = [
   'Irrigation', 'Food Processing', 'Agricultural Finance',
   'Climate & Sustainability', 'Supply Chain', 'Research & Development',
 ]
+const STATES = [
+  'Abia', 'Adamawa', 'Akwa Ibom', 'Anambra', 'Bauchi', 'Bayelsa', 'Benue', 'Borno',
+  'Cross River', 'Delta', 'Ebonyi', 'Edo', 'Ekiti', 'Enugu', 'FCT Abuja', 'Gombe',
+  'Imo', 'Jigawa', 'Kaduna', 'Kano', 'Katsina', 'Kebbi', 'Kogi', 'Kwara', 'Lagos',
+  'Nasarawa', 'Niger', 'Ogun', 'Ondo', 'Osun', 'Oyo', 'Plateau', 'Rivers',
+  'Sokoto', 'Taraba', 'Yobe', 'Zamfara',
+]
 
 type Profile = {
   id: string
@@ -40,6 +47,7 @@ export default function DirectoryClient({ profiles, currentUserId, followingIds,
   const [search,         setSearch]         = useState('')
   const [roleFilter,     setRoleFilter]     = useState('All')
   const [interestFilter, setInterestFilter] = useState('')
+  const [locationFilter, setLocationFilter] = useState('')
   const [connectionFilter, setConnectionFilter] = useState('All')
 
   const followingSet = new Set(followingIds)
@@ -60,13 +68,16 @@ export default function DirectoryClient({ profiles, currentUserId, followingIds,
     const matchesInterest =
       !interestFilter ||
       p.interests?.includes(interestFilter)
+    const matchesLocation =
+      !locationFilter ||
+      (p.location ?? '').toLowerCase().includes(locationFilter.toLowerCase())
     const matchesConnection =
       connectionFilter === 'All' ||
       (connectionFilter === 'Following' && followingSet.has(p.id)) ||
       (connectionFilter === 'Followers' && followerSet.has(p.id)) ||
       (connectionFilter === 'Mentors' && mentorSet.has(p.id)) ||
       (connectionFilter === 'Mentees' && menteeSet.has(p.id))
-    return matchesSearch && matchesRole && matchesInterest && matchesConnection
+    return matchesSearch && matchesRole && matchesInterest && matchesLocation && matchesConnection
   })
 
   return (
@@ -95,14 +106,24 @@ export default function DirectoryClient({ profiles, currentUserId, followingIds,
             </button>
           ))}
         </div>
-        <select
-          value={interestFilter}
-          onChange={e => setInterestFilter(e.target.value)}
-          className="w-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-        >
-          <option value="">All areas of interest</option>
-          {INTERESTS.map(i => <option key={i} value={i}>{i}</option>)}
-        </select>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <select
+            value={interestFilter}
+            onChange={e => setInterestFilter(e.target.value)}
+            className="w-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+          >
+            <option value="">All areas of interest</option>
+            {INTERESTS.map(i => <option key={i} value={i}>{i}</option>)}
+          </select>
+          <select
+            value={locationFilter}
+            onChange={e => setLocationFilter(e.target.value)}
+            className="w-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+          >
+            <option value="">All locations</option>
+            {STATES.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
         {/* Connection filters */}
         <div className="flex flex-wrap gap-2">
           {['All', 'Following', 'Followers', 'Mentors', 'Mentees'].map(opt => (
