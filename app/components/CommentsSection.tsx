@@ -35,6 +35,7 @@ export default function CommentsSection({ postId, postType }: Props) {
   const [content,    setContent]    = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [loading,    setLoading]    = useState(true)
+  const [sortNewest, setSortNewest] = useState(true)
 
   useEffect(() => {
     const supabase = createClient()
@@ -143,6 +144,8 @@ export default function CommentsSection({ postId, postType }: Props) {
     setSubmitting(false)
     if (!error && data) {
       setComments(prev => [...prev, { ...data, likeCount: 0, liked: false }])
+      // Scroll to new comment if sorting newest first (it'll be at top)
+      if (sortNewest) window.scrollTo({ top: document.querySelector('.mt-8.pt-6')?.getBoundingClientRect().top! + window.scrollY - 100, behavior: 'smooth' })
       setContent('')
       // Notify post author (fire and forget)
       fetch('/api/notifications', {
@@ -162,11 +165,26 @@ export default function CommentsSection({ postId, postType }: Props) {
   const initial = (name: string | null) =>
     (name ?? 'U').charAt(0).toUpperCase()
 
+  const sortedComments = [...comments].sort((a, b) => {
+    const diff = new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    return sortNewest ? -diff : diff
+  })
+
   return (
     <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800">
-      <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-4">
-        {'Comments'}{comments.length > 0 && <span className="text-gray-400 dark:text-gray-500 font-normal ml-1">({comments.length})</span>}
-      </h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+          {'Comments'}{comments.length > 0 && <span className="text-gray-400 dark:text-gray-500 font-normal ml-1">({comments.length})</span>}
+        </h2>
+        {comments.length > 1 && (
+          <button
+            onClick={() => setSortNewest(prev => !prev)}
+            className="text-xs text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors font-medium"
+          >
+            {sortNewest ? '↓ Newest first' : '↑ Oldest first'}
+          </button>
+        )}
+      </div>
 
       {loading ? (
         <div className="space-y-3">
@@ -184,7 +202,7 @@ export default function CommentsSection({ postId, postType }: Props) {
         <p className="text-sm text-gray-400 dark:text-gray-500 mb-4">No comments yet. Be the first to comment.</p>
       ) : (
         <div className="space-y-4 mb-6">
-          {comments.map(comment => (
+          {sortedComments.map(comment => (
             <div key={comment.id} className="flex gap-3">
               <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center shrink-0">
                 <span className="text-xs font-semibold text-green-700 dark:text-green-400">
