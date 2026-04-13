@@ -33,8 +33,11 @@ export async function POST(request: NextRequest) {
           title:     body.title,
           type:      body.type,
           content:   body.content,
-          tags:      body.tags?.length ? body.tags : null,
-          is_locked: body.is_locked ?? false,
+          tags:            body.tags?.length ? body.tags : null,
+          is_locked:       body.is_locked ?? false,
+          cover_image_url: body.cover_image_url || null,
+          attachment_url:  body.attachment_url  || null,
+          attachment_name: body.attachment_name || null,
           is_active: true,
       })
       .select('id')

@@ -4,6 +4,7 @@ import AppNav from '@/app/components/AppNav'
 import ListingActions from './ListingActions'
 import CommentsSection from '@/app/components/CommentsSection'
 import MessageButton from '@/app/components/MessageButton'
+import ListingGallery from './ListingGallery'
 
 const CATEGORY_COLOURS: Record<string, string> = {
   produce:   'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
@@ -80,6 +81,11 @@ export default async function ListingPage({
               </span>
             )}
           </div>
+
+          {/* Product Images */}
+          {listing.image_urls?.length > 0 && (
+            <ListingGallery images={listing.image_urls} title={listing.title} />
+          )}
 
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3">{listing.title}</h1>
 

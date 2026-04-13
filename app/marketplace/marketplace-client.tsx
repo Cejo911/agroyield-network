@@ -39,6 +39,7 @@ type Listing = {
   price_negotiable: boolean | null
   description: string | null
   state: string | null
+  image_urls: string[] | null
   is_closed: boolean
   created_at: string
 }
@@ -142,7 +143,19 @@ export default function MarketplaceClient({
             const isClosed = listing.is_closed ?? false
             return (
               <div key={listing.id} className={`bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md hover:border-green-200 dark:hover:border-green-800 transition-all group flex flex-col ${isClosed ? 'opacity-70' : ''}`}>
-                <Link href={`/marketplace/${listing.id}`} className="block p-5 flex-1">
+                <Link href={`/marketplace/${listing.id}`} className="block flex-1">
+                  {listing.image_urls?.[0] && (
+                    <div className="relative w-full aspect-[4/3] bg-gray-100 dark:bg-gray-800 rounded-t-2xl overflow-hidden">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={listing.image_urls[0]} alt={listing.title} className="w-full h-full object-cover" />
+                      {listing.image_urls.length > 1 && (
+                        <span className="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] font-medium px-1.5 py-0.5 rounded">
+                          +{listing.image_urls.length - 1}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  <div className="p-5">
                   <div className="flex flex-wrap gap-2 mb-3">
                     {listing.type && <span className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${getTypeColour(listing.type)}`}>{listing.type}</span>}
                     {listing.category && <span className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${getCategoryColour(listing.category)}`}>{listing.category}</span>}
@@ -180,6 +193,7 @@ export default function MarketplaceClient({
                     })()}
                     <span className="text-gray-300 dark:text-gray-700">·</span>
                     <span className="text-xs text-gray-400 dark:text-gray-500">{timeAgo(listing.created_at)}</span>
+                  </div>
                   </div>
                 </Link>
 

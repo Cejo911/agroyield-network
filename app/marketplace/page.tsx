@@ -11,7 +11,7 @@ export default async function MarketplacePage() {
 
   const { data: listings } = await supabase
     .from('marketplace_listings')
-    .select('id, user_id, title, category, type, price, price_negotiable, description, state, is_closed, created_at')
+    .select('id, user_id, title, category, type, price, price_negotiable, description, state, image_urls, is_closed, created_at')
     .eq('is_active', true)
     .order('created_at', { ascending: false })
 

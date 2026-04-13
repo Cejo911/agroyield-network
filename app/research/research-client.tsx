@@ -29,6 +29,7 @@ export type ResearchPost = {
   type: string | null
   content: string
   tags: string[] | null
+  cover_image_url: string | null
   is_locked: boolean
   created_at: string
 }
@@ -123,7 +124,14 @@ export default function ResearchClient({
             const isOwner = post.user_id === userId
             return (
               <div key={post.id} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md hover:border-green-200 dark:hover:border-green-800 transition-all">
-                <Link href={`/research/${post.id}`} className="block p-6 group">
+                <Link href={`/research/${post.id}`} className="block group">
+                  {post.cover_image_url && (
+                    <div className="relative w-full aspect-[16/9] bg-gray-100 dark:bg-gray-800 rounded-t-2xl overflow-hidden">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={post.cover_image_url} alt={post.title} className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                  <div className="p-6">
                   <div className="flex flex-wrap items-center gap-2 mb-2">
                     {post.type && (
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${getTypeColour(post.type)}`}>{post.type}</span>
@@ -160,6 +168,7 @@ export default function ResearchClient({
                     })()}
                     <span className="text-gray-300 dark:text-gray-700">·</span>
                     <span className="text-xs text-gray-400 dark:text-gray-500">{timeAgo(post.created_at)}</span>
+                  </div>
                   </div>
                 </Link>
 

@@ -78,6 +78,14 @@ export default async function ResearchPostPage({
             })}
           </p>
 
+          {/* Cover Image */}
+          {post.cover_image_url && (
+            <div className="relative w-full aspect-[16/9] rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 mb-6">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={post.cover_image_url} alt={post.title} className="w-full h-full object-contain" />
+            </div>
+          )}
+
           {canReadFull ? (
             <div className="prose prose-sm max-w-none">
               <p className="text-gray-600 dark:text-gray-400 leading-relaxed whitespace-pre-wrap">{post.content}</p>
@@ -94,6 +102,30 @@ export default async function ResearchPostPage({
                 <p className="text-xs text-gray-500 dark:text-gray-400">Sign in to read the full content and join the discussion.</p>
                 <a href="/login" className="mt-1 bg-green-600 text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors">Sign in to read full post</a>
               </div>
+            </div>
+          )}
+
+          {/* File Attachment */}
+          {canReadFull && post.attachment_url && (
+            <div className="mt-6 p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center gap-3">
+              <span className="text-xl">
+                {post.attachment_name?.endsWith('.pdf') ? '📕' :
+                 post.attachment_name?.match(/\.docx?$/) ? '📘' :
+                 post.attachment_name?.match(/\.xlsx?$|\.csv$/) ? '📗' : '📎'}
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
+                  {post.attachment_name || 'Attached file'}
+                </p>
+              </div>
+              <a
+                href={post.attachment_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm font-semibold text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
+              >
+                Download
+              </a>
             </div>
           )}
 

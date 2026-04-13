@@ -1,10 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import AppNav from '@/app/components/AppNav'
 import useProfileGate from '@/app/hooks/useProfileGate'
 import ProfileGateBanner from '@/app/components/ProfileGateBanner'
+import ImageUploader from '@/app/components/ImageUploader'
+import FileUploader from '@/app/components/FileUploader'
+import { createClient } from '@/lib/supabase/client'
 
 const TYPES = ['finding', 'question', 'dataset', 'review', 'collaboration', 'guide', 'resource']
 const TAGS = [
@@ -18,6 +21,10 @@ export default function NewResearchPage() {
   const { ready: gateReady, allowed: profileComplete, missing: profileMissing } = useProfileGate()
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [coverImages, setCoverImages] = useState<string[]>([])
+  const [attachmentUrl, setAttachmentUrl] = useState<string | null>(null)
+  const [attachmentName, setAttachmentName] = useState<string | null>(null)
+  const [userId, setUserId] = useState<string>('')
   const [form, setForm] = useState({
     title:     '',
     type:      '',
@@ -25,6 +32,14 @@ export default function NewResearchPage() {
     tags:      [] as string[],
     is_locked: false,
   })
+
+  // Get current user ID for upload folder
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) setUserId(user.id)
+    })
+  }, [])
 
   const toggleTag = (tag: string) => {
     setForm(prev => ({
@@ -43,7 +58,12 @@ export default function NewResearchPage() {
       const res = await fetch('/api/research', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+          cover_image_url: coverImages[0] || null,
+          attachment_url: attachmentUrl,
+          attachment_name: attachmentName,
+        }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to post')
@@ -121,6 +141,33 @@ export default function NewResearchPage() {
                 className="w-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
               />
             </div>
+
+            {/* Cover Image */}
+            {userId && (
+              <ImageUploader
+                bucket="research-files"
+                folder={`${userId}/images`}
+                maxImages={1}
+                maxSizeMB={2}
+                value={coverImages}
+                onChange={setCoverImages}
+              />
+            )}
+
+            {/* File Attachment */}
+            {userId && (
+              <FileUploader
+                bucket="research-files"
+                folder={`${userId}/docs`}
+                maxSizeMB={10}
+                value={attachmentUrl}
+                fileName={attachmentName}
+                onChange={(url, name) => {
+                  setAttachmentUrl(url)
+                  setAttachmentName(name)
+                }}
+              />
+            )}
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Topics</label>

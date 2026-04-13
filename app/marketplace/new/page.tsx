@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation'
 import AppNav from '@/app/components/AppNav'
 import useProfileGate from '@/app/hooks/useProfileGate'
 import ProfileGateBanner from '@/app/components/ProfileGateBanner'
+import ImageUploader from '@/app/components/ImageUploader'
+import { createClient } from '@/lib/supabase/client'
 
 const DEFAULT_CATEGORIES = ['produce', 'inputs', 'equipment', 'livestock', 'services', 'other']
 const TYPES = ['sell', 'buy', 'trade']
@@ -23,10 +25,20 @@ export default function NewListingPage() {
   const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [imageUrls, setImageUrls] = useState<string[]>([])
+  const [userId, setUserId] = useState<string>('')
   const [form, setForm] = useState({
     title: '', category: '', type: '', price: '',
     price_negotiable: false, description: '', state: '', contact: '',
   })
+
+  // Get current user ID for upload folder
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) setUserId(user.id)
+    })
+  }, [])
 
   useEffect(() => {
     fetch('/api/content-types')
@@ -58,7 +70,7 @@ export default function NewListingPage() {
       const res = await fetch('/api/marketplace', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, price: form.price ? parseFloat(form.price) : null }),
+        body: JSON.stringify({ ...form, price: form.price ? parseFloat(form.price) : null, image_urls: imageUrls }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to post listing')
@@ -192,6 +204,18 @@ export default function NewListingPage() {
                 className={inputCls}
               />
             </div>
+
+            {/* Photos */}
+            {userId && (
+              <ImageUploader
+                bucket="marketplace-images"
+                folder={userId}
+                maxImages={4}
+                maxSizeMB={2}
+                value={imageUrls}
+                onChange={setImageUrls}
+              />
+            )}
 
             {/* State + Contact */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
