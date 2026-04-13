@@ -179,13 +179,13 @@ export default function MentorDetail({ mentor, reviews, avgRating, sessionCount,
           <div className="mt-6 pt-5 border-t border-gray-100 dark:border-gray-800">
             {existingSession ? (
               <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 text-sm text-yellow-800 dark:text-yellow-300">
-                You have a <strong>{existingSession.status}</strong> session with {name}.{' '}
-                <Link href="/mentorship/sessions" className="underline">View sessions →</Link>
+                You have a <strong>{existingSession.status}</strong> request with {name}.{' '}
+                <Link href="/mentorship/sessions" className="underline">View requests →</Link>
               </div>
             ) : sent ? (
               <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 text-sm text-green-800 dark:text-green-300">
                 Session request sent! {name} will review your request and respond.{' '}
-                <Link href="/mentorship/sessions" className="underline">View sessions →</Link>
+                <Link href="/mentorship/sessions" className="underline">View requests →</Link>
               </div>
             ) : !showRequest ? (
               <button
