@@ -48,9 +48,11 @@ const timeAgo = (dateStr: string) => {
 
 export default function ResearchClient({
   posts: initial,
+  profileMap,
   userId,
 }: {
   posts: ResearchPost[]
+  profileMap: Record<string, { first_name: string | null; last_name: string | null; avatar_url: string | null; username: string | null }>
   userId: string
 }) {
   const [posts, setPosts]               = useState(initial)
@@ -135,7 +137,30 @@ export default function ResearchClient({
                   </div>
                   <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-green-700 dark:group-hover:text-green-400 transition-colors text-lg mb-2">{post.title}</h3>
                   <p className="text-sm text-gray-400 dark:text-gray-500 line-clamp-2">{post.content}</p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-3">{timeAgo(post.created_at)}</p>
+                  <div className="flex items-center gap-2 mt-3">
+                    {(() => {
+                      const profile = profileMap[post.user_id]
+                      if (!profile) return <span className="text-xs text-gray-400 dark:text-gray-500">Anonymous</span>
+                      const name = [profile.first_name, profile.last_name].filter(Boolean).join(' ') || 'Anonymous'
+                      const href = profile.username ? `/u/${profile.username}` : `/directory/${post.user_id}`
+                      return (
+                        <Link href={href} className="flex items-center gap-1.5 group" onClick={e => e.stopPropagation()}>
+                          {profile.avatar_url ? (
+                            <img src={profile.avatar_url} alt="" className="w-5 h-5 rounded-full object-cover shrink-0" />
+                          ) : (
+                            <span className="w-5 h-5 rounded-full bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 text-[10px] font-bold flex items-center justify-center shrink-0">
+                              {(profile.first_name?.[0] || '?').toUpperCase()}
+                            </span>
+                          )}
+                          <span className="text-xs text-gray-500 dark:text-gray-400 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">
+                            {name}
+                          </span>
+                        </Link>
+                      )
+                    })()}
+                    <span className="text-gray-300 dark:text-gray-700">·</span>
+                    <span className="text-xs text-gray-400 dark:text-gray-500">{timeAgo(post.created_at)}</span>
+                  </div>
                 </Link>
 
                 <div className="px-6 pb-4 flex items-center justify-between border-t border-gray-100 dark:border-gray-800 pt-3">

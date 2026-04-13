@@ -15,6 +15,16 @@ export default async function ResearchPage() {
     .eq('is_active', true)
     .order('created_at', { ascending: false })
 
+  const postList = (posts ?? []) as any[]
+  const userIds = [...new Set(postList.map((p: any) => p.user_id))]
+
+  const { data: profiles } = userIds.length > 0
+    ? await supabase.from('profiles').select('id, first_name, last_name, avatar_url, username').in('id', userIds)
+    : { data: [] }
+
+  const profileMap: Record<string, any> = {}
+  for (const p of (profiles ?? []) as any[]) profileMap[p.id] = p
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <AppNav />
@@ -30,7 +40,7 @@ export default async function ResearchPage() {
             Post research
           </Link>
         </div>
-        <ResearchClient posts={(posts ?? []) as any} userId={user.id} />
+        <ResearchClient posts={postList} profileMap={profileMap} userId={user.id} />
       </main>
     </div>
   )
