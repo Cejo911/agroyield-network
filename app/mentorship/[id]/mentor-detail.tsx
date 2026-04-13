@@ -51,16 +51,9 @@ export default function MentorDetail({ mentor, reviews, avgRating, sessionCount,
       return
     }
 
-    // Send notification to mentor (non-critical)
-    await fetch('/api/mentorship/sessions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'notify',
-        mentorId: mentor.user_id,
-        topic: topic.trim(),
-      }),
-    }).catch(() => {})
+    // Notification to the mentor is created server-side by the DB trigger
+    // `trg_on_mentorship_request` on public.mentorship_requests INSERT.
+    // Do NOT also POST to /api/mentorship/sessions — that would dupe the notification.
 
     setSent(true)
     setSending(false)
