@@ -38,10 +38,15 @@ export default function MessageThread({ conversationId, currentUserId, otherUser
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages.length])
 
-  // Focus input on mount
+  // Focus input and mark messages as read on mount
   useEffect(() => {
     inputRef.current?.focus()
-  }, [])
+    fetch('/api/messages/read', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ conversationId }),
+    }).catch(() => {})
+  }, [conversationId])
 
   // Poll for new messages every 5 seconds
   useEffect(() => {
