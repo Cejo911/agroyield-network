@@ -68,6 +68,7 @@ export async function POST(request: NextRequest) {
         state:             body.state            || null,
         contact:           body.contact          || null,
         image_urls:        body.image_urls?.length ? body.image_urls : null,
+        condition:         body.condition || null,
         is_active:         !isPending,
         is_pending_review: isPending,
       })

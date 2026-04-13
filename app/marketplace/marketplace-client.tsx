@@ -6,14 +6,22 @@ import { createClient } from '@/lib/supabase/client'
 import LikeButton from '@/app/components/LikeButton'
 import ReportButton from '@/app/components/ReportButton'
 
-const CATEGORIES = ['All', 'Produce', 'Inputs', 'Equipment', 'Livestock', 'Services', 'Other']
+const CATEGORIES = ['All', 'Produce', 'Inputs', 'Equipment', 'Livestock', 'Oil', 'Services', 'Other']
 const TYPES      = ['All', 'Sell', 'Buy', 'Trade']
+const STATES = [
+  'Abia', 'Adamawa', 'Akwa Ibom', 'Anambra', 'Bauchi', 'Bayelsa', 'Benue', 'Borno',
+  'Cross River', 'Delta', 'Ebonyi', 'Edo', 'Ekiti', 'Enugu', 'FCT Abuja', 'Gombe',
+  'Imo', 'Jigawa', 'Kaduna', 'Kano', 'Katsina', 'Kebbi', 'Kogi', 'Kwara', 'Lagos',
+  'Nasarawa', 'Niger', 'Ogun', 'Ondo', 'Osun', 'Oyo', 'Plateau', 'Rivers',
+  'Sokoto', 'Taraba', 'Yobe', 'Zamfara',
+]
 
 const CATEGORY_COLOURS: Record<string, string> = {
   produce:   'bg-green-100  dark:bg-green-900/30  text-green-700  dark:text-green-400',
   inputs:    'bg-blue-100   dark:bg-blue-900/30   text-blue-700   dark:text-blue-400',
   equipment: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400',
   livestock: 'bg-red-100    dark:bg-red-900/30    text-red-700    dark:text-red-400',
+  oil:       'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400',
   services:  'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400',
   other:     'bg-gray-100   dark:bg-gray-800      text-gray-600   dark:text-gray-400',
 }
@@ -39,6 +47,7 @@ type Listing = {
   price_negotiable: boolean | null
   description: string | null
   state: string | null
+  condition: string | null
   image_urls: string[] | null
   is_closed: boolean
   created_at: string
@@ -70,6 +79,7 @@ export default function MarketplaceClient({
   const [search, setSearch]               = useState('')
   const [categoryFilter, setCategoryFilter] = useState('All')
   const [typeFilter, setTypeFilter]       = useState('All')
+  const [stateFilter, setStateFilter]     = useState('All')
   const [minPrice, setMinPrice]           = useState('')
   const [maxPrice, setMaxPrice]           = useState('')
   const [togglingId, setTogglingId]       = useState<string | null>(null)
@@ -86,14 +96,15 @@ export default function MarketplaceClient({
     const matchesSearch   = !search || l.title.toLowerCase().includes(search.toLowerCase()) || (l.description ?? '').toLowerCase().includes(search.toLowerCase()) || (l.state ?? '').toLowerCase().includes(search.toLowerCase())
     const matchesCategory = categoryFilter === 'All' || (l.category ?? '').toLowerCase() === categoryFilter.toLowerCase()
     const matchesType     = typeFilter === 'All' || (l.type ?? '').toLowerCase() === typeFilter.toLowerCase()
+    const matchesState    = stateFilter === 'All' || (l.state ?? '').toLowerCase() === stateFilter.toLowerCase()
     const min = minPrice ? parseFloat(minPrice) : null
     const max = maxPrice ? parseFloat(maxPrice) : null
     const matchesMin = min === null || (l.price !== null && l.price >= min)
     const matchesMax = max === null || (l.price !== null && l.price <= max)
-    return matchesSearch && matchesCategory && matchesType && matchesMin && matchesMax
+    return matchesSearch && matchesCategory && matchesType && matchesState && matchesMin && matchesMax
   })
 
-  const hasActiveFilters = categoryFilter !== 'All' || typeFilter !== 'All' || search || minPrice || maxPrice
+  const hasActiveFilters = categoryFilter !== 'All' || typeFilter !== 'All' || stateFilter !== 'All' || search || minPrice || maxPrice
 
   const inputClass = "w-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
   const filterBtn  = (active: boolean) => `px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${active ? 'bg-green-600 text-white border-green-600' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-green-400 dark:hover:border-green-500'}`
@@ -109,6 +120,17 @@ export default function MarketplaceClient({
           {TYPES.map(type => <button key={type} onClick={() => setTypeFilter(type)} className={filterBtn(typeFilter === type)}>{type}</button>)}
         </div>
         <div className="pt-1 border-t border-gray-100 dark:border-gray-800">
+          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Location</p>
+          <select
+            value={stateFilter}
+            onChange={e => setStateFilter(e.target.value)}
+            className={inputClass}
+          >
+            <option value="All">All states</option>
+            {STATES.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
+        <div className="pt-1 border-t border-gray-100 dark:border-gray-800">
           <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Price range (₦)</p>
           <div className="flex items-center gap-3">
             <input type="number" placeholder="Min" value={minPrice} onChange={e => setMinPrice(e.target.value)} min={0} className="w-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
@@ -120,7 +142,7 @@ export default function MarketplaceClient({
           </div>
         </div>
         {hasActiveFilters && (
-          <button onClick={() => { setSearch(''); setCategoryFilter('All'); setTypeFilter('All'); setMinPrice(''); setMaxPrice('') }} className="text-xs text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 font-medium">
+          <button onClick={() => { setSearch(''); setCategoryFilter('All'); setTypeFilter('All'); setStateFilter('All'); setMinPrice(''); setMaxPrice('') }} className="text-xs text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 font-medium">
             Clear all filters
           </button>
         )}
@@ -159,6 +181,7 @@ export default function MarketplaceClient({
                   <div className="flex flex-wrap gap-2 mb-3">
                     {listing.type && <span className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${getTypeColour(listing.type)}`}>{listing.type}</span>}
                     {listing.category && <span className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${getCategoryColour(listing.category)}`}>{listing.category}</span>}
+                    {listing.condition && <span className="text-xs px-2 py-0.5 rounded-full font-medium capitalize bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">{listing.condition}</span>}
                     {isClosed && <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">CLOSED</span>}
                   </div>
                   <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-green-700 dark:group-hover:text-green-400 transition-colors mb-2">{listing.title}</h3>

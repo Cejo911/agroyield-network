@@ -7,7 +7,8 @@ import ProfileGateBanner from '@/app/components/ProfileGateBanner'
 import ImageUploader from '@/app/components/ImageUploader'
 import { createClient } from '@/lib/supabase/client'
 
-const DEFAULT_CATEGORIES = ['produce', 'inputs', 'equipment', 'livestock', 'services', 'other']
+const DEFAULT_CATEGORIES = ['produce', 'inputs', 'equipment', 'livestock', 'oil', 'services', 'other']
+const CONDITIONS = ['new', 'used']
 const TYPES = ['sell', 'buy', 'trade']
 const STATES = [
   'Abia', 'Adamawa', 'Akwa Ibom', 'Anambra', 'Bauchi', 'Bayelsa', 'Benue', 'Borno',
@@ -30,6 +31,7 @@ export default function NewListingPage() {
   const [form, setForm] = useState({
     title: '', category: '', type: '', price: '',
     price_negotiable: false, description: '', state: '', contact: '',
+    condition: '',
   })
 
   // Get current user ID for upload folder
@@ -149,7 +151,7 @@ export default function NewListingPage() {
                   <button
                     key={cat}
                     type="button"
-                    onClick={() => setForm(prev => ({ ...prev, category: cat }))}
+                    onClick={() => setForm(prev => ({ ...prev, category: cat, condition: cat === 'equipment' ? prev.condition : '' }))}
                     className={`py-2 px-3 rounded-lg border text-sm font-medium capitalize transition-colors ${
                       form.category === cat
                         ? 'border-green-600 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400'
@@ -160,6 +162,30 @@ export default function NewListingPage() {
                 ))}
               </div>
             </div>
+
+            {/* Condition — only for equipment */}
+            {form.category === 'equipment' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Condition <span className="text-red-500">*</span>
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  {CONDITIONS.map(cond => (
+                    <button
+                      key={cond}
+                      type="button"
+                      onClick={() => setForm(prev => ({ ...prev, condition: cond }))}
+                      className={`py-2.5 rounded-lg border text-sm font-medium capitalize transition-colors ${
+                        form.condition === cond
+                          ? 'border-green-600 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                          : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-green-300 dark:hover:border-green-700'
+                      }`}>
+                      {cond}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Price */}
             <div>
@@ -259,7 +285,7 @@ export default function NewListingPage() {
             {/* Submit */}
             <button
               type="submit"
-              disabled={loading || !form.title || !form.type || !form.category}
+              disabled={loading || !form.title || !form.type || !form.category || (form.category === 'equipment' && !form.condition)}
               className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white py-3 rounded-lg font-semibold transition-colors">
               {loading ? 'Posting...' : 'Post Listing'}
             </button>

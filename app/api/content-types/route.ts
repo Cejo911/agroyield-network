@@ -8,7 +8,7 @@ const adminClient = createClient(
 
 const DEFAULTS = {
   opportunity_types:      'grant,fellowship,job,partnership,internship,training',
-  marketplace_categories: 'produce,inputs,equipment,livestock,services,other',
+  marketplace_categories: 'produce,inputs,equipment,livestock,oil,services,other',
 }
 
 export async function GET() {

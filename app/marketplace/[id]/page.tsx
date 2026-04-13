@@ -11,6 +11,7 @@ const CATEGORY_COLOURS: Record<string, string> = {
   inputs:    'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400',
   equipment: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400',
   livestock: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
+  oil:       'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400',
   services:  'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400',
   other:     'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400',
 }
@@ -73,6 +74,11 @@ export default async function ListingPage({
             {listing.category && (
               <span className={`text-xs px-3 py-1 rounded-full font-medium capitalize ${getColour(CATEGORY_COLOURS, listing.category)}`}>
                 {listing.category}
+              </span>
+            )}
+            {listing.condition && (
+              <span className="text-xs px-3 py-1 rounded-full font-medium capitalize bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                {listing.condition}
               </span>
             )}
             {isClosed && (
