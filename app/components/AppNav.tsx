@@ -25,6 +25,7 @@ export default function AppNav() {
   const [userOpen,    setUserOpen]    = useState(false)
   const [isAdmin,     setIsAdmin]     = useState<boolean | null>(null)
   const [userInitial, setUserInitial] = useState('?')
+  const [userAvatar,  setUserAvatar]  = useState<string | null>(null)
   const [userEmail,   setUserEmail]   = useState('')
   const [unreadMsgCount, setUnreadMsgCount] = useState(0)
   const pathname = usePathname()
@@ -39,13 +40,14 @@ export default function AppNav() {
       setUserEmail(user.email || '')
       supabaseAny
         .from('profiles')
-        .select('is_admin, first_name')
+        .select('is_admin, first_name, avatar_url')
         .eq('id', user.id)
         .single()
-        .then(({ data }: { data: { is_admin: boolean; first_name: string } | null }) => {
+        .then(({ data }: { data: { is_admin: boolean; first_name: string; avatar_url: string | null } | null }) => {
           if (data) {
             setIsAdmin(data.is_admin)
             setUserInitial((data.first_name || user.email || '?')[0].toUpperCase())
+            setUserAvatar(data.avatar_url || null)
           }
         })
 
@@ -179,10 +181,15 @@ export default function AppNav() {
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setUserOpen(!userOpen)}
-              className="w-8 h-8 rounded-full bg-green-600 dark:bg-green-700 text-white text-sm font-bold flex items-center justify-center hover:bg-green-700 dark:hover:bg-green-600 transition-colors"
+              className="w-8 h-8 rounded-full bg-green-600 dark:bg-green-700 text-white text-sm font-bold flex items-center justify-center hover:bg-green-700 dark:hover:bg-green-600 transition-colors overflow-hidden"
               title="Account"
             >
-              {userInitial}
+              {userAvatar ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={userAvatar} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                userInitial
+              )}
             </button>
 
             {userOpen && (
