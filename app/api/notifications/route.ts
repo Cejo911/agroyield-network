@@ -39,13 +39,14 @@ export async function POST(request: Request) {
         opportunity: 'opportunities',
         listing: 'marketplace_listings',
         price_report: 'price_reports',
+        community: 'community_posts',
       }
       const table = tableMap[postType]
       if (!table) return NextResponse.json({ error: 'Invalid post type' }, { status: 400 })
 
       const { data: post } = await admin
         .from(table)
-        .select('user_id, title')
+        .select('user_id, title, content')
         .eq('id', postId)
         .single()
 
@@ -54,15 +55,23 @@ export async function POST(request: Request) {
         opportunity: `/opportunities/${postId}`,
         listing: `/marketplace/${postId}`,
         price_report: `/prices`,
+        community: `/community/${postId}`,
       }
       const link = linkMap[postType] || '/'
+
+      // Build a short label for the notification text
+      const postLabel = post?.title
+        ? `"${post.title}"`
+        : post?.content
+          ? `"${(post.content as string).slice(0, 50).trimEnd()}${(post.content as string).length > 50 ? '…' : ''}"`
+          : 'a post'
 
       // Notify the post author (if it's not the commenter)
       if (post && post.user_id !== user.id) {
         await createNotification(admin, {
           userId:   post.user_id,
           type:     'comment',
-          title:    `${actorName} commented on "${post.title}"`,
+          title:    `${actorName} commented on ${postLabel}`,
           link,
           actorId:  user.id,
           entityId: postId,
@@ -87,7 +96,7 @@ export async function POST(request: Request) {
             await createNotification(admin, {
               userId:   uid,
               type:     'comment',
-              title:    `${actorName} also commented on "${post.title}"`,
+              title:    `${actorName} also commented on ${postLabel}`,
               link,
               actorId:  user.id,
               entityId: postId,
