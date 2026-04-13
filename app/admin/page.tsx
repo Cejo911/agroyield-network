@@ -44,12 +44,14 @@ export default async function AdminPage() {
     { data: members },
     { data: settingsRows },
     { data: reports },
+    { count: waitlistCount },
   ] = await Promise.all([
     supabaseAny.from('opportunities').select('*').order('created_at', { ascending: false }),
     supabaseAny.from('marketplace_listings').select('*').order('created_at', { ascending: false }),
     supabaseAny.from('profiles').select('*').order('created_at', { ascending: false }),
     adminAny.from('settings').select('key, value'),
     adminAny.from('reports').select('*').order('created_at', { ascending: false }),
+    adminAny.from('waitlist_signups').select('*', { count: 'exact', head: true }),
   ])
 
   const profilesMap: Record<string, { first_name: string | null; last_name: string | null }> = {}
@@ -136,11 +138,12 @@ export default async function AdminPage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
           {[
+            { label: 'Waitlist',      value: waitlistCount ?? 0 },
+            { label: 'Members',       value: membersCount },
             { label: 'Opportunities', value: oppsCount },
             { label: 'Listings',      value: listingsCount },
-            { label: 'Members',       value: membersCount },
             { label: 'Removed',       value: removedCount },
           ].map(stat => (
             <div key={stat.label} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm p-4 text-center">
