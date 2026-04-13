@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import AppNav from '@/app/components/AppNav'
 
-const TYPES = ['Finding', 'Question', 'Dataset', 'Review', 'Collaboration']
+const TYPES = ['Finding', 'Question', 'Dataset', 'Review', 'Collaboration', 'Guide', 'Resource']
 const TAGS = [
   'Crop Science', 'Livestock', 'Agritech', 'Soil Health', 'Irrigation',
   'Food Processing', 'Agricultural Finance', 'Climate & Sustainability',

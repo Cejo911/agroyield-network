@@ -12,6 +12,8 @@ const TYPE_COLOURS: Record<string, string> = {
   dataset:       'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
   review:        'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400',
   collaboration: 'bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-400',
+  guide:         'bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400',
+  resource:      'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400',
 }
 
 const getTypeColour = (type: string | null): string => {

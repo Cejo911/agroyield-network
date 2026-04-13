@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import AppNav from '@/app/components/AppNav'
 
-const TYPES = ['finding', 'question', 'dataset', 'review', 'collaboration']
+const TYPES = ['finding', 'question', 'dataset', 'review', 'collaboration', 'guide', 'resource']
 const TAGS = [
   'Crop Science', 'Livestock', 'Agritech', 'Soil Health', 'Irrigation',
   'Food Processing', 'Agricultural Finance', 'Climate & Sustainability',
@@ -62,7 +62,7 @@ export default function NewResearchPage() {
       <main className="max-w-2xl mx-auto px-4 py-10">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Post Research</h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">Share your findings, questions or datasets with the network.</p>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">Share findings, questions, datasets, guides or learning resources with the network.</p>
         </div>
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -111,7 +111,7 @@ export default function NewResearchPage() {
                 value={form.content}
                 onChange={e => setForm(prev => ({ ...prev, content: e.target.value }))}
                 rows={8}
-                placeholder="Share your research findings, methodology, questions or dataset details..."
+                placeholder="Share your research findings, methodology, questions, dataset details or learning resources..."
                 className="w-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
               />
             </div>
