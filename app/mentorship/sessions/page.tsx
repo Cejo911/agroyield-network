@@ -19,6 +19,17 @@ interface Session {
   completed_at: string | null
 }
 
+// Shape of a row in public.mentorship_reviews — used on completed sessions
+interface Review {
+  id: string
+  session_id: string
+  reviewer_id: string
+  reviewee_id: string
+  rating: number
+  comment: string | null
+  created_at: string
+}
+
 // A row from public.mentorship_requests + joined profile + latest active session
 interface Request {
   id: string
@@ -33,6 +44,8 @@ interface Request {
   mentor_profile?: { first_name: string | null; last_name: string | null; avatar_url: string | null }
   mentee_profile?: { first_name: string | null; last_name: string | null; avatar_url: string | null }
   session?: Session   // latest non-cancelled session for this request, if any
+  my_review?: Review      // review I (current user) left on this session
+  their_review?: Review   // review the other party left on this session
 }
 
 // Status colours match the mentorship_request_status enum exactly
@@ -81,6 +94,12 @@ export default function RequestsPage() {
   const [meetingLink, setMeetingLink] = useState('')
   const [scheduleSubmitting, setScheduleSubmitting] = useState(false)
 
+  // Review modal
+  const [reviewTarget, setReviewTarget] = useState<Request | null>(null)
+  const [reviewRating, setReviewRating] = useState(5)
+  const [reviewComment, setReviewComment] = useState('')
+  const [reviewSubmitting, setReviewSubmitting] = useState(false)
+
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
@@ -111,6 +130,19 @@ export default function RequestsPage() {
             .order('scheduled_at', { ascending: true }),
         ])
 
+        // Now that we know which sessions exist, fetch any reviews against them.
+        // RLS restricts this to reviews where the current user is reviewer or reviewee — exactly what we want.
+        const sessionIds = ((sessionsRes.data ?? []) as { id: string }[]).map(s => s.id)
+        let reviewsData: Review[] = []
+        if (sessionIds.length > 0) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const { data: rd } = await (supabase as any)
+            .from('mentorship_reviews')
+            .select('*')
+            .in('session_id', sessionIds)
+          reviewsData = (rd ?? []) as Review[]
+        }
+
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const profileMap: Record<string, any> = {}
         for (const p of profilesRes.data ?? []) profileMap[(p as { id: string }).id] = p
@@ -123,13 +155,26 @@ export default function RequestsPage() {
           sessionMap[s.request_id] = s as Session
         }
 
+        // Bucket reviews per session, split by reviewer-is-me vs reviewer-is-other
+        const myReviewBySession: Record<string, Review> = {}
+        const theirReviewBySession: Record<string, Review> = {}
+        for (const rv of reviewsData) {
+          if (rv.reviewer_id === user.id) myReviewBySession[rv.session_id] = rv
+          else                            theirReviewBySession[rv.session_id] = rv
+        }
+
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const enriched: Request[] = data.map((r: any) => ({
-          ...r,
-          mentor_profile: profileMap[r.mentor_id],
-          mentee_profile: profileMap[r.mentee_id],
-          session: sessionMap[r.id],
-        }))
+        const enriched: Request[] = data.map((r: any) => {
+          const s = sessionMap[r.id]
+          return {
+            ...r,
+            mentor_profile: profileMap[r.mentor_id],
+            mentee_profile: profileMap[r.mentee_id],
+            session: s,
+            my_review:    s ? myReviewBySession[s.id]    : undefined,
+            their_review: s ? theirReviewBySession[s.id] : undefined,
+          }
+        })
         setRequests(enriched)
 
         // Default the tab to whichever side the user has more activity on
@@ -279,6 +324,48 @@ export default function RequestsPage() {
     }
     setRequests(prev => prev.map(x => x.id === r.id ? { ...x, session: undefined } : x))
     setUpdating(null)
+  }
+
+  // Open review modal — prefills with a 5-star default
+  function openReviewModal(r: Request) {
+    setReviewTarget(r)
+    setReviewRating(5)
+    setReviewComment('')
+  }
+
+  async function handleReviewSubmit() {
+    if (!reviewTarget || !reviewTarget.session || !userId) return
+    setReviewSubmitting(true)
+
+    const revieweeId = userId === reviewTarget.mentor_id ? reviewTarget.mentee_id : reviewTarget.mentor_id
+    const payload = {
+      session_id: reviewTarget.session.id,
+      reviewer_id: userId,
+      reviewee_id: revieweeId,
+      rating: reviewRating,
+      comment: reviewComment.trim() || null,
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: inserted, error } = await (supabase as any)
+      .from('mentorship_reviews')
+      .insert(payload)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Review insert failed:', error)
+      alert(`Could not submit review: ${error.message}`)
+      setReviewSubmitting(false)
+      return
+    }
+
+    // Attach locally so the UI refreshes without a reload
+    setRequests(prev => prev.map(x =>
+      x.id === reviewTarget.id ? { ...x, my_review: inserted as Review } : x
+    ))
+    setReviewTarget(null)
+    setReviewSubmitting(false)
   }
 
   const displayed = requests.filter(r => tab === 'mentee' ? r.mentee_id === userId : r.mentor_id === userId)
@@ -499,10 +586,49 @@ export default function RequestsPage() {
                     </div>
                   )}
 
-                  {/* Completed request */}
+                  {/* Completed request — reviews */}
                   {r.status === 'completed' && (
-                    <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800">
-                      <p className="text-[11px] text-gray-400">Reviews coming soon.</p>
+                    <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800 space-y-2">
+                      {/* My review of the other party */}
+                      {r.my_review ? (
+                        <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-900/40 rounded-lg">
+                          <p className="text-[11px] font-semibold text-green-800 dark:text-green-300 mb-1">
+                            Your review of {otherName}
+                          </p>
+                          <p className="text-sm text-yellow-500">
+                            {'★'.repeat(r.my_review.rating)}
+                            <span className="text-gray-300 dark:text-gray-700">{'★'.repeat(5 - r.my_review.rating)}</span>
+                          </p>
+                          {r.my_review.comment && (
+                            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 italic">&ldquo;{r.my_review.comment}&rdquo;</p>
+                          )}
+                        </div>
+                      ) : r.session ? (
+                        <button
+                          onClick={() => openReviewModal(r)}
+                          className="text-xs font-semibold bg-yellow-500 text-white px-4 py-1.5 rounded-lg hover:bg-yellow-600"
+                        >
+                          ★ Leave Review
+                        </button>
+                      ) : (
+                        <p className="text-[11px] text-gray-400">Completed without a scheduled session — no review possible.</p>
+                      )}
+
+                      {/* Their review of me */}
+                      {r.their_review && (
+                        <div className="p-3 bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-lg">
+                          <p className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                            {otherName}&apos;s review of you
+                          </p>
+                          <p className="text-sm text-yellow-500">
+                            {'★'.repeat(r.their_review.rating)}
+                            <span className="text-gray-300 dark:text-gray-700">{'★'.repeat(5 - r.their_review.rating)}</span>
+                          </p>
+                          {r.their_review.comment && (
+                            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 italic">&ldquo;{r.their_review.comment}&rdquo;</p>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -625,6 +751,73 @@ export default function RequestsPage() {
                   className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 rounded-lg disabled:opacity-50"
                 >
                   {scheduleSubmitting ? 'Scheduling…' : 'Schedule Session'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Review modal */}
+        {reviewTarget && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-md p-6">
+              <h2 className="text-base font-bold text-gray-900 dark:text-white mb-1">Leave a Review</h2>
+              <p className="text-sm text-gray-500 mb-4">
+                Your review is visible to the other party and helps build trust in the mentorship network.
+              </p>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    Rating <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map(n => (
+                      <button
+                        key={n}
+                        type="button"
+                        onClick={() => setReviewRating(n)}
+                        className={`text-3xl transition-colors ${
+                          n <= reviewRating ? 'text-yellow-500' : 'text-gray-300 dark:text-gray-700 hover:text-yellow-300'
+                        }`}
+                        aria-label={`${n} star${n > 1 ? 's' : ''}`}
+                      >
+                        ★
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                    Comment (optional)
+                  </label>
+                  <textarea
+                    value={reviewComment}
+                    onChange={e => setReviewComment(e.target.value)}
+                    rows={4}
+                    placeholder="What went well? What could be improved?"
+                    maxLength={500}
+                    className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+                  />
+                  <p className="text-[11px] text-gray-400 mt-1">{reviewComment.length}/500</p>
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-5">
+                <button
+                  onClick={() => setReviewTarget(null)}
+                  disabled={reviewSubmitting}
+                  className="flex-1 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-sm font-medium py-2 rounded-lg disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleReviewSubmit}
+                  disabled={reviewSubmitting || reviewRating < 1}
+                  className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white text-sm font-semibold py-2 rounded-lg disabled:opacity-50"
+                >
+                  {reviewSubmitting ? 'Submitting…' : 'Submit Review'}
                 </button>
               </div>
             </div>
