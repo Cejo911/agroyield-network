@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import AppNav from '@/app/components/AppNav'
+import useProfileGate from '@/app/hooks/useProfileGate'
+import ProfileGateBanner from '@/app/components/ProfileGateBanner'
 import Link from 'next/link'
 
 const CATEGORIES = ['Research', 'Startup', 'Student', 'Women', 'Innovation', 'Farmer', 'Policy']
@@ -12,6 +14,7 @@ export default function PostGrantPage() {
   const supabase = createClient()
   const router = useRouter()
   const [saving, setSaving] = useState(false)
+  const { ready: gateReady, allowed: profileComplete, missing: profileMissing } = useProfileGate()
   const [form, setForm] = useState({
     title: '',
     funder: '',
@@ -76,6 +79,9 @@ export default function PostGrantPage() {
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Post a Grant</h1>
         <p className="text-gray-500 dark:text-gray-400 text-sm mb-8">Add a new funding opportunity for the community.</p>
 
+        {gateReady && !profileComplete ? (
+          <ProfileGateBanner missing={profileMissing} />
+        ) : (
         <form onSubmit={handleSubmit} className="space-y-6 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
           {/* Title */}
           <div>
@@ -217,6 +223,7 @@ export default function PostGrantPage() {
             </button>
           </div>
         </form>
+        )}
       </main>
     </div>
   )

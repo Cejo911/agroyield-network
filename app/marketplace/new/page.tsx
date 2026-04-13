@@ -2,6 +2,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import AppNav from '@/app/components/AppNav'
+import useProfileGate from '@/app/hooks/useProfileGate'
+import ProfileGateBanner from '@/app/components/ProfileGateBanner'
 
 const DEFAULT_CATEGORIES = ['produce', 'inputs', 'equipment', 'livestock', 'services', 'other']
 const TYPES = ['sell', 'buy', 'trade']
@@ -17,6 +19,7 @@ const inputCls = 'w-full border border-gray-300 dark:border-gray-700 rounded-lg 
 
 export default function NewListingPage() {
   const router = useRouter()
+  const { ready: gateReady, allowed: profileComplete, missing: profileMissing } = useProfileGate()
   const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
@@ -81,6 +84,9 @@ export default function NewListingPage() {
           <p className="text-gray-500 dark:text-gray-400 mt-1">List a product, input, equipment or service.</p>
         </div>
 
+        {gateReady && !profileComplete ? (
+          <ProfileGateBanner missing={profileMissing} />
+        ) : (
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
 
@@ -236,6 +242,7 @@ export default function NewListingPage() {
 
           </form>
         </div>
+        )}
       </main>
     </div>
   )

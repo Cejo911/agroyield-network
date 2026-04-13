@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import AppNav from '@/app/components/AppNav'
+import useProfileGate from '@/app/hooks/useProfileGate'
+import ProfileGateBanner from '@/app/components/ProfileGateBanner'
 
 const TYPES = ['finding', 'question', 'dataset', 'review', 'collaboration', 'guide', 'resource']
 const TAGS = [
@@ -13,6 +15,7 @@ const TAGS = [
 
 export default function NewResearchPage() {
   const router = useRouter()
+  const { ready: gateReady, allowed: profileComplete, missing: profileMissing } = useProfileGate()
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [form, setForm] = useState({
@@ -64,6 +67,9 @@ export default function NewResearchPage() {
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Post Research</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1">Share findings, questions, datasets, guides or learning resources with the network.</p>
         </div>
+        {gateReady && !profileComplete ? (
+          <ProfileGateBanner missing={profileMissing} />
+        ) : (
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
@@ -167,6 +173,7 @@ export default function NewResearchPage() {
             </button>
           </form>
         </div>
+        )}
       </main>
     </div>
   )

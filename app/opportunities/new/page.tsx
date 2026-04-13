@@ -2,6 +2,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import AppNav from '@/app/components/AppNav'
+import useProfileGate from '@/app/hooks/useProfileGate'
+import ProfileGateBanner from '@/app/components/ProfileGateBanner'
 
 const DEFAULT_TYPES = ['grant', 'fellowship', 'job', 'partnership', 'internship', 'training']
 
@@ -10,6 +12,7 @@ export default function NewOpportunityPage() {
   const [types, setTypes] = useState<string[]>(DEFAULT_TYPES)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const { ready: gateReady, allowed: profileComplete, missing: profileMissing } = useProfileGate()
   const [form, setForm] = useState({
     title: '', type: '', organisation: '', location: '',
     description: '', requirements: '', deadline: '', url: '',
@@ -56,6 +59,9 @@ export default function NewOpportunityPage() {
           <h1 className="text-3xl font-bold text-gray-900">Post an Opportunity</h1>
           <p className="text-gray-500 mt-1">Share a grant, job, fellowship or partnership with the network.</p>
         </div>
+        {gateReady && !profileComplete ? (
+          <ProfileGateBanner missing={profileMissing} />
+        ) : (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
@@ -158,6 +164,7 @@ export default function NewOpportunityPage() {
             </button>
           </form>
         </div>
+        )}
       </main>
     </div>
   )

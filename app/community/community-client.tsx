@@ -4,6 +4,8 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import useProfileGate from '@/app/hooks/useProfileGate'
+import ProfileGateBanner from '@/app/components/ProfileGateBanner'
 
 const POST_TYPES = [
   { value: 'all',        label: 'All',         icon: '' },
@@ -42,6 +44,7 @@ interface Props {
 export default function CommunityClient({ posts, profileMap, likeCountMap, userLikedSet: initialLiked, commentCountMap, currentUserId }: Props) {
   const supabase = createClient()
   const router = useRouter()
+  const { allowed: profileComplete, missing: profileMissing } = useProfileGate()
   const [filter, setFilter] = useState('all')
   const [showForm, setShowForm] = useState(false)
   const [postType, setPostType] = useState('discussion')
@@ -142,7 +145,9 @@ export default function CommunityClient({ posts, profileMap, likeCountMap, userL
   return (
     <div>
       {/* New post button */}
-      {!showForm ? (
+      {!profileComplete ? (
+        <div className="mb-6"><ProfileGateBanner missing={profileMissing} /></div>
+      ) : !showForm ? (
         <button
           onClick={() => setShowForm(true)}
           className="w-full bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 text-left text-gray-400 dark:text-gray-500 hover:border-green-300 dark:hover:border-green-700 transition-colors mb-6 text-sm"

@@ -2,6 +2,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import AppNav from '@/app/components/AppNav'
+import useProfileGate from '@/app/hooks/useProfileGate'
+import ProfileGateBanner from '@/app/components/ProfileGateBanner'
 
 const COMMODITIES: Record<string, string[]> = {
   grains:     ['Maize', 'Rice', 'Sorghum', 'Millet', 'Wheat', 'Barley'],
@@ -36,6 +38,7 @@ export default function SubmitPricePage() {
   })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const { ready: gateReady, allowed: profileComplete, missing: profileMissing } = useProfileGate()
 
   const currentCommodities: string[] = form.category ? (COMMODITIES[form.category] ?? []) : []
 
@@ -100,6 +103,10 @@ export default function SubmitPricePage() {
           Help the community by sharing current commodity prices from your local market.
         </p>
 
+        {gateReady && !profileComplete ? (
+          <ProfileGateBanner missing={profileMissing} />
+        ) : (
+        <>
         {error && (
           <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-lg text-sm">
             {error}
@@ -227,6 +234,8 @@ export default function SubmitPricePage() {
           </button>
 
         </form>
+        </>
+        )}
       </div>
     </div>
   )
