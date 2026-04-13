@@ -93,7 +93,7 @@ export default function AppNav() {
 
   return (
     <header className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 sticky top-0 z-50">
-      <div className="w-full px-4 lg:px-8 py-3 flex items-center justify-between gap-3">
+      <div className="w-full px-4 xl:px-8 py-3 flex items-center justify-between gap-3 overflow-hidden">
 
         {/* Logo */}
 <Link href="/dashboard" className="flex items-center shrink-0">
@@ -123,7 +123,7 @@ export default function AppNav() {
 </Link>
 
         {/* Desktop nav links */}
-        <nav className="hidden lg:flex items-center gap-1 flex-1 justify-center">
+        <nav className="hidden xl:flex items-center gap-1 flex-1 justify-center">
           {NAV_LINKS.map(link => (
             <Link
               key={link.href}
@@ -140,7 +140,7 @@ export default function AppNav() {
         </nav>
 
         {/* Desktop right side — ThemeToggle + User avatar dropdown */}
-        <div className="hidden lg:flex items-center gap-2 shrink-0">
+        <div className="hidden xl:flex items-center gap-2 shrink-0">
           {/* Get Verified badge for non-admins */}
           {isAdmin === false && (
             <Link
@@ -233,7 +233,7 @@ export default function AppNav() {
 
         {/* Mobile hamburger */}
         <button
-          className="lg:hidden p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 text-lg"
+          className="xl:hidden p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 text-lg"
           onClick={() => setMenuOpen(!menuOpen)}
         >
           {menuOpen ? '✕' : '☰'}
@@ -242,7 +242,7 @@ export default function AppNav() {
 
       {/* Mobile menu */}
       {menuOpen && (
-        <div className="lg:hidden border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 py-3 space-y-1">
+        <div className="xl:hidden border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 py-3 space-y-1">
           {NAV_LINKS.map(link => (
             <Link
               key={link.href}
