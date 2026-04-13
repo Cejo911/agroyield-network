@@ -103,14 +103,14 @@ export default async function PublicProfilePage({
 
           {/* Follower / Following counts */}
           <div className="flex gap-3 mb-6">
-            <div className="flex-1 text-center bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg py-3">
+            <Link href={`/directory/${id}/followers`} className="flex-1 text-center bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg py-3 hover:border-green-400 dark:hover:border-green-600 transition-colors">
               <p className="text-xl font-bold text-gray-900 dark:text-white">{followerCount ?? 0}</p>
               <p className="text-xs text-gray-500 dark:text-gray-400">Followers</p>
-            </div>
-            <div className="flex-1 text-center bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg py-3">
+            </Link>
+            <Link href={`/directory/${id}/following`} className="flex-1 text-center bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg py-3 hover:border-green-400 dark:hover:border-green-600 transition-colors">
               <p className="text-xl font-bold text-gray-900 dark:text-white">{followingCount ?? 0}</p>
               <p className="text-xs text-gray-500 dark:text-gray-400">Following</p>
-            </div>
+            </Link>
           </div>
 
           {/* Details */}

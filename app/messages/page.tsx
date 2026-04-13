@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
 import AppNav from '@/app/components/AppNav'
+import MessagesInbox from './messages-inbox'
 
 export default async function MessagesPage() {
   const supabase = await createClient()
@@ -89,74 +89,39 @@ export default async function MessagesPage() {
     return new Date(dateStr).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
   }
 
+  // Prepare conversations for client component
+  const conversations = allConvos.map(convo => {
+    const otherId = convo.participant_a === user.id ? convo.participant_b : convo.participant_a
+    const profile = profileMap[otherId]
+    const name = profile ? `${profile.first_name ?? ''} ${profile.last_name ?? ''}`.trim() : 'User'
+    const lastMsg = lastMsgMap[convo.id]
+    const unread = unreadMap[convo.id] || 0
+    const preview = lastMsg
+      ? (lastMsg.sender_id === user.id ? 'You: ' : '') + (lastMsg.body?.slice(0, 60) || '') + (lastMsg.body?.length > 60 ? '…' : '')
+      : 'No messages yet'
+    const time = lastMsg ? timeAgo(lastMsg.created_at) : ''
+
+    return {
+      id: convo.id,
+      name,
+      initial: (name[0] || '?').toUpperCase(),
+      avatarUrl: profile?.avatar_url || null,
+      preview,
+      time,
+      unread,
+    }
+  })
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <AppNav />
       <main className="max-w-2xl mx-auto px-4 py-10">
-        <div className="mb-8">
+        <div className="mb-6">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Messages</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1">Your private conversations</p>
         </div>
 
-        {allConvos.length === 0 ? (
-          <div className="text-center py-16 text-gray-400 dark:text-gray-500">
-            <p className="text-4xl mb-3">✉️</p>
-            <p className="font-medium">No messages yet</p>
-            <p className="text-sm mt-1">Start a conversation from someone&apos;s profile in the Directory.</p>
-          </div>
-        ) : (
-          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 divide-y divide-gray-100 dark:divide-gray-800 overflow-hidden">
-            {allConvos.map(convo => {
-              const otherId = convo.participant_a === user.id ? convo.participant_b : convo.participant_a
-              const profile = profileMap[otherId]
-              const name = profile ? `${profile.first_name ?? ''} ${profile.last_name ?? ''}`.trim() : 'User'
-              const initial = (name[0] || '?').toUpperCase()
-              const lastMsg = lastMsgMap[convo.id]
-              const unread = unreadMap[convo.id] || 0
-              const preview = lastMsg
-                ? (lastMsg.sender_id === user.id ? 'You: ' : '') + (lastMsg.body?.slice(0, 60) || '') + (lastMsg.body?.length > 60 ? '…' : '')
-                : 'No messages yet'
-              const time = lastMsg ? timeAgo(lastMsg.created_at) : ''
-
-              return (
-                <Link
-                  key={convo.id}
-                  href={`/messages/${convo.id}`}
-                  className="flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
-                >
-                  {/* Avatar */}
-                  {profile?.avatar_url ? (
-                    <img src={profile.avatar_url} alt={name} className="w-11 h-11 rounded-full object-cover shrink-0" />
-                  ) : (
-                    <div className="w-11 h-11 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-700 dark:text-green-400 font-bold text-sm shrink-0">
-                      {initial}
-                    </div>
-                  )}
-
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className={`text-sm truncate ${unread > 0 ? 'font-bold text-gray-900 dark:text-white' : 'font-semibold text-gray-800 dark:text-gray-200'}`}>
-                        {name}
-                      </span>
-                      <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0">{time}</span>
-                    </div>
-                    <div className="flex items-center justify-between gap-2 mt-0.5">
-                      <p className={`text-xs truncate ${unread > 0 ? 'font-medium text-gray-700 dark:text-gray-300' : 'text-gray-500 dark:text-gray-400'}`}>
-                        {preview}
-                      </p>
-                      {unread > 0 && (
-                        <span className="shrink-0 w-5 h-5 flex items-center justify-center bg-green-600 text-white text-[10px] font-bold rounded-full">
-                          {unread > 9 ? '9+' : unread}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </Link>
-              )
-            })}
-          </div>
-        )}
+        <MessagesInbox conversations={conversations} />
       </main>
     </div>
   )
