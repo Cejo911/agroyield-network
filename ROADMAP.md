@@ -114,6 +114,18 @@ Features that drive daily engagement and create network effects.
 > **Scope:** Reorder NavBar (Community to position 2, cluster transactional tools). Reorder dashboard 3×3 grid (Community top-left, Business bottom-right). Rewrite all card descriptions to action-oriented copy. Replace module icons for distinctness (🌱→🚀, 🛒→🤝, 📊→🏷️, 👥→📇, 🎓→🧭). Update sitewide: dashboard, landing page, onboarding wizard, email templates, notification bell.
 > **Status:** ✅ Completed (12 Apr 2026)
 
+### 3.3d — Direct Messages
+
+> **Why:** Core engagement feature. Enables private communication between members — essential for marketplace deals, mentorship coordination, and networking. Pulled forward from post-launch backlog due to high impact on retention.
+> **Scope:** `/messages` inbox with conversations list, search, unread badges. Chat thread UI with message bubbles, date separators, read receipts (✓/✓✓), optimistic sends with rollback, 5s polling. Reusable `MessageButton` component on Directory, Marketplace, and Mentorship profiles. Messages icon with live unread badge in NavBar (replaces text link). Service role client for cross-user DB operations. RLS policies on `conversations` and `messages` tables.
+> **Status:** ✅ Completed (13 Apr 2026)
+
+### 3.3e — UX Polish (Profiles + Navigation)
+
+> **Why:** Reduce dead ends and improve discoverability. Profile pages had no back navigation, follower/following counts were static text, and the `/u/[slug]` public profile lacked message and follower interaction.
+> **Scope:** Reusable `BackButton` component (history-aware with fallback). Clickable follower/following counts on `/directory/[id]` and `/u/[slug]` profiles. `MessageButton` added to `/u/[slug]` public profile. Guest nav logo updated from emoji to brand assets. 404 page logo replaced with brand assets.
+> **Status:** ✅ Completed (13 Apr 2026)
+
 ### 3.4 — Multi-Business Support
 
 > **Why:** Agripreneurs run multiple ventures. Accountants serve multiple clients. `business_team` table already supports this.
@@ -174,7 +186,7 @@ Harden the platform, add differentiators, test with real users.
 
 These are valuable but can wait until after July 5.
 
-- [ ] Direct messaging between members
+- [x] ~~Direct messaging between members~~ — Delivered as Direct Messages (Phase 3.3d)
 - [x] ~~Connections & Insights feed (posts, polls, articles)~~ — Delivered as Community Feed (Phase 3.3b)
 - [ ] Data products (aggregated price intelligence for corporates/NGOs)
 - [ ] Mentorship marketplace (paid sessions with commission)

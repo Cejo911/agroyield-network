@@ -1,6 +1,6 @@
 # AgroYield Network — Project Status
 
-> **Last updated:** 12 April 2026 (Checkpoint 5)
+> **Last updated:** 13 April 2026 (Checkpoint 6)
 > **Maintained by:** Okoli (okolichijiokei@gmail.com)
 > **Launch Target:** 5 July 2026 (~12 weeks remaining)
 > **Purpose:** Permanent reference for any developer or Claude session to get up to speed instantly.
@@ -162,6 +162,22 @@
 | Delete own posts (soft delete)                                       | ✅ Done | Sets `is_active = false`                             |
 | Loading + error boundaries                                           | ✅ Done | `app/community/loading.tsx`, `error.tsx`             |
 
+### Module 10 — Direct Messages
+
+| Feature                                                | Status  | Location                                                          |
+| ------------------------------------------------------ | ------- | ----------------------------------------------------------------- |
+| Conversations inbox with search                        | ✅ Done | `app/messages/page.tsx`, `app/messages/messages-inbox.tsx`        |
+| Chat thread with message bubbles and date separators   | ✅ Done | `app/messages/[id]/message-thread.tsx`                            |
+| Read receipts (✓ sent, ✓✓ read)                       | ✅ Done | `app/messages/[id]/message-thread.tsx`                            |
+| Optimistic sends with rollback on error                | ✅ Done | `app/messages/[id]/message-thread.tsx`                            |
+| 5-second polling for new messages                      | ✅ Done | `app/api/messages/poll/route.ts`                                  |
+| Mark messages as read (server + client)                | ✅ Done | `app/api/messages/read/route.ts`                                  |
+| MessageButton on Directory, Marketplace, Mentorship    | ✅ Done | `app/components/MessageButton.tsx`                                |
+| Messages icon with unread badge in NavBar              | ✅ Done | `app/components/AppNav.tsx` — 30s polling for count               |
+| Inbox search (filter by name + message preview)        | ✅ Done | `app/messages/messages-inbox.tsx`                                 |
+| Service role client for cross-user operations          | ✅ Done | `app/api/messages/route.ts`, `app/api/messages/send/route.ts`    |
+| Loading + error boundaries                             | ✅ Done | `app/messages/loading.tsx`, `app/messages/error.tsx`              |
+
 ### Platform Features
 
 | Feature                                  | Status  | Location                                                                                           |
@@ -189,6 +205,9 @@
 | Subscription expiry cron                 | ✅ Done | `app/api/cron/expire-subscriptions/route.ts`                                                       |
 | Expiry reminder emails                   | ✅ Done | `app/api/cron/expiry-reminder/route.ts`                                                            |
 | Data deletion page                       | ✅ Done | `app/data-deletion/page.tsx`                                                                       |
+| History-aware back button                | ✅ Done | `app/components/BackButton.tsx` — used on directory + public profiles                              |
+| Clickable follower/following counts      | ✅ Done | `app/directory/[id]/page.tsx`, `app/u/[slug]/page.tsx`                                             |
+| Branded 404 page with logo               | ✅ Done | `app/not-found.tsx` — updated from emoji to `/logo-horizontal-white.png`                           |
 
 ---
 
@@ -249,6 +268,8 @@
 | `grants`               | Grant/funding opportunities posted by admins                                 |
 | `grant_applications`   | User grant application tracker (status, documents, notes)                    |
 | `community_posts`      | Community feed posts (discussion, question, poll, news, milestone)           |
+| `conversations`        | DM conversations between two users (participant_a/b, last_message_preview)   |
+| `messages`             | Individual messages within conversations (body, status, read_at)             |
 
 ---
 
@@ -256,13 +277,34 @@
 
 The middleware at `middleware.ts` redirects unauthenticated users to `/login` for:
 
-`/dashboard`, `/profile`, `/directory`, `/opportunities`, `/prices`, `/marketplace`, `/research`, `/mentorship`, `/grants`, `/community`, `/insights`, `/connections`
+`/dashboard`, `/profile`, `/directory`, `/opportunities`, `/prices`, `/marketplace`, `/research`, `/mentorship`, `/grants`, `/community`, `/messages`, `/insights`, `/connections`
 
 Note: `/insights`, `/connections` are pre-registered for future modules.
 
 ---
 
 ## Changelog
+
+### Checkpoint 6 — April 13, 2026 (Phase 3.3d complete — 10 modules live)
+
+- Added: Direct Messages module — conversations inbox with search, chat thread UI with message bubbles, date separators, read receipts (✓/✓✓), optimistic sends with rollback, 5-second polling for new messages
+- Added: `MessageButton` component integrated into Directory profiles, Marketplace listings, Mentorship profiles, and `/u/[slug]` public profiles
+- Added: Messages icon with live unread count badge in NavBar utility area (replaces text link, 30s polling)
+- Added: Messages inbox search bar — client-side filter by conversation name and message preview
+- Added: `BackButton` component — history-aware navigation with fallback, used on directory and public profile pages
+- Added: Clickable follower/following counts on `/directory/[id]` and `/u/[slug]` profile pages (link to followers/following list pages)
+- Added: `conversations` and `messages` tables with RLS policies (SELECT, INSERT, UPDATE)
+- Added: `/messages` to middleware route protection
+- Changed: Messages removed from NavBar text links, now an icon button between ThemeToggle and NotificationBell
+- Changed: 404 page logo updated from emoji placeholder (🌾) to brand asset (`/logo-horizontal-white.png`)
+- Changed: Guest nav on `/u/[slug]` updated from emoji logo to brand asset (`/logo-horizontal-colored.png`)
+- Fixed: `conversations` RLS policies dropped by CASCADE — recreated SELECT, INSERT, UPDATE policies
+- Fixed: `messages` RLS policies missing — created policies for viewing messages in own conversations, sending, and updating
+- Fixed: `conversations_participant_a_fkey` and `conversations_participant_b_fkey` FK constraints pointing to `public.users` instead of `auth.users`
+- Fixed: `messages_sender_id_fkey` FK constraint pointing to `public.users` instead of `auth.users`
+- Fixed: Broken JSX comment in `not-found.tsx` (`// NEW` inside JSX) causing Vercel build failures
+- Fixed: Orphan `participant_1`/`participant_2` columns dropped from conversations table
+- API routes added: `POST /api/messages` (start/find conversation), `POST /api/messages/send`, `POST /api/messages/read`, `GET /api/messages/poll`
 
 ### Checkpoint 5 — April 12, 2026 (Phase 3.3 complete — 9 modules live)
 
