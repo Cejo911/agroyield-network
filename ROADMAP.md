@@ -126,6 +126,23 @@ Features that drive daily engagement and create network effects.
 > **Scope:** Reusable `BackButton` component (history-aware with fallback). Clickable follower/following counts on `/directory/[id]` and `/u/[slug]` profiles. `MessageButton` added to `/u/[slug]` public profile. Guest nav logo updated from emoji to brand assets. 404 page logo replaced with brand assets.
 > **Status:** ✅ Completed (13 Apr 2026)
 
+### 3.3f — UX Polish Pass 2 + Security + Build Hardening
+
+> **Why:** Close small gaps that erode trust — missing image editing in marketplace, mismatched footer-page branding, missing repost option, dashboard skeleton count drift, no location filter in directory, no login-device email. Also: Next.js 16 upgrade surfaced build-time crashes from module-scope client instantiation that had to be fixed before shipping.
+> **Scope:**
+> - Marketplace: image upload/removal on edit listing form (was only on new-listing form)
+> - Logos on footer-linked pages (About, Contact, Privacy, Terms) replaced with brand assets, light/dark theme toggle wired in
+> - Community repost (with optional caption, embedded original post card, self-repost prevention, flattened chain)
+> - Waitlist member count on Admin Dashboard (responsive 5-column grid, service-role count query)
+> - Dashboard loading skeleton corrected from 7 to 9 cards
+> - Member directory location filter (37 Nigerian states, case-insensitive substring match)
+> - Login notification emails (Option B — new device/location only): privacy-preserving device fingerprint (IPv4 /24 + SHA-256), opt-out flag, fire-and-forget, first-login suppression, sent from `security@agroyield.africa`
+> - Centralised email senders: `lib/email/senders.ts` with `SENDERS` / `INBOXES` constants and env-var overrides (`RESEND_FROM_*`, `CONTACT_INBOX`)
+> - Lazy Resend client: `lib/email/client.ts` with `getResend()` helper
+> - Lazy Supabase clients: `lib/supabase/admin.ts` with `getSupabaseAdmin()` / `getSupabaseAnon()` — fixes Next.js 16 "Failed to collect page data" build crashes across 11 routes/components
+> - Tables added: `login_history` (device fingerprints), `notify_on_login` column on profiles
+> **Status:** ✅ Completed (13 Apr 2026)
+
 ### 3.4 — Multi-Business Support
 
 > **Why:** Agripreneurs run multiple ventures. Accountants serve multiple clients. `business_team` table already supports this.

@@ -80,6 +80,7 @@ export default async function ProfilePage() {
               whatsapp:      whatsapp,
               gender:        (rawProfile?.gender as string) ?? null,
               date_of_birth: (rawProfile?.date_of_birth as string) ?? null,
+              notify_on_login: (rawProfile?.notify_on_login as boolean | null) ?? true,
             }}
           />
         </div>

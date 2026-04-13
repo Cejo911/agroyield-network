@@ -67,6 +67,7 @@ export async function POST(req: Request) {
       whatsapp:      body.whatsapp      || null,
       gender:        body.gender        || null,
       date_of_birth: body.date_of_birth || null,
+      notify_on_login: typeof body.notify_on_login === 'boolean' ? body.notify_on_login : true,
       updated_at:    new Date().toISOString(),
       ...(username ? { username } : {}),
     }

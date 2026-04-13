@@ -182,6 +182,7 @@ type ProfileFormProps = {
     whatsapp:      string | null
     gender:        string | null
     date_of_birth: string | null
+    notify_on_login?: boolean | null
   }
 }
 
@@ -220,6 +221,7 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
     whatsapp:      initialData.whatsapp      || '',
     gender:        initialData.gender        || '',
     date_of_birth: initialData.date_of_birth || '',
+    notify_on_login: initialData.notify_on_login ?? true,
   })
 
   // ── Completeness ──
@@ -602,6 +604,29 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
                 className={inputCls} />
             </div>
           </div>
+        </div>
+
+        {/* ── Security & Notifications ── */}
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            Security & Notifications
+          </h2>
+          <label className="flex items-start gap-3 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={form.notify_on_login}
+              onChange={e => setForm(prev => ({ ...prev, notify_on_login: e.target.checked }))}
+              className="mt-1 h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+            />
+            <span className="text-sm">
+              <span className="block font-medium text-gray-900 dark:text-gray-100">
+                Email me when a new device signs in to my account
+              </span>
+              <span className="block text-gray-500 dark:text-gray-400 text-xs mt-0.5">
+                We&apos;ll only notify you if we don&apos;t recognise the device or network. Recommended.
+              </span>
+            </span>
+          </label>
         </div>
 
         {/* ── Submit ── */}

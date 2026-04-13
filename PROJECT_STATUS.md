@@ -1,6 +1,6 @@
 # AgroYield Network — Project Status
 
-> **Last updated:** 13 April 2026 (Checkpoint 6)
+> **Last updated:** 13 April 2026 (Checkpoint 7)
 > **Maintained by:** Okoli (okolichijiokei@gmail.com)
 > **Launch Target:** 5 July 2026 (~12 weeks remaining)
 > **Purpose:** Permanent reference for any developer or Claude session to get up to speed instantly.
@@ -37,12 +37,13 @@
 | Registration open/close toggle | ✅ Done    | Controlled via `settings` table                                               |
 | Forgot password                | ✅ Done    | `app/forgot-password/page.tsx`, `app/api/auth/reset-password/route.ts`        |
 | Password reset                 | ✅ Done    | `app/reset-password/page.tsx`                                                 |
+| New-device login email alerts  | ✅ Done    | `lib/auth/login-notification.ts`, `login_history` table, `security@` sender   |
 
 ### Module 1 — Member Directory
 
 | Feature                                                   | Status  | Location                                                     |
 | --------------------------------------------------------- | ------- | ------------------------------------------------------------ |
-| Browse members with filters (role, location, institution) | ✅ Done | `app/directory/`                                             |
+| Browse members with filters (role, interests, location, institution) | ✅ Done | `app/directory/directory-client.tsx` — 37 Nigerian states dropdown |
 | Individual member profile view                            | ✅ Done | `app/directory/[id]/page.tsx`                                |
 | Follow / unfollow                                         | ✅ Done | `app/directory/follow-button.tsx`, `app/api/follow/route.ts` |
 | Public profile via username slug                          | ✅ Done | `app/u/[slug]/page.tsx`                                      |
@@ -78,7 +79,7 @@
 | Feature                             | Status  | Location                             |
 | ----------------------------------- | ------- | ------------------------------------ |
 | Browse listings with filters        | ✅ Done | `app/marketplace/`                   |
-| Create / edit / close listing       | ✅ Done | `app/marketplace/new/`, `[id]/edit/` |
+| Create / edit / close listing       | ✅ Done | `app/marketplace/new/`, `[id]/edit/` — image upload/removal on both forms |
 | Listing detail with contact actions | ✅ Done | `app/marketplace/[id]/page.tsx`      |
 | Rate limiting                       | ✅ Done | Via `settings` table                 |
 | Admin moderation                    | ✅ Done | `app/api/admin/listing/route.ts`     |
@@ -154,6 +155,7 @@
 | -------------------------------------------------------------------- | ------- | ---------------------------------------------------- |
 | Post creation (5 types: discussion, question, poll, news, milestone) | ✅ Done | `app/community/community-client.tsx`                 |
 | Post type filtering                                                  | ✅ Done | `app/community/community-client.tsx`                 |
+| Repost with optional caption (embedded original card)                | ✅ Done | `app/community/community-client.tsx` — self-repost prevented, repost-of-repost flattened to original |
 | Poll voting with results                                             | ✅ Done | `app/api/community/vote/route.ts`                    |
 | Like toggle (reuses existing like system)                            | ✅ Done | `app/community/community-client.tsx`                 |
 | Comments on posts                                                    | ✅ Done | `app/community/[id]/page.tsx` + CommentsSection      |
@@ -208,6 +210,12 @@
 | History-aware back button                | ✅ Done | `app/components/BackButton.tsx` — used on directory + public profiles                              |
 | Clickable follower/following counts      | ✅ Done | `app/directory/[id]/page.tsx`, `app/u/[slug]/page.tsx`                                             |
 | Branded 404 page with logo               | ✅ Done | `app/not-found.tsx` — updated from emoji to `/logo-horizontal-white.png`                           |
+| Footer-linked pages theme-aware logos    | ✅ Done | About, Contact, Privacy, Terms — dual light/dark brand assets synced to theme toggle               |
+| Waitlist member count on Admin Dashboard | ✅ Done | `app/admin/page.tsx` — service-role count on `waitlist_signups`, 5-column responsive stats grid    |
+| Dashboard loading skeleton (9 cards)     | ✅ Done | `app/dashboard/loading.tsx` — matches 3×3 module grid                                              |
+| Centralised email senders                | ✅ Done | `lib/email/senders.ts` — SENDERS / INBOXES with env-var overrides (`RESEND_FROM_*`, `CONTACT_INBOX`) |
+| Lazy Resend client                       | ✅ Done | `lib/email/client.ts` — `getResend()` to avoid Next.js 16 build-time module-eval crash             |
+| Lazy Supabase clients                    | ✅ Done | `lib/supabase/admin.ts` — `getSupabaseAdmin()` / `getSupabaseAnon()` for the same reason           |
 
 ---
 
@@ -270,6 +278,7 @@
 | `community_posts`      | Community feed posts (discussion, question, poll, news, milestone)           |
 | `conversations`        | DM conversations between two users (participant_a/b, last_message_preview)   |
 | `messages`             | Individual messages within conversations (body, status, read_at)             |
+| `login_history`        | Device fingerprint log (SHA-256 of UA + IPv4 /24) for new-device detection   |
 
 ---
 
@@ -284,6 +293,24 @@ Note: `/insights`, `/connections` are pre-registered for future modules.
 ---
 
 ## Changelog
+
+### Checkpoint 7 — April 13, 2026 (Phase 3.3f — UX polish pass 2 + security + build hardening)
+
+- Added: Marketplace edit-listing image upload/removal (previously only available on new-listing form)
+- Added: Community repost — optional caption, embedded original post card, self-repost prevention, flattened chain
+- Added: Waitlist member count on Admin Dashboard (responsive 5-column grid, service-role count query)
+- Added: Member Directory location filter — 37 Nigerian states, case-insensitive substring match
+- Added: Login notification emails (new device/location only) — privacy-preserving device fingerprint (IPv4 /24 + SHA-256), opt-out flag, fire-and-forget, first-login suppression, sent from `security@agroyield.africa`
+- Added: `login_history` table for device fingerprint tracking; `notify_on_login` column on `profiles`
+- Added: `lib/email/senders.ts` — centralised `SENDERS` / `INBOXES` constants with env-var overrides (`RESEND_FROM_*`, `CONTACT_INBOX`)
+- Added: `lib/email/client.ts` — lazy Resend client via `getResend()` helper
+- Added: `lib/supabase/admin.ts` — lazy Supabase clients via `getSupabaseAdmin()` / `getSupabaseAnon()`
+- Changed: Footer-linked pages (About, Contact, Privacy, Terms) logos replaced with brand assets and wired to light/dark theme toggle
+- Changed: Dashboard loading skeleton corrected from 7 to 9 cards
+- Changed: 20+ files refactored to use lazy Resend + Supabase client helpers (eliminates module-scope side effects)
+- Changed: 11 files migrated from hardcoded `'AgroYield Network <x@agroyield.africa>'` strings to `SENDERS` constants
+- Fixed: Next.js 16 "Failed to collect page data" build failures — `new Resend(undefined)` and `createClient(undefined, undefined)` at module load time across 11 routes/components
+- Fixed: `/api/business/invite` and `/api/auth/reset-password` build crashes resolved by lazy client initialisation
 
 ### Checkpoint 6 — April 13, 2026 (Phase 3.3d complete — 10 modules live)
 
