@@ -1,10 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-const adminClient = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { getSupabaseAdmin } from '@/lib/supabase/admin'
 
 export async function GET(request: Request) {
   // Verify this is called by Vercel Cron
@@ -14,7 +9,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const adminAny = adminClient as any
+    const adminAny = getSupabaseAdmin() as any
 
     // Read grace period from settings (default 7 days)
     const { data: setting } = await adminAny

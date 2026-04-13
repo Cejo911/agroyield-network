@@ -1,14 +1,9 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-import { Resend } from 'resend'
 import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
+import { SENDERS, INBOXES } from '@/lib/email/senders'
+import { getResend } from '@/lib/email/client'
+import { getSupabaseAnon } from '@/lib/supabase/admin'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
-
-const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(request: Request) {
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown'
@@ -21,7 +16,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Email required' }, { status: 400 })
   }
 
-  const { error: dbError } = await supabase
+  const { error: dbError } = await getSupabaseAnon()
     .from('waitlist_signups')
     .insert([{ email, source: 'waitlist_page' }])
 
@@ -33,8 +28,8 @@ export async function POST(request: Request) {
 
   try {
     // Confirmation to the subscriber
-    await resend.emails.send({
-      from: 'AgroYield Network <noreply@agroyield.africa>',
+    await getResend().emails.send({
+      from: SENDERS.noreply,
       to: email,
       subject: "You're on the AgroYield waitlist 🌾",
       html: `<!DOCTYPE html>
@@ -84,9 +79,9 @@ export async function POST(request: Request) {
 
     // Admin notification to hello@agroyield.africa
     if (!isDuplicate) {
-      await resend.emails.send({
-        from: 'AgroYield Network <noreply@agroyield.africa>',
-        to: 'hello@agroyield.africa',
+      await getResend().emails.send({
+        from: SENDERS.noreply,
+        to: INBOXES.hello,
         subject: `🌱 New waitlist signup — ${email}`,
         html: `<!DOCTYPE html>
 <html>

@@ -1,13 +1,8 @@
-import { createClient as createAdminClient } from '@supabase/supabase-js'
-import { Resend } from 'resend'
 import { NextResponse } from 'next/server'
 import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
-
-const resend = new Resend(process.env.RESEND_API_KEY)
-const adminClient = createAdminClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { SENDERS } from '@/lib/email/senders'
+import { getResend } from '@/lib/email/client'
+import { getSupabaseAdmin } from '@/lib/supabase/admin'
 
 export async function POST(request: Request) {
   try {
@@ -23,7 +18,7 @@ export async function POST(request: Request) {
     const { origin } = new URL(request.url)
 
     // Generate recovery link via Admin API (does NOT send an email)
-    const { data, error } = await adminClient.auth.admin.generateLink({
+    const { data, error } = await getSupabaseAdmin().auth.admin.generateLink({
       type: 'recovery',
       email,
       options: {
@@ -42,8 +37,8 @@ export async function POST(request: Request) {
     const resetLink = `${origin}/auth/callback?token_hash=${token_hash}&type=recovery&next=/reset-password`
 
     // Send branded email via Resend
-    await resend.emails.send({
-      from: 'AgroYield Network <noreply@agroyield.africa>',
+    await getResend().emails.send({
+      from: SENDERS.noreply,
       to: email,
       subject: 'Reset your AgroYield password',
       html: `<!DOCTYPE html>

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
-import { Resend } from 'resend'
+import { SENDERS } from '@/lib/email/senders'
+import { getResend } from '@/lib/email/client'
 
 const REASONS = ['Spam', 'Misleading', 'Inappropriate', 'Duplicate', 'Other']
 
@@ -11,8 +12,6 @@ function getAdminClient() {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 }
-
-const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function GET(request: NextRequest) {
   try {
@@ -116,8 +115,8 @@ export async function POST(request: NextRequest) {
         :                               `marketplace/${postId}`
         const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://agroyield.africa'
 
-        await resend.emails.send({
-          from: 'AgroYield Network <noreply@agroyield.africa>',
+        await getResend().emails.send({
+          from: SENDERS.noreply,
           to: notificationEmail,
           subject: autoHidden
             ? `⚠️ Post auto-hidden after ${totalReports} reports — AgroYield`

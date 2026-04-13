@@ -1,10 +1,5 @@
 import { unstable_noStore as noStore } from 'next/cache'
-import { createClient } from '@supabase/supabase-js'
-
-const adminClient = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { getSupabaseAdmin } from '@/lib/supabase/admin'
 
 const COLOR_CLASSES: Record<string, string> = {
   green:  'bg-green-600 text-white',
@@ -16,7 +11,7 @@ const COLOR_CLASSES: Record<string, string> = {
 export default async function AnnouncementBanner() {
   noStore()
   try {
-    const adminAny = adminClient as any
+    const adminAny = getSupabaseAdmin() as any
     const { data } = await adminAny
       .from('settings')
       .select('key, value')

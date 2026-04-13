@@ -1,13 +1,6 @@
-import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import crypto from 'crypto'
-
-const adminClient = createAdminClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
-const APP_SECRET = process.env.FACEBOOK_APP_SECRET!
+import { getSupabaseAdmin } from '@/lib/supabase/admin'
 
 /**
  * Facebook Data Deletion Callback
@@ -38,7 +31,7 @@ export async function POST(request: Request) {
 
     // Find the Supabase user linked to this Facebook ID
     // Facebook user IDs are stored in the auth.users identities
-    const { data: { users }, error: listError } = await adminClient.auth.admin.listUsers({
+    const { data: { users }, error: listError } = await getSupabaseAdmin().auth.admin.listUsers({
       page: 1,
       perPage: 1000,
     })
@@ -52,7 +45,7 @@ export async function POST(request: Request) {
 
       if (matchedUser) {
         // Flag the user's profile for deletion
-        await (adminClient as any).from('profiles').update({
+        await (getSupabaseAdmin() as any).from('profiles').update({
           deletion_requested: true,
           deletion_code: confirmationCode,
           deletion_requested_at: new Date().toISOString(),
@@ -90,7 +83,7 @@ function parseSignedRequest(signedRequest: string) {
 
   // Verify the signature using the app secret
   const expectedSig = crypto
-    .createHmac('sha256', APP_SECRET)
+    .createHmac('sha256', process.env.FACEBOOK_APP_SECRET!)
     .update(payload)
     .digest()
 

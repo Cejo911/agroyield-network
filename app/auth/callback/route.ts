@@ -1,8 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
-import { Resend } from 'resend'
-
-const resend = new Resend(process.env.RESEND_API_KEY)
+import { recordLoginAndNotify } from '@/lib/auth/login-notification'
+import { SENDERS } from '@/lib/email/senders'
+import { getResend } from '@/lib/email/client'
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
@@ -37,6 +37,13 @@ export async function GET(request: Request) {
 
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
+        // Fire-and-forget new-device check — never block redirect
+        const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+          ?? request.headers.get('x-real-ip')
+          ?? 'unknown'
+        const userAgent = request.headers.get('user-agent') ?? 'unknown'
+        recordLoginAndNotify({ userId: user.id, userEmail: user.email, ip, userAgent }).catch(() => {})
+
         const { data: profile } = await supabase
           .from('profiles')
           .select('id, first_name')
@@ -45,8 +52,8 @@ export async function GET(request: Request) {
         
         if (profile && !profile.first_name) {
           try {
-            await resend.emails.send({
-              from: 'AgroYield Network <noreply@agroyield.africa>',
+            await getResend().emails.send({
+              from: SENDERS.noreply,
               to: user.email!,
               subject: 'Welcome to AgroYield Network 🌾',
               html: `<!DOCTYPE html>

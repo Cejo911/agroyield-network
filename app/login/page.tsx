@@ -19,6 +19,8 @@ export default function Login() {
     const supabase = createClient()
     const { error: err } = await supabase.auth.signInWithPassword({ email, password })
     if (err) { setError(err.message); setLoading(false); return }
+    // Fire-and-forget new-device notification — never block the login flow
+    fetch('/api/auth/login-notification', { method: 'POST' }).catch(() => {})
     router.push('/dashboard')
   }
 

@@ -1,13 +1,7 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-import { Resend } from 'resend'
-
-const resend = new Resend(process.env.RESEND_API_KEY)
-
-const adminClient = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { SENDERS } from '@/lib/email/senders'
+import { getResend } from '@/lib/email/client'
+import { getSupabaseAdmin } from '@/lib/supabase/admin'
 
 export async function GET(req: Request) {
   const authHeader = req.headers.get('authorization')
@@ -20,7 +14,7 @@ export async function GET(req: Request) {
   const in3Days = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000)
   const in4Days = new Date(now.getTime() + 4 * 24 * 60 * 60 * 1000)
 
-  const { data: expiring, error } = await adminClient
+  const { data: expiring, error } = await getSupabaseAdmin()
     .from('profiles')
     .select('id, first_name, email, subscription_expires_at, subscription_plan')
     .eq('is_verified', true)
@@ -53,8 +47,8 @@ export async function GET(req: Request) {
       : null
 
     try {
-      await resend.emails.send({
-        from: 'AgroYield Network <noreply@agroyield.africa>',
+      await getResend().emails.send({
+        from: SENDERS.noreply,
         to: profile.email,
         subject: 'Your AgroYield verification expires in 3 days',
         html: `

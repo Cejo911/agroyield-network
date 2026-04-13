@@ -1,15 +1,9 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { SENDERS } from '@/lib/email/senders'
+import { getSupabaseAdmin } from '@/lib/supabase/admin'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
-const RESEND_API_KEY = process.env.RESEND_API_KEY
 const APP_URL = 'https://agroyield.africa'
-const FROM_EMAIL = 'AgroYield Network <digest@agroyield.africa>'
+const FROM_EMAIL = SENDERS.digest
 
 interface Opportunity {
   id: string
@@ -32,7 +26,7 @@ async function sendEmail(to: string, subject: string, html: string): Promise<boo
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${RESEND_API_KEY}`,
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ from: FROM_EMAIL, to, subject, html }),
@@ -251,9 +245,12 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const RESEND_API_KEY = process.env.RESEND_API_KEY
   if (!RESEND_API_KEY) {
     return NextResponse.json({ error: 'RESEND_API_KEY not configured' }, { status: 500 })
   }
+
+  const supabaseAdmin = getSupabaseAdmin()
 
   const since = new Date()
   since.setDate(since.getDate() - 7)

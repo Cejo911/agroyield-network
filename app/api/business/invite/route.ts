@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
-import { Resend } from 'resend'
 import { createNotification } from '@/lib/notifications'
 import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
-
-const resend = new Resend(process.env.RESEND_API_KEY)
+import { SENDERS } from '@/lib/email/senders'
+import { getResend } from '@/lib/email/client'
 
 export async function POST(request: Request) {
   try {
@@ -123,8 +122,8 @@ export async function POST(request: Request) {
     const acceptUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://agroyield.africa'}/business/accept-invite?token=${inviteToken}`
 
     // Send branded invitation email
-    await resend.emails.send({
-      from: 'AgroYield Network <noreply@agroyield.africa>',
+    await getResend().emails.send({
+      from: SENDERS.noreply,
       to: email.toLowerCase(),
       subject: `You've been invited to ${business.name} on AgroYield`,
       html: `<!DOCTYPE html>

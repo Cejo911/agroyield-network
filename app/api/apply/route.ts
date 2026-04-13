@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
-import { Resend } from 'resend'
 import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
-
-const resend = new Resend(process.env.RESEND_API_KEY)
+import { SENDERS } from '@/lib/email/senders'
+import { getResend } from '@/lib/email/client'
 
 export async function GET() {
   return NextResponse.json({ status: 'ok' })
@@ -73,8 +72,8 @@ export async function POST(request: NextRequest) {
   const opportunityUrl = `https://agroyield.africa/opportunities/${opportunity_id}`
 
   try {
-    await resend.emails.send({
-      from: 'AgroYield Network <noreply@agroyield.africa>',
+    await getResend().emails.send({
+      from: SENDERS.noreply,
       to: poster.email,
       subject: `New application for "${opportunity.title}" 🎯`,
       html: `<!DOCTYPE html>

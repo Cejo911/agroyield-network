@@ -1,12 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
-import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
-
-const adminClient = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { getSupabaseAdmin } from '@/lib/supabase/admin'
 
 export async function DELETE(req: Request) {
   const cookieStore = await cookies()
@@ -29,7 +24,7 @@ export async function DELETE(req: Request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const adminAny = adminClient as any
+  const adminAny = getSupabaseAdmin() as any
   const { data: profile } = await adminAny
     .from('profiles')
     .select('is_admin')
