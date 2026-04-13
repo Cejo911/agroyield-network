@@ -34,6 +34,7 @@ const typeColors: Record<string, string> = {
 
 interface Props {
   posts: any[]
+  parentMap?: Record<string, any>
   profileMap: Record<string, any>
   likeCountMap: Record<string, number>
   userLikedSet: string[]
@@ -41,7 +42,7 @@ interface Props {
   currentUserId: string
 }
 
-export default function CommunityClient({ posts, profileMap, likeCountMap, userLikedSet: initialLiked, commentCountMap, currentUserId }: Props) {
+export default function CommunityClient({ posts, parentMap = {}, profileMap, likeCountMap, userLikedSet: initialLiked, commentCountMap, currentUserId }: Props) {
   const supabase = createClient()
   const router = useRouter()
   const { allowed: profileComplete, missing: profileMissing } = useProfileGate()
@@ -55,6 +56,9 @@ export default function CommunityClient({ posts, profileMap, likeCountMap, userL
   const [likedSet, setLikedSet] = useState(new Set(initialLiked))
   const [likeCounts, setLikeCounts] = useState(likeCountMap)
   const [pollVotesLocal, setPollVotesLocal] = useState<Record<string, any>>({})
+  const [repostTarget, setRepostTarget] = useState<any | null>(null)
+  const [repostCaption, setRepostCaption] = useState('')
+  const [reposting, setReposting] = useState(false)
 
   const filtered = filter === 'all' ? posts : posts.filter(p => p.post_type === filter)
 
@@ -122,6 +126,33 @@ export default function CommunityClient({ posts, profileMap, likeCountMap, userL
     if (data.poll_votes) {
       setPollVotesLocal(prev => ({ ...prev, [postId]: data.poll_votes }))
     }
+  }
+
+  async function submitRepost() {
+    if (!repostTarget) return
+    // Don't allow reposting your own post
+    if (repostTarget.user_id === currentUserId) {
+      alert("You can't repost your own post.")
+      return
+    }
+    // If target is itself a repost, point to the underlying original
+    const originalId = repostTarget.reposted_from || repostTarget.id
+
+    setReposting(true)
+    const payload: any = {
+      user_id: currentUserId,
+      post_type: repostTarget.post_type || 'discussion',
+      content: repostCaption.trim(),
+      reposted_from: originalId,
+    }
+    const { error } = await (supabase as any).from('community_posts').insert(payload)
+    setReposting(false)
+
+    if (error) { alert(`Error: ${error.message}`); return }
+
+    setRepostTarget(null)
+    setRepostCaption('')
+    router.refresh()
   }
 
   async function deletePost(postId: string) {
@@ -279,12 +310,23 @@ export default function CommunityClient({ posts, profileMap, likeCountMap, userL
             const liked = likedSet.has(post.id)
             const likeCount = likeCounts[post.id] || 0
             const commentCount = commentCountMap[post.id] || 0
+            const parent = post.reposted_from ? parentMap[post.reposted_from] : null
+            const parentProfile = parent ? profileMap[parent.user_id] : null
+            const parentName = parentProfile ? `${parentProfile.first_name ?? ''} ${parentProfile.last_name ?? ''}`.trim() : 'Anonymous'
+            const parentInitials = parentName.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()
+            const parentHref = parentProfile?.username ? `/u/${parentProfile.username}` : parent ? `/directory/${parent.user_id}` : '#'
             const votes = pollVotesLocal[post.id] || post.poll_votes || {}
             const totalVotes = Object.values(votes).reduce((sum: number, arr: any) => sum + (Array.isArray(arr) ? arr.length : 0), 0) as number
             const hasVoted = Object.values(votes).some((arr: any) => Array.isArray(arr) && arr.includes(currentUserId))
 
             return (
               <div key={post.id} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+                {/* Repost badge */}
+                {post.reposted_from && (
+                  <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 mb-3">
+                    <span>🔁 Reposted</span>
+                  </div>
+                )}
                 {/* Header */}
                 <div className="flex items-start gap-3 mb-3">
                   <Link href={profileHref} className="shrink-0">
@@ -320,10 +362,42 @@ export default function CommunityClient({ posts, profileMap, likeCountMap, userL
                   )}
                 </div>
 
-                {/* Content */}
-                <p className="text-sm text-gray-800 dark:text-gray-200 leading-relaxed whitespace-pre-line mb-3">
-                  {post.content}
-                </p>
+                {/* Content (caption for reposts may be empty) */}
+                {post.content && (
+                  <p className="text-sm text-gray-800 dark:text-gray-200 leading-relaxed whitespace-pre-line mb-3">
+                    {post.content}
+                  </p>
+                )}
+
+                {/* Embedded original post (for reposts) */}
+                {post.reposted_from && (
+                  parent ? (
+                    <Link href={`/community/${parent.id}`} className="block rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/40 p-3 mb-3 hover:border-green-300 dark:hover:border-green-700 transition-colors">
+                      <div className="flex items-center gap-2 mb-2">
+                        {parentProfile?.avatar_url ? (
+                          <img src={parentProfile.avatar_url} alt={parentName} className="w-7 h-7 rounded-full object-cover" />
+                        ) : (
+                          <div className="w-7 h-7 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-700 dark:text-green-400 font-bold text-[11px]">
+                            {parentInitials}
+                          </div>
+                        )}
+                        <span className="font-semibold text-gray-800 dark:text-gray-200 text-xs">{parentName}</span>
+                        {parentProfile?.role && (
+                          <span className="text-[10px] text-gray-400 dark:text-gray-500 capitalize">· {parentProfile.role}</span>
+                        )}
+                        <span className="text-[10px] text-gray-400 dark:text-gray-500">· {timeAgo(parent.created_at)}</span>
+                      </div>
+                      <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line line-clamp-4">{parent.content}</p>
+                      {parent.link_url && (
+                        <p className="text-xs text-green-600 mt-1.5 break-all">🔗 {parent.link_url.replace(/^https?:\/\//, '').slice(0, 50)}...</p>
+                      )}
+                    </Link>
+                  ) : (
+                    <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/40 p-3 mb-3 text-xs text-gray-400 dark:text-gray-500 italic">
+                      Original post unavailable
+                    </div>
+                  )
+                )}
 
                 {/* Link */}
                 {post.link_url && (
@@ -389,10 +463,66 @@ export default function CommunityClient({ posts, profileMap, likeCountMap, userL
                     <span>{commentCount > 0 ? commentCount : ''}</span>
                     <span className="text-xs">Comment</span>
                   </Link>
+                  {post.user_id !== currentUserId && (
+                    <button
+                      onClick={() => { setRepostTarget(post); setRepostCaption('') }}
+                      className="flex items-center gap-1.5 text-sm text-gray-400 dark:text-gray-500 hover:text-green-600 transition-colors"
+                      title="Repost"
+                    >
+                      <span>🔁</span>
+                      <span className="text-xs">Repost</span>
+                    </button>
+                  )}
                 </div>
               </div>
             )
           })}
+        </div>
+      )}
+
+      {/* Repost modal */}
+      {repostTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => !reposting && setRepostTarget(null)}>
+          <div className="bg-white dark:bg-gray-900 rounded-xl max-w-lg w-full p-5 shadow-xl" onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">Repost this?</h3>
+            <textarea
+              value={repostCaption}
+              onChange={e => setRepostCaption(e.target.value)}
+              rows={3}
+              placeholder="Add your thoughts (optional)"
+              className="w-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 resize-none mb-3"
+            />
+            <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/40 p-3 mb-4">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                Original by{' '}
+                <span className="font-semibold text-gray-700 dark:text-gray-300">
+                  {(() => {
+                    const p = profileMap[repostTarget.user_id]
+                    return p ? `${p.first_name ?? ''} ${p.last_name ?? ''}`.trim() : 'Anonymous'
+                  })()}
+                </span>
+              </p>
+              <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-4 whitespace-pre-line">{repostTarget.content}</p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setRepostTarget(null)}
+                disabled={reposting}
+                className="flex-1 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-sm font-medium py-2 rounded-lg disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={submitRepost}
+                disabled={reposting}
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold py-2 rounded-lg disabled:opacity-50 transition-colors"
+              >
+                {reposting ? 'Reposting…' : 'Repost'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

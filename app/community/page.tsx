@@ -21,8 +21,22 @@ export default async function CommunityPage() {
     .limit(50)
 
   const postList = (posts ?? []) as any[]
-  const userIds = [...new Set(postList.map((p: any) => p.user_id))]
-  const postIds = postList.map((p: any) => p.id)
+
+  // Fetch parent posts for any reposts
+  const parentIds = [...new Set(postList.map((p: any) => p.reposted_from).filter(Boolean))]
+  const { data: parentPosts } = parentIds.length > 0
+    ? await supabaseAny.from('community_posts').select('*').in('id', parentIds)
+    : { data: [] }
+  const parentList = (parentPosts ?? []) as any[]
+  const parentMap: Record<string, any> = {}
+  for (const p of parentList) parentMap[p.id] = p
+
+  const userIds = [...new Set([
+    ...postList.map((p: any) => p.user_id),
+    ...parentList.map((p: any) => p.user_id),
+  ])]
+  // Include parent ids for like/comment counts too
+  const postIds = [...postList.map((p: any) => p.id), ...parentList.map((p: any) => p.id)]
 
   const [{ data: profiles }, { data: allLikes }, { data: userLikes }, { data: commentCounts }] = await Promise.all([
     userIds.length > 0
@@ -64,6 +78,7 @@ export default async function CommunityPage() {
         </div>
         <CommunityClient
           posts={postList}
+          parentMap={parentMap}
           profileMap={profileMap}
           likeCountMap={likeCountMap}
           userLikedSet={Array.from(userLikedSet)}
