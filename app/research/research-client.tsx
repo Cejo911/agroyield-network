@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import LikeButton from '@/app/components/LikeButton'
+import ReportButton from '@/app/components/ReportButton'
 
 const TYPES = ['All', 'Finding', 'Question', 'Dataset', 'Review', 'Collaboration']
 const TYPE_COLOURS: Record<string, string> = {
@@ -138,7 +139,7 @@ export default function ResearchClient({
                 <div className="px-6 pb-4 flex items-center justify-between border-t border-gray-100 dark:border-gray-800 pt-3">
                   <LikeButton postId={post.id} postType="research" />
 
-                  {isOwner && (
+                  {isOwner ? (
                     <div className="flex items-center gap-2">
                       {confirmingId === post.id ? (
                         <>
@@ -154,6 +155,8 @@ export default function ResearchClient({
                         </>
                       )}
                     </div>
+                  ) : (
+                    <ReportButton postId={post.id} postType="research" />
                   )}
                 </div>
               </div>
