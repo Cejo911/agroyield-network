@@ -2,10 +2,12 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import AppNav from '@/app/components/AppNav'
+import ImageUploader from '@/app/components/ImageUploader'
 import { createClient } from '@/lib/supabase/client'
 
-const DEFAULT_CATEGORIES = ['produce', 'inputs', 'equipment', 'livestock', 'services', 'other']
+const DEFAULT_CATEGORIES = ['produce', 'inputs', 'equipment', 'livestock', 'oil', 'services', 'other']
 const TYPES = ['sell', 'buy', 'trade']
+const CONDITIONS = ['new', 'used']
 const STATES = [
   'Abia', 'Adamawa', 'Akwa Ibom', 'Anambra', 'Bauchi', 'Bayelsa', 'Benue', 'Borno',
   'Cross River', 'Delta', 'Ebonyi', 'Edo', 'Ekiti', 'Enugu', 'FCT Abuja', 'Gombe',
@@ -23,9 +25,11 @@ export default function EditListingPage() {
   const [fetching, setFetching] = useState(true)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [userId, setUserId] = useState<string | null>(null)
+  const [images, setImages] = useState<string[]>([])
   const [form, setForm] = useState({
     title: '', category: '', type: '', price: '',
-    price_negotiable: false, description: '', state: '', contact: '',
+    price_negotiable: false, description: '', state: '', contact: '', condition: '',
   })
 
   // Load listing data and check ownership
@@ -44,6 +48,8 @@ export default function EditListingPage() {
       if (!listing) { router.push('/marketplace'); return }
       if (listing.user_id !== user.id) { router.push(`/marketplace/${id}`); return }
 
+      setUserId(user.id)
+      setImages(Array.isArray(listing.image_urls) ? listing.image_urls : [])
       setForm({
         title:            listing.title ?? '',
         category:         listing.category ?? '',
@@ -53,6 +59,7 @@ export default function EditListingPage() {
         description:      listing.description ?? '',
         state:            listing.state ?? '',
         contact:          listing.contact ?? '',
+        condition:        listing.condition ?? '',
       })
       setFetching(false)
     }
@@ -94,6 +101,8 @@ export default function EditListingPage() {
         description:      form.description,
         state:            form.state,
         contact:          form.contact,
+        condition:        form.category === 'equipment' ? (form.condition || null) : null,
+        image_urls:       images.length ? images : null,
       })
       .eq('id', id)
 
@@ -173,7 +182,7 @@ export default function EditListingPage() {
               <div className="flex flex-wrap gap-2">
                 {categories.map(cat => (
                   <button key={cat} type="button"
-                    onClick={() => setForm(prev => ({ ...prev, category: cat }))}
+                    onClick={() => setForm(prev => ({ ...prev, category: cat, condition: cat === 'equipment' ? prev.condition : '' }))}
                     className={`py-2 px-3 rounded-lg border text-sm font-medium capitalize transition-colors ${
                       form.category === cat
                         ? 'border-green-600 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400'
@@ -184,6 +193,44 @@ export default function EditListingPage() {
                 ))}
               </div>
             </div>
+
+            {/* Condition (equipment only) */}
+            {form.category === 'equipment' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Condition <span className="text-red-500">*</span>
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  {CONDITIONS.map(c => (
+                    <button key={c} type="button"
+                      onClick={() => setForm(prev => ({ ...prev, condition: c }))}
+                      className={`py-2.5 rounded-lg border text-sm font-medium capitalize transition-colors ${
+                        form.condition === c
+                          ? 'border-green-600 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                          : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-green-300 dark:hover:border-green-700'
+                      }`}>
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Images */}
+            {userId && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Images <span className="text-gray-400 dark:text-gray-500 font-normal">— up to 4</span>
+                </label>
+                <ImageUploader
+                  bucket="marketplace-images"
+                  folder={userId}
+                  maxImages={4}
+                  value={images}
+                  onChange={setImages}
+                />
+              </div>
+            )}
 
             {/* Price */}
             <div>
@@ -263,7 +310,7 @@ export default function EditListingPage() {
                 Cancel
               </button>
               <button type="submit"
-                disabled={loading || !form.title || !form.type || !form.category}
+                disabled={loading || !form.title || !form.type || !form.category || (form.category === 'equipment' && !form.condition)}
                 className="flex-1 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white py-3 rounded-lg font-semibold transition-colors">
                 {loading ? 'Saving…' : 'Save Changes'}
               </button>
