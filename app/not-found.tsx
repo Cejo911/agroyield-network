@@ -11,10 +11,9 @@ export default function NotFound() {
 
       {/* NAV */}
       <nav className="agy-nav" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(34,197,94,0.08)' }}>
-        // NEW — uses actual logo assets
-<Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
-  <img src="/logo-horizontal-white.png" alt="AgroYield Network" style={{ height: 34, width: 'auto' }} />
-</Link>
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
+          <img src="/logo-horizontal-white.png" alt="AgroYield Network" style={{ height: 34, width: 'auto' }} />
+        </Link>
       </nav>
 
       {/* CONTENT */}
