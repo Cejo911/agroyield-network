@@ -93,7 +93,7 @@ export default function AppNav() {
 
   return (
     <header className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 sticky top-0 z-50">
-      <div className="max-w-[1400px] mx-auto px-4 py-3 flex items-center justify-between gap-3">
+      <div className="w-full px-4 lg:px-8 py-3 flex items-center justify-between gap-3">
 
         {/* Logo */}
 <Link href="/dashboard" className="flex items-center shrink-0">
@@ -123,12 +123,12 @@ export default function AppNav() {
 </Link>
 
         {/* Desktop nav links */}
-        <nav className="hidden lg:flex items-center gap-0.5 flex-1 justify-center">
+        <nav className="hidden lg:flex items-center gap-1 flex-1 justify-center">
           {NAV_LINKS.map(link => (
             <Link
               key={link.href}
               href={link.href}
-              className={`px-2 py-1.5 rounded-lg text-[13px] font-medium transition-colors whitespace-nowrap ${
+              className={`px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
                 isActive(link.href)
                   ? 'bg-green-50 dark:bg-green-900/40 text-green-700 dark:text-green-400'
                   : 'text-gray-600 dark:text-gray-300 hover:text-green-700 dark:hover:text-green-400 hover:bg-gray-50 dark:hover:bg-gray-800'
