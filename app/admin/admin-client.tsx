@@ -602,7 +602,7 @@ export default function AdminClient({
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium text-gray-900 dark:text-gray-100">{displayName}</span>
+                      <a href={`/directory/${member.id}`} target="_blank" rel="noopener noreferrer" className="font-medium text-green-700 dark:text-green-400 hover:underline">{displayName}</a>
                       {member.is_elite && (
                         <span className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs px-2 py-0.5 rounded-full font-semibold">Elite</span>
                       )}
