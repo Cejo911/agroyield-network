@@ -485,7 +485,8 @@ export default function AnalyticsTab(props: AnalyticsProps) {
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
               <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#9ca3af' }} />
               <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} tickFormatter={(v: number) => v >= 1000 ? `₦${(v / 1000).toFixed(0)}k` : `₦${v}`} />
-              <Tooltip {...tooltipStyle} formatter={(value: number) => `₦${value.toLocaleString()}`} />
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              <Tooltip {...tooltipStyle} formatter={(value: any) => `₦${Number(value).toLocaleString()}`} />
               <Bar dataKey="Revenue" fill="#16a34a" radius={[4, 4, 0, 0]} />
               <Bar dataKey="Expenses" fill="#ef4444" radius={[4, 4, 0, 0]} />
             </BarChart>
