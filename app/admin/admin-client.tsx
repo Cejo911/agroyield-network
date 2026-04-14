@@ -35,6 +35,7 @@ interface Member {
   id: string
   first_name: string | null
   last_name: string | null
+  email: string | null
   username: string | null
   is_admin: boolean
   admin_role: string | null
@@ -412,7 +413,7 @@ export default function AdminClient({
   const filteredMembers = members.filter(m => {
     const q = memberSearch.toLowerCase()
     const displayName = [m.first_name, m.last_name].filter(Boolean).join(' ') || m.username || ''
-    const matchesSearch = !q || displayName.toLowerCase().includes(q) || (m.username?.toLowerCase().includes(q))
+    const matchesSearch = !q || displayName.toLowerCase().includes(q) || (m.email?.toLowerCase().includes(q)) || (m.username?.toLowerCase().includes(q))
     const matchesRole = memberRoleFilter === 'all'
       || (memberRoleFilter === 'admin' && m.is_admin)
       || (memberRoleFilter === 'verified' && m.is_verified)
@@ -592,7 +593,7 @@ export default function AdminClient({
           <div className="space-y-3">
           {filteredMembers.length === 0 && <p className="text-gray-500 dark:text-gray-400 text-sm">No members found.</p>}
           {filteredMembers.map((member) => {
-            const displayName = [member.first_name, member.last_name].filter(Boolean).join(' ') || member.username || 'Unknown'
+            const displayName = [member.first_name, member.last_name].filter(Boolean).join(' ') || member.username || member.email || 'Unknown'
             const isSelf = member.id === currentUserId
             const isModerator = member.is_admin && member.admin_role === 'moderator'
             const showPermsPanel = expandedPermsMember === member.id
@@ -622,7 +623,7 @@ export default function AdminClient({
                       )}
                       {isSelf && <span className="text-xs text-gray-400 dark:text-gray-500 italic">You</span>}
                     </div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">@{member.username || 'no-username'}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{member.email || 'No email'}</p>
                     {member.subscription_plan && (
                       <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 capitalize">
                         Plan: {member.subscription_plan}
