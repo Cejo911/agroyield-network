@@ -236,8 +236,8 @@ export default function SignUp() {
         {/* NAV */}
         <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 40px', borderBottom: '1px solid var(--nav-border)' }}>
           <a href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-            <Image src="/logo-horizontal-colored.png" alt="AgroYield Network" width={160} height={40} className="auth-logo-colored" style={{ height: 40, width: 'auto' }} />
-            <Image src="/logo-horizontal-white.png" alt="AgroYield Network" width={160} height={40} className="auth-logo-white" style={{ height: 40, width: 'auto' }} />
+            <Image src="/logo-horizontal-colored.png" alt="AgroYield Network" width={200} height={58} className="auth-logo-colored" style={{ height: 58, width: 'auto' }} />
+            <Image src="/logo-horizontal-white.png" alt="AgroYield Network" width={200} height={58} className="auth-logo-white" style={{ height: 58, width: 'auto' }} />
           </a>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <ThemeToggle />
@@ -252,8 +252,8 @@ export default function SignUp() {
           <div style={{ width: '100%', maxWidth: 480 }}>
             <div style={{ textAlign: 'center', marginBottom: 40 }}>
               <div style={{ margin: '0 auto 24px', display: 'flex', justifyContent: 'center' }}>
-                <Image src="/logo-stacked-colored.png" alt="AgroYield Network" width={80} height={80} className="auth-logo-colored" style={{ height: 80, width: 'auto' }} />
-                <Image src="/logo-stacked-white.png" alt="AgroYield Network" width={80} height={80} className="auth-logo-white" style={{ height: 80, width: 'auto' }} />
+                <Image src="/logo-stacked-colored.png" alt="AgroYield Network" width={120} height={120} className="auth-logo-colored" style={{ height: 120, width: 'auto' }} />
+                <Image src="/logo-stacked-white.png" alt="AgroYield Network" width={120} height={120} className="auth-logo-white" style={{ height: 120, width: 'auto' }} />
               </div>
               <h1 style={{ fontSize: 28, fontWeight: 900, color: 'var(--text-primary)', letterSpacing: -1, marginBottom: 8 }}>Create your account</h1>
               <p style={{ fontSize: 15, color: 'var(--text-secondary)' }}>Join AgroYield Network as a founding member</p>

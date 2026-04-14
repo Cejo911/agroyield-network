@@ -103,23 +103,23 @@ export default function AppNav() {
   <Image
     src="/logo-icon-colored.png"
     alt="AgroYield Network"
-    width={40}
-    height={40}
+    width={44}
+    height={44}
     className="block sm:hidden"
   />
   {/* Horizontal logo on desktop */}
   <Image
     src="/logo-horizontal-colored.png"
     alt="AgroYield Network"
-    width={160}
-    height={40}
+    width={200}
+    height={50}
     className="hidden sm:block dark:hidden"
   />
   <Image
     src="/logo-horizontal-white.png"
     alt="AgroYield Network"
-    width={160}
-    height={40}
+    width={200}
+    height={50}
     className="hidden dark:sm:block"
   />
 </Link>
