@@ -437,315 +437,410 @@ export default function AnalyticsTab(props: AnalyticsProps) {
     setExportingPdf(true)
     try {
       const pdf = new jsPDF('p', 'mm', 'a4')
-      const pw = 210 // page width
-      const margin = 14
+      const pw = 210
+      const ph = 297
+      const margin = 16
       const usable = pw - margin * 2
-      let y = margin
+      const contentBottom = ph - 18 // reserve space for footer
+      let y = 0
+
+      // ── Brand colours ──
+      const green = { r: 22, g: 163, b: 106 }
+      const darkGreen = { r: 15, g: 118, b: 76 }
+      const dark = { r: 17, g: 24, b: 39 }
+      const mid = { r: 107, g: 114, b: 128 }
+      const light = { r: 156, g: 163, b: 175 }
+      const faint = { r: 243, g: 244, b: 246 }
+      const white = { r: 255, g: 255, b: 255 }
+
+      // ── Helpers ──
+      const setColor = (c: { r: number; g: number; b: number }) => pdf.setTextColor(c.r, c.g, c.b)
+      const setFill = (c: { r: number; g: number; b: number }) => pdf.setFillColor(c.r, c.g, c.b)
 
       const checkPage = (need: number) => {
-        if (y + need > 280) { pdf.addPage(); y = margin }
+        if (y + need > contentBottom) { pdf.addPage(); y = margin }
       }
 
-      // ── Helper: draw a simple table ──
-      const drawTable = (headers: string[], rows: string[][], colWidths: number[]) => {
-        checkPage(10 + rows.length * 7)
-        // Header row
-        pdf.setFillColor(22, 163, 106)
-        pdf.rect(margin, y, usable, 7, 'F')
+      // ── Rounded rect ──
+      const roundedRect = (x: number, ry: number, w: number, h: number, r: number, style: 'F' | 'S' | 'FD') => {
+        pdf.roundedRect(x, ry, w, h, r, r, style)
+      }
+
+      // ── Draw metric card ──
+      const drawCard = (x: number, cy: number, w: number, label: string, value: string, accent = false) => {
+        setFill(accent ? green : { r: 249, g: 250, b: 251 })
+        roundedRect(x, cy, w, 18, 2, 'F')
+        if (!accent) {
+          pdf.setDrawColor(229, 231, 235)
+          roundedRect(x, cy, w, 18, 2, 'S')
+        }
         pdf.setFont('helvetica', 'bold')
-        pdf.setFontSize(8)
-        pdf.setTextColor(255, 255, 255)
-        let cx = margin + 2
-        headers.forEach((h, i) => { pdf.text(h, cx, y + 5); cx += colWidths[i] })
-        y += 7
-        // Data rows
+        pdf.setFontSize(13)
+        setColor(accent ? white : dark)
+        pdf.text(value, x + w / 2, cy + 8, { align: 'center' })
         pdf.setFont('helvetica', 'normal')
-        pdf.setTextColor(55, 65, 81)
-        rows.forEach((row, ri) => {
-          checkPage(7)
-          if (ri % 2 === 0) { pdf.setFillColor(249, 250, 251); pdf.rect(margin, y, usable, 7, 'F') }
-          cx = margin + 2
-          row.forEach((cell, i) => { pdf.text(String(cell), cx, y + 5); cx += colWidths[i] })
-          y += 7
-        })
+        pdf.setFontSize(6.5)
+        setColor(accent ? { r: 220, g: 255, b: 230 } : mid)
+        pdf.text(label.toUpperCase(), x + w / 2, cy + 14, { align: 'center' })
       }
 
-      // ── Title ──
-      pdf.setFontSize(18)
+      // ── Section header with green accent bar ──
+      const sectionHeader = (title: string, subtitle?: string) => {
+        checkPage(16)
+        setFill(green)
+        pdf.rect(margin, y, 3, 8, 'F')
+        pdf.setFont('helvetica', 'bold')
+        pdf.setFontSize(11)
+        setColor(dark)
+        pdf.text(title, margin + 7, y + 5.5)
+        if (subtitle) {
+          pdf.setFont('helvetica', 'normal')
+          pdf.setFontSize(7.5)
+          setColor(mid)
+          pdf.text(subtitle, margin + 7, y + 10.5)
+          y += 14
+        } else {
+          y += 10
+        }
+      }
+
+      // ── Professional table ──
+      const drawTable = (headers: string[], rows: string[][], colWidths: number[], opts?: { rightAlignLast?: boolean }) => {
+        const rowH = 6.5
+        const headerH = 7.5
+        checkPage(headerH + rows.length * rowH + 2)
+
+        // Header
+        setFill({ r: 240, g: 253, b: 244 }) // very light green
+        roundedRect(margin, y, usable, headerH, 1.5, 'F')
+        pdf.setFont('helvetica', 'bold')
+        pdf.setFontSize(7)
+        setColor(darkGreen)
+        let cx = margin + 3
+        headers.forEach((h, i) => {
+          const isLast = i === headers.length - 1
+          if (isLast && opts?.rightAlignLast) {
+            pdf.text(h, margin + usable - 3, y + 5.2, { align: 'right' })
+          } else {
+            pdf.text(h, cx, y + 5.2)
+          }
+          cx += colWidths[i]
+        })
+        y += headerH
+
+        // Separator line
+        pdf.setDrawColor(209, 213, 219)
+        pdf.setLineWidth(0.2)
+        pdf.line(margin, y, margin + usable, y)
+
+        // Rows
+        pdf.setFont('helvetica', 'normal')
+        pdf.setFontSize(7)
+        rows.forEach((row, ri) => {
+          checkPage(rowH)
+          if (ri % 2 === 0) {
+            setFill(faint)
+            pdf.rect(margin, y, usable, rowH, 'F')
+          }
+          setColor(dark)
+          cx = margin + 3
+          row.forEach((cell, i) => {
+            const isLast = i === row.length - 1
+            if (isLast && opts?.rightAlignLast) {
+              pdf.text(String(cell), margin + usable - 3, y + 4.5, { align: 'right' })
+            } else {
+              // Truncate if too wide
+              const maxW = colWidths[i] - 2
+              let text = String(cell)
+              while (pdf.getTextWidth(text) > maxW && text.length > 3) text = text.slice(0, -4) + '...'
+              pdf.text(text, cx, y + 4.5)
+            }
+            cx += colWidths[i]
+          })
+          y += rowH
+        })
+        // Bottom border
+        pdf.setDrawColor(229, 231, 235)
+        pdf.line(margin, y, margin + usable, y)
+        y += 2
+      }
+
+      // ── Divider line ──
+      const divider = () => {
+        y += 3
+        pdf.setDrawColor(229, 231, 235)
+        pdf.setLineWidth(0.3)
+        pdf.line(margin, y, margin + usable, y)
+        y += 5
+      }
+
+      // ═══════════════════════════════════════════════════════════
+      // PAGE 1: COVER HEADER
+      // ═══════════════════════════════════════════════════════════
+
+      // Full-width green header band
+      setFill(green)
+      pdf.rect(0, 0, pw, 38, 'F')
+      // Subtle darker stripe at bottom of header
+      setFill(darkGreen)
+      pdf.rect(0, 35, pw, 3, 'F')
+
       pdf.setFont('helvetica', 'bold')
-      pdf.setTextColor(17, 24, 39)
-      pdf.text('AgroYield Network — Analytics Report', margin, y + 6)
-      y += 10
-      pdf.setFontSize(9)
+      pdf.setFontSize(20)
+      setColor(white)
+      pdf.text('AgroYield Network', margin, 16)
       pdf.setFont('helvetica', 'normal')
-      pdf.setTextColor(107, 114, 128)
-      pdf.text(`Generated: ${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })}`, margin, y + 4)
-      y += 10
+      pdf.setFontSize(11)
+      pdf.text('Platform Analytics Report', margin, 24)
 
-      // ── Section: Key Metrics ──
-      pdf.setFontSize(12)
-      pdf.setFont('helvetica', 'bold')
-      pdf.setTextColor(17, 24, 39)
-      pdf.text('Key Metrics', margin, y + 4)
-      y += 8
-      const metrics = [
-        ['Total Members', String(members.length)],
-        ['Waitlist', String(waitlistSignups.length)],
-        ['Growth (MoM)', `${growthRate >= 0 ? '+' : ''}${growthRate}%`],
-        ['Active (7d)', String(funnel[funnel.length - 1]?.value ?? 0)],
-        ['Active Subscribers', String(subscriptionData.activeSubs)],
-        ['Mentors', String(mentorshipHealth.mentors)],
-        ['Businesses', String(businessHealth.totalBusinesses)],
-        ['Platform GMV', fmtNaira(businessHealth.totalRevenue)],
-        ['Net Profit', fmtNaira(businessHealth.netProfit)],
+      pdf.setFontSize(8)
+      const dateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })
+      pdf.text(dateStr, pw - margin, 16, { align: 'right' })
+      pdf.setFontSize(7)
+      pdf.text('Confidential', pw - margin, 23, { align: 'right' })
+
+      y = 46
+
+      // ═══════════════════════════════════════════════════════════
+      // KEY METRICS — Card grid (2 rows of 4)
+      // ═══════════════════════════════════════════════════════════
+      const cardW = (usable - 9) / 4 // 3 gaps of 3mm
+      const metricsData = [
+        { label: 'Total Members', value: String(members.length) },
+        { label: 'Waitlist', value: String(waitlistSignups.length) },
+        { label: 'Growth (MoM)', value: `${growthRate >= 0 ? '+' : ''}${growthRate}%` },
+        { label: 'Active (7d)', value: String(funnel[funnel.length - 1]?.value ?? 0) },
+        { label: 'Subscribers', value: String(subscriptionData.activeSubs) },
+        { label: 'Mentors', value: String(mentorshipHealth.mentors) },
+        { label: 'Businesses', value: String(businessHealth.totalBusinesses) },
+        { label: 'Platform GMV', value: fmtNaira(businessHealth.totalRevenue), accent: true },
       ]
-      drawTable(['Metric', 'Value'], metrics, [100, 82])
-      y += 6
+      metricsData.forEach((m, i) => {
+        const col = i % 4
+        const row = Math.floor(i / 4)
+        const cx = margin + col * (cardW + 3)
+        const cy = y + row * 22
+        drawCard(cx, cy, cardW, m.label, m.value, (m as { accent?: boolean }).accent)
+      })
+      y += 48
 
-      // ── Section: Growth Trends (last 12 months) ──
-      checkPage(20)
-      pdf.setFontSize(12)
-      pdf.setFont('helvetica', 'bold')
-      pdf.setTextColor(17, 24, 39)
-      pdf.text('Growth Trends (Last 12 Months)', margin, y + 4)
-      y += 8
+      // ═══════════════════════════════════════════════════════════
+      // GROWTH TRENDS
+      // ═══════════════════════════════════════════════════════════
+      sectionHeader('Growth Trends', 'Monthly new members and cumulative totals (last 12 months)')
       drawTable(
-        ['Month', 'New Members', 'Cumulative', 'Waitlist'],
+        ['Month', 'New Members', 'Cumulative', 'Waitlist Signups'],
         growthData.map(g => [g.label, String(g['New Members']), String(g['Total Members']), String(g['Waitlist Signups'])]),
-        [40, 40, 50, 52],
+        [38, 40, 50, 54],
+        { rightAlignLast: true },
       )
-      y += 6
 
-      // ── Section: Module Adoption ──
-      checkPage(20)
-      pdf.setFontSize(12)
-      pdf.setFont('helvetica', 'bold')
-      pdf.setTextColor(17, 24, 39)
-      pdf.text('Module Adoption', margin, y + 4)
-      y += 8
+      divider()
+
+      // ═══════════════════════════════════════════════════════════
+      // ENGAGEMENT FUNNEL + MODULE ADOPTION (side by side concept — sequential here)
+      // ═══════════════════════════════════════════════════════════
+      sectionHeader('Engagement Funnel', 'User journey from registration to active participation')
+      drawTable(
+        ['Stage', 'Users', 'Drop-off'],
+        funnel.map((f, i) => {
+          const prev = i > 0 ? funnel[i - 1].value : f.value
+          const dropoff = prev > 0 && i > 0 ? `-${Math.round(((prev - f.value) / prev) * 100)}%` : '—'
+          return [f.name, String(f.value), dropoff]
+        }),
+        [80, 50, 52],
+        { rightAlignLast: true },
+      )
+
+      divider()
+
+      sectionHeader('Module Adoption', 'Content volume per module with 7-day activity')
       drawTable(
         ['Module', 'Total', 'Last 7 Days'],
         moduleData.map(m => [m.module, String(m.total), String(m.recent)]),
         [80, 50, 52],
+        { rightAlignLast: true },
       )
-      y += 6
 
-      // ── Section: Engagement Funnel ──
-      checkPage(20)
-      pdf.setFontSize(12)
-      pdf.setFont('helvetica', 'bold')
-      pdf.setTextColor(17, 24, 39)
-      pdf.text('Engagement Funnel', margin, y + 4)
-      y += 8
-      drawTable(
-        ['Stage', 'Count'],
-        funnel.map(f => [f.name, String(f.value)]),
-        [100, 82],
-      )
-      y += 6
+      divider()
 
-      // ── Section: Subscription Health ──
-      checkPage(20)
-      pdf.setFontSize(12)
-      pdf.setFont('helvetica', 'bold')
-      pdf.setTextColor(17, 24, 39)
-      pdf.text('Subscription Health', margin, y + 4)
-      y += 8
+      // ═══════════════════════════════════════════════════════════
+      // SUBSCRIPTION + MENTORSHIP (compact)
+      // ═══════════════════════════════════════════════════════════
+      sectionHeader('Subscription Health', `${subscriptionData.activeSubs} active · ${subscriptionData.expiringIn30} expiring within 30 days`)
       drawTable(
-        ['Status', 'Count'],
+        ['Plan Status', 'Members'],
         subscriptionData.pie.map((p: { name: string; value: number }) => [p.name, String(p.value)]),
         [100, 82],
+        { rightAlignLast: true },
       )
-      y += 6
 
-      // ── Section: Business Suite ──
-      checkPage(20)
-      pdf.setFontSize(12)
-      pdf.setFont('helvetica', 'bold')
-      pdf.setTextColor(17, 24, 39)
-      pdf.text('Business Suite Health', margin, y + 4)
-      y += 8
-      const bizMetrics = [
-        ['Businesses', String(businessHealth.totalBusinesses)],
-        ['Total Invoices', String(businessHealth.totalInvoices)],
-        ['Total Revenue (Paid)', fmtNaira(businessHealth.totalRevenue)],
-        ['Total Expenses', fmtNaira(businessHealth.totalExpenseAmount)],
-        ['Net Profit', fmtNaira(businessHealth.netProfit)],
+      divider()
+
+      sectionHeader('Mentorship Health', `${mentorshipHealth.mentors} mentors · ${mentorshipHealth.total} total requests`)
+      drawTable(
+        ['Status', 'Count'],
+        mentorshipHealth.pie.map((p: { name: string; value: number }) => [p.name, String(p.value)]),
+        [100, 82],
+        { rightAlignLast: true },
+      )
+
+      divider()
+
+      // ═══════════════════════════════════════════════════════════
+      // BUSINESS SUITE
+      // ═══════════════════════════════════════════════════════════
+      sectionHeader('Business Suite', `${businessHealth.totalBusinesses} businesses · ${fmtNaira(businessHealth.totalRevenue)} GMV · ${fmtNaira(businessHealth.netProfit)} net`)
+
+      // Summary cards row
+      checkPage(24)
+      const bCardW = (usable - 6) / 3
+      const bizCards = [
+        { label: 'Total Revenue', value: fmtNaira(businessHealth.totalRevenue) },
+        { label: 'Total Expenses', value: fmtNaira(businessHealth.totalExpenseAmount) },
+        { label: 'Net Profit', value: fmtNaira(businessHealth.netProfit) },
       ]
-      drawTable(['Metric', 'Value'], bizMetrics, [100, 82])
-      y += 4
+      bizCards.forEach((c, i) => {
+        drawCard(margin + i * (bCardW + 3), y, bCardW, c.label, c.value, i === 2 && businessHealth.netProfit > 0)
+      })
+      y += 22
+
+      if (businessHealth.revByMonth.length > 0) {
+        drawTable(
+          ['Month', 'Revenue', 'Expenses', 'Profit'],
+          businessHealth.revByMonth.map((m: { label: string; Revenue: number; Expenses: number; Profit: number }) =>
+            [m.label, fmtNaira(m.Revenue), fmtNaira(m.Expenses), fmtNaira(m.Profit)]),
+          [36, 45, 45, 56],
+          { rightAlignLast: true },
+        )
+      }
 
       if (businessHealth.invoicePie.length > 0) {
-        checkPage(14)
-        pdf.setFontSize(10)
+        y += 2
         pdf.setFont('helvetica', 'bold')
-        pdf.text('Invoice Status', margin, y + 4)
+        pdf.setFontSize(8)
+        setColor(dark)
+        pdf.text('Invoice Status Breakdown', margin + 7, y + 4)
         y += 6
         drawTable(
           ['Status', 'Count'],
           businessHealth.invoicePie.map((p: { name: string; value: number }) => [p.name, String(p.value)]),
           [100, 82],
+          { rightAlignLast: true },
         )
-        y += 4
       }
 
       if (businessHealth.topCategories.length > 0) {
-        checkPage(14)
-        pdf.setFontSize(10)
         pdf.setFont('helvetica', 'bold')
-        pdf.text('Top Expense Categories', margin, y + 4)
+        pdf.setFontSize(8)
+        setColor(dark)
+        pdf.text('Top Expense Categories', margin + 7, y + 4)
         y += 6
         drawTable(
           ['Category', 'Amount'],
           businessHealth.topCategories.map((c: { name: string; value: number }) => [c.name, fmtNaira(c.value)]),
           [100, 82],
+          { rightAlignLast: true },
         )
-        y += 4
       }
-      y += 2
 
-      // ── Section: Business Intelligence ──
-      checkPage(20)
-      pdf.setFontSize(12)
-      pdf.setFont('helvetica', 'bold')
-      pdf.setTextColor(17, 24, 39)
-      pdf.text('Business Intelligence', margin, y + 4)
-      y += 8
+      divider()
 
-      // Key insights line
-      pdf.setFontSize(9)
-      pdf.setFont('helvetica', 'normal')
-      pdf.setTextColor(107, 114, 128)
-      pdf.text(`Revenue concentration: ${businessIntel.top80Count} of ${businessIntel.totalBizCount} businesses generate ${businessIntel.concentrationPct}% of revenue. Avg invoice: ${fmtNaira(businessIntel.avgInvoice)}`, margin, y + 3)
-      y += 8
+      // ═══════════════════════════════════════════════════════════
+      // BUSINESS INTELLIGENCE
+      // ═══════════════════════════════════════════════════════════
+      sectionHeader('Business Intelligence', `Revenue concentration: ${businessIntel.top80Count} of ${businessIntel.totalBizCount} businesses generate ${businessIntel.concentrationPct}% · Avg invoice: ${fmtNaira(businessIntel.avgInvoice)}`)
 
       if (businessIntel.topByRevenue.length > 0) {
-        checkPage(14)
-        pdf.setFontSize(10)
-        pdf.setFont('helvetica', 'bold')
-        pdf.setTextColor(17, 24, 39)
-        pdf.text('Top Businesses by Revenue', margin, y + 4)
-        y += 6
         drawTable(
-          ['Rank', 'Business', 'Owner', 'Revenue'],
+          ['#', 'Business', 'Owner', 'Revenue'],
           businessIntel.topByRevenue.map((b, i) => [String(i + 1), b.name, b.ownerName, fmtNaira(b.revenue)]),
-          [20, 55, 55, 52],
+          [12, 60, 60, 50],
+          { rightAlignLast: true },
         )
-        y += 4
       }
 
       if (businessIntel.topUsers.length > 0) {
-        checkPage(14)
-        pdf.setFontSize(10)
+        y += 2
         pdf.setFont('helvetica', 'bold')
-        pdf.setTextColor(17, 24, 39)
-        pdf.text('Top Users — Business Module', margin, y + 4)
+        pdf.setFontSize(8)
+        setColor(dark)
+        pdf.text('Top Users of Business Module', margin + 7, y + 4)
         y += 6
         drawTable(
-          ['Rank', 'User', 'Businesses', 'Invoices', 'Revenue'],
+          ['#', 'User', 'Businesses', 'Invoices', 'Revenue'],
           businessIntel.topUsers.map((u, i) => [String(i + 1), u.name, String(u.businesses), String(u.invoices), fmtNaira(u.revenue)]),
-          [20, 50, 30, 30, 52],
-        )
-        y += 6
-      }
-
-      // ── Section: Mentorship Health ──
-      checkPage(20)
-      pdf.setFontSize(12)
-      pdf.setFont('helvetica', 'bold')
-      pdf.setTextColor(17, 24, 39)
-      pdf.text('Mentorship Health', margin, y + 4)
-      y += 8
-      const mentorMetrics = [
-        ['Active Mentors', String(mentorshipHealth.mentors)],
-        ['Total Requests', String(mentorshipHealth.total)],
-        ...mentorshipHealth.pie.map((p: { name: string; value: number }) => [p.name, String(p.value)]),
-      ]
-      drawTable(['Metric', 'Value'], mentorMetrics, [100, 82])
-      y += 6
-
-      // ── Section: Monthly Revenue Trend ──
-      if (businessHealth.revByMonth.length > 0) {
-        checkPage(20)
-        pdf.setFontSize(12)
-        pdf.setFont('helvetica', 'bold')
-        pdf.setTextColor(17, 24, 39)
-        pdf.text('Monthly Revenue vs Expenses', margin, y + 4)
-        y += 8
-        drawTable(
-          ['Month', 'Revenue', 'Expenses'],
-          businessHealth.revByMonth.map((m: { label: string; Revenue: number; Expenses: number }) => [m.label, fmtNaira(m.Revenue), fmtNaira(m.Expenses)]),
-          [60, 60, 62],
+          [12, 55, 35, 35, 45],
+          { rightAlignLast: true },
         )
       }
 
-      // ── Section: Search Insights ──
+      divider()
+
+      // ═══════════════════════════════════════════════════════════
+      // SEARCH INSIGHTS
+      // ═══════════════════════════════════════════════════════════
       if (searchInsights) {
-        checkPage(20)
-        pdf.setFontSize(12)
-        pdf.setFont('helvetica', 'bold')
-        pdf.setTextColor(17, 24, 39)
-        pdf.text('Search Insights', margin, y + 4)
-        y += 8
-        pdf.setFontSize(9)
-        pdf.setFont('helvetica', 'normal')
-        pdf.setTextColor(107, 114, 128)
-        pdf.text(`Total searches: ${searchInsights.totalSearches} · Unique searchers: ${searchInsights.uniqueSearchers}`, margin, y + 3)
-        y += 8
-
-        if (searchInsights.topTerms.length > 0) {
-          checkPage(14)
-          pdf.setFontSize(10)
-          pdf.setFont('helvetica', 'bold')
-          pdf.setTextColor(17, 24, 39)
-          pdf.text('Top Search Terms', margin, y + 4)
-          y += 6
-          drawTable(
-            ['Rank', 'Search Term', 'Count'],
-            searchInsights.topTerms.map((t, i) => [String(i + 1), t.term, String(t.count)]),
-            [20, 120, 42],
-          )
-          y += 4
-        }
-
-        if (searchInsights.zeroResultTerms.length > 0) {
-          checkPage(14)
-          pdf.setFontSize(10)
-          pdf.setFont('helvetica', 'bold')
-          pdf.setTextColor(17, 24, 39)
-          pdf.text('Zero-Result Searches (Unmet Demand)', margin, y + 4)
-          y += 6
-          drawTable(
-            ['Rank', 'Search Term', 'Count'],
-            searchInsights.zeroResultTerms.map((t, i) => [String(i + 1), t.term, String(t.count)]),
-            [20, 120, 42],
-          )
-          y += 4
-        }
+        sectionHeader('Search Insights', `${searchInsights.totalSearches.toLocaleString()} total searches · ${searchInsights.uniqueSearchers} unique users`)
 
         if (searchInsights.byModule.length > 0) {
-          checkPage(14)
-          pdf.setFontSize(10)
-          pdf.setFont('helvetica', 'bold')
-          pdf.setTextColor(17, 24, 39)
-          pdf.text('Searches by Module', margin, y + 4)
-          y += 6
           drawTable(
             ['Module', 'Searches'],
             searchInsights.byModule.map(m => [m.module, String(m.count)]),
             [100, 82],
+            { rightAlignLast: true },
           )
+        }
+
+        if (searchInsights.topTerms.length > 0) {
+          y += 2
+          pdf.setFont('helvetica', 'bold')
+          pdf.setFontSize(8)
+          setColor(dark)
+          pdf.text('Most Searched Terms', margin + 7, y + 4)
           y += 6
+          drawTable(
+            ['#', 'Search Term', 'Frequency'],
+            searchInsights.topTerms.map((t, i) => [String(i + 1), t.term, `${t.count}x`]),
+            [12, 120, 50],
+            { rightAlignLast: true },
+          )
+        }
+
+        if (searchInsights.zeroResultTerms.length > 0) {
+          y += 2
+          pdf.setFont('helvetica', 'bold')
+          pdf.setFontSize(8)
+          pdf.setTextColor(220, 38, 38) // red accent
+          pdf.text('Zero-Result Searches (Unmet Demand)', margin + 7, y + 4)
+          y += 6
+          drawTable(
+            ['#', 'Search Term', 'Frequency'],
+            searchInsights.zeroResultTerms.map((t, i) => [String(i + 1), t.term, `${t.count}x`]),
+            [12, 120, 50],
+            { rightAlignLast: true },
+          )
         }
       }
 
-      // ── Footer ──
+      // ═══════════════════════════════════════════════════════════
+      // FOOTER — every page
+      // ═══════════════════════════════════════════════════════════
       const pageCount = pdf.getNumberOfPages()
       for (let i = 1; i <= pageCount; i++) {
         pdf.setPage(i)
-        pdf.setFontSize(7)
-        pdf.setTextColor(156, 163, 175)
-        pdf.text(`AgroYield Network Analytics — Page ${i} of ${pageCount}`, margin, 290)
+        // Footer line
+        pdf.setDrawColor(229, 231, 235)
+        pdf.setLineWidth(0.3)
+        pdf.line(margin, ph - 14, pw - margin, ph - 14)
+        // Left: branding
+        pdf.setFont('helvetica', 'normal')
+        pdf.setFontSize(6.5)
+        setColor(light)
+        pdf.text('AgroYield Network  |  Confidential', margin, ph - 9)
+        // Right: page number
+        pdf.setFont('helvetica', 'bold')
+        pdf.text(`${i} / ${pageCount}`, pw - margin, ph - 9, { align: 'right' })
       }
 
       pdf.save(`AgroYield_Analytics_${new Date().toISOString().slice(0, 10)}.pdf`)
