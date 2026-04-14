@@ -57,6 +57,9 @@ export default async function AdminPage() {
     { data: reports },
     { data: auditLog },
     { data: waitlistSignups },
+    { data: businesses },
+    { data: invoices },
+    { data: businessExpenses },
   ] = await Promise.all([
     supabaseAny.from('opportunities').select('*').order('created_at', { ascending: false }),
     supabaseAny.from('marketplace_listings').select('*').order('created_at', { ascending: false }),
@@ -72,6 +75,9 @@ export default async function AdminPage() {
     adminAny.from('reports').select('*').order('created_at', { ascending: false }),
     adminAny.from('admin_audit_log').select('id, admin_id, action, target_type, target_id, details, created_at').order('created_at', { ascending: false }).limit(100),
     adminAny.from('waitlist_signups').select('*').order('created_at', { ascending: false }),
+    adminAny.from('businesses').select('id, user_id, name, created_at').order('created_at', { ascending: false }),
+    adminAny.from('invoices').select('id, business_id, status, total_amount, issue_date, created_at').order('created_at', { ascending: false }).limit(1000),
+    adminAny.from('business_expenses').select('id, business_id, amount, category, date, created_at').order('created_at', { ascending: false }).limit(1000),
   ])
 
   const profilesMap: Record<string, { first_name: string | null; last_name: string | null; email: string | null; username: string | null }> = {}
@@ -199,6 +205,9 @@ export default async function AdminPage() {
           currentAdminPermissions={currentAdminPermissions}
           currentUserId={user.id}
           waitlistSignups={waitlistSignups ?? []}
+          businesses={businesses ?? []}
+          invoices={invoices ?? []}
+          businessExpenses={businessExpenses ?? []}
         />
       </div>
     </div>

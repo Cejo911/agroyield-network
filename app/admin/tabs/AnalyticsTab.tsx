@@ -1,9 +1,11 @@
 'use client'
-import { useMemo } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import {
   AreaChart, Area, BarChart, Bar, LineChart, Line,
   XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell, Legend,
 } from 'recharts'
+import html2canvas from 'html2canvas'
+import jsPDF from 'jspdf'
 
 // ── Types ──
 interface AnalyticsProps {
@@ -17,6 +19,9 @@ interface AnalyticsProps {
   priceReports: { id: string; user_id: string; reported_at: string }[]
   mentorProfiles: { user_id: string }[]
   mentorshipRequests: { id: string; mentor_id: string; mentee_id: string; status: string; created_at: string }[]
+  businesses: { id: string; user_id: string; name: string; created_at: string }[]
+  invoices: { id: string; business_id: string; status: string; total_amount: number | null; issue_date: string | null; created_at: string }[]
+  businessExpenses: { id: string; business_id: string; amount: number; category: string | null; date: string | null; created_at: string }[]
 }
 
 const COLORS = ['#16a34a', '#22c55e', '#86efac', '#f59e0b', '#ef4444', '#6366f1', '#ec4899', '#14b8a6']
@@ -92,7 +97,42 @@ function Section({ title, subtitle, children }: { title: string; subtitle?: stri
 
 // ── Main Component ──
 export default function AnalyticsTab(props: AnalyticsProps) {
-  const { members, waitlistSignups, communityPosts, researchPosts, opportunities, listings, grants, priceReports, mentorProfiles, mentorshipRequests } = props
+  const { members, waitlistSignups, communityPosts, researchPosts, opportunities, listings, grants, priceReports, mentorProfiles, mentorshipRequests, businesses, invoices, businessExpenses } = props
+  const reportRef = useRef<HTMLDivElement>(null)
+  const [exportingPdf, setExportingPdf] = useState(false)
+
+  const exportPDF = async () => {
+    if (!reportRef.current) return
+    setExportingPdf(true)
+    try {
+      const canvas = await html2canvas(reportRef.current, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#030712',
+        logging: false,
+      })
+      const imgData = canvas.toDataURL('image/png')
+      const imgWidth = 210 // A4 width in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width
+      const pdf = new jsPDF('p', 'mm', 'a4')
+      let heightLeft = imgHeight
+      let position = 0
+
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+      heightLeft -= 297 // A4 height in mm
+
+      while (heightLeft > 0) {
+        position -= 297
+        pdf.addPage()
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+        heightLeft -= 297
+      }
+
+      pdf.save(`AgroYield_Analytics_${new Date().toISOString().slice(0, 10)}.pdf`)
+    } finally {
+      setExportingPdf(false)
+    }
+  }
 
   const months = useMemo(() => getLast12Months(), [])
   const days30 = useMemo(() => getLast30Days(), [])
@@ -181,8 +221,9 @@ export default function AnalyticsTab(props: AnalyticsProps) {
       { module: 'Prices', total: priceReports.length, recent: priceReports.filter(r => r.reported_at >= sevenDaysAgo).length },
       { module: 'Grants', total: grants.length, recent: grants.filter(g => g.created_at >= sevenDaysAgo).length },
       { module: 'Mentorship', total: mentorshipRequests.length, recent: mentorshipRequests.filter(r => r.created_at >= sevenDaysAgo).length },
+      { module: 'Business', total: invoices.length, recent: invoices.filter(i => i.created_at >= sevenDaysAgo).length },
     ].sort((a, b) => b.total - a.total)
-  }, [communityPosts, listings, opportunities, researchPosts, priceReports, grants, mentorshipRequests])
+  }, [communityPosts, listings, opportunities, researchPosts, priceReports, grants, mentorshipRequests, invoices])
 
   // ═══════════════════════════════════════════════════════════
   // 4. SUBSCRIPTION & REVENUE
@@ -231,7 +272,49 @@ export default function AnalyticsTab(props: AnalyticsProps) {
   }, [communityPosts, researchPosts, priceReports, listings, days30])
 
   // ═══════════════════════════════════════════════════════════
-  // 6. MENTORSHIP HEALTH
+  // 6. BUSINESS SUITE HEALTH
+  // ═══════════════════════════════════════════════════════════
+  const businessHealth = useMemo(() => {
+    const totalBusinesses = businesses.length
+    const totalInvoices = invoices.length
+    const totalExpenses = businessExpenses.length
+    const paidInvoices = invoices.filter(i => i.status === 'paid')
+    const totalRevenue = paidInvoices.reduce((s, i) => s + Number(i.total_amount || 0), 0)
+    const totalExpenseAmount = businessExpenses.reduce((s, e) => s + Number(e.amount || 0), 0)
+    const netProfit = totalRevenue - totalExpenseAmount
+
+    // Invoice status breakdown
+    const statusCounts: Record<string, number> = {}
+    for (const inv of invoices) {
+      const s = inv.status || 'unknown'
+      statusCounts[s] = (statusCounts[s] || 0) + 1
+    }
+    const invoicePie = Object.entries(statusCounts).map(([name, value]) => ({ name: name.charAt(0).toUpperCase() + name.slice(1), value }))
+
+    // Monthly revenue trend (last 12 months)
+    const revByMonth = months.map(m => {
+      const rev = paidInvoices
+        .filter(i => i.issue_date && i.issue_date.startsWith(m.key))
+        .reduce((s, i) => s + Number(i.total_amount || 0), 0)
+      const exp = businessExpenses
+        .filter(e => e.date && e.date.startsWith(m.key))
+        .reduce((s, e) => s + Number(e.amount || 0), 0)
+      return { label: m.label, Revenue: rev, Expenses: exp, Profit: rev - exp }
+    })
+
+    // Top expense categories
+    const catMap: Record<string, number> = {}
+    for (const e of businessExpenses) {
+      const cat = e.category || 'Uncategorised'
+      catMap[cat] = (catMap[cat] || 0) + Number(e.amount || 0)
+    }
+    const topCategories = Object.entries(catMap).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([name, value]) => ({ name, value }))
+
+    return { totalBusinesses, totalInvoices, totalExpenses, totalRevenue, totalExpenseAmount, netProfit, invoicePie, revByMonth, topCategories }
+  }, [businesses, invoices, businessExpenses, months])
+
+  // ═══════════════════════════════════════════════════════════
+  // 7. MENTORSHIP HEALTH
   // ═══════════════════════════════════════════════════════════
   const mentorshipHealth = useMemo(() => {
     const statusCounts: Record<string, number> = {}
@@ -254,14 +337,26 @@ export default function AnalyticsTab(props: AnalyticsProps) {
   return (
     <div className="space-y-6">
 
+      {/* ── PDF Export Button ── */}
+      <div className="flex justify-end">
+        <button onClick={exportPDF} disabled={exportingPdf}
+          className="flex items-center gap-1.5 px-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:border-green-400 hover:text-green-700 dark:hover:text-green-400 transition-all disabled:opacity-50">
+          {exportingPdf ? 'Generating PDF...' : 'Download PDF Report'}
+        </button>
+      </div>
+
+      <div ref={reportRef} className="space-y-6">
+
       {/* ── Key Metrics Row ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
         <StatCard label="Total Members" value={members.length} accent="text-green-600 dark:text-green-400" />
         <StatCard label="Waitlist" value={waitlistSignups.length} />
         <StatCard label="Growth (MoM)" value={`${growthRate >= 0 ? '+' : ''}${growthRate}%`} accent={growthRate >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'} />
         <StatCard label="Active (7d)" value={funnel[funnel.length - 1]?.value ?? 0} sub={`${members.length > 0 ? Math.round((funnel[funnel.length - 1]?.value ?? 0) / members.length * 100) : 0}% of members`} />
         <StatCard label="Subscribers" value={subscriptionData.activeSubs} sub={`${subscriptionData.expiringIn30} expiring in 30d`} accent="text-amber-600 dark:text-amber-400" />
         <StatCard label="Mentors" value={mentorshipHealth.mentors} sub={`${mentorshipHealth.total} requests`} />
+        <StatCard label="Businesses" value={businessHealth.totalBusinesses} sub={`${businessHealth.totalInvoices} invoices`} />
+        <StatCard label="Platform GMV" value={`₦${businessHealth.totalRevenue.toLocaleString()}`} sub={`${businessHealth.netProfit >= 0 ? '+' : ''}₦${businessHealth.netProfit.toLocaleString()} net`} accent="text-green-600 dark:text-green-400" />
       </div>
 
       {/* ── Growth & Signup Trends ── */}
@@ -382,6 +477,71 @@ export default function AnalyticsTab(props: AnalyticsProps) {
         </div>
       </Section>
 
+      {/* ── Business Suite Health ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Section title="Business Suite — Revenue vs Expenses" subtitle="Monthly trend across all businesses (last 12 months)">
+          <ResponsiveContainer width="100%" height={240}>
+            <BarChart data={businessHealth.revByMonth} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
+              <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#9ca3af' }} />
+              <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} tickFormatter={(v: number) => v >= 1000 ? `₦${(v / 1000).toFixed(0)}k` : `₦${v}`} />
+              <Tooltip {...tooltipStyle} formatter={(value: number) => `₦${value.toLocaleString()}`} />
+              <Bar dataKey="Revenue" fill="#16a34a" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="Expenses" fill="#ef4444" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+          <div className="flex gap-4 text-xs text-gray-500 dark:text-gray-400 pt-1">
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-green-600" /> Revenue</span>
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-red-500" /> Expenses</span>
+          </div>
+        </Section>
+
+        <Section title="Business Suite — Overview" subtitle="Invoice status and top expense categories">
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Invoice Status</p>
+              <div className="space-y-1.5">
+                {businessHealth.invoicePie.map((entry, i) => (
+                  <div key={entry.name} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full" style={{ background: COLORS[i % COLORS.length] }} />
+                      <span className="text-xs text-gray-600 dark:text-gray-400">{entry.name}</span>
+                    </div>
+                    <span className="text-xs font-semibold text-gray-900 dark:text-white">{entry.value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Top Expense Categories</p>
+              <div className="space-y-1.5">
+                {businessHealth.topCategories.map((cat) => (
+                  <div key={cat.name} className="flex items-center justify-between">
+                    <span className="text-xs text-gray-600 dark:text-gray-400 truncate mr-2">{cat.name}</span>
+                    <span className="text-xs font-semibold text-gray-900 dark:text-white whitespace-nowrap">₦{cat.value.toLocaleString()}</span>
+                  </div>
+                ))}
+                {businessHealth.topCategories.length === 0 && <p className="text-xs text-gray-400">No expenses recorded</p>}
+              </div>
+            </div>
+          </div>
+          <div className="pt-3 border-t border-gray-100 dark:border-gray-800 grid grid-cols-3 gap-3 text-center">
+            <div>
+              <p className="text-lg font-bold text-gray-900 dark:text-white">{businessHealth.totalBusinesses}</p>
+              <p className="text-[10px] text-gray-500 dark:text-gray-400">Businesses</p>
+            </div>
+            <div>
+              <p className="text-lg font-bold text-green-600">₦{businessHealth.totalRevenue.toLocaleString()}</p>
+              <p className="text-[10px] text-gray-500 dark:text-gray-400">Total Revenue</p>
+            </div>
+            <div>
+              <p className={`text-lg font-bold ${businessHealth.netProfit >= 0 ? 'text-green-600' : 'text-red-500'}`}>₦{businessHealth.netProfit.toLocaleString()}</p>
+              <p className="text-[10px] text-gray-500 dark:text-gray-400">Net Profit</p>
+            </div>
+          </div>
+        </Section>
+      </div>
+
       {/* ── Mentorship Health ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Section title="Mentorship Health" subtitle="Request status breakdown">
@@ -481,6 +641,7 @@ export default function AnalyticsTab(props: AnalyticsProps) {
         </Section>
       </div>
 
+      </div>{/* end reportRef */}
     </div>
   )
 }

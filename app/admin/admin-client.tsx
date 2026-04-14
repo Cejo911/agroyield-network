@@ -140,6 +140,28 @@ interface WaitlistSignup {
   source: string | null
   created_at: string
 }
+interface Business {
+  id: string
+  user_id: string
+  name: string
+  created_at: string
+}
+interface Invoice {
+  id: string
+  business_id: string
+  status: string
+  total_amount: number | null
+  issue_date: string | null
+  created_at: string
+}
+interface BusinessExpense {
+  id: string
+  business_id: string
+  amount: number
+  category: string | null
+  date: string | null
+  created_at: string
+}
 
 interface AdminClientProps {
   opportunities: Opportunity[]
@@ -160,6 +182,9 @@ interface AdminClientProps {
   currentAdminPermissions: Record<string, boolean> | null
   currentUserId: string
   waitlistSignups: WaitlistSignup[]
+  businesses: Business[]
+  invoices: Invoice[]
+  businessExpenses: BusinessExpense[]
 }
 
 type Tab = 'opportunities' | 'marketplace' | 'members' | 'grants' | 'community' | 'research' | 'comments' | 'prices' | 'mentorship' | 'reports' | 'analytics' | 'audit_log' | 'notifications' | 'settings'
@@ -216,6 +241,9 @@ export default function AdminClient({
   currentAdminPermissions,
   currentUserId,
   waitlistSignups,
+  businesses,
+  invoices,
+  businessExpenses,
 }: AdminClientProps) {
   const isSuperAdmin = currentAdminRole === 'super'
 
@@ -499,8 +527,9 @@ export default function AdminClient({
   })
 
   // ── Tab definitions — filter by permissions ──
+  const [adminMenuOpen, setAdminMenuOpen] = useState(false)
 
-  const allTabs: { id: Tab; label: string; badge?: number }[] = [
+  const regularTabs: { id: Tab; label: string; badge?: number }[] = [
     { id: 'opportunities', label: 'Opportunities' },
     { id: 'marketplace',   label: 'Marketplace' },
     { id: 'members',       label: 'Members' },
@@ -511,25 +540,27 @@ export default function AdminClient({
     { id: 'prices',        label: 'Prices' },
     { id: 'mentorship',    label: 'Mentorship' },
     { id: 'reports',       label: 'Reports', badge: reportGroups.length || undefined },
-    ...(isSuperAdmin ? [
-      { id: 'analytics' as Tab, label: 'Analytics' },
-      { id: 'audit_log' as Tab, label: 'Audit Log' },
-      { id: 'notifications' as Tab, label: 'Notify' },
-      { id: 'settings' as Tab, label: 'Settings' },
-    ] : []),
   ]
 
-  const tabs = allTabs.filter(t => canAccess(t.id))
+  const superAdminTabs: { id: Tab; label: string }[] = [
+    { id: 'analytics', label: 'Analytics' },
+    { id: 'audit_log', label: 'Audit Log' },
+    { id: 'notifications', label: 'Notify' },
+    { id: 'settings', label: 'Settings' },
+  ]
+
+  const tabs = regularTabs.filter(t => canAccess(t.id))
+  const isSuperAdminTab = (tab: Tab) => superAdminTabs.some(t => t.id === tab)
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
       {/* Tab bar */}
       <div className="border-b border-gray-200 dark:border-gray-800 mb-6">
-        <nav className="-mb-px flex gap-4 overflow-x-auto">
+        <nav className="-mb-px flex gap-4 overflow-x-auto items-center">
           {tabs.map((tab) => (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+            <button key={tab.id} onClick={() => { setActiveTab(tab.id); setAdminMenuOpen(false) }}
               className={`pb-3 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
-                activeTab === tab.id
+                activeTab === tab.id && !isSuperAdminTab(activeTab)
                   ? 'border-green-600 text-green-600'
                   : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
               }`}>
@@ -541,6 +572,38 @@ export default function AdminClient({
               ) : null}
             </button>
           ))}
+
+          {/* Super Admin dropdown */}
+          {isSuperAdmin && (
+            <div className="relative ml-auto">
+              <button onClick={() => setAdminMenuOpen(!adminMenuOpen)}
+                className={`pb-3 text-sm font-medium border-b-2 whitespace-nowrap transition-colors flex items-center gap-1 ${
+                  isSuperAdminTab(activeTab)
+                    ? 'border-green-600 text-green-600'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                }`}>
+                {isSuperAdminTab(activeTab) ? superAdminTabs.find(t => t.id === activeTab)?.label : 'Admin'}
+                <svg className={`w-3.5 h-3.5 transition-transform ${adminMenuOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+              </button>
+              {adminMenuOpen && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setAdminMenuOpen(false)} />
+                  <div className="absolute right-0 top-full mt-1 z-20 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-1 min-w-[160px]">
+                    {superAdminTabs.map(t => (
+                      <button key={t.id} onClick={() => { setActiveTab(t.id); setAdminMenuOpen(false) }}
+                        className={`w-full text-left px-4 py-2 text-sm transition-colors ${
+                          activeTab === t.id
+                            ? 'text-green-600 bg-green-50 dark:bg-green-900/20 font-medium'
+                            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+                        }`}>
+                        {t.label}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </nav>
       </div>
 
@@ -1056,6 +1119,9 @@ export default function AdminClient({
           priceReports={priceReports}
           mentorProfiles={mentorProfiles}
           mentorshipRequests={mentorshipRequests}
+          businesses={businesses}
+          invoices={invoices}
+          businessExpenses={businessExpenses}
         />
       )}
 
