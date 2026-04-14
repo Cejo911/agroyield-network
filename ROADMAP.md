@@ -234,10 +234,10 @@ These are valuable but can wait until after July 5.
 
 - [x] ~~Direct messaging between members~~ — Delivered as Direct Messages (Phase 3.3d)
 - [x] ~~Connections & Insights feed (posts, polls, articles)~~ — Delivered as Community Feed (Phase 3.3b)
+- [x] ~~Analytics dashboard for admin (signups, active users, module usage)~~ — Delivered as Analytics tab (14 Apr 2026)
 - [ ] Data products (aggregated price intelligence for corporates/NGOs)
 - [ ] Mentorship marketplace (paid sessions with commission)
 - [ ] Mobile app consideration (React Native or enhanced PWA)
-- [ ] Analytics dashboard for admin (signups, active users, module usage)
 - [ ] Two-factor authentication
 - [ ] Supabase Realtime for live updates
 - [ ] Generate Supabase TypeScript types (eliminate `as any` casts)
@@ -254,3 +254,35 @@ These are valuable but can wait until after July 5.
 3. When an item is done, change ⬜ to ✅ and note the date
 4. If scope changes or priorities shift, we update this document
 5. The Strategic Review (docx) has the full reasoning behind each item
+
+---
+
+## Scratchpad — Unresolved Thoughts & Unicorn-Path Intel
+
+> This section captures strategic ideas, observations, and intel that surface during development sessions. Review periodically and promote items to the roadmap or discard them.
+
+### 14 April 2026
+
+**1. Data Products as Revenue Multiplier**
+AgroYield's price tracker is collecting commodity prices across Nigerian states daily. This is exactly the kind of data that corporates, NGOs, and government agencies pay for. Think: "Nigeria Agricultural Price Index" — a subscription data product (API or monthly report) sold to Nestlé Nigeria, USAID, World Bank, state agricultural ministries. This is a proven unicorn ingredient: user-generated data → aggregated intelligence → B2B revenue stream that doesn't depend on individual subscriptions. **Action:** After launch, add anonymised price data export API. Start with free tier to build credibility, then gate historical data and cross-state analytics behind enterprise subscriptions.
+
+**2. Mentorship Marketplace (Commission Model)**
+The mentorship module currently runs for free. Post-launch, introduce paid mentorship sessions where mentors set hourly rates and AgroYield takes 10-15% commission via Paystack. This is the Toptal/Clarity.fm model applied to agriculture. The mentor profiles, ratings, and session history we're building now are the foundation. **Action:** Add `rate_per_hour` to `mentor_profiles`, integrate Paystack split payments. Wait until you have 50+ active mentors before enabling.
+
+**3. Geographic Expansion Signal**
+The waitlist IP capture we just added will reveal demand outside Nigeria. If you see signups from Ghana, Kenya, Tanzania — that's your expansion signal. AgroYield's modules (price tracking, marketplace, mentorship, grants) are not Nigeria-specific. The first pan-African agricultural platform to reach critical mass wins. **Action:** Watch waitlist IPs. If 10%+ are non-Nigerian, start planning multi-country support (currency, language, commodity lists).
+
+**4. Grant Application Data as Institutional Sales Tool**
+Every grant application tracked through AgroYield is a signal of demand and intent. Aggregate this: "2,400 Nigerian agripreneurs applied for funding in Q3 2026, 60% in poultry and crop farming, average ask ₦5M." This is intelligence that grant-making institutions (Tony Elumelu Foundation, AGRA, AfDB) would pay for — or better, partner with AgroYield to distribute their grants exclusively. **Action:** Build grant analytics view post-launch. Use it in BD conversations with institutions.
+
+**5. Admin Analytics = Investor Readiness**
+The analytics dashboard we're building now isn't just for platform management — it's what investors want to see in a pitch deck. Growth curves, engagement funnels, retention cohorts, module adoption, revenue metrics. Every chart in the Analytics tab is a slide in your Series A deck. **Action:** Keep the analytics tab data-rich and exportable. When fundraising starts, these numbers tell the story.
+
+**6. Community Feed as Content Moat**
+Platforms with user-generated discussion (Reddit, Stack Overflow, Farmers' Forum) build organic SEO moats. Every community post becomes an indexed page. "Best poultry feed in Lagos" → AgroYield discussion → organic traffic → new signups. **Action:** Ensure community posts have individual public URLs with proper SEO metadata. Consider making the community feed partially public (read-only for non-members) to drive organic discovery.
+
+**7. Business Suite as SME Lock-in**
+Once an SME runs their invoicing, expenses, and inventory through AgroYield, switching cost is high. This is the QuickBooks playbook. The Business Suite is not just a feature — it's the retention engine. Every invoice created is a reason to come back. **Action:** Prioritise Business Suite reliability and add recurring invoices post-launch. The more financial data they store, the stickier the platform.
+
+**8. Girl-Child & Inclusion as Impact Metric**
+Impact investors (Omidyar, Acumen, Shell Foundation) increasingly fund platforms with measurable social impact. AgroYield's gender field on profiles + community features + mentorship can produce real metrics: "X% of mentorship sessions involve female mentees", "Y female-led businesses onboarded." **Action:** Build gender-disaggregated stats into the Analytics tab. This becomes part of impact reports for grant applications and impact investor pitches.

@@ -9,6 +9,7 @@ import PricesTab from './tabs/PricesTab'
 import MentorshipTab from './tabs/MentorshipTab'
 import AuditLogTab from './tabs/AuditLogTab'
 import NotifyPanel from './tabs/NotifyPanel'
+import AnalyticsTab from './tabs/AnalyticsTab'
 
 // ── Interfaces ──
 
@@ -161,7 +162,7 @@ interface AdminClientProps {
   waitlistSignups: WaitlistSignup[]
 }
 
-type Tab = 'opportunities' | 'marketplace' | 'members' | 'grants' | 'community' | 'research' | 'comments' | 'prices' | 'mentorship' | 'reports' | 'audit_log' | 'notifications' | 'settings'
+type Tab = 'opportunities' | 'marketplace' | 'members' | 'grants' | 'community' | 'research' | 'comments' | 'prices' | 'mentorship' | 'reports' | 'analytics' | 'audit_log' | 'notifications' | 'settings'
 
 // Permission keys per tab — determines which tabs a moderator can see
 const TAB_PERMISSION: Partial<Record<Tab, string>> = {
@@ -511,6 +512,7 @@ export default function AdminClient({
     { id: 'mentorship',    label: 'Mentorship' },
     { id: 'reports',       label: 'Reports', badge: reportGroups.length || undefined },
     ...(isSuperAdmin ? [
+      { id: 'analytics' as Tab, label: 'Analytics' },
       { id: 'audit_log' as Tab, label: 'Audit Log' },
       { id: 'notifications' as Tab, label: 'Notify' },
       { id: 'settings' as Tab, label: 'Settings' },
@@ -1039,6 +1041,22 @@ export default function AdminClient({
           ))}
           </div>
         </div>
+      )}
+
+      {/* ── Analytics (super admin only) ── */}
+      {activeTab === 'analytics' && isSuperAdmin && (
+        <AnalyticsTab
+          members={members}
+          waitlistSignups={waitlistSignups}
+          communityPosts={communityPosts}
+          researchPosts={researchPosts}
+          opportunities={opportunities}
+          listings={listings}
+          grants={grants}
+          priceReports={priceReports}
+          mentorProfiles={mentorProfiles}
+          mentorshipRequests={mentorshipRequests}
+        />
       )}
 
       {/* ── Audit Log (super admin only, delegated) ── */}
