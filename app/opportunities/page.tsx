@@ -11,7 +11,7 @@ export default async function OpportunitiesPage() {
 
   const { data: opportunities } = await supabase
     .from('opportunities')
-    .select('id, user_id, title, type, organisation, location, description, deadline, is_closed, created_at')
+    .select('id, user_id, title, type, organisation, location, description, deadline, is_closed, created_at, thumbnail_url')
     .eq('is_active', true)
     .order('created_at', { ascending: false })
 

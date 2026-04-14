@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import useProfileGate from '@/app/hooks/useProfileGate'
 import ProfileGateBanner from '@/app/components/ProfileGateBanner'
+import ImageUploader from '@/app/components/ImageUploader'
 
 const POST_TYPES = [
   { value: 'all',        label: 'All',         icon: '' },
@@ -56,6 +57,7 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
   const [likedSet, setLikedSet] = useState(new Set(initialLiked))
   const [likeCounts, setLikeCounts] = useState(likeCountMap)
   const [pollVotesLocal, setPollVotesLocal] = useState<Record<string, any>>({})
+  const [imageUrls, setImageUrls] = useState<string[]>([])
   const [repostTarget, setRepostTarget] = useState<any | null>(null)
   const [repostCaption, setRepostCaption] = useState('')
   const [reposting, setReposting] = useState(false)
@@ -72,6 +74,7 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
       post_type: postType,
       content: content.trim(),
       link_url: linkUrl.trim() || null,
+      image_url: imageUrls[0] || null,
     }
 
     if (postType === 'poll') {
@@ -95,6 +98,7 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
 
     setContent('')
     setLinkUrl('')
+    setImageUrls([])
     setPollOptions(['', ''])
     setPostType('discussion')
     setShowForm(false)
@@ -262,9 +266,19 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
             </div>
           )}
 
+          {/* Image upload */}
+          <ImageUploader
+            bucket="community-images"
+            folder={currentUserId}
+            maxImages={1}
+            maxSizeMB={2}
+            value={imageUrls}
+            onChange={setImageUrls}
+          />
+
           {/* Actions */}
           <div className="flex gap-3">
-            <button type="button" onClick={() => { setPostType('discussion'); setShowForm(false) }}
+            <button type="button" onClick={() => { setPostType('discussion'); setImageUrls([]); setShowForm(false) }}
               className="flex-1 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-sm font-medium py-2 rounded-lg">
               Cancel
             </button>
@@ -397,6 +411,13 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
                       Original post unavailable
                     </div>
                   )
+                )}
+
+                {/* Post image */}
+                {post.image_url && (
+                  <div className="mb-3 rounded-lg overflow-hidden border border-gray-100 dark:border-gray-800">
+                    <img src={post.image_url} alt="Post image" className="w-full max-h-96 object-cover" />
+                  </div>
                 )}
 
                 {/* Link */}

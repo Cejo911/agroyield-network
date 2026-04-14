@@ -26,6 +26,7 @@ type Grant = {
   save_count: number
   apply_count: number
   created_at: string
+  thumbnail_url?: string | null
 }
 
 type Props = {
@@ -157,7 +158,14 @@ export default function GrantsClient({ grants, applicationMap }: Props) {
                 href={`/grants/${grant.id}`}
                 className="block bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 hover:border-green-300 dark:hover:border-green-700 hover:shadow-md transition-all"
               >
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-4">
+                  {grant.thumbnail_url && (
+                    <img
+                      src={grant.thumbnail_url}
+                      alt=""
+                      className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg object-cover shrink-0 border border-gray-100 dark:border-gray-800"
+                    />
+                  )}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap mb-1">
                       {grant.featured && (

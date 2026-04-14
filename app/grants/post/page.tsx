@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import AppNav from '@/app/components/AppNav'
 import useProfileGate from '@/app/hooks/useProfileGate'
 import ProfileGateBanner from '@/app/components/ProfileGateBanner'
 import Link from 'next/link'
+import ImageUploader from '@/app/components/ImageUploader'
 
 const CATEGORIES = ['Research', 'Startup', 'Student', 'Women', 'Innovation', 'Farmer', 'Policy']
 
@@ -14,6 +15,8 @@ export default function PostGrantPage() {
   const supabase = createClient()
   const router = useRouter()
   const [saving, setSaving] = useState(false)
+  const [thumbnailUrls, setThumbnailUrls] = useState<string[]>([])
+  const [userId, setUserId] = useState<string>('')
   const { ready: gateReady, allowed: profileComplete, missing: profileMissing } = useProfileGate()
   const [form, setForm] = useState({
     title: '',
@@ -32,12 +35,18 @@ export default function PostGrantPage() {
     status: 'open' as string,
   })
 
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => { if (user) setUserId(user.id) })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
 
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/login'); return }
+    if (!userId) setUserId(user.id)
 
     const payload = {
       title: form.title.trim(),
@@ -54,6 +63,7 @@ export default function PostGrantPage() {
       apply_link: form.apply_link.trim() || null,
       featured: form.featured,
       status: form.status,
+      thumbnail_url: thumbnailUrls[0] || null,
       posted_by: user.id,
     }
 
@@ -104,6 +114,18 @@ export default function PostGrantPage() {
               placeholder="e.g. AGCOMS Agricultural Revolution in Africa"
               className={inputCls} />
           </div>
+
+          {/* Thumbnail */}
+          {userId && (
+            <ImageUploader
+              bucket="opportunity-images"
+              folder={userId}
+              maxImages={1}
+              maxSizeMB={2}
+              value={thumbnailUrls}
+              onChange={setThumbnailUrls}
+            />
+          )}
 
           {/* Category + Status */}
           <div className="grid grid-cols-2 gap-4">

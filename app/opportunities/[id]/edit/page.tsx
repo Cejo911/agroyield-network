@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import AppNav from '@/app/components/AppNav'
+import ImageUploader from '@/app/components/ImageUploader'
 
 const TYPES = ['Grant', 'Fellowship', 'Job', 'Internship', 'Partnership', 'Training', 'Other']
 
@@ -15,6 +16,8 @@ export default function EditOpportunityPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [thumbnailUrls, setThumbnailUrls] = useState<string[]>([])
+  const [userId, setUserId] = useState<string>('')
   const [form, setForm] = useState({
     title: '',
     type: '',
@@ -31,6 +34,7 @@ export default function EditOpportunityPage() {
     const supabase = createClient()
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) { router.push('/login'); return }
+      setUserId(user.id)
       supabase
         .from('opportunities')
         .select('*')
@@ -49,6 +53,7 @@ export default function EditOpportunityPage() {
             deadline: data.deadline ? data.deadline.slice(0, 10) : '',
             url: data.url ?? '',
           })
+          if (data.thumbnail_url) setThumbnailUrls([data.thumbnail_url])
           setLoading(false)
         })
     })
@@ -74,6 +79,7 @@ export default function EditOpportunityPage() {
         requirements: form.requirements.trim() || null,
         deadline: form.deadline || null,
         url: form.url.trim() || null,
+        thumbnail_url: thumbnailUrls[0] || null,
       })
       .eq('id', id)
     setSaving(false)
@@ -184,6 +190,18 @@ export default function EditOpportunityPage() {
               placeholder="Who is eligible? What is required?"
             />
           </div>
+
+          {/* Thumbnail */}
+          {userId && (
+            <ImageUploader
+              bucket="opportunity-images"
+              folder={userId}
+              maxImages={1}
+              maxSizeMB={2}
+              value={thumbnailUrls}
+              onChange={setThumbnailUrls}
+            />
+          )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>

@@ -67,6 +67,7 @@ export async function POST(request: NextRequest) {
         requirements:      body.requirements  || null,
         deadline:          body.deadline      || null,
         url:               body.url           || null,
+        thumbnail_url:     body.thumbnail_url || null,
         is_active:         !isPending,
         is_pending_review: isPending,
       })

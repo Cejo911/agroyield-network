@@ -17,6 +17,7 @@ export type Opportunity = {
   deadline: string | null
   is_closed: boolean
   created_at: string
+  thumbnail_url?: string | null
 }
 
 export default function OpportunitiesClient({
@@ -27,9 +28,26 @@ export default function OpportunitiesClient({
   userId: string
 }) {
   const [opportunities, setOpportunities] = useState(initial)
+  const [search, setSearch]               = useState('')
+  const [typeFilter, setTypeFilter]       = useState('all')
   const [confirmingId, setConfirmingId]   = useState<string | null>(null)
   const [deletingId, setDeletingId]       = useState<string | null>(null)
   const [togglingId, setTogglingId]       = useState<string | null>(null)
+
+  // Derive unique types for filter pills
+  const types = ['all', ...Array.from(new Set(initial.map(o => o.type).filter(Boolean)))]
+
+  // Filter by search + type
+  const filtered = opportunities.filter(o => {
+    const matchesType = typeFilter === 'all' || o.type === typeFilter
+    const q = search.toLowerCase()
+    const matchesSearch = !q
+      || o.title.toLowerCase().includes(q)
+      || (o.organisation?.toLowerCase().includes(q) ?? false)
+      || (o.location?.toLowerCase().includes(q) ?? false)
+      || (o.description?.toLowerCase().includes(q) ?? false)
+    return matchesType && matchesSearch
+  })
 
   const handleDelete = async (id: string) => {
     setDeletingId(id)
@@ -48,7 +66,7 @@ export default function OpportunitiesClient({
     setTogglingId(null)
   }
 
-  if (opportunities.length === 0) {
+  if (initial.length === 0) {
     return (
       <div className="text-center py-20 text-gray-400 dark:text-gray-500">
         <p className="text-lg font-medium mb-1">No opportunities yet</p>
@@ -59,7 +77,40 @@ export default function OpportunitiesClient({
 
   return (
     <div className="space-y-4">
-      {opportunities.map(opportunity => {
+      {/* Search + type filter */}
+      <div className="space-y-3 mb-2">
+        <input
+          type="text"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Search opportunities..."
+          className="w-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+        />
+        <div className="flex gap-2 flex-wrap">
+          {types.map(t => (
+            <button
+              key={t}
+              onClick={() => setTypeFilter(t)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium border capitalize transition-colors ${
+                typeFilter === t
+                  ? 'bg-green-600 text-white border-green-600'
+                  : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-green-400'
+              }`}
+            >
+              {t === 'all' ? 'All' : t}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className="text-center py-12 text-gray-400 dark:text-gray-500">
+          <p className="font-medium">No opportunities match your search</p>
+          <p className="text-sm mt-1">Try different keywords or clear the filter</p>
+        </div>
+      ) : null}
+
+      {filtered.map(opportunity => {
         const isOwner  = opportunity.user_id === userId
         const isClosed = opportunity.is_closed ?? false
         const deadline = opportunity.deadline
@@ -74,8 +125,15 @@ export default function OpportunitiesClient({
             className={`bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm transition-all ${isClosed ? 'opacity-70' : ''}`}
           >
             <Link href={`/opportunities/${opportunity.id}`} className="block p-5 group">
-              <div className="flex items-start justify-between gap-3 mb-2">
-                <div>
+              <div className="flex items-start gap-4 mb-2">
+                {opportunity.thumbnail_url && (
+                  <img
+                    src={opportunity.thumbnail_url}
+                    alt=""
+                    className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg object-cover shrink-0 border border-gray-100 dark:border-gray-800"
+                  />
+                )}
+                <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2 mb-1.5">
                     <span className="inline-block text-xs font-semibold px-2 py-0.5 rounded-full bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400">
                       {opportunity.type}
