@@ -1,2 +1,3 @@
-// This file is intentionally empty — to be deleted after debugging
+// Placeholder — delete this file and its directory manually via:
+// rm -rf app/api/admin/debug
 export {}
