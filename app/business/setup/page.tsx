@@ -75,6 +75,16 @@ export default function BusinessSetup() {
     if (businessId) {
       await supabase.from('businesses').update({ ...form, updated_at: new Date().toISOString() }).eq('id', businessId)
     } else {
+      // Guard: if multi-business is off, block creating a second business
+      const { data: existing } = await supabase.from('businesses').select('id').eq('user_id', user.id).limit(1)
+      if (existing && existing.length > 0) {
+        const { data: flag } = await supabase.from('settings').select('value').eq('key', 'allow_multi_business').single()
+        if (!flag || flag.value !== 'true') {
+          alert('You already have a business. Multi-business support is not yet available.')
+          setSaving(false)
+          return
+        }
+      }
       await supabase.from('businesses').insert({ ...form, user_id: user.id })
     }
     setSaving(false)

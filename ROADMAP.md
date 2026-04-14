@@ -147,7 +147,16 @@ Features that drive daily engagement and create network effects.
 
 > **Why:** Agripreneurs run multiple ventures. Accountants serve multiple clients. `business_team` table already supports this.
 > **Scope:** Business switcher in sidebar. Create multiple businesses. See all businesses you own or are invited to. Consolidated reporting.
-> **Status:** ⬜ Not started
+> **Status:** ⬜ Post-launch — gated behind `allow_multi_business` feature flag in Admin Dashboard
+>
+> **Implementation plan (saved for post-launch):**
+> 1. **`getBusinessAccess()` refactor** (`lib/business-access.ts`) — currently uses `.single()` assuming one business per user. Change to return all businesses the user owns or is a team member of. Add optional `businessId` parameter so pages can request a specific one.
+> 2. **Business switcher component** — dropdown in the business sidebar listing all accessible businesses. Selected business ID stored in cookie or URL search param so it persists across page navigations without server state.
+> 3. **Business setup unlocked** — `app/business/setup/page.tsx` currently updates-if-exists / inserts-if-not. Add a "Create another business" entry point, visible only when feature flag is on.
+> 4. **RLS audit** — confirm all business-table policies (`invoices`, `customers`, `business_products`, `business_expenses`, `business_assets`, `stock_movements`) scope on `business_id` via the team access helper, not just `user_id`. Any policy that assumes one-business-per-user will leak cross-business data.
+> 5. **Consolidated reporting** — optional dashboard view aggregating revenue/expenses across all businesses the user has access to.
+>
+> **Data model readiness:** All child tables already have `business_id` FK. No schema changes needed. The bottleneck is the access layer + UI.
 
 ### 3.5 — Subscription Tiers
 

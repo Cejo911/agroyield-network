@@ -103,6 +103,7 @@ export default function AdminClient({
   const [listingLimit, setListingLimit] = useState(settingsMap.listing_daily_limit ?? '3')
   const [reportThreshold, setReportThreshold] = useState(settingsMap.report_threshold ?? '3')
   const [adminNotificationEmail, setAdminNotificationEmail] = useState(settingsMap.admin_notification_email ?? '')
+  const [allowMultiBusiness, setAllowMultiBusiness] = useState(settingsMap.allow_multi_business === 'true')
   const [savingSettings, setSavingSettings] = useState(false)
   const [settingsSaved, setSettingsSaved] = useState(false)
 
@@ -135,6 +136,7 @@ export default function AdminClient({
           listing_daily_limit: listingLimit,
           report_threshold: reportThreshold,
           admin_notification_email: adminNotificationEmail,
+          allow_multi_business: String(allowMultiBusiness),
         }),
       })
       setSettingsSaved(true)
@@ -634,6 +636,22 @@ export default function AdminClient({
               <p className="text-xs text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 rounded-md px-3 py-2 mt-2">
                 Alerts will be sent to {adminNotificationEmail} on every new report.
               </p>
+            )}
+          </div>
+
+          {/* Multi-Business (Feature Flag) */}
+          <div className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-lg p-4">
+            <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Multi-Business Support</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Allow members to create and manage more than one business. Turn this on after the multi-business feature is fully built.</p>
+            <div className="flex items-center gap-3">
+              <button onClick={() => setAllowMultiBusiness(!allowMultiBusiness)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${allowMultiBusiness ? 'bg-green-600' : 'bg-gray-300 dark:bg-gray-600'}`}>
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${allowMultiBusiness ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
+              <span className="text-sm text-gray-700 dark:text-gray-300">{allowMultiBusiness ? 'Multi-business enabled' : 'Single business only'}</span>
+            </div>
+            {!allowMultiBusiness && (
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">Members are limited to one business each. Enable this post-launch to unlock multi-business workflows.</p>
             )}
           </div>
 
