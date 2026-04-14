@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
+import Link from 'next/link'
 import AppNav from '@/app/components/AppNav'
 import ListingActions from './ListingActions'
 import CommentsSection from '@/app/components/CommentsSection'
@@ -57,6 +58,9 @@ export default async function ListingPage({
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <AppNav />
       <main className="max-w-2xl mx-auto px-4 py-10">
+        <Link href="/marketplace" className="inline-flex items-center text-sm text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 mb-4 transition-colors">
+          ← Back to Marketplace
+        </Link>
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-8">
 
           {isClosed && (

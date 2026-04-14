@@ -6,6 +6,7 @@ import useProfileGate from '@/app/hooks/useProfileGate'
 import ProfileGateBanner from '@/app/components/ProfileGateBanner'
 import ImageUploader from '@/app/components/ImageUploader'
 import { createClient } from '@/lib/supabase/client'
+import BackButton from '@/app/components/BackButton'
 
 const DEFAULT_CATEGORIES = ['produce', 'inputs', 'equipment', 'livestock', 'oil', 'services', 'other']
 const CONDITIONS = ['new', 'used']
@@ -94,6 +95,7 @@ export default function NewListingPage() {
       <AppNav />
       <main className="max-w-2xl mx-auto px-4 py-10">
         <div className="mb-8">
+          <BackButton fallbackHref="/marketplace" label="Back to Marketplace" />
           <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Post a Listing</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1">List a product, input, equipment or service.</p>
         </div>

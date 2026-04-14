@@ -8,6 +8,7 @@ import ProfileGateBanner from '@/app/components/ProfileGateBanner'
 import ImageUploader from '@/app/components/ImageUploader'
 import FileUploader from '@/app/components/FileUploader'
 import { createClient } from '@/lib/supabase/client'
+import BackButton from '@/app/components/BackButton'
 
 const TYPES = ['finding', 'question', 'dataset', 'review', 'collaboration', 'guide', 'resource']
 const TAGS = [
@@ -84,6 +85,7 @@ export default function NewResearchPage() {
       <AppNav />
       <main className="max-w-2xl mx-auto px-4 py-10">
         <div className="mb-8">
+          <BackButton fallbackHref="/research" label="Back to Research" />
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Post Research</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1">Share findings, questions, datasets, guides or learning resources with the network.</p>
         </div>

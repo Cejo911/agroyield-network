@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import AppNav from '@/app/components/AppNav'
+import BackButton from '@/app/components/BackButton'
 
 const TYPES = ['Finding', 'Question', 'Dataset', 'Review', 'Collaboration', 'Guide', 'Resource']
 const TAGS = [
@@ -104,6 +105,7 @@ export default function EditResearchPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <AppNav />
       <main className="max-w-2xl mx-auto px-4 py-10">
+        <BackButton fallbackHref="/research" label="Back to Research" />
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Edit Research Post</h1>
 
         <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-6 space-y-5">

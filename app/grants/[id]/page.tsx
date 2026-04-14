@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
+import Link from 'next/link'
 import AppNav from '@/app/components/AppNav'
 import GrantDetail from './grant-detail'
 
@@ -24,6 +25,9 @@ export default async function GrantPage({ params }: { params: Promise<{ id: stri
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <AppNav />
       <main className="max-w-3xl mx-auto px-4 py-10">
+        <Link href="/grants" className="inline-flex items-center text-sm text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 mb-4 transition-colors">
+          ← Back to Grants
+        </Link>
         <GrantDetail
           grant={grant}
           application={application}

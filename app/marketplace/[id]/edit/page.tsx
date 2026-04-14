@@ -4,6 +4,7 @@ import { useRouter, useParams } from 'next/navigation'
 import AppNav from '@/app/components/AppNav'
 import ImageUploader from '@/app/components/ImageUploader'
 import { createClient } from '@/lib/supabase/client'
+import BackButton from '@/app/components/BackButton'
 
 const DEFAULT_CATEGORIES = ['produce', 'inputs', 'equipment', 'livestock', 'oil', 'services', 'other']
 const TYPES = ['sell', 'buy', 'trade']
@@ -132,6 +133,7 @@ export default function EditListingPage() {
       <AppNav />
       <main className="max-w-2xl mx-auto px-4 py-10">
         <div className="mb-8">
+          <BackButton fallbackHref="/marketplace" label="Back to Marketplace" />
           <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Edit Listing</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1">Update your listing details below.</p>
         </div>
