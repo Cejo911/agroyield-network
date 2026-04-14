@@ -18,7 +18,7 @@ export async function POST(request: Request) {
 
   const { error: dbError } = await getSupabaseAnon()
     .from('waitlist_signups')
-    .insert([{ email, source: 'waitlist_page' }])
+    .insert([{ email, source: 'waitlist_page', ip_address: ip }])
 
   const isDuplicate = dbError?.code === '23505'
 

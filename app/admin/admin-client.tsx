@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import ExcelJS from 'exceljs'
 import { SearchBar, FilterPills } from './tabs/AdminSearchBar'
 import CommunityTab from './tabs/CommunityTab'
 import ResearchTab from './tabs/ResearchTab'
@@ -304,6 +305,40 @@ export default function AdminClient({
   const fmt = (dateStr: string) =>
     new Date(dateStr).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
 
+  // ── Export helper ──
+  const [exporting, setExporting] = useState(false)
+  const exportToExcel = async (sheetName: string, columns: { header: string; key: string; width: number }[], rows: Record<string, unknown>[]) => {
+    setExporting(true)
+    try {
+      const wb = new ExcelJS.Workbook()
+      const ws = wb.addWorksheet(sheetName)
+      ws.columns = columns.map(c => ({ header: c.header, key: c.key, width: c.width }))
+      // Style header row
+      ws.getRow(1).font = { bold: true }
+      ws.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF16A34A' } }
+      ws.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } }
+      rows.forEach(r => ws.addRow(r))
+      // Add summary row
+      ws.addRow({})
+      ws.addRow({ [columns[0].key]: `Total: ${rows.length} records` })
+
+      const filename = `AgroYield_${sheetName.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.xlsx`
+      const buffer = await wb.xlsx.writeBuffer()
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url; a.download = filename; a.click()
+      URL.revokeObjectURL(url)
+    } finally { setExporting(false) }
+  }
+
+  const ExportButton = ({ onClick }: { onClick: () => void }) => (
+    <button onClick={onClick} disabled={exporting}
+      className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-400 hover:border-green-400 hover:text-green-700 dark:hover:text-green-400 transition-all disabled:opacity-50">
+      {exporting ? 'Exporting...' : 'Export Excel'}
+    </button>
+  )
+
   // ── Actions ──
 
   const saveSettings = async () => {
@@ -510,7 +545,24 @@ export default function AdminClient({
       {/* ── Opportunities ── */}
       {activeTab === 'opportunities' && (
         <div>
-          <SearchBar value={oppSearch} onChange={setOppSearch} placeholder="Search opportunities by title, type, location, or poster..." />
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div className="flex-1"><SearchBar value={oppSearch} onChange={setOppSearch} placeholder="Search opportunities by title, type, location, or poster..." /></div>
+            <ExportButton onClick={() => exportToExcel('Opportunities', [
+              { header: 'Title', key: 'title', width: 36 },
+              { header: 'Type', key: 'type', width: 16 },
+              { header: 'Location', key: 'location', width: 20 },
+              { header: 'Status', key: 'status', width: 12 },
+              { header: 'Posted By', key: 'posted_by', width: 24 },
+              { header: 'Created', key: 'created', width: 16 },
+            ], opportunities.map(o => ({
+              title: o.title,
+              type: o.type,
+              location: o.location || 'N/A',
+              status: o.is_pending_review ? 'Pending' : o.is_active ? 'Active' : 'Hidden',
+              posted_by: getDisplayName(o.user_id),
+              created: fmt(o.created_at),
+            })))} />
+          </div>
           <FilterPills value={oppStatusFilter} onChange={(v) => setOppStatusFilter(v as typeof oppStatusFilter)} options={[
             { id: 'all', label: `All (${opportunities.length})` },
             { id: 'active', label: `Active (${opportunities.filter(o => o.is_active && !o.is_pending_review).length})` },
@@ -560,7 +612,24 @@ export default function AdminClient({
       {/* ── Marketplace ── */}
       {activeTab === 'marketplace' && (
         <div>
-          <SearchBar value={listingSearch} onChange={setListingSearch} placeholder="Search listings by title, category, or poster..." />
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div className="flex-1"><SearchBar value={listingSearch} onChange={setListingSearch} placeholder="Search listings by title, category, or poster..." /></div>
+            <ExportButton onClick={() => exportToExcel('Marketplace', [
+              { header: 'Title', key: 'title', width: 36 },
+              { header: 'Category', key: 'category', width: 18 },
+              { header: 'Price (NGN)', key: 'price', width: 14 },
+              { header: 'Status', key: 'status', width: 12 },
+              { header: 'Posted By', key: 'posted_by', width: 24 },
+              { header: 'Created', key: 'created', width: 16 },
+            ], listings.map(l => ({
+              title: l.title,
+              category: l.category || 'N/A',
+              price: l.price ?? 'N/A',
+              status: l.is_pending_review ? 'Pending' : l.is_active ? 'Active' : 'Hidden',
+              posted_by: getDisplayName(l.user_id),
+              created: fmt(l.created_at),
+            })))} />
+          </div>
           <FilterPills value={listingStatusFilter} onChange={(v) => setListingStatusFilter(v as typeof listingStatusFilter)} options={[
             { id: 'all', label: `All (${listings.length})` },
             { id: 'active', label: `Active (${listings.filter(l => l.is_active && !l.is_pending_review).length})` },
@@ -625,7 +694,18 @@ export default function AdminClient({
           {/* Waitlist view */}
           {membersView === 'waitlist' && (
             <div>
-              <SearchBar value={waitlistSearch} onChange={setWaitlistSearch} placeholder="Search waitlist by email..." />
+              <div className="flex items-center justify-between gap-3 mb-3">
+                <div className="flex-1"><SearchBar value={waitlistSearch} onChange={setWaitlistSearch} placeholder="Search waitlist by email..." /></div>
+                <ExportButton onClick={() => exportToExcel('Waitlist', [
+                  { header: 'Email', key: 'email', width: 36 },
+                  { header: 'Source', key: 'source', width: 18 },
+                  { header: 'Signed Up', key: 'signed_up', width: 24 },
+                ], waitlistSignups.map(w => ({
+                  email: w.email,
+                  source: w.source || 'N/A',
+                  signed_up: new Date(w.created_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Lagos' }),
+                })))} />
+              </div>
               <div className="space-y-2">
                 {waitlistSignups.length === 0 && <p className="text-gray-500 dark:text-gray-400 text-sm">No waitlist signups yet.</p>}
                 {waitlistSignups
@@ -636,7 +716,7 @@ export default function AdminClient({
                       <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{w.email}</p>
                       {w.source && <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Source: {w.source}</p>}
                     </div>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">{fmt(w.created_at)}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">{new Date(w.created_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Lagos' })}</p>
                   </div>
                 ))}
               </div>
@@ -645,7 +725,28 @@ export default function AdminClient({
 
           {/* Registered members view */}
           {membersView === 'registered' && (<>
-          <SearchBar value={memberSearch} onChange={setMemberSearch} placeholder="Search members by name, email, or username..." />
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div className="flex-1"><SearchBar value={memberSearch} onChange={setMemberSearch} placeholder="Search members by name, email, or username..." /></div>
+            <ExportButton onClick={() => exportToExcel('Members', [
+              { header: 'Name', key: 'name', width: 28 },
+              { header: 'Email', key: 'email', width: 32 },
+              { header: 'Username', key: 'username', width: 20 },
+              { header: 'Role', key: 'role', width: 16 },
+              { header: 'Verified', key: 'verified', width: 10 },
+              { header: 'Elite', key: 'elite', width: 10 },
+              { header: 'Plan', key: 'plan', width: 14 },
+              { header: 'Joined', key: 'joined', width: 16 },
+            ], members.map(m => ({
+              name: [m.first_name, m.last_name].filter(Boolean).join(' ') || 'N/A',
+              email: m.email || 'N/A',
+              username: m.username || 'N/A',
+              role: m.is_admin ? (m.admin_role === 'super' ? 'Super Admin' : 'Moderator') : 'Member',
+              verified: m.is_verified ? 'Yes' : 'No',
+              elite: m.is_elite ? 'Yes' : 'No',
+              plan: m.subscription_plan || 'Free',
+              joined: fmt(m.created_at),
+            })))} />
+          </div>
           <FilterPills value={memberRoleFilter} onChange={(v) => setMemberRoleFilter(v as typeof memberRoleFilter)} options={[
             { id: 'all', label: `All (${members.length})` },
             { id: 'admin', label: `Admins (${members.filter(m => m.is_admin).length})` },
@@ -797,7 +898,26 @@ export default function AdminClient({
       {/* ── Grants ── */}
       {activeTab === 'grants' && (
         <div>
-          <SearchBar value={grantSearch} onChange={setGrantSearch} placeholder="Search grants by title, funder, or category..." />
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div className="flex-1"><SearchBar value={grantSearch} onChange={setGrantSearch} placeholder="Search grants by title, funder, or category..." /></div>
+            <ExportButton onClick={() => exportToExcel('Grants', [
+              { header: 'Title', key: 'title', width: 36 },
+              { header: 'Funder', key: 'funder', width: 24 },
+              { header: 'Category', key: 'category', width: 18 },
+              { header: 'Status', key: 'status', width: 12 },
+              { header: 'Deadline', key: 'deadline', width: 16 },
+              { header: 'Featured', key: 'featured', width: 10 },
+              { header: 'Created', key: 'created', width: 16 },
+            ], grants.map(g => ({
+              title: g.title,
+              funder: g.funder || 'N/A',
+              category: g.category || 'N/A',
+              status: g.status || 'N/A',
+              deadline: g.deadline ? fmt(g.deadline) : 'N/A',
+              featured: g.featured ? 'Yes' : 'No',
+              created: fmt(g.created_at),
+            })))} />
+          </div>
           <FilterPills value={grantStatusFilter} onChange={(v) => setGrantStatusFilter(v as typeof grantStatusFilter)} options={[
             { id: 'all', label: `All (${grants.length})` },
             { id: 'open', label: `Open (${grants.filter(g => g.status === 'open').length})` },
