@@ -1,10 +1,9 @@
 'use client'
-import { useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   AreaChart, Area, BarChart, Bar, LineChart, Line,
   XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell, Legend,
 } from 'recharts'
-import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
 
 // ── Types ──
@@ -71,6 +70,16 @@ function daysAgo(n: number): Date {
   return d
 }
 
+// ── Compact currency formatter — ₦1,234,567 → ₦1.23M ──
+function fmtNaira(n: number): string {
+  const abs = Math.abs(n)
+  const sign = n < 0 ? '-' : ''
+  if (abs >= 1_000_000_000) return `${sign}₦${(abs / 1_000_000_000).toFixed(2)}B`
+  if (abs >= 1_000_000) return `${sign}₦${(abs / 1_000_000).toFixed(2)}M`
+  if (abs >= 1_000) return `${sign}₦${(abs / 1_000).toFixed(1)}K`
+  return `${sign}₦${abs.toLocaleString()}`
+}
+
 // ── Stat Card ──
 function StatCard({ label, value, sub, accent }: { label: string; value: string | number; sub?: string; accent?: string }) {
   return (
@@ -98,41 +107,7 @@ function Section({ title, subtitle, children }: { title: string; subtitle?: stri
 // ── Main Component ──
 export default function AnalyticsTab(props: AnalyticsProps) {
   const { members, waitlistSignups, communityPosts, researchPosts, opportunities, listings, grants, priceReports, mentorProfiles, mentorshipRequests, businesses, invoices, businessExpenses } = props
-  const reportRef = useRef<HTMLDivElement>(null)
   const [exportingPdf, setExportingPdf] = useState(false)
-
-  const exportPDF = async () => {
-    if (!reportRef.current) return
-    setExportingPdf(true)
-    try {
-      const canvas = await html2canvas(reportRef.current, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#030712',
-        logging: false,
-      })
-      const imgData = canvas.toDataURL('image/png')
-      const imgWidth = 210 // A4 width in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width
-      const pdf = new jsPDF('p', 'mm', 'a4')
-      let heightLeft = imgHeight
-      let position = 0
-
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
-      heightLeft -= 297 // A4 height in mm
-
-      while (heightLeft > 0) {
-        position -= 297
-        pdf.addPage()
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
-        heightLeft -= 297
-      }
-
-      pdf.save(`AgroYield_Analytics_${new Date().toISOString().slice(0, 10)}.pdf`)
-    } finally {
-      setExportingPdf(false)
-    }
-  }
 
   const months = useMemo(() => getLast12Months(), [])
   const days30 = useMemo(() => getLast30Days(), [])
@@ -334,6 +309,223 @@ export default function AnalyticsTab(props: AnalyticsProps) {
 
   const tooltipStyle = { contentStyle: { background: '#111827', border: '1px solid #374151', borderRadius: 8, fontSize: 12 }, labelStyle: { color: '#9ca3af' }, itemStyle: { color: '#d1d5db' } }
 
+  // ── PDF Export (data-driven, no canvas) ──
+  const exportPDF = () => {
+    setExportingPdf(true)
+    try {
+      const pdf = new jsPDF('p', 'mm', 'a4')
+      const pw = 210 // page width
+      const margin = 14
+      const usable = pw - margin * 2
+      let y = margin
+
+      const checkPage = (need: number) => {
+        if (y + need > 280) { pdf.addPage(); y = margin }
+      }
+
+      // ── Helper: draw a simple table ──
+      const drawTable = (headers: string[], rows: string[][], colWidths: number[]) => {
+        checkPage(10 + rows.length * 7)
+        // Header row
+        pdf.setFillColor(22, 163, 106)
+        pdf.rect(margin, y, usable, 7, 'F')
+        pdf.setFont('helvetica', 'bold')
+        pdf.setFontSize(8)
+        pdf.setTextColor(255, 255, 255)
+        let cx = margin + 2
+        headers.forEach((h, i) => { pdf.text(h, cx, y + 5); cx += colWidths[i] })
+        y += 7
+        // Data rows
+        pdf.setFont('helvetica', 'normal')
+        pdf.setTextColor(55, 65, 81)
+        rows.forEach((row, ri) => {
+          checkPage(7)
+          if (ri % 2 === 0) { pdf.setFillColor(249, 250, 251); pdf.rect(margin, y, usable, 7, 'F') }
+          cx = margin + 2
+          row.forEach((cell, i) => { pdf.text(String(cell), cx, y + 5); cx += colWidths[i] })
+          y += 7
+        })
+      }
+
+      // ── Title ──
+      pdf.setFontSize(18)
+      pdf.setFont('helvetica', 'bold')
+      pdf.setTextColor(17, 24, 39)
+      pdf.text('AgroYield Network — Analytics Report', margin, y + 6)
+      y += 10
+      pdf.setFontSize(9)
+      pdf.setFont('helvetica', 'normal')
+      pdf.setTextColor(107, 114, 128)
+      pdf.text(`Generated: ${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })}`, margin, y + 4)
+      y += 10
+
+      // ── Section: Key Metrics ──
+      pdf.setFontSize(12)
+      pdf.setFont('helvetica', 'bold')
+      pdf.setTextColor(17, 24, 39)
+      pdf.text('Key Metrics', margin, y + 4)
+      y += 8
+      const metrics = [
+        ['Total Members', String(members.length)],
+        ['Waitlist', String(waitlistSignups.length)],
+        ['Growth (MoM)', `${growthRate >= 0 ? '+' : ''}${growthRate}%`],
+        ['Active (7d)', String(funnel[funnel.length - 1]?.value ?? 0)],
+        ['Active Subscribers', String(subscriptionData.activeSubs)],
+        ['Mentors', String(mentorshipHealth.mentors)],
+        ['Businesses', String(businessHealth.totalBusinesses)],
+        ['Platform GMV', fmtNaira(businessHealth.totalRevenue)],
+        ['Net Profit', fmtNaira(businessHealth.netProfit)],
+      ]
+      drawTable(['Metric', 'Value'], metrics, [100, 82])
+      y += 6
+
+      // ── Section: Growth Trends (last 12 months) ──
+      checkPage(20)
+      pdf.setFontSize(12)
+      pdf.setFont('helvetica', 'bold')
+      pdf.setTextColor(17, 24, 39)
+      pdf.text('Growth Trends (Last 12 Months)', margin, y + 4)
+      y += 8
+      drawTable(
+        ['Month', 'New Members', 'Cumulative', 'Waitlist'],
+        growthData.map(g => [g.label, String(g['New Members']), String(g['Total Members']), String(g['Waitlist Signups'])]),
+        [40, 40, 50, 52],
+      )
+      y += 6
+
+      // ── Section: Module Adoption ──
+      checkPage(20)
+      pdf.setFontSize(12)
+      pdf.setFont('helvetica', 'bold')
+      pdf.setTextColor(17, 24, 39)
+      pdf.text('Module Adoption', margin, y + 4)
+      y += 8
+      drawTable(
+        ['Module', 'Total', 'Last 7 Days'],
+        moduleData.map(m => [m.module, String(m.total), String(m.recent)]),
+        [80, 50, 52],
+      )
+      y += 6
+
+      // ── Section: Engagement Funnel ──
+      checkPage(20)
+      pdf.setFontSize(12)
+      pdf.setFont('helvetica', 'bold')
+      pdf.setTextColor(17, 24, 39)
+      pdf.text('Engagement Funnel', margin, y + 4)
+      y += 8
+      drawTable(
+        ['Stage', 'Count'],
+        funnel.map(f => [f.name, String(f.value)]),
+        [100, 82],
+      )
+      y += 6
+
+      // ── Section: Subscription Health ──
+      checkPage(20)
+      pdf.setFontSize(12)
+      pdf.setFont('helvetica', 'bold')
+      pdf.setTextColor(17, 24, 39)
+      pdf.text('Subscription Health', margin, y + 4)
+      y += 8
+      drawTable(
+        ['Status', 'Count'],
+        subscriptionData.pie.map((p: { name: string; value: number }) => [p.name, String(p.value)]),
+        [100, 82],
+      )
+      y += 6
+
+      // ── Section: Business Suite ──
+      checkPage(20)
+      pdf.setFontSize(12)
+      pdf.setFont('helvetica', 'bold')
+      pdf.setTextColor(17, 24, 39)
+      pdf.text('Business Suite Health', margin, y + 4)
+      y += 8
+      const bizMetrics = [
+        ['Businesses', String(businessHealth.totalBusinesses)],
+        ['Total Invoices', String(businessHealth.totalInvoices)],
+        ['Total Revenue (Paid)', fmtNaira(businessHealth.totalRevenue)],
+        ['Total Expenses', fmtNaira(businessHealth.totalExpenseAmount)],
+        ['Net Profit', fmtNaira(businessHealth.netProfit)],
+      ]
+      drawTable(['Metric', 'Value'], bizMetrics, [100, 82])
+      y += 4
+
+      if (businessHealth.invoicePie.length > 0) {
+        checkPage(14)
+        pdf.setFontSize(10)
+        pdf.setFont('helvetica', 'bold')
+        pdf.text('Invoice Status', margin, y + 4)
+        y += 6
+        drawTable(
+          ['Status', 'Count'],
+          businessHealth.invoicePie.map((p: { name: string; value: number }) => [p.name, String(p.value)]),
+          [100, 82],
+        )
+        y += 4
+      }
+
+      if (businessHealth.topCategories.length > 0) {
+        checkPage(14)
+        pdf.setFontSize(10)
+        pdf.setFont('helvetica', 'bold')
+        pdf.text('Top Expense Categories', margin, y + 4)
+        y += 6
+        drawTable(
+          ['Category', 'Amount'],
+          businessHealth.topCategories.map((c: { name: string; value: number }) => [c.name, fmtNaira(c.value)]),
+          [100, 82],
+        )
+        y += 4
+      }
+      y += 2
+
+      // ── Section: Mentorship Health ──
+      checkPage(20)
+      pdf.setFontSize(12)
+      pdf.setFont('helvetica', 'bold')
+      pdf.setTextColor(17, 24, 39)
+      pdf.text('Mentorship Health', margin, y + 4)
+      y += 8
+      const mentorMetrics = [
+        ['Active Mentors', String(mentorshipHealth.mentors)],
+        ['Total Requests', String(mentorshipHealth.total)],
+        ...mentorshipHealth.pie.map((p: { name: string; value: number }) => [p.name, String(p.value)]),
+      ]
+      drawTable(['Metric', 'Value'], mentorMetrics, [100, 82])
+      y += 6
+
+      // ── Section: Monthly Revenue Trend ──
+      if (businessHealth.revByMonth.length > 0) {
+        checkPage(20)
+        pdf.setFontSize(12)
+        pdf.setFont('helvetica', 'bold')
+        pdf.setTextColor(17, 24, 39)
+        pdf.text('Monthly Revenue vs Expenses', margin, y + 4)
+        y += 8
+        drawTable(
+          ['Month', 'Revenue', 'Expenses'],
+          businessHealth.revByMonth.map((m: { label: string; Revenue: number; Expenses: number }) => [m.label, fmtNaira(m.Revenue), fmtNaira(m.Expenses)]),
+          [60, 60, 62],
+        )
+      }
+
+      // ── Footer ──
+      const pageCount = pdf.getNumberOfPages()
+      for (let i = 1; i <= pageCount; i++) {
+        pdf.setPage(i)
+        pdf.setFontSize(7)
+        pdf.setTextColor(156, 163, 175)
+        pdf.text(`AgroYield Network Analytics — Page ${i} of ${pageCount}`, margin, 290)
+      }
+
+      pdf.save(`AgroYield_Analytics_${new Date().toISOString().slice(0, 10)}.pdf`)
+    } finally {
+      setExportingPdf(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
 
@@ -341,11 +533,11 @@ export default function AnalyticsTab(props: AnalyticsProps) {
       <div className="flex justify-end">
         <button onClick={exportPDF} disabled={exportingPdf}
           className="flex items-center gap-1.5 px-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:border-green-400 hover:text-green-700 dark:hover:text-green-400 transition-all disabled:opacity-50">
-          {exportingPdf ? 'Generating PDF...' : 'Download PDF Report'}
+          {exportingPdf ? 'Generating PDF...' : '📄 Download PDF Report'}
         </button>
       </div>
 
-      <div ref={reportRef} className="space-y-6">
+      <div className="space-y-6">
 
       {/* ── Key Metrics Row ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
@@ -356,7 +548,7 @@ export default function AnalyticsTab(props: AnalyticsProps) {
         <StatCard label="Subscribers" value={subscriptionData.activeSubs} sub={`${subscriptionData.expiringIn30} expiring in 30d`} accent="text-amber-600 dark:text-amber-400" />
         <StatCard label="Mentors" value={mentorshipHealth.mentors} sub={`${mentorshipHealth.total} requests`} />
         <StatCard label="Businesses" value={businessHealth.totalBusinesses} sub={`${businessHealth.totalInvoices} invoices`} />
-        <StatCard label="Platform GMV" value={`₦${businessHealth.totalRevenue.toLocaleString()}`} sub={`${businessHealth.netProfit >= 0 ? '+' : ''}₦${businessHealth.netProfit.toLocaleString()} net`} accent="text-green-600 dark:text-green-400" />
+        <StatCard label="Platform GMV" value={fmtNaira(businessHealth.totalRevenue)} sub={`${businessHealth.netProfit >= 0 ? '+' : ''}${fmtNaira(businessHealth.netProfit)} net`} accent="text-green-600 dark:text-green-400" />
       </div>
 
       {/* ── Growth & Signup Trends ── */}
@@ -642,7 +834,7 @@ export default function AnalyticsTab(props: AnalyticsProps) {
         </Section>
       </div>
 
-      </div>{/* end reportRef */}
+      </div>
     </div>
   )
 }
