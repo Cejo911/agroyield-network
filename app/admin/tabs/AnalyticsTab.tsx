@@ -20,7 +20,7 @@ interface AnalyticsProps {
   mentorProfiles: { user_id: string }[]
   mentorshipRequests: { id: string; mentor_id: string; mentee_id: string; status: string; created_at: string }[]
   businesses: { id: string; user_id: string; name: string; created_at: string }[]
-  invoices: { id: string; business_id: string; status: string; total_amount: number | null; issue_date: string | null; created_at: string }[]
+  invoices: { id: string; business_id: string; status: string; total: number | null; issue_date: string | null; created_at: string }[]
   businessExpenses: { id: string; business_id: string; amount: number; category: string | null; date: string | null; created_at: string }[]
 }
 
@@ -279,7 +279,7 @@ export default function AnalyticsTab(props: AnalyticsProps) {
     const totalInvoices = invoices.length
     const totalExpenses = businessExpenses.length
     const paidInvoices = invoices.filter(i => i.status === 'paid')
-    const totalRevenue = paidInvoices.reduce((s, i) => s + Number(i.total_amount || 0), 0)
+    const totalRevenue = paidInvoices.reduce((s, i) => s + Number(i.total || 0), 0)
     const totalExpenseAmount = businessExpenses.reduce((s, e) => s + Number(e.amount || 0), 0)
     const netProfit = totalRevenue - totalExpenseAmount
 
@@ -295,7 +295,7 @@ export default function AnalyticsTab(props: AnalyticsProps) {
     const revByMonth = months.map(m => {
       const rev = paidInvoices
         .filter(i => i.issue_date && i.issue_date.startsWith(m.key))
-        .reduce((s, i) => s + Number(i.total_amount || 0), 0)
+        .reduce((s, i) => s + Number(i.total || 0), 0)
       const exp = businessExpenses
         .filter(e => e.date && e.date.startsWith(m.key))
         .reduce((s, e) => s + Number(e.amount || 0), 0)

@@ -76,7 +76,7 @@ export default async function AdminPage() {
     adminAny.from('admin_audit_log').select('id, admin_id, action, target_type, target_id, details, created_at').order('created_at', { ascending: false }).limit(100),
     adminAny.from('waitlist_signups').select('*').order('created_at', { ascending: false }),
     adminAny.from('businesses').select('id, user_id, name, created_at').order('created_at', { ascending: false }),
-    adminAny.from('invoices').select('id, business_id, status, total_amount, issue_date, created_at').order('created_at', { ascending: false }).limit(1000),
+    adminAny.from('invoices').select('id, business_id, status, total, issue_date, created_at').order('created_at', { ascending: false }).limit(1000),
     adminAny.from('business_expenses').select('id, business_id, amount, category, date, created_at').order('created_at', { ascending: false }).limit(1000),
   ])
 

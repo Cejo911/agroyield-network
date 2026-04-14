@@ -150,7 +150,7 @@ interface Invoice {
   id: string
   business_id: string
   status: string
-  total_amount: number | null
+  total: number | null
   issue_date: string | null
   created_at: string
 }
