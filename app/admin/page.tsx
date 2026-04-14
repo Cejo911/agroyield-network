@@ -58,7 +58,7 @@ export default async function AdminPage() {
   ] = await Promise.all([
     supabaseAny.from('opportunities').select('*').order('created_at', { ascending: false }),
     supabaseAny.from('marketplace_listings').select('*').order('created_at', { ascending: false }),
-    adminAny.from('profiles').select('id, first_name, last_name, email, username, is_admin, admin_role, admin_permissions, is_verified, is_elite, is_suspended, subscription_expires_at, subscription_plan, created_at').order('created_at', { ascending: false }),
+    adminAny.from('profiles').select('id, first_name, last_name, username, is_admin, admin_role, admin_permissions, is_verified, is_elite, is_suspended, subscription_expires_at, subscription_plan, created_at').order('created_at', { ascending: false }),
     adminAny.from('grants').select('id, title, funder, category, status, featured, deadline, posted_by, created_at').order('created_at', { ascending: false }),
     adminAny.from('community_posts').select('id, user_id, post_type, content, image_url, is_active, is_pinned, created_at').order('created_at', { ascending: false }).limit(500),
     adminAny.from('research_posts').select('id, user_id, title, type, is_active, is_locked, created_at').order('created_at', { ascending: false }).limit(500),
