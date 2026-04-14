@@ -47,7 +47,7 @@ const PERM_LABELS: Record<string, string> = {
 }
 
 // Generate a plain-English description from action + details
-function describeAction(action: string, targetType: string, details: Record<string, unknown> | null, getDisplayName: (id: string) => string): string {
+function describeAction(action: string, targetType: string, targetId: string | null, details: Record<string, unknown> | null, getDisplayName: (id: string) => string): string {
   const d = details ?? {}
 
   // Settings changes
@@ -62,7 +62,6 @@ function describeAction(action: string, targetType: string, details: Record<stri
 
   // Member actions
   if (targetType === 'member' || targetType === 'user') {
-    const targetId = d.targetId as string | undefined
     const targetName = targetId ? getDisplayName(targetId) : 'a member'
 
     if (action === 'member.suspend') return `Suspended ${targetName}`
@@ -159,7 +158,7 @@ export default function AuditLogTab({
 
   const filtered = entries.filter(e => {
     const q = search.toLowerCase()
-    const description = describeAction(e.action, e.target_type, e.details, getDisplayName).toLowerCase()
+    const description = describeAction(e.action, e.target_type, e.target_id, e.details, getDisplayName).toLowerCase()
     return !q
       || e.action.toLowerCase().includes(q)
       || e.target_type.toLowerCase().includes(q)
@@ -184,7 +183,7 @@ export default function AuditLogTab({
       <div className="space-y-2">
         {filtered.length === 0 && <p className="text-gray-500 dark:text-gray-400 text-sm">No audit log entries found.</p>}
         {filtered.map(e => {
-          const description = describeAction(e.action, e.target_type, e.details, getDisplayName)
+          const description = describeAction(e.action, e.target_type, e.target_id, e.details, getDisplayName)
           const isExpanded = expandedId === e.id
           const hasDetails = e.details && Object.keys(e.details).length > 0
           return (
