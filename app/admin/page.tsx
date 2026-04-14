@@ -75,12 +75,13 @@ export default async function AdminPage() {
   const profilesMap: Record<string, { first_name: string | null; last_name: string | null; email: string | null; username: string | null }> = {}
   for (const m of (members ?? [])) {
     const raw = m as Record<string, unknown>
-    if (typeof raw.id === 'string') {
-      profilesMap[raw.id] = {
-        first_name: typeof raw.first_name === 'string' ? raw.first_name : null,
-        last_name:  typeof raw.last_name  === 'string' ? raw.last_name  : null,
-        email:      typeof raw.email      === 'string' ? raw.email      : null,
-        username:   typeof raw.username   === 'string' ? raw.username   : null,
+    const id = String(raw.id ?? '')
+    if (id) {
+      profilesMap[id] = {
+        first_name: (raw.first_name as string) ?? null,
+        last_name:  (raw.last_name as string)  ?? null,
+        email:      (raw.email as string)      ?? null,
+        username:   (raw.username as string)   ?? null,
       }
     }
   }
