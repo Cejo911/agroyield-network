@@ -39,6 +39,7 @@ interface Member {
   last_name: string | null
   email: string | null
   username: string | null
+  gender: string | null
   is_admin: boolean
   admin_role: string | null
   admin_permissions: Record<string, boolean> | null

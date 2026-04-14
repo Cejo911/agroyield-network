@@ -8,7 +8,7 @@ import jsPDF from 'jspdf'
 
 // ── Types ──
 interface AnalyticsProps {
-  members: { id: string; created_at: string; is_verified: boolean; is_elite: boolean; is_suspended: boolean; subscription_plan: string | null; subscription_expires_at: string | null }[]
+  members: { id: string; gender: string | null; created_at: string; is_verified: boolean; is_elite: boolean; is_suspended: boolean; subscription_plan: string | null; subscription_expires_at: string | null }[]
   waitlistSignups: { id: string; created_at: string }[]
   communityPosts: { id: string; user_id: string; created_at: string; is_active: boolean }[]
   researchPosts: { id: string; user_id: string; created_at: string }[]
@@ -430,6 +430,66 @@ export default function AnalyticsTab(props: AnalyticsProps) {
     return { totalSearches: searchLogs.length, uniqueSearchers, topTerms, zeroResultTerms, byModule, dailyTrend }
   }, [searchLogs, days30])
 
+  // ═══════════════════════════════════════════════════════════
+  // 10. GENDER & INCLUSION ANALYTICS
+  // ═══════════════════════════════════════════════════════════
+  const genderStats = useMemo(() => {
+    // Build gender lookup: userId → gender
+    const genderMap: Record<string, string> = {}
+    for (const m of members) {
+      if (m.gender) genderMap[m.id] = m.gender
+    }
+
+    // Overall breakdown
+    const counts: Record<string, number> = { female: 0, male: 0, other: 0, prefer_not_to_say: 0, unset: 0 }
+    for (const m of members) {
+      const g = m.gender || 'unset'
+      counts[g] = (counts[g] || 0) + 1
+    }
+    const total = members.length
+    const femalePct = total > 0 ? Math.round((counts.female / total) * 100) : 0
+
+    // Pie data (exclude unset for cleaner chart)
+    const labelMap: Record<string, string> = { female: 'Female', male: 'Male', other: 'Other', prefer_not_to_say: 'Prefer not to say', unset: 'Not specified' }
+    const pie = Object.entries(counts)
+      .filter(([, v]) => v > 0)
+      .map(([key, value]) => ({ name: labelMap[key] || key, value }))
+
+    // Helper: count females in a set of user_ids
+    const femaleIn = (userIds: string[]) => userIds.filter(id => genderMap[id] === 'female').length
+    const totalIn = (userIds: string[]) => userIds.length
+    const pctF = (f: number, t: number) => t > 0 ? Math.round((f / t) * 100) : 0
+
+    // Per-module gender breakdown
+    const communityUserIds = [...new Set(communityPosts.map(p => p.user_id))]
+    const researchUserIds = [...new Set(researchPosts.map(p => p.user_id))]
+    const opportunityUserIds = [...new Set(opportunities.map(o => o.user_id))]
+    const listingUserIds = [...new Set(listings.map(l => l.user_id))]
+    const businessUserIds = [...new Set(businesses.map(b => b.user_id))]
+    const mentorUserIds = [...new Set(mentorProfiles.map(m => m.user_id))]
+    const menteeUserIds = [...new Set(mentorshipRequests.map(r => r.mentee_id))]
+
+    const moduleBreakdown = [
+      { module: 'Members (overall)', female: counts.female, total, pct: femalePct },
+      { module: 'Community Posts', female: femaleIn(communityUserIds), total: totalIn(communityUserIds), pct: pctF(femaleIn(communityUserIds), totalIn(communityUserIds)) },
+      { module: 'Research', female: femaleIn(researchUserIds), total: totalIn(researchUserIds), pct: pctF(femaleIn(researchUserIds), totalIn(researchUserIds)) },
+      { module: 'Opportunities', female: femaleIn(opportunityUserIds), total: totalIn(opportunityUserIds), pct: pctF(femaleIn(opportunityUserIds), totalIn(opportunityUserIds)) },
+      { module: 'Marketplace', female: femaleIn(listingUserIds), total: totalIn(listingUserIds), pct: pctF(femaleIn(listingUserIds), totalIn(listingUserIds)) },
+      { module: 'Business Owners', female: femaleIn(businessUserIds), total: totalIn(businessUserIds), pct: pctF(femaleIn(businessUserIds), totalIn(businessUserIds)) },
+      { module: 'Mentors', female: femaleIn(mentorUserIds), total: totalIn(mentorUserIds), pct: pctF(femaleIn(mentorUserIds), totalIn(mentorUserIds)) },
+      { module: 'Mentees', female: femaleIn(menteeUserIds), total: totalIn(menteeUserIds), pct: pctF(femaleIn(menteeUserIds), totalIn(menteeUserIds)) },
+    ]
+
+    // Growth trend: female signups per month
+    const femaleGrowth = months.map(m => {
+      const monthMembers = members.filter(mb => mb.created_at.startsWith(m.key))
+      const f = monthMembers.filter(mb => mb.gender === 'female').length
+      return { label: m.label, Female: f, Other: monthMembers.length - f }
+    })
+
+    return { counts, total, femalePct, pie, moduleBreakdown, femaleGrowth }
+  }, [members, communityPosts, researchPosts, opportunities, listings, businesses, mentorProfiles, mentorshipRequests, months])
+
   const tooltipStyle = { contentStyle: { background: '#111827', border: '1px solid #374151', borderRadius: 8, fontSize: 12 }, labelStyle: { color: '#9ca3af' }, itemStyle: { color: '#d1d5db' } }
 
   // ── PDF Export (data-driven, no canvas) ──
@@ -774,6 +834,35 @@ export default function AnalyticsTab(props: AnalyticsProps) {
           { rightAlignLast: true },
         )
       }
+
+      divider()
+
+      // ═══════════════════════════════════════════════════════════
+      // GENDER & INCLUSION
+      // ═══════════════════════════════════════════════════════════
+      sectionHeader('Gender & Inclusion', `${genderStats.femalePct}% female participation across ${genderStats.total} members`)
+
+      // Overall breakdown
+      drawTable(
+        ['Gender', 'Count', '% of Total'],
+        genderStats.pie.map(p => [p.name, String(p.value), `${genderStats.total > 0 ? Math.round((p.value / genderStats.total) * 100) : 0}%`]),
+        [70, 50, 62],
+        { rightAlignLast: true },
+      )
+
+      // Per-module female participation
+      y += 2
+      pdf.setFont('helvetica', 'bold')
+      pdf.setFontSize(8)
+      pdf.setTextColor(dark.r, dark.g, dark.b)
+      pdf.text('Female Participation by Module', margin + 7, y + 4)
+      y += 6
+      drawTable(
+        ['Module', 'Female Users', 'Total Users', 'Female %'],
+        genderStats.moduleBreakdown.map(m => [m.module, String(m.female), String(m.total), `${m.pct}%`]),
+        [55, 35, 35, 57],
+        { rightAlignLast: true },
+      )
 
       divider()
 
@@ -1171,6 +1260,71 @@ export default function AnalyticsTab(props: AnalyticsProps) {
             </div>
           </div>
         </Section>
+
+      {/* ── Gender & Inclusion ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Gender Breakdown Pie */}
+        <Section title="Gender Breakdown" subtitle={`${genderStats.femalePct}% female participation across ${genderStats.total} members`}>
+          <div className="flex items-center gap-4">
+            <ResponsiveContainer width="50%" height={160}>
+              <PieChart>
+                <Pie data={genderStats.pie} cx="50%" cy="50%" innerRadius={35} outerRadius={65} dataKey="value" paddingAngle={2}>
+                  {genderStats.pie.map((_, i) => (
+                    <Cell key={i} fill={['#ec4899', '#3b82f6', '#8b5cf6', '#9ca3af', '#d1d5db'][i % 5]} />
+                  ))}
+                </Pie>
+                <Tooltip {...tooltipStyle} />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="space-y-1.5 flex-1">
+              {genderStats.pie.map((entry, i) => (
+                <div key={entry.name} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: ['#ec4899', '#3b82f6', '#8b5cf6', '#9ca3af', '#d1d5db'][i % 5] }} />
+                    <span className="text-xs text-gray-600 dark:text-gray-400">{entry.name}</span>
+                  </div>
+                  <span className="text-xs font-semibold text-gray-900 dark:text-white">{entry.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Section>
+
+        {/* Female Participation by Module */}
+        <Section title="Female Participation by Module" subtitle="Unique female users per module">
+          <div className="space-y-2">
+            {genderStats.moduleBreakdown.map(m => (
+              <div key={m.module}>
+                <div className="flex items-center justify-between mb-0.5">
+                  <span className="text-xs text-gray-600 dark:text-gray-400">{m.module}</span>
+                  <span className="text-xs font-semibold text-gray-900 dark:text-white">{m.female} / {m.total} <span className="text-gray-400 font-normal">({m.pct}%)</span></span>
+                </div>
+                <div className="w-full h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                  <div className="h-full rounded-full bg-pink-500" style={{ width: `${m.pct}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </Section>
+
+        {/* Female Signup Trend */}
+        <Section title="Female Signup Trend" subtitle="Monthly female vs other signups (last 12 months)">
+          <ResponsiveContainer width="100%" height={180}>
+            <BarChart data={genderStats.femaleGrowth} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
+              <XAxis dataKey="label" tick={{ fontSize: 9, fill: '#9ca3af' }} />
+              <YAxis tick={{ fontSize: 10, fill: '#9ca3af' }} allowDecimals={false} />
+              <Tooltip {...tooltipStyle} />
+              <Bar dataKey="Female" fill="#ec4899" radius={[3, 3, 0, 0]} stackId="a" />
+              <Bar dataKey="Other" fill="#3b82f6" radius={[3, 3, 0, 0]} stackId="a" />
+            </BarChart>
+          </ResponsiveContainer>
+          <div className="flex gap-4 text-xs text-gray-500 dark:text-gray-400 pt-1">
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-pink-500" /> Female</span>
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-blue-500" /> Other</span>
+          </div>
+        </Section>
+      </div>
 
       {/* ── Search Insights ── */}
       {searchInsights && (
