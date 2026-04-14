@@ -1,6 +1,6 @@
 # AgroYield Network — Project Status
 
-> **Last updated:** 13 April 2026 (Checkpoint 7)
+> **Last updated:** 14 April 2026 (Checkpoint 8)
 > **Maintained by:** Okoli (okolichijiokei@gmail.com)
 > **Launch Target:** 5 July 2026 (~12 weeks remaining)
 > **Purpose:** Permanent reference for any developer or Claude session to get up to speed instantly.
@@ -131,10 +131,16 @@
 | ---------------------------------------------------- | ------- | --------------------------------------------------------------- |
 | Browse mentors with expertise + availability filters | ✅ Done | `app/mentorship/mentor-browser.tsx`                             |
 | Mentor profile creation/editing                      | ✅ Done | `app/mentorship/become-mentor/page.tsx`                         |
-| Session booking (request/accept/decline/complete)    | ✅ Done | `app/mentorship/[id]/mentor-detail.tsx`                         |
-| Star ratings + reviews after sessions                | ✅ Done | `app/mentorship/[id]/mentor-detail.tsx`                         |
+| Request workflow (send/accept/decline/withdraw)      | ✅ Done | `app/mentorship/[id]/mentor-detail.tsx`, `app/mentorship/sessions/page.tsx` |
+| Session scheduling (date, duration, format, link)    | ✅ Done | `app/mentorship/sessions/page.tsx` — mentor schedules, both parties see details |
+| Mark completed / cancel session                      | ✅ Done | `app/mentorship/sessions/page.tsx` — cascades to request status |
+| Star ratings + reviews after sessions                | ✅ Done | `app/mentorship/sessions/page.tsx` — both parties review independently |
 | LinkedIn auto-populate from profile                  | ✅ Done | Fetches profile LinkedIn on mentor form load                    |
 | Availability enum (Open/Limited/Waitlist/Closed)     | ✅ Done | Custom PostgreSQL enum `mentor_availability`                    |
+| Status transition enforcement (DB trigger)           | ✅ Done | `enforce_mentorship_request_transition()` — blocks illegal state changes |
+| Party-scoped RLS on sessions                         | ✅ Done | SELECT restricted to mentor + mentee via `mentorship_requests` join |
+| Notification deduplication                           | ✅ Done | Removed client-side API notify; DB trigger `on_mentorship_request()` is single source |
+| Notification link fix                                | ✅ Done | Updated trigger from legacy `/agroyield-mentorship.html` to `/mentorship/sessions` |
 
 ### Module 8 — Grant Tracker
 
@@ -267,8 +273,9 @@
 | `settings`             | Platform-wide settings (pricing, rate limits, moderation mode)               |
 | `notifications`        | In-app notifications (follow, invite, comment, system) with read_at tracking |
 | `mentor_profiles`      | Mentor availability, expertise, bio, session formats                         |
-| `mentorship_sessions`  | Session requests between mentors and mentees with status workflow            |
-| `mentorship_reviews`   | Star ratings and comments after completed sessions                           |
+| `mentorship_requests`  | Mentorship request lifecycle (pending/accepted/declined/withdrawn/completed) |
+| `mentorship_sessions`  | Scheduled sessions linked to accepted requests (date, format, meeting link)  |
+| `mentorship_reviews`   | Star ratings + comments after completed sessions (one per party per session) |
 | `price_alerts`         | User-created alerts for commodity price thresholds                           |
 | `reports`              | Content reports from users                                                   |
 | `comments`             | Comments on all content types                                                |
@@ -293,6 +300,23 @@ Note: `/insights`, `/connections` are pre-registered for future modules.
 ---
 
 ## Changelog
+
+### Checkpoint 8 — April 14, 2026 (Mentorship module hardening — scheduling, reviews, security)
+
+- Added: Session scheduling UI — mentors schedule accepted requests with date/time, duration, format, meeting link; both parties see blue info panel with Africa/Lagos timezone
+- Added: `mentorship_reviews` table with RLS (reviewer inserts own, parties can read) + review modal on completed sessions with star rating + optional comment
+- Added: `mentorship_requests` table (corrected — was previously routing through `mentorship_sessions` by mistake)
+- Added: `enforce_mentorship_request_transition()` BEFORE UPDATE trigger — state machine blocks illegal transitions (mentee self-accepting, completing without session, reopening declined/withdrawn)
+- Added: `handle_new_user()` SECURITY DEFINER trigger on `auth.users` INSERT — auto-creates profile row, prevents orphan users
+- Changed: `/mentorship/sessions` page fully rewritten against `mentorship_requests` as source of truth (was incorrectly querying `mentorship_sessions`)
+- Changed: `on_mentorship_request()` trigger notification link updated from legacy `/agroyield-mentorship.html` to `/mentorship/sessions`; existing rows backfilled
+- Changed: Mentor notification path deduplicated — removed client-side `fetch('/api/mentorship/sessions')`, DB trigger is now single source; API route returns 410 Gone
+- Changed: `on_mentorship_request()` set to SECURITY DEFINER (was failing RLS when mentee triggered cross-user notification insert)
+- Changed: `mentorship_sessions` SELECT policy tightened from `qual = true` (any authenticated user) to party-scoped via `mentorship_requests` join
+- Fixed: `mentor_profiles_user_id_fkey` repointed from `auth.users` to `public.profiles` (PostgREST embed was silently returning empty)
+- Fixed: `mentorship_requests_{mentee,mentor}_id_fkey` repointed from `public.users` (empty table) to `public.profiles`
+- Fixed: 6 orphan `auth.users` rows without profile rows — backfilled from `raw_user_meta_data`
+- Tables added: `mentorship_reviews`; tables modified: `mentorship_requests` (FKs), `mentorship_sessions` (RLS), `mentor_profiles` (FK), `notifications` (link backfill)
 
 ### Checkpoint 7 — April 13, 2026 (Phase 3.3f — UX polish pass 2 + security + build hardening)
 

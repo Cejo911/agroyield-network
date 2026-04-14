@@ -87,8 +87,8 @@ Features that drive daily engagement and create network effects.
 ### 3.1 — Mentorship Module
 
 > **Why:** High-value networking feature. Creates sticky relationships. Already in middleware matcher.
-> **Scope:** Mentor profiles with expertise/availability. Mentee matching. Session booking (Google Calendar integration available). Session notes. Ratings.
-> **Status:** ✅ Completed (12 Apr 2026) — Mentor profiles, browse/search with expertise + availability filters, session booking (request/accept/decline/complete/cancel), star ratings + reviews. Loading + error boundaries. Notification on session request.
+> **Scope:** Mentor profiles with expertise/availability. Mentee matching. Request workflow (pending/accepted/declined/withdrawn/completed). Session scheduling with date, format, duration, meeting link. Post-session star ratings + reviews (both parties). Notification deduplication. State-machine enforcement via DB trigger. Party-scoped RLS on sessions + reviews.
+> **Status:** ✅ Completed (14 Apr 2026) — Mentor profiles, browse/search with expertise + availability filters, request workflow, session scheduling UI (mentor schedules → both see details), mark completed / cancel session, star ratings + review modal, notification link fix, transition enforcement trigger, deduplicated notifications (DB trigger only), tightened RLS on mentorship_sessions + mentorship_requests.
 
 ### 3.2 — Smart Price Intelligence
 
