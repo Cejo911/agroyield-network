@@ -85,10 +85,10 @@ function fmtNaira(n: number): string {
 // ── Stat Card ──
 function StatCard({ label, value, sub, accent }: { label: string; value: string | number; sub?: string; accent?: string }) {
   return (
-    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4">
-      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{label}</p>
-      <p className={`text-2xl font-bold ${accent || 'text-gray-900 dark:text-white'}`}>{value}</p>
-      {sub && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{sub}</p>}
+    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 min-w-0 overflow-hidden">
+      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 truncate">{label}</p>
+      <p className={`text-lg sm:text-xl font-bold truncate ${accent || 'text-gray-900 dark:text-white'}`}>{value}</p>
+      {sub && <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1 truncate">{sub}</p>}
     </div>
   )
 }
