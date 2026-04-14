@@ -122,8 +122,8 @@ function BusinessSetup() {
       }
     }
     setSaving(false)
-    router.push('/business')
-    router.refresh()
+    // Hard navigate so the sidebar BusinessSwitcher reloads with the new business list
+    window.location.href = '/business'
   }
 
   if (loading) return <div className="text-center py-10 text-gray-400">Loading...</div>
