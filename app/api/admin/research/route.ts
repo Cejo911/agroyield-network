@@ -18,23 +18,30 @@ export async function PATCH(request: NextRequest) {
 
     if (p.admin_role !== 'super') {
       const perms = p.admin_permissions as Record<string, boolean> | null
-      if (!perms?.marketplace) return NextResponse.json({ error: 'No permission' }, { status: 403 })
+      if (!perms?.research) return NextResponse.json({ error: 'No permission' }, { status: 403 })
     }
 
-    const { id, is_active, is_pending_review } = await request.json()
+    const { id, action: postAction } = await request.json() as {
+      id: string
+      action: 'hide' | 'show' | 'lock' | 'unlock' | 'delete'
+    }
 
-    const updateData: Record<string, unknown> = { is_active }
-    if (typeof is_pending_review === 'boolean') updateData.is_pending_review = is_pending_review
+    if (postAction === 'hide') {
+      await supabaseAny.from('research_posts').update({ is_active: false }).eq('id', id)
+    } else if (postAction === 'show') {
+      await supabaseAny.from('research_posts').update({ is_active: true }).eq('id', id)
+    } else if (postAction === 'lock') {
+      await supabaseAny.from('research_posts').update({ is_locked: true }).eq('id', id)
+    } else if (postAction === 'unlock') {
+      await supabaseAny.from('research_posts').update({ is_locked: false }).eq('id', id)
+    } else if (postAction === 'delete') {
+      await supabaseAny.from('research_posts').update({
+        is_active: false,
+        content: '[Removed by admin]',
+      }).eq('id', id)
+    }
 
-    const { error } = await supabaseAny
-      .from('marketplace_listings')
-      .update(updateData)
-      .eq('id', id)
-
-    if (error) throw error
-
-    const action = is_pending_review === false && is_active ? 'approve' : is_pending_review === false ? 'decline' : is_active ? 'show' : 'hide'
-    await logAdminAction({ adminId: user.id, action: `listing.${action}`, targetType: 'listing', targetId: id })
+    await logAdminAction({ adminId: user.id, action: `research.${postAction}`, targetType: 'research_post', targetId: id })
 
     return NextResponse.json({ success: true })
   } catch (err: unknown) {

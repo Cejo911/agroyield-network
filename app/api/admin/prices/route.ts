@@ -18,23 +18,23 @@ export async function PATCH(request: NextRequest) {
 
     if (p.admin_role !== 'super') {
       const perms = p.admin_permissions as Record<string, boolean> | null
-      if (!perms?.marketplace) return NextResponse.json({ error: 'No permission' }, { status: 403 })
+      if (!perms?.prices) return NextResponse.json({ error: 'No permission' }, { status: 403 })
     }
 
-    const { id, is_active, is_pending_review } = await request.json()
+    const { id, action: priceAction } = await request.json() as {
+      id: string
+      action: 'hide' | 'show' | 'delete'
+    }
 
-    const updateData: Record<string, unknown> = { is_active }
-    if (typeof is_pending_review === 'boolean') updateData.is_pending_review = is_pending_review
+    if (priceAction === 'hide') {
+      await supabaseAny.from('price_reports').update({ is_active: false }).eq('id', id)
+    } else if (priceAction === 'show') {
+      await supabaseAny.from('price_reports').update({ is_active: true }).eq('id', id)
+    } else if (priceAction === 'delete') {
+      await supabaseAny.from('price_reports').update({ is_active: false }).eq('id', id)
+    }
 
-    const { error } = await supabaseAny
-      .from('marketplace_listings')
-      .update(updateData)
-      .eq('id', id)
-
-    if (error) throw error
-
-    const action = is_pending_review === false && is_active ? 'approve' : is_pending_review === false ? 'decline' : is_active ? 'show' : 'hide'
-    await logAdminAction({ adminId: user.id, action: `listing.${action}`, targetType: 'listing', targetId: id })
+    await logAdminAction({ adminId: user.id, action: `price.${priceAction}`, targetType: 'price_report', targetId: id })
 
     return NextResponse.json({ success: true })
   } catch (err: unknown) {

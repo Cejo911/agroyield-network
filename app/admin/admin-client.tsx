@@ -1,5 +1,15 @@
 'use client'
 import { useState } from 'react'
+import { SearchBar, FilterPills } from './tabs/AdminSearchBar'
+import CommunityTab from './tabs/CommunityTab'
+import ResearchTab from './tabs/ResearchTab'
+import CommentsTab from './tabs/CommentsTab'
+import PricesTab from './tabs/PricesTab'
+import MentorshipTab from './tabs/MentorshipTab'
+import AuditLogTab from './tabs/AuditLogTab'
+import NotifyPanel from './tabs/NotifyPanel'
+
+// ── Interfaces ──
 
 interface Opportunity {
   id: string
@@ -29,6 +39,7 @@ interface Member {
   username: string | null
   is_admin: boolean
   admin_role: string | null
+  admin_permissions: Record<string, boolean> | null
   is_verified: boolean
   is_elite: boolean
   is_suspended: boolean
@@ -56,20 +67,126 @@ interface Grant {
   posted_by: string | null
   created_at: string
 }
+interface CommunityPost {
+  id: string
+  user_id: string
+  post_type: string
+  content: string
+  image_url: string | null
+  is_active: boolean
+  is_pinned: boolean
+  created_at: string
+}
+interface ResearchPost {
+  id: string
+  user_id: string
+  title: string
+  type: string
+  is_active: boolean
+  is_locked: boolean
+  created_at: string
+}
+interface Comment {
+  id: string
+  user_id: string
+  post_id: string
+  post_type: string
+  content: string
+  user_name: string | null
+  is_hidden: boolean
+  created_at: string
+}
+interface PriceReport {
+  id: string
+  user_id: string
+  commodity: string
+  state: string
+  market_name: string
+  price: number
+  unit: string
+  reported_at: string
+  is_active?: boolean
+}
+interface MentorProfile {
+  id: string
+  user_id: string
+  headline: string | null
+  expertise: string | null
+  availability: string | null
+  is_active: boolean
+  updated_at: string
+}
+interface MentorshipRequest {
+  id: string
+  mentor_id: string
+  mentee_id: string
+  topic: string | null
+  status: string
+  created_at: string
+}
+interface AuditEntry {
+  id: string
+  admin_id: string
+  action: string
+  target_type: string
+  target_id: string | null
+  details: Record<string, unknown> | null
+  created_at: string
+}
+
 interface AdminClientProps {
   opportunities: Opportunity[]
   listings: Listing[]
   members: Member[]
   grants: Grant[]
+  communityPosts: CommunityPost[]
+  researchPosts: ResearchPost[]
+  comments: Comment[]
+  priceReports: PriceReport[]
+  mentorProfiles: MentorProfile[]
+  mentorshipRequests: MentorshipRequest[]
+  auditLog: AuditEntry[]
   reportGroups: ReportGroup[]
   profilesMap: Record<string, { first_name: string | null; last_name: string | null }>
   settingsMap: Record<string, string>
   currentAdminRole: string
+  currentAdminPermissions: Record<string, boolean> | null
   currentUserId: string
 }
-type Tab = 'opportunities' | 'marketplace' | 'members' | 'grants' | 'reports' | 'settings'
 
-// Shared input class for settings inputs
+type Tab = 'opportunities' | 'marketplace' | 'members' | 'grants' | 'community' | 'research' | 'comments' | 'prices' | 'mentorship' | 'reports' | 'audit_log' | 'notifications' | 'settings'
+
+// Permission keys per tab — determines which tabs a moderator can see
+const TAB_PERMISSION: Partial<Record<Tab, string>> = {
+  opportunities: 'opportunities',
+  marketplace: 'marketplace',
+  members: 'members',
+  grants: 'grants',
+  community: 'community',
+  research: 'research',
+  comments: 'comments',
+  prices: 'prices',
+  mentorship: 'mentorship',
+  reports: 'reports',
+  notifications: 'notifications',
+}
+
+// All permission keys with labels for the moderator management UI
+const PERMISSION_LABELS: { key: string; label: string }[] = [
+  { key: 'opportunities', label: 'Opportunities' },
+  { key: 'marketplace', label: 'Marketplace' },
+  { key: 'community', label: 'Community Posts' },
+  { key: 'research', label: 'Research Posts' },
+  { key: 'grants', label: 'Grants' },
+  { key: 'prices', label: 'Price Reports' },
+  { key: 'mentorship', label: 'Mentorship' },
+  { key: 'comments', label: 'Comments' },
+  { key: 'members', label: 'Members' },
+  { key: 'reports', label: 'Reports' },
+  { key: 'notifications', label: 'Notifications' },
+]
+
+// Shared input class
 const sInput = 'border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500'
 
 export default function AdminClient({
@@ -77,13 +194,32 @@ export default function AdminClient({
   listings: initialListings,
   members: initialMembers,
   grants: initialGrants,
+  communityPosts,
+  researchPosts,
+  comments,
+  priceReports,
+  mentorProfiles,
+  mentorshipRequests,
+  auditLog,
   reportGroups: initialReportGroups,
   profilesMap,
   settingsMap,
   currentAdminRole,
+  currentAdminPermissions,
   currentUserId,
 }: AdminClientProps) {
   const isSuperAdmin = currentAdminRole === 'super'
+
+  // Helper: does the current admin have access to a tab?
+  const canAccess = (tab: Tab): boolean => {
+    if (isSuperAdmin) return true
+    // Settings and audit_log are super-admin only
+    if (tab === 'settings' || tab === 'audit_log') return false
+    const permKey = TAB_PERMISSION[tab]
+    if (!permKey) return false
+    return currentAdminPermissions?.[permKey] === true
+  }
+
   const [activeTab, setActiveTab] = useState<Tab>('opportunities')
   const [opportunities, setOpportunities] = useState<Opportunity[]>(initialOpportunities)
   const [listings, setListings] = useState<Listing[]>(initialListings)
@@ -102,6 +238,11 @@ export default function AdminClient({
   const [memberRoleFilter, setMemberRoleFilter] = useState<'all' | 'admin' | 'verified' | 'elite' | 'suspended'>('all')
   const [grantStatusFilter, setGrantStatusFilter] = useState<'all' | 'open' | 'closed'>('all')
 
+  // Moderator permissions management (expanded member id)
+  const [expandedPermsMember, setExpandedPermsMember] = useState<string | null>(null)
+  const [savingPerms, setSavingPerms] = useState(false)
+
+  // Settings state
   const [registrationEnabled, setRegistrationEnabled] = useState(settingsMap.registration_enabled !== 'false')
   const [moderationMode, setModerationMode] = useState<'immediate' | 'approval'>(
     (settingsMap.moderation_mode as 'immediate' | 'approval') ?? 'immediate'
@@ -132,6 +273,8 @@ export default function AdminClient({
   const [savingSettings, setSavingSettings] = useState(false)
   const [settingsSaved, setSettingsSaved] = useState(false)
 
+  // ── Helpers ──
+
   const getDisplayName = (userId: string) => {
     const p = profilesMap[userId]
     if (!p) return 'Unknown'
@@ -139,6 +282,8 @@ export default function AdminClient({
   }
   const fmt = (dateStr: string) =>
     new Date(dateStr).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+
+  // ── Actions ──
 
   const saveSettings = async () => {
     setSavingSettings(true)
@@ -233,7 +378,20 @@ export default function AdminClient({
     await fetch('/api/admin/grant', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, status }) })
   }
 
-  // Filtered data
+  // Update moderator permissions
+  const updatePermissions = async (userId: string, permissions: Record<string, boolean>) => {
+    setSavingPerms(true)
+    setMembers(prev => prev.map(m => m.id === userId ? { ...m, admin_permissions: permissions } : m))
+    await fetch('/api/admin/member', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, action: 'update_permissions', permissions }),
+    })
+    setSavingPerms(false)
+  }
+
+  // ── Filtered data ──
+
   const filteredOpps = opportunities.filter(o => {
     const q = oppSearch.toLowerCase()
     const matchesSearch = !q || o.title.toLowerCase().includes(q) || o.type?.toLowerCase().includes(q) || o.location?.toLowerCase().includes(q) || getDisplayName(o.user_id).toLowerCase().includes(q)
@@ -276,57 +434,33 @@ export default function AdminClient({
     return !q || rg.postTitle.toLowerCase().includes(q) || rg.postType.toLowerCase().includes(q)
   })
 
-  const pendingCount = opportunities.filter(o => o.is_pending_review).length + listings.filter(l => l.is_pending_review).length
+  // ── Tab definitions — filter by permissions ──
 
-  const tabs: { id: Tab; label: string; badge?: number }[] = [
+  const allTabs: { id: Tab; label: string; badge?: number }[] = [
     { id: 'opportunities', label: 'Opportunities' },
     { id: 'marketplace',   label: 'Marketplace' },
     { id: 'members',       label: 'Members' },
     { id: 'grants',        label: 'Grants' },
+    { id: 'community',     label: 'Community' },
+    { id: 'research',      label: 'Research' },
+    { id: 'comments',      label: 'Comments' },
+    { id: 'prices',        label: 'Prices' },
+    { id: 'mentorship',    label: 'Mentorship' },
     { id: 'reports',       label: 'Reports', badge: reportGroups.length || undefined },
-    ...(isSuperAdmin ? [{ id: 'settings' as Tab, label: 'Settings' }] : []),
+    ...(isSuperAdmin ? [
+      { id: 'audit_log' as Tab, label: 'Audit Log' },
+      { id: 'notifications' as Tab, label: 'Notify' },
+      { id: 'settings' as Tab, label: 'Settings' },
+    ] : []),
   ]
 
-  // Reusable search bar
-  const SearchBar = ({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder: string }) => (
-    <div className="relative mb-4">
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className={`w-full pl-9 ${sInput}`}
-      />
-      <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-      </svg>
-      {value && (
-        <button onClick={() => onChange('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-sm">✕</button>
-      )}
-    </div>
-  )
-
-  // Reusable filter pills
-  const FilterPills = ({ options, value, onChange }: { options: { id: string; label: string }[]; value: string; onChange: (v: string) => void }) => (
-    <div className="flex flex-wrap gap-2 mb-4">
-      {options.map(opt => (
-        <button key={opt.id} onClick={() => onChange(opt.id)}
-          className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${
-            value === opt.id
-              ? 'bg-green-600 text-white'
-              : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
-          }`}>
-          {opt.label}
-        </button>
-      ))}
-    </div>
-  )
+  const tabs = allTabs.filter(t => canAccess(t.id))
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
       {/* Tab bar */}
       <div className="border-b border-gray-200 dark:border-gray-800 mb-6">
-        <nav className="-mb-px flex gap-6 overflow-x-auto">
+        <nav className="-mb-px flex gap-4 overflow-x-auto">
           {tabs.map((tab) => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)}
               className={`pb-3 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
@@ -461,6 +595,8 @@ export default function AdminClient({
           {filteredMembers.map((member) => {
             const displayName = [member.first_name, member.last_name].filter(Boolean).join(' ') || member.username || member.email
             const isSelf = member.id === currentUserId
+            const isModerator = member.is_admin && member.admin_role === 'moderator'
+            const showPermsPanel = expandedPermsMember === member.id
             return (
               <div key={member.id} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4">
                 <div className="flex items-start justify-between gap-4">
@@ -468,10 +604,10 @@ export default function AdminClient({
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-medium text-gray-900 dark:text-gray-100">{displayName}</span>
                       {member.is_elite && (
-                        <span className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs px-2 py-0.5 rounded-full font-semibold">👑 Elite</span>
+                        <span className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs px-2 py-0.5 rounded-full font-semibold">Elite</span>
                       )}
                       {member.is_verified && (
-                        <span className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs px-2 py-0.5 rounded-full">✓ Verified</span>
+                        <span className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs px-2 py-0.5 rounded-full">Verified</span>
                       )}
                       {member.is_admin && (
                         <span className={`text-xs px-2 py-0.5 rounded-full ${
@@ -479,7 +615,7 @@ export default function AdminClient({
                             ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400'
                             : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
                         }`}>
-                          {member.admin_role === 'super' ? '⚙ Super Admin' : '⚙ Moderator'}
+                          {member.admin_role === 'super' ? 'Super Admin' : 'Moderator'}
                         </span>
                       )}
                       {member.is_suspended && (
@@ -530,7 +666,7 @@ export default function AdminClient({
                         ) : (
                           <button onClick={() => memberAction(member.id, 'elite', m => ({ ...m, is_elite: true }))}
                             className="text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 px-3 py-1.5 rounded-md hover:bg-yellow-200 dark:hover:bg-yellow-900/50">
-                            👑 Make Elite
+                            Make Elite
                           </button>
                         )}
                         {!member.is_admin && (
@@ -546,13 +682,45 @@ export default function AdminClient({
                           </>
                         )}
                         {member.is_admin && (
-                          <button onClick={() => memberAction(member.id, 'removeadmin', m => ({ ...m, is_admin: false, admin_role: null }))}
+                          <button onClick={() => memberAction(member.id, 'removeadmin', m => ({ ...m, is_admin: false, admin_role: null, admin_permissions: null }))}
                             className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 px-3 py-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700">
                             Remove Admin
                           </button>
                         )}
+                        {/* Manage moderator permissions button */}
+                        {isModerator && (
+                          <button onClick={() => setExpandedPermsMember(showPermsPanel ? null : member.id)}
+                            className="text-xs bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 px-3 py-1.5 rounded-md hover:bg-indigo-200 dark:hover:bg-indigo-900/50">
+                            {showPermsPanel ? 'Hide Permissions' : 'Manage Permissions'}
+                          </button>
+                        )}
                       </>
                     )}
+                  </div>
+                )}
+
+                {/* ── Moderator Permissions Panel ── */}
+                {showPermsPanel && isSuperAdmin && isModerator && (
+                  <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Module Permissions</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {PERMISSION_LABELS.map(({ key, label }) => {
+                        const perms = member.admin_permissions ?? {}
+                        const enabled = perms[key] === true
+                        return (
+                          <label key={key} className="flex items-center gap-2 cursor-pointer">
+                            <button
+                              onClick={() => updatePermissions(member.id, { ...perms, [key]: !enabled })}
+                              disabled={savingPerms}
+                              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${enabled ? 'bg-green-600' : 'bg-gray-300 dark:bg-gray-600'}`}>
+                              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${enabled ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                            </button>
+                            <span className="text-xs text-gray-600 dark:text-gray-400">{label}</span>
+                          </label>
+                        )
+                      })}
+                    </div>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">Changes are saved immediately. Toggling a permission controls which admin tabs this moderator can access.</p>
                   </div>
                 )}
               </div>
@@ -622,6 +790,31 @@ export default function AdminClient({
         </div>
       )}
 
+      {/* ── Community Posts (delegated) ── */}
+      {activeTab === 'community' && (
+        <CommunityTab posts={communityPosts} getDisplayName={getDisplayName} fmt={fmt} />
+      )}
+
+      {/* ── Research Posts (delegated) ── */}
+      {activeTab === 'research' && (
+        <ResearchTab posts={researchPosts} getDisplayName={getDisplayName} fmt={fmt} />
+      )}
+
+      {/* ── Comments (delegated) ── */}
+      {activeTab === 'comments' && (
+        <CommentsTab comments={comments} getDisplayName={getDisplayName} fmt={fmt} />
+      )}
+
+      {/* ── Price Reports (delegated) ── */}
+      {activeTab === 'prices' && (
+        <PricesTab reports={priceReports} getDisplayName={getDisplayName} fmt={fmt} />
+      )}
+
+      {/* ── Mentorship (delegated) ── */}
+      {activeTab === 'mentorship' && (
+        <MentorshipTab mentors={mentorProfiles} requests={mentorshipRequests} getDisplayName={getDisplayName} fmt={fmt} />
+      )}
+
       {/* ── Reports ── */}
       {activeTab === 'reports' && (
         <div>
@@ -662,6 +855,16 @@ export default function AdminClient({
           ))}
           </div>
         </div>
+      )}
+
+      {/* ── Audit Log (super admin only, delegated) ── */}
+      {activeTab === 'audit_log' && isSuperAdmin && (
+        <AuditLogTab entries={auditLog} getDisplayName={getDisplayName} fmt={fmt} />
+      )}
+
+      {/* ── Notifications (super admin only, delegated) ── */}
+      {activeTab === 'notifications' && isSuperAdmin && (
+        <NotifyPanel />
       )}
 
       {/* ── Settings ── */}

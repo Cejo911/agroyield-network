@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
+import { logAdminAction } from '@/lib/admin/audit-log'
+import { DEFAULT_MODERATOR_PERMISSIONS } from '@/lib/admin/permissions'
 
 export async function PATCH(request: NextRequest) {
   try {
@@ -18,19 +20,31 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const { userId, action } = await request.json() as {
+    const { userId, action, permissions } = await request.json() as {
       userId: string
       action:
         | 'suspend' | 'unsuspend'
         | 'verify'  | 'unverify'
         | 'elite'   | 'unelite'
         | 'makesuper' | 'makemoderator' | 'removeadmin'
+        | 'update_permissions'
+      permissions?: Record<string, boolean>
     }
 
     // These actions require super admin
-    const superOnly = ['verify', 'unverify', 'elite', 'unelite', 'makesuper', 'makemoderator', 'removeadmin']
+    const superOnly = ['verify', 'unverify', 'elite', 'unelite', 'makesuper', 'makemoderator', 'removeadmin', 'update_permissions']
     if (superOnly.includes(action) && adminProfile.admin_role !== 'super') {
       return NextResponse.json({ error: 'Forbidden — super admin only' }, { status: 403 })
+    }
+
+    // Moderators need 'members' permission for suspend/unsuspend
+    if (['suspend', 'unsuspend'].includes(action) && adminProfile.admin_role !== 'super') {
+      const { data: modProfile } = await supabaseAny
+        .from('profiles').select('admin_permissions').eq('id', user.id).single()
+      const perms = (modProfile as Record<string, unknown>)?.admin_permissions as Record<string, boolean> | null
+      if (!perms?.members) {
+        return NextResponse.json({ error: 'No permission for member management' }, { status: 403 })
+      }
     }
 
     // Prevent super admin from removing their own admin status
@@ -79,18 +93,37 @@ export async function PATCH(request: NextRequest) {
       await adminAny.from('profiles').update({
         is_admin: true,
         admin_role: 'super',
+        admin_permissions: null, // Super admins don't need permissions
       }).eq('id', userId)
     } else if (action === 'makemoderator') {
       await adminAny.from('profiles').update({
         is_admin: true,
         admin_role: 'moderator',
+        admin_permissions: DEFAULT_MODERATOR_PERMISSIONS,
       }).eq('id', userId)
     } else if (action === 'removeadmin') {
       await adminAny.from('profiles').update({
         is_admin: false,
         admin_role: null,
+        admin_permissions: null,
+      }).eq('id', userId)
+    } else if (action === 'update_permissions') {
+      if (!permissions) {
+        return NextResponse.json({ error: 'Permissions object required' }, { status: 400 })
+      }
+      await adminAny.from('profiles').update({
+        admin_permissions: permissions,
       }).eq('id', userId)
     }
+
+    // Audit log
+    await logAdminAction({
+      adminId: user.id,
+      action: `member.${action}`,
+      targetType: 'member',
+      targetId: userId,
+      details: action === 'update_permissions' ? { permissions } : {},
+    })
 
     return NextResponse.json({ ok: true })
   } catch (err: unknown) {

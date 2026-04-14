@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
+import { logAdminAction } from '@/lib/admin/audit-log'
 
 export async function PATCH(request: NextRequest) {
   try {
@@ -20,7 +21,6 @@ export async function PATCH(request: NextRequest) {
 
     const updates = await request.json() as Record<string, string>
 
-    // Use admin client to bypass RLS
     const adminClient = createAdminClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -43,6 +43,13 @@ export async function PATCH(request: NextRequest) {
     if (errors.length > 0) {
       return NextResponse.json({ error: errors.join(', ') }, { status: 500 })
     }
+
+    await logAdminAction({
+      adminId: user.id,
+      action: 'settings.update',
+      targetType: 'settings',
+      details: { keys: Object.keys(updates) },
+    })
 
     return NextResponse.json({ ok: true })
   } catch (err: unknown) {

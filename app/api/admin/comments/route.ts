@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { logAdminAction } from '@/lib/admin/audit-log'
 
 export async function PATCH(request: NextRequest) {
@@ -18,23 +19,34 @@ export async function PATCH(request: NextRequest) {
 
     if (p.admin_role !== 'super') {
       const perms = p.admin_permissions as Record<string, boolean> | null
-      if (!perms?.marketplace) return NextResponse.json({ error: 'No permission' }, { status: 403 })
+      if (!perms?.comments) return NextResponse.json({ error: 'No permission' }, { status: 403 })
     }
 
-    const { id, is_active, is_pending_review } = await request.json()
+    const { id, action: commentAction } = await request.json() as {
+      id: string
+      action: 'hide' | 'show' | 'delete'
+    }
 
-    const updateData: Record<string, unknown> = { is_active }
-    if (typeof is_pending_review === 'boolean') updateData.is_pending_review = is_pending_review
+    // Use service role to bypass RLS on comments
+    const adminClient = createAdminClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const adminAny = adminClient as any
 
-    const { error } = await supabaseAny
-      .from('marketplace_listings')
-      .update(updateData)
-      .eq('id', id)
+    if (commentAction === 'hide') {
+      await adminAny.from('comments').update({ is_hidden: true }).eq('id', id)
+    } else if (commentAction === 'show') {
+      await adminAny.from('comments').update({ is_hidden: false }).eq('id', id)
+    } else if (commentAction === 'delete') {
+      await adminAny.from('comments').update({
+        is_hidden: true,
+        content: '[Removed by admin]',
+      }).eq('id', id)
+    }
 
-    if (error) throw error
-
-    const action = is_pending_review === false && is_active ? 'approve' : is_pending_review === false ? 'decline' : is_active ? 'show' : 'hide'
-    await logAdminAction({ adminId: user.id, action: `listing.${action}`, targetType: 'listing', targetId: id })
+    await logAdminAction({ adminId: user.id, action: `comment.${commentAction}`, targetType: 'comment', targetId: id })
 
     return NextResponse.json({ success: true })
   } catch (err: unknown) {
