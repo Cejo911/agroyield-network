@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { useSearchLog } from '@/lib/useSearchLog'
 import LikeButton from '@/app/components/LikeButton'
 import ReportButton from '@/app/components/ReportButton'
 
@@ -78,6 +79,8 @@ export default function ResearchClient({
     const matchesTag    = !tagFilter || (p.tags ?? []).includes(tagFilter)
     return matchesSearch && matchesType && matchesTag
   })
+
+  useSearchLog(search, 'research', filtered.length)
 
   const filterBtn = (active: boolean) =>
     `px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${active ? 'bg-green-600 text-white border-green-600' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-green-400 dark:hover:border-green-500'}`

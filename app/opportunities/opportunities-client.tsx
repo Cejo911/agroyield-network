@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import LikeButton from '@/app/components/LikeButton'
 import ReportButton from '@/app/components/ReportButton'
+import { useSearchLog } from '@/lib/useSearchLog'
 
 export type Opportunity = {
   id: string
@@ -48,6 +49,8 @@ export default function OpportunitiesClient({
       || (o.description?.toLowerCase().includes(q) ?? false)
     return matchesType && matchesSearch
   })
+
+  useSearchLog(search, 'opportunities', filtered.length)
 
   const handleDelete = async (id: string) => {
     setDeletingId(id)

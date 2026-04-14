@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import FollowButton from './follow-button'
+import { useSearchLog } from '@/lib/useSearchLog'
 
 const ROLES = ['All', 'Student', 'Researcher', 'Farmer', 'Agripreneur']
 const INTERESTS = [
@@ -79,6 +80,8 @@ export default function DirectoryClient({ profiles, currentUserId, followingIds,
       (connectionFilter === 'Mentees' && menteeSet.has(p.id))
     return matchesSearch && matchesRole && matchesInterest && matchesLocation && matchesConnection
   })
+
+  useSearchLog(search, 'directory', filtered.length)
 
   return (
     <div>

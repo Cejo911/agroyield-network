@@ -21,6 +21,8 @@ interface AnalyticsProps {
   businesses: { id: string; user_id: string; name: string; created_at: string }[]
   invoices: { id: string; business_id: string; status: string; total: number | null; issue_date: string | null; created_at: string }[]
   businessExpenses: { id: string; business_id: string; amount: number; category: string | null; date: string | null; created_at: string }[]
+  profilesMap: Record<string, { first_name: string | null; last_name: string | null; email: string | null; username: string | null }>
+  searchLogs: { id: string; user_id: string | null; query: string; module: string; results_count: number; created_at: string }[]
 }
 
 const COLORS = ['#16a34a', '#22c55e', '#86efac', '#f59e0b', '#ef4444', '#6366f1', '#ec4899', '#14b8a6']
@@ -106,7 +108,7 @@ function Section({ title, subtitle, children }: { title: string; subtitle?: stri
 
 // ── Main Component ──
 export default function AnalyticsTab(props: AnalyticsProps) {
-  const { members, waitlistSignups, communityPosts, researchPosts, opportunities, listings, grants, priceReports, mentorProfiles, mentorshipRequests, businesses, invoices, businessExpenses } = props
+  const { members, waitlistSignups, communityPosts, researchPosts, opportunities, listings, grants, priceReports, mentorProfiles, mentorshipRequests, businesses, invoices, businessExpenses, profilesMap, searchLogs } = props
   const [exportingPdf, setExportingPdf] = useState(false)
 
   const months = useMemo(() => getLast12Months(), [])
@@ -307,6 +309,127 @@ export default function AnalyticsTab(props: AnalyticsProps) {
     }
   }, [mentorshipRequests, mentorProfiles])
 
+  // ═══════════════════════════════════════════════════════════
+  // 8. BUSINESS INTELLIGENCE
+  // ═══════════════════════════════════════════════════════════
+  const businessIntel = useMemo(() => {
+    const getName = (userId: string) => {
+      const p = profilesMap[userId]
+      if (!p) return 'Unknown'
+      return [p.first_name, p.last_name].filter(Boolean).join(' ') || p.username || p.email || 'Unknown'
+    }
+
+    // Build a map: businessId → { name, userId, revenue, invoiceCount, expenseTotal }
+    const bizMap: Record<string, { name: string; userId: string; revenue: number; invoiceCount: number; paidCount: number; expenseTotal: number }> = {}
+    for (const b of businesses) {
+      bizMap[b.id] = { name: b.name, userId: b.user_id, revenue: 0, invoiceCount: 0, paidCount: 0, expenseTotal: 0 }
+    }
+    for (const inv of invoices) {
+      if (bizMap[inv.business_id]) {
+        bizMap[inv.business_id].invoiceCount++
+        if (inv.status === 'paid') {
+          bizMap[inv.business_id].paidCount++
+          bizMap[inv.business_id].revenue += Number(inv.total || 0)
+        }
+      }
+    }
+    for (const exp of businessExpenses) {
+      if (bizMap[exp.business_id]) {
+        bizMap[exp.business_id].expenseTotal += Number(exp.amount || 0)
+      }
+    }
+
+    const bizList = Object.entries(bizMap).map(([id, data]) => ({ id, ...data, ownerName: getName(data.userId) }))
+
+    // Top 10 businesses by revenue
+    const topByRevenue = [...bizList].sort((a, b) => b.revenue - a.revenue).slice(0, 10)
+
+    // Top 10 by invoice volume
+    const topByVolume = [...bizList].sort((a, b) => b.invoiceCount - a.invoiceCount).slice(0, 10)
+
+    // Revenue concentration — what % do top N businesses hold?
+    const totalRev = bizList.reduce((s, b) => s + b.revenue, 0)
+    const sortedByRev = [...bizList].sort((a, b) => b.revenue - a.revenue)
+    let cumRev = 0
+    let top80Count = 0
+    for (const b of sortedByRev) {
+      cumRev += b.revenue
+      top80Count++
+      if (totalRev > 0 && cumRev / totalRev >= 0.8) break
+    }
+    const concentrationPct = totalRev > 0 ? Math.round((sortedByRev.slice(0, top80Count).reduce((s, b) => s + b.revenue, 0) / totalRev) * 100) : 0
+
+    // Average invoice value
+    const paidInvoices = invoices.filter(i => i.status === 'paid')
+    const avgInvoice = paidInvoices.length > 0
+      ? paidInvoices.reduce((s, i) => s + Number(i.total || 0), 0) / paidInvoices.length
+      : 0
+
+    // Most active users (by number of businesses + invoices created)
+    const userActivity: Record<string, { name: string; businesses: number; invoices: number; revenue: number }> = {}
+    for (const b of bizList) {
+      if (!userActivity[b.userId]) userActivity[b.userId] = { name: b.ownerName, businesses: 0, invoices: 0, revenue: 0 }
+      userActivity[b.userId].businesses++
+      userActivity[b.userId].invoices += b.invoiceCount
+      userActivity[b.userId].revenue += b.revenue
+    }
+    const topUsers = Object.entries(userActivity)
+      .map(([id, data]) => ({ id, ...data }))
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 10)
+
+    return { topByRevenue, topByVolume, concentrationPct, top80Count, avgInvoice, topUsers, totalBizCount: businesses.length }
+  }, [businesses, invoices, businessExpenses, profilesMap])
+
+  // ═══════════════════════════════════════════════════════════
+  // 9. SEARCH INSIGHTS
+  // ═══════════════════════════════════════════════════════════
+  const searchInsights = useMemo(() => {
+    if (searchLogs.length === 0) return null
+
+    // Top searched terms (normalise to lowercase)
+    const termCounts: Record<string, number> = {}
+    const zeroCounts: Record<string, number> = {}
+    const moduleCounts: Record<string, number> = {}
+    const dailyCounts: Record<string, number> = {}
+
+    for (const log of searchLogs) {
+      const term = log.query.toLowerCase()
+      termCounts[term] = (termCounts[term] || 0) + 1
+      if (log.results_count === 0) {
+        zeroCounts[term] = (zeroCounts[term] || 0) + 1
+      }
+      moduleCounts[log.module] = (moduleCounts[log.module] || 0) + 1
+      const day = log.created_at.slice(0, 10)
+      dailyCounts[day] = (dailyCounts[day] || 0) + 1
+    }
+
+    const topTerms = Object.entries(termCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 15)
+      .map(([term, count]) => ({ term, count }))
+
+    const zeroResultTerms = Object.entries(zeroCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([term, count]) => ({ term, count }))
+
+    const byModule = Object.entries(moduleCounts)
+      .sort((a, b) => b[1] - a[1])
+      .map(([module, count]) => ({ module: module.charAt(0).toUpperCase() + module.slice(1), count }))
+
+    // Daily trend (last 30 days)
+    const dailyTrend = days30.map(d => ({
+      label: d.label,
+      searches: dailyCounts[d.key] || 0,
+    }))
+
+    // Unique searchers
+    const uniqueSearchers = new Set(searchLogs.filter(l => l.user_id).map(l => l.user_id)).size
+
+    return { totalSearches: searchLogs.length, uniqueSearchers, topTerms, zeroResultTerms, byModule, dailyTrend }
+  }, [searchLogs, days30])
+
   const tooltipStyle = { contentStyle: { background: '#111827', border: '1px solid #374151', borderRadius: 8, fontSize: 12 }, labelStyle: { color: '#9ca3af' }, itemStyle: { color: '#d1d5db' } }
 
   // ── PDF Export (data-driven, no canvas) ──
@@ -481,6 +604,51 @@ export default function AnalyticsTab(props: AnalyticsProps) {
       }
       y += 2
 
+      // ── Section: Business Intelligence ──
+      checkPage(20)
+      pdf.setFontSize(12)
+      pdf.setFont('helvetica', 'bold')
+      pdf.setTextColor(17, 24, 39)
+      pdf.text('Business Intelligence', margin, y + 4)
+      y += 8
+
+      // Key insights line
+      pdf.setFontSize(9)
+      pdf.setFont('helvetica', 'normal')
+      pdf.setTextColor(107, 114, 128)
+      pdf.text(`Revenue concentration: ${businessIntel.top80Count} of ${businessIntel.totalBizCount} businesses generate ${businessIntel.concentrationPct}% of revenue. Avg invoice: ${fmtNaira(businessIntel.avgInvoice)}`, margin, y + 3)
+      y += 8
+
+      if (businessIntel.topByRevenue.length > 0) {
+        checkPage(14)
+        pdf.setFontSize(10)
+        pdf.setFont('helvetica', 'bold')
+        pdf.setTextColor(17, 24, 39)
+        pdf.text('Top Businesses by Revenue', margin, y + 4)
+        y += 6
+        drawTable(
+          ['Rank', 'Business', 'Owner', 'Revenue'],
+          businessIntel.topByRevenue.map((b, i) => [String(i + 1), b.name, b.ownerName, fmtNaira(b.revenue)]),
+          [20, 55, 55, 52],
+        )
+        y += 4
+      }
+
+      if (businessIntel.topUsers.length > 0) {
+        checkPage(14)
+        pdf.setFontSize(10)
+        pdf.setFont('helvetica', 'bold')
+        pdf.setTextColor(17, 24, 39)
+        pdf.text('Top Users — Business Module', margin, y + 4)
+        y += 6
+        drawTable(
+          ['Rank', 'User', 'Businesses', 'Invoices', 'Revenue'],
+          businessIntel.topUsers.map((u, i) => [String(i + 1), u.name, String(u.businesses), String(u.invoices), fmtNaira(u.revenue)]),
+          [20, 50, 30, 30, 52],
+        )
+        y += 6
+      }
+
       // ── Section: Mentorship Health ──
       checkPage(20)
       pdf.setFontSize(12)
@@ -509,6 +677,66 @@ export default function AnalyticsTab(props: AnalyticsProps) {
           businessHealth.revByMonth.map((m: { label: string; Revenue: number; Expenses: number }) => [m.label, fmtNaira(m.Revenue), fmtNaira(m.Expenses)]),
           [60, 60, 62],
         )
+      }
+
+      // ── Section: Search Insights ──
+      if (searchInsights) {
+        checkPage(20)
+        pdf.setFontSize(12)
+        pdf.setFont('helvetica', 'bold')
+        pdf.setTextColor(17, 24, 39)
+        pdf.text('Search Insights', margin, y + 4)
+        y += 8
+        pdf.setFontSize(9)
+        pdf.setFont('helvetica', 'normal')
+        pdf.setTextColor(107, 114, 128)
+        pdf.text(`Total searches: ${searchInsights.totalSearches} · Unique searchers: ${searchInsights.uniqueSearchers}`, margin, y + 3)
+        y += 8
+
+        if (searchInsights.topTerms.length > 0) {
+          checkPage(14)
+          pdf.setFontSize(10)
+          pdf.setFont('helvetica', 'bold')
+          pdf.setTextColor(17, 24, 39)
+          pdf.text('Top Search Terms', margin, y + 4)
+          y += 6
+          drawTable(
+            ['Rank', 'Search Term', 'Count'],
+            searchInsights.topTerms.map((t, i) => [String(i + 1), t.term, String(t.count)]),
+            [20, 120, 42],
+          )
+          y += 4
+        }
+
+        if (searchInsights.zeroResultTerms.length > 0) {
+          checkPage(14)
+          pdf.setFontSize(10)
+          pdf.setFont('helvetica', 'bold')
+          pdf.setTextColor(17, 24, 39)
+          pdf.text('Zero-Result Searches (Unmet Demand)', margin, y + 4)
+          y += 6
+          drawTable(
+            ['Rank', 'Search Term', 'Count'],
+            searchInsights.zeroResultTerms.map((t, i) => [String(i + 1), t.term, String(t.count)]),
+            [20, 120, 42],
+          )
+          y += 4
+        }
+
+        if (searchInsights.byModule.length > 0) {
+          checkPage(14)
+          pdf.setFontSize(10)
+          pdf.setFont('helvetica', 'bold')
+          pdf.setTextColor(17, 24, 39)
+          pdf.text('Searches by Module', margin, y + 4)
+          y += 6
+          drawTable(
+            ['Module', 'Searches'],
+            searchInsights.byModule.map(m => [m.module, String(m.count)]),
+            [100, 82],
+          )
+          y += 6
+        }
       }
 
       // ── Footer ──
@@ -735,6 +963,90 @@ export default function AnalyticsTab(props: AnalyticsProps) {
         </Section>
       </div>
 
+      {/* ── Business Intelligence ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Top Businesses by Revenue */}
+        <Section title="Top Businesses — Revenue" subtitle="Highest-earning businesses on the platform">
+          {businessIntel.topByRevenue.length === 0 ? (
+            <p className="text-xs text-gray-400">No revenue data yet</p>
+          ) : (
+            <div className="space-y-2">
+              {businessIntel.topByRevenue.map((b, i) => (
+                <div key={b.id} className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className={`text-xs font-bold w-5 text-center shrink-0 ${i < 3 ? 'text-green-600' : 'text-gray-400'}`}>{i + 1}</span>
+                    <div className="min-w-0">
+                      <p className="text-xs font-medium text-gray-900 dark:text-white truncate">{b.name}</p>
+                      <p className="text-[10px] text-gray-400 truncate">{b.ownerName}</p>
+                    </div>
+                  </div>
+                  <span className="text-xs font-semibold text-green-600 whitespace-nowrap">{fmtNaira(b.revenue)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </Section>
+
+        {/* Top Users of Business Module */}
+        <Section title="Top Users — Business Module" subtitle="Most active business owners by revenue">
+          {businessIntel.topUsers.length === 0 ? (
+            <p className="text-xs text-gray-400">No business users yet</p>
+          ) : (
+            <div className="space-y-2">
+              {businessIntel.topUsers.map((u, i) => (
+                <div key={u.id} className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className={`text-xs font-bold w-5 text-center shrink-0 ${i < 3 ? 'text-green-600' : 'text-gray-400'}`}>{i + 1}</span>
+                    <div className="min-w-0">
+                      <p className="text-xs font-medium text-gray-900 dark:text-white truncate">{u.name}</p>
+                      <p className="text-[10px] text-gray-400">{u.businesses} biz · {u.invoices} invoices</p>
+                    </div>
+                  </div>
+                  <span className="text-xs font-semibold text-green-600 whitespace-nowrap">{fmtNaira(u.revenue)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </Section>
+
+        {/* Business Insights */}
+        <Section title="Business Insights" subtitle="Key intelligence metrics">
+          <div className="space-y-4">
+            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3 space-y-3">
+              <div>
+                <p className="text-[10px] uppercase tracking-wide text-gray-400 mb-0.5">Revenue Concentration</p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                  {businessIntel.top80Count} of {businessIntel.totalBizCount} businesses
+                </p>
+                <p className="text-[10px] text-gray-500 dark:text-gray-400">
+                  generate {businessIntel.concentrationPct}% of total platform revenue
+                </p>
+                {businessIntel.totalBizCount > 0 && businessIntel.top80Count <= Math.ceil(businessIntel.totalBizCount * 0.2) && (
+                  <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-1">
+                    ⚠ High concentration — revenue depends on few businesses
+                  </p>
+                )}
+              </div>
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
+                <p className="text-[10px] uppercase tracking-wide text-gray-400 mb-0.5">Average Invoice Value</p>
+                <p className="text-lg font-bold text-gray-900 dark:text-white">{fmtNaira(businessIntel.avgInvoice)}</p>
+              </div>
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
+                <p className="text-[10px] uppercase tracking-wide text-gray-400 mb-0.5">Businesses by Volume</p>
+                <div className="space-y-1 mt-1">
+                  {businessIntel.topByVolume.slice(0, 5).map((b, i) => (
+                    <div key={b.id} className="flex items-center justify-between">
+                      <span className="text-xs text-gray-600 dark:text-gray-400 truncate mr-2">{i + 1}. {b.name}</span>
+                      <span className="text-xs font-medium text-gray-900 dark:text-white whitespace-nowrap">{b.invoiceCount} inv</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </Section>
+      </div>
+
       {/* ── Mentorship Health ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Section title="Mentorship Health" subtitle="Request status breakdown">
@@ -764,6 +1076,74 @@ export default function AnalyticsTab(props: AnalyticsProps) {
             </div>
           </div>
         </Section>
+
+      {/* ── Search Insights ── */}
+      {searchInsights && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Search Volume Trend */}
+          <Section title="Search Volume" subtitle={`${searchInsights.totalSearches.toLocaleString()} searches · ${searchInsights.uniqueSearchers} unique searchers`}>
+            <ResponsiveContainer width="100%" height={160}>
+              <BarChart data={searchInsights.dailyTrend} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
+                <XAxis dataKey="label" tick={{ fontSize: 9, fill: '#9ca3af' }} interval={4} />
+                <YAxis tick={{ fontSize: 10, fill: '#9ca3af' }} allowDecimals={false} />
+                <Tooltip {...tooltipStyle} />
+                <Bar dataKey="searches" fill="#16a34a" radius={[3, 3, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+            <div className="pt-2 space-y-1.5">
+              <p className="text-[10px] uppercase tracking-wide text-gray-400">Searches by Module</p>
+              {searchInsights.byModule.map(m => (
+                <div key={m.module} className="flex items-center justify-between">
+                  <span className="text-xs text-gray-600 dark:text-gray-400">{m.module}</span>
+                  <span className="text-xs font-semibold text-gray-900 dark:text-white">{m.count}</span>
+                </div>
+              ))}
+            </div>
+          </Section>
+
+          {/* Top Search Terms */}
+          <Section title="Top Search Terms" subtitle="Most frequently searched queries">
+            <div className="space-y-1.5">
+              {searchInsights.topTerms.map((t, i) => (
+                <div key={t.term} className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className={`text-xs font-bold w-5 text-center shrink-0 ${i < 3 ? 'text-green-600' : 'text-gray-400'}`}>{i + 1}</span>
+                    <span className="text-xs text-gray-700 dark:text-gray-300 truncate">{t.term}</span>
+                  </div>
+                  <span className="text-xs font-medium text-gray-500 whitespace-nowrap">{t.count}x</span>
+                </div>
+              ))}
+              {searchInsights.topTerms.length === 0 && <p className="text-xs text-gray-400">No searches recorded yet</p>}
+            </div>
+          </Section>
+
+          {/* Zero-Result Searches */}
+          <Section title="Zero-Result Searches" subtitle="What users searched but couldn't find">
+            {searchInsights.zeroResultTerms.length === 0 ? (
+              <div className="text-center py-6">
+                <p className="text-2xl mb-1">✅</p>
+                <p className="text-xs text-gray-400">All searches returned results</p>
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                {searchInsights.zeroResultTerms.map((t, i) => (
+                  <div key={t.term} className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-xs text-red-500 font-bold w-5 text-center shrink-0">{i + 1}</span>
+                      <span className="text-xs text-gray-700 dark:text-gray-300 truncate">{t.term}</span>
+                    </div>
+                    <span className="text-xs font-medium text-red-400 whitespace-nowrap">{t.count}x</span>
+                  </div>
+                ))}
+                <p className="text-[10px] text-amber-600 dark:text-amber-400 pt-2">
+                  💡 These represent unmet demand — consider adding content or features to address them
+                </p>
+              </div>
+            )}
+          </Section>
+        </div>
+      )}
 
         {/* Quick Insights */}
         <Section title="Quick Insights" subtitle="Auto-generated observations">

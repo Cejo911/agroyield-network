@@ -163,6 +163,15 @@ interface BusinessExpense {
   created_at: string
 }
 
+interface SearchLog {
+  id: string
+  user_id: string | null
+  query: string
+  module: string
+  results_count: number
+  created_at: string
+}
+
 interface AdminClientProps {
   opportunities: Opportunity[]
   listings: Listing[]
@@ -185,6 +194,7 @@ interface AdminClientProps {
   businesses: Business[]
   invoices: Invoice[]
   businessExpenses: BusinessExpense[]
+  searchLogs: SearchLog[]
 }
 
 type Tab = 'opportunities' | 'marketplace' | 'members' | 'grants' | 'community' | 'research' | 'comments' | 'prices' | 'mentorship' | 'reports' | 'analytics' | 'audit_log' | 'notifications' | 'settings'
@@ -244,6 +254,7 @@ export default function AdminClient({
   businesses,
   invoices,
   businessExpenses,
+  searchLogs,
 }: AdminClientProps) {
   const isSuperAdmin = currentAdminRole === 'super'
 
@@ -1124,6 +1135,8 @@ export default function AdminClient({
           businesses={businesses}
           invoices={invoices}
           businessExpenses={businessExpenses}
+          profilesMap={profilesMap}
+          searchLogs={searchLogs}
         />
       )}
 

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useSearchLog } from '@/lib/useSearchLog'
 
 const CATEGORIES = ['All', 'Research', 'Startup', 'Student', 'Women', 'Innovation', 'Farmer', 'Policy']
 const STATUSES = ['All', 'open', 'upcoming', 'closed']
@@ -89,6 +90,8 @@ export default function GrantsClient({ grants, applicationMap }: Props) {
     }
     return true
   })
+
+  useSearchLog(search, 'grants', filtered.length)
 
   return (
     <div>

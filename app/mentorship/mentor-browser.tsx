@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useSearchLog } from '@/lib/useSearchLog'
 
 interface Mentor {
   id: string
@@ -52,6 +53,8 @@ export default function MentorBrowser({ mentors, userId }: { mentors: Mentor[]; 
     }
     return true
   })
+
+  useSearchLog(search, 'mentorship', filtered.length)
 
   return (
     <div>

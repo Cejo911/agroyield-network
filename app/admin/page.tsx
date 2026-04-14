@@ -60,6 +60,7 @@ export default async function AdminPage() {
     { data: businesses },
     { data: invoices },
     { data: businessExpenses },
+    { data: searchLogs },
   ] = await Promise.all([
     supabaseAny.from('opportunities').select('*').order('created_at', { ascending: false }),
     supabaseAny.from('marketplace_listings').select('*').order('created_at', { ascending: false }),
@@ -78,6 +79,7 @@ export default async function AdminPage() {
     adminAny.from('businesses').select('id, user_id, name, created_at').order('created_at', { ascending: false }),
     adminAny.from('invoices').select('id, business_id, status, total, issue_date, created_at').order('created_at', { ascending: false }).limit(1000),
     adminAny.from('business_expenses').select('id, business_id, amount, category, date, created_at').order('created_at', { ascending: false }).limit(1000),
+    adminAny.from('search_logs').select('id, user_id, query, module, results_count, created_at').order('created_at', { ascending: false }).limit(5000),
   ])
 
   const profilesMap: Record<string, { first_name: string | null; last_name: string | null; email: string | null; username: string | null }> = {}
@@ -208,6 +210,7 @@ export default async function AdminPage() {
           businesses={businesses ?? []}
           invoices={invoices ?? []}
           businessExpenses={businessExpenses ?? []}
+          searchLogs={searchLogs ?? []}
         />
       </div>
     </div>

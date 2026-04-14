@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import ReportButton from '@/app/components/ReportButton'
+import { useSearchLog } from '@/lib/useSearchLog'
 import { createClient } from '@/lib/supabase/client'
 
 const CATEGORIES = ['All', 'Grains', 'Tubers', 'Legumes', 'Vegetables', 'Oils', 'Livestock', 'Other']
@@ -59,6 +60,8 @@ export default function PricesClient({
       (r.category ?? '').toLowerCase() === categoryFilter.toLowerCase()
     return matchesSearch && matchesCategory
   })
+
+  useSearchLog(search, 'prices', filtered.length)
 
   const formatPrice = (price: number) =>
     new Intl.NumberFormat('en-NG', {

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import LikeButton from '@/app/components/LikeButton'
 import ReportButton from '@/app/components/ReportButton'
+import { useSearchLog } from '@/lib/useSearchLog'
 
 const CATEGORIES = ['All', 'Produce', 'Inputs', 'Equipment', 'Livestock', 'Oil', 'Services', 'Other']
 const TYPES      = ['All', 'Sell', 'Buy', 'Trade']
@@ -103,6 +104,8 @@ export default function MarketplaceClient({
     const matchesMax = max === null || (l.price !== null && l.price <= max)
     return matchesSearch && matchesCategory && matchesType && matchesState && matchesMin && matchesMax
   })
+
+  useSearchLog(search, 'marketplace', filtered.length)
 
   const hasActiveFilters = categoryFilter !== 'All' || typeFilter !== 'All' || stateFilter !== 'All' || search || minPrice || maxPrice
 
