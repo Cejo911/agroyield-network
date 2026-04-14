@@ -147,7 +147,7 @@ interface AdminClientProps {
   mentorshipRequests: MentorshipRequest[]
   auditLog: AuditEntry[]
   reportGroups: ReportGroup[]
-  profilesMap: Record<string, { first_name: string | null; last_name: string | null }>
+  profilesMap: Record<string, { first_name: string | null; last_name: string | null; email: string | null; username: string | null }>
   settingsMap: Record<string, string>
   currentAdminRole: string
   currentAdminPermissions: Record<string, boolean> | null
@@ -278,7 +278,7 @@ export default function AdminClient({
   const getDisplayName = (userId: string) => {
     const p = profilesMap[userId]
     if (!p) return 'Unknown'
-    return [p.first_name, p.last_name].filter(Boolean).join(' ') || 'Unknown'
+    return [p.first_name, p.last_name].filter(Boolean).join(' ') || p.username || p.email || 'Unknown'
   }
   const fmt = (dateStr: string) =>
     new Date(dateStr).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })

@@ -72,13 +72,15 @@ export default async function AdminPage() {
     adminAny.from('waitlist_signups').select('*', { count: 'exact', head: true }),
   ])
 
-  const profilesMap: Record<string, { first_name: string | null; last_name: string | null }> = {}
+  const profilesMap: Record<string, { first_name: string | null; last_name: string | null; email: string | null; username: string | null }> = {}
   for (const m of (members ?? [])) {
     const raw = m as Record<string, unknown>
     if (typeof raw.id === 'string') {
       profilesMap[raw.id] = {
         first_name: typeof raw.first_name === 'string' ? raw.first_name : null,
         last_name:  typeof raw.last_name  === 'string' ? raw.last_name  : null,
+        email:      typeof raw.email      === 'string' ? raw.email      : null,
+        username:   typeof raw.username   === 'string' ? raw.username   : null,
       }
     }
   }
