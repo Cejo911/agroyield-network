@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import AppNav from '@/app/components/AppNav'
 import ImageUploader from '@/app/components/ImageUploader'
 
-const TYPES = ['grant', 'fellowship', 'job', 'internship', 'partnership', 'training']
+const TYPES = ['job', 'internship', 'partnership', 'training', 'conference']
 
 export default function EditOpportunityPage() {
   const router = useRouter()

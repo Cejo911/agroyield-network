@@ -13,7 +13,7 @@ const MODULES = [
   },
   {
     title: 'Opportunities',
-    description: 'Discover jobs, fellowships, and training opportunities across agriculture.',
+    description: 'Discover jobs, internships, partnerships and training across agriculture.',
     icon: '🚀',
     href: '/opportunities',
   },

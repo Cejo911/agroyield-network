@@ -124,8 +124,8 @@ const modules = [
   },
   {
     icon: '🎯', tag: 'Module 02', name: 'Opportunities', wide: false,
-    desc: "Grants, events, and mentorship in one dashboard. Get alerted before deadlines, find mentors who've walked your path, and register for agri conferences — all without the endless email lists.",
-    pills: ['Grants & Funding', 'Events', 'Mentorship'],
+    desc: "Jobs, internships, partnerships and training in one place. Discover career openings, find collaborators, and register for agri conferences — all without the endless email lists.",
+    pills: ['Jobs & Internships', 'Partnerships', 'Training'],
   },
   {
     icon: '🏷️', tag: 'Module 03', name: 'Price Tracker', wide: false,

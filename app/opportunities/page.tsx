@@ -23,7 +23,7 @@ export default async function OpportunitiesPage() {
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Opportunities</h1>
             <p className="text-gray-500 dark:text-gray-400 mt-1">
-              Grants, fellowships, jobs and partnerships in agriculture.
+              Jobs, internships, partnerships and training in agriculture.
             </p>
           </div>
           <Link href="/opportunities/new" className="bg-green-600 text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors">

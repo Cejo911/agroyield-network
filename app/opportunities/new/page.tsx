@@ -7,7 +7,7 @@ import useProfileGate from '@/app/hooks/useProfileGate'
 import ProfileGateBanner from '@/app/components/ProfileGateBanner'
 import ImageUploader from '@/app/components/ImageUploader'
 
-const DEFAULT_TYPES = ['grant', 'fellowship', 'job', 'partnership', 'internship', 'training']
+const DEFAULT_TYPES = ['job', 'internship', 'partnership', 'training', 'conference']
 
 export default function NewOpportunityPage() {
   const router = useRouter()
@@ -65,7 +65,7 @@ export default function NewOpportunityPage() {
       <main className="max-w-2xl mx-auto px-4 py-10">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Post an Opportunity</h1>
-          <p className="text-gray-500 mt-1">Share a grant, job, fellowship or partnership with the network.</p>
+          <p className="text-gray-500 mt-1">Share a job, internship, partnership or training opportunity with the network.</p>
         </div>
         {gateReady && !profileComplete ? (
           <ProfileGateBanner missing={profileMissing} />

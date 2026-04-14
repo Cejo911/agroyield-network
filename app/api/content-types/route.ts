@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase/admin'
 
 const DEFAULTS = {
-  opportunity_types:      'grant,fellowship,job,partnership,internship,training',
+  opportunity_types:      'job,internship,partnership,training,conference',
   marketplace_categories: 'produce,inputs,equipment,livestock,oil,services,other',
 }
 
