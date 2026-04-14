@@ -45,17 +45,29 @@ interface ReportGroup {
   reasons: Record<string, number>
   latestAt: string
 }
+interface Grant {
+  id: string
+  title: string
+  funder: string | null
+  category: string | null
+  status: string | null
+  featured: boolean
+  deadline: string | null
+  posted_by: string | null
+  created_at: string
+}
 interface AdminClientProps {
   opportunities: Opportunity[]
   listings: Listing[]
   members: Member[]
+  grants: Grant[]
   reportGroups: ReportGroup[]
   profilesMap: Record<string, { first_name: string | null; last_name: string | null }>
   settingsMap: Record<string, string>
   currentAdminRole: string
   currentUserId: string
 }
-type Tab = 'opportunities' | 'marketplace' | 'members' | 'reports' | 'settings'
+type Tab = 'opportunities' | 'marketplace' | 'members' | 'grants' | 'reports' | 'settings'
 
 // Shared input class for settings inputs
 const sInput = 'border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500'
@@ -64,6 +76,7 @@ export default function AdminClient({
   opportunities: initialOpportunities,
   listings: initialListings,
   members: initialMembers,
+  grants: initialGrants,
   reportGroups: initialReportGroups,
   profilesMap,
   settingsMap,
@@ -75,7 +88,19 @@ export default function AdminClient({
   const [opportunities, setOpportunities] = useState<Opportunity[]>(initialOpportunities)
   const [listings, setListings] = useState<Listing[]>(initialListings)
   const [members, setMembers] = useState<Member[]>(initialMembers)
+  const [grants, setGrants] = useState<Grant[]>(initialGrants)
   const [reportGroups, setReportGroups] = useState<ReportGroup[]>(initialReportGroups)
+
+  // Search / filter state
+  const [oppSearch, setOppSearch] = useState('')
+  const [listingSearch, setListingSearch] = useState('')
+  const [memberSearch, setMemberSearch] = useState('')
+  const [grantSearch, setGrantSearch] = useState('')
+  const [reportSearch, setReportSearch] = useState('')
+  const [oppStatusFilter, setOppStatusFilter] = useState<'all' | 'active' | 'pending' | 'hidden'>('all')
+  const [listingStatusFilter, setListingStatusFilter] = useState<'all' | 'active' | 'pending' | 'hidden'>('all')
+  const [memberRoleFilter, setMemberRoleFilter] = useState<'all' | 'admin' | 'verified' | 'elite' | 'suspended'>('all')
+  const [grantStatusFilter, setGrantStatusFilter] = useState<'all' | 'open' | 'closed'>('all')
 
   const [registrationEnabled, setRegistrationEnabled] = useState(settingsMap.registration_enabled !== 'false')
   const [moderationMode, setModerationMode] = useState<'immediate' | 'approval'>(
@@ -88,8 +113,8 @@ export default function AdminClient({
   const [announcementText, setAnnouncementText] = useState(settingsMap.announcement_text ?? '')
   const [announcementColor, setAnnouncementColor] = useState(settingsMap.announcement_color ?? 'green')
   const [opportunityTypes, setOpportunityTypes] = useState<string[]>(() => {
-    try { return settingsMap.opportunity_types ? JSON.parse(settingsMap.opportunity_types) : ['Job', 'Internship', 'Grant', 'Fellowship', 'Training', 'Conference'] }
-    catch { return ['Job', 'Internship', 'Grant', 'Fellowship', 'Training', 'Conference'] }
+    try { return settingsMap.opportunity_types ? JSON.parse(settingsMap.opportunity_types) : ['Job', 'Internship', 'Partnership', 'Training', 'Conference'] }
+    catch { return ['Job', 'Internship', 'Partnership', 'Training', 'Conference'] }
   })
   const [marketplaceCategories, setMarketplaceCategories] = useState<string[]>(() => {
     try { return settingsMap.marketplace_categories ? JSON.parse(settingsMap.marketplace_categories) : ['Equipment', 'Seeds', 'Fertilizer', 'Services', 'Land', 'Other'] }
@@ -198,13 +223,104 @@ export default function AdminClient({
   }
   const removeMarketplaceCategory = (cat: string) => setMarketplaceCategories(prev => prev.filter(c => c !== cat))
 
+  // Grant actions
+  const toggleGrantFeatured = async (id: string, featured: boolean) => {
+    setGrants(prev => prev.map(g => g.id === id ? { ...g, featured } : g))
+    await fetch('/api/admin/grant', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, featured }) })
+  }
+  const toggleGrantStatus = async (id: string, status: string) => {
+    setGrants(prev => prev.map(g => g.id === id ? { ...g, status } : g))
+    await fetch('/api/admin/grant', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, status }) })
+  }
+
+  // Filtered data
+  const filteredOpps = opportunities.filter(o => {
+    const q = oppSearch.toLowerCase()
+    const matchesSearch = !q || o.title.toLowerCase().includes(q) || o.type?.toLowerCase().includes(q) || o.location?.toLowerCase().includes(q) || getDisplayName(o.user_id).toLowerCase().includes(q)
+    const matchesStatus = oppStatusFilter === 'all'
+      || (oppStatusFilter === 'active' && o.is_active && !o.is_pending_review)
+      || (oppStatusFilter === 'pending' && o.is_pending_review)
+      || (oppStatusFilter === 'hidden' && !o.is_active && !o.is_pending_review)
+    return matchesSearch && matchesStatus
+  })
+  const filteredListings = listings.filter(l => {
+    const q = listingSearch.toLowerCase()
+    const matchesSearch = !q || l.title.toLowerCase().includes(q) || l.category?.toLowerCase().includes(q) || getDisplayName(l.user_id).toLowerCase().includes(q)
+    const matchesStatus = listingStatusFilter === 'all'
+      || (listingStatusFilter === 'active' && l.is_active && !l.is_pending_review)
+      || (listingStatusFilter === 'pending' && l.is_pending_review)
+      || (listingStatusFilter === 'hidden' && !l.is_active && !l.is_pending_review)
+    return matchesSearch && matchesStatus
+  })
+  const filteredMembers = members.filter(m => {
+    const q = memberSearch.toLowerCase()
+    const displayName = [m.first_name, m.last_name].filter(Boolean).join(' ') || m.username || ''
+    const matchesSearch = !q || displayName.toLowerCase().includes(q) || m.email.toLowerCase().includes(q) || (m.username?.toLowerCase().includes(q))
+    const matchesRole = memberRoleFilter === 'all'
+      || (memberRoleFilter === 'admin' && m.is_admin)
+      || (memberRoleFilter === 'verified' && m.is_verified)
+      || (memberRoleFilter === 'elite' && m.is_elite)
+      || (memberRoleFilter === 'suspended' && m.is_suspended)
+    return matchesSearch && matchesRole
+  })
+  const filteredGrants = grants.filter(g => {
+    const q = grantSearch.toLowerCase()
+    const matchesSearch = !q || g.title.toLowerCase().includes(q) || (g.funder?.toLowerCase().includes(q)) || (g.category?.toLowerCase().includes(q))
+    const matchesStatus = grantStatusFilter === 'all'
+      || (grantStatusFilter === 'open' && g.status === 'open')
+      || (grantStatusFilter === 'closed' && g.status === 'closed')
+    return matchesSearch && matchesStatus
+  })
+  const filteredReports = reportGroups.filter(rg => {
+    const q = reportSearch.toLowerCase()
+    return !q || rg.postTitle.toLowerCase().includes(q) || rg.postType.toLowerCase().includes(q)
+  })
+
+  const pendingCount = opportunities.filter(o => o.is_pending_review).length + listings.filter(l => l.is_pending_review).length
+
   const tabs: { id: Tab; label: string; badge?: number }[] = [
     { id: 'opportunities', label: 'Opportunities' },
     { id: 'marketplace',   label: 'Marketplace' },
     { id: 'members',       label: 'Members' },
+    { id: 'grants',        label: 'Grants' },
     { id: 'reports',       label: 'Reports', badge: reportGroups.length || undefined },
     ...(isSuperAdmin ? [{ id: 'settings' as Tab, label: 'Settings' }] : []),
   ]
+
+  // Reusable search bar
+  const SearchBar = ({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder: string }) => (
+    <div className="relative mb-4">
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className={`w-full pl-9 ${sInput}`}
+      />
+      <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+      {value && (
+        <button onClick={() => onChange('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-sm">✕</button>
+      )}
+    </div>
+  )
+
+  // Reusable filter pills
+  const FilterPills = ({ options, value, onChange }: { options: { id: string; label: string }[]; value: string; onChange: (v: string) => void }) => (
+    <div className="flex flex-wrap gap-2 mb-4">
+      {options.map(opt => (
+        <button key={opt.id} onClick={() => onChange(opt.id)}
+          className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${
+            value === opt.id
+              ? 'bg-green-600 text-white'
+              : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+          }`}>
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  )
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
@@ -231,9 +347,17 @@ export default function AdminClient({
 
       {/* ── Opportunities ── */}
       {activeTab === 'opportunities' && (
-        <div className="space-y-3">
-          {opportunities.length === 0 && <p className="text-gray-500 dark:text-gray-400 text-sm">No opportunities found.</p>}
-          {opportunities.map((opp) => (
+        <div>
+          <SearchBar value={oppSearch} onChange={setOppSearch} placeholder="Search opportunities by title, type, location, or poster..." />
+          <FilterPills value={oppStatusFilter} onChange={(v) => setOppStatusFilter(v as typeof oppStatusFilter)} options={[
+            { id: 'all', label: `All (${opportunities.length})` },
+            { id: 'active', label: `Active (${opportunities.filter(o => o.is_active && !o.is_pending_review).length})` },
+            { id: 'pending', label: `Pending (${opportunities.filter(o => o.is_pending_review).length})` },
+            { id: 'hidden', label: `Hidden (${opportunities.filter(o => !o.is_active && !o.is_pending_review).length})` },
+          ]} />
+          <div className="space-y-3">
+          {filteredOpps.length === 0 && <p className="text-gray-500 dark:text-gray-400 text-sm">No opportunities found.</p>}
+          {filteredOpps.map((opp) => (
             <div key={opp.id} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4 flex items-start justify-between gap-4">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -267,14 +391,23 @@ export default function AdminClient({
               </div>
             </div>
           ))}
+          </div>
         </div>
       )}
 
       {/* ── Marketplace ── */}
       {activeTab === 'marketplace' && (
-        <div className="space-y-3">
-          {listings.length === 0 && <p className="text-gray-500 dark:text-gray-400 text-sm">No listings found.</p>}
-          {listings.map((listing) => (
+        <div>
+          <SearchBar value={listingSearch} onChange={setListingSearch} placeholder="Search listings by title, category, or poster..." />
+          <FilterPills value={listingStatusFilter} onChange={(v) => setListingStatusFilter(v as typeof listingStatusFilter)} options={[
+            { id: 'all', label: `All (${listings.length})` },
+            { id: 'active', label: `Active (${listings.filter(l => l.is_active && !l.is_pending_review).length})` },
+            { id: 'pending', label: `Pending (${listings.filter(l => l.is_pending_review).length})` },
+            { id: 'hidden', label: `Hidden (${listings.filter(l => !l.is_active && !l.is_pending_review).length})` },
+          ]} />
+          <div className="space-y-3">
+          {filteredListings.length === 0 && <p className="text-gray-500 dark:text-gray-400 text-sm">No listings found.</p>}
+          {filteredListings.map((listing) => (
             <div key={listing.id} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4 flex items-start justify-between gap-4">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -308,14 +441,24 @@ export default function AdminClient({
               </div>
             </div>
           ))}
+          </div>
         </div>
       )}
 
       {/* ── Members ── */}
       {activeTab === 'members' && (
-        <div className="space-y-3">
-          {members.length === 0 && <p className="text-gray-500 dark:text-gray-400 text-sm">No members found.</p>}
-          {members.map((member) => {
+        <div>
+          <SearchBar value={memberSearch} onChange={setMemberSearch} placeholder="Search members by name, email, or username..." />
+          <FilterPills value={memberRoleFilter} onChange={(v) => setMemberRoleFilter(v as typeof memberRoleFilter)} options={[
+            { id: 'all', label: `All (${members.length})` },
+            { id: 'admin', label: `Admins (${members.filter(m => m.is_admin).length})` },
+            { id: 'verified', label: `Verified (${members.filter(m => m.is_verified).length})` },
+            { id: 'elite', label: `Elite (${members.filter(m => m.is_elite).length})` },
+            { id: 'suspended', label: `Suspended (${members.filter(m => m.is_suspended).length})` },
+          ]} />
+          <div className="space-y-3">
+          {filteredMembers.length === 0 && <p className="text-gray-500 dark:text-gray-400 text-sm">No members found.</p>}
+          {filteredMembers.map((member) => {
             const displayName = [member.first_name, member.last_name].filter(Boolean).join(' ') || member.username || member.email
             const isSelf = member.id === currentUserId
             return (
@@ -415,14 +558,77 @@ export default function AdminClient({
               </div>
             )
           })}
+          </div>
+        </div>
+      )}
+
+      {/* ── Grants ── */}
+      {activeTab === 'grants' && (
+        <div>
+          <SearchBar value={grantSearch} onChange={setGrantSearch} placeholder="Search grants by title, funder, or category..." />
+          <FilterPills value={grantStatusFilter} onChange={(v) => setGrantStatusFilter(v as typeof grantStatusFilter)} options={[
+            { id: 'all', label: `All (${grants.length})` },
+            { id: 'open', label: `Open (${grants.filter(g => g.status === 'open').length})` },
+            { id: 'closed', label: `Closed (${grants.filter(g => g.status === 'closed').length})` },
+          ]} />
+          <div className="space-y-3">
+          {filteredGrants.length === 0 && <p className="text-gray-500 dark:text-gray-400 text-sm">No grants found.</p>}
+          {filteredGrants.map((grant) => (
+            <div key={grant.id} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4 flex items-start justify-between gap-4">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-medium text-gray-900 dark:text-gray-100 truncate">{grant.title}</span>
+                  {grant.featured && (
+                    <span className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs px-2 py-0.5 rounded-full font-semibold">Featured</span>
+                  )}
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${
+                    grant.status === 'open'
+                      ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                      : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+                  }`}>
+                    {grant.status === 'open' ? 'Open' : 'Closed'}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                  {grant.funder || 'No funder'} · {grant.category || 'Uncategorized'}
+                  {grant.posted_by ? ` · by ${getDisplayName(grant.posted_by)}` : ''}
+                </p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                  {fmt(grant.created_at)}
+                  {grant.deadline && ` · Deadline: ${fmt(grant.deadline)}`}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
+                <button onClick={() => toggleGrantFeatured(grant.id, !grant.featured)}
+                  className={`text-xs px-3 py-1.5 rounded-md ${
+                    grant.featured
+                      ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 hover:bg-yellow-200 dark:hover:bg-yellow-900/50'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}>
+                  {grant.featured ? 'Unfeature' : 'Feature'}
+                </button>
+                <button onClick={() => toggleGrantStatus(grant.id, grant.status === 'open' ? 'closed' : 'open')}
+                  className={`text-xs px-3 py-1.5 rounded-md ${
+                    grant.status === 'open'
+                      ? 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                      : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50'
+                  }`}>
+                  {grant.status === 'open' ? 'Close' : 'Reopen'}
+                </button>
+              </div>
+            </div>
+          ))}
+          </div>
         </div>
       )}
 
       {/* ── Reports ── */}
       {activeTab === 'reports' && (
-        <div className="space-y-4">
-          {reportGroups.length === 0 && <p className="text-gray-500 dark:text-gray-400 text-sm">No active reports.</p>}
-          {reportGroups.map((rg) => (
+        <div>
+          <SearchBar value={reportSearch} onChange={setReportSearch} placeholder="Search reports by post title or type..." />
+          <div className="space-y-4">
+          {filteredReports.length === 0 && <p className="text-gray-500 dark:text-gray-400 text-sm">No active reports.</p>}
+          {filteredReports.map((rg) => (
             <div key={`${rg.postType}-${rg.postId}`} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
@@ -454,6 +660,7 @@ export default function AdminClient({
               </div>
             </div>
           ))}
+          </div>
         </div>
       )}
 

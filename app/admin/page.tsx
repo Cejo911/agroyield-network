@@ -42,6 +42,7 @@ export default async function AdminPage() {
     { data: opportunities },
     { data: listings },
     { data: members },
+    { data: grants },
     { data: settingsRows },
     { data: reports },
     { count: waitlistCount },
@@ -49,6 +50,7 @@ export default async function AdminPage() {
     supabaseAny.from('opportunities').select('*').order('created_at', { ascending: false }),
     supabaseAny.from('marketplace_listings').select('*').order('created_at', { ascending: false }),
     supabaseAny.from('profiles').select('*').order('created_at', { ascending: false }),
+    adminAny.from('grants').select('id, title, funder, category, status, featured, deadline, posted_by, created_at').order('created_at', { ascending: false }),
     adminAny.from('settings').select('key, value'),
     adminAny.from('reports').select('*').order('created_at', { ascending: false }),
     adminAny.from('waitlist_signups').select('*', { count: 'exact', head: true }),
@@ -121,6 +123,7 @@ export default async function AdminPage() {
   const oppsCount     = (opportunities ?? []).length
   const listingsCount = (listings ?? []).length
   const membersCount  = (members ?? []).length
+  const grantsCount   = (grants ?? []).length
   const removedCount  = [
     ...(opportunities ?? []).filter((o: unknown) => !(o as Record<string, unknown>).is_active),
     ...(listings ?? []).filter((l: unknown) => !(l as Record<string, unknown>).is_active),
@@ -138,11 +141,12 @@ export default async function AdminPage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
           {[
             { label: 'Waitlist',      value: waitlistCount ?? 0 },
             { label: 'Members',       value: membersCount },
             { label: 'Opportunities', value: oppsCount },
+            { label: 'Grants',        value: grantsCount },
             { label: 'Listings',      value: listingsCount },
             { label: 'Removed',       value: removedCount },
           ].map(stat => (
@@ -157,6 +161,7 @@ export default async function AdminPage() {
           opportunities={opportunities ?? []}
           listings={listings ?? []}
           members={members ?? []}
+          grants={grants ?? []}
           reportGroups={reportGroups}
           profilesMap={profilesMap}
           settingsMap={settingsMap}
