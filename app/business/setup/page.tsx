@@ -1,11 +1,20 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
+import { Suspense, useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getBusinessAccess } from '@/lib/business-access'
 import { getActiveBusinessId, setActiveBusinessId } from '@/lib/business-cookie'
 
-export default function BusinessSetup() {
+/** Wrapper with Suspense boundary — required by Next.js for useSearchParams */
+export default function BusinessSetupPage() {
+  return (
+    <Suspense fallback={<div className="text-center py-10 text-gray-400">Loading...</div>}>
+      <BusinessSetup />
+    </Suspense>
+  )
+}
+
+function BusinessSetup() {
   const supabase = createClient()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -81,9 +90,15 @@ export default function BusinessSetup() {
     e.preventDefault()
     setSaving(true)
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    if (!user) { setSaving(false); return }
+
     if (businessId) {
-      await supabase.from('businesses').update({ ...form, updated_at: new Date().toISOString() }).eq('id', businessId)
+      const { error } = await supabase.from('businesses').update({ ...form, updated_at: new Date().toISOString() }).eq('id', businessId)
+      if (error) {
+        alert('Failed to update business: ' + error.message)
+        setSaving(false)
+        return
+      }
     } else {
       // Guard: if multi-business is off, block creating a second business
       const { data: existing } = await supabase.from('businesses').select('id').eq('user_id', user.id).limit(1)
@@ -95,7 +110,12 @@ export default function BusinessSetup() {
           return
         }
       }
-      const { data: newBiz } = await supabase.from('businesses').insert({ ...form, user_id: user.id }).select('id').single()
+      const { data: newBiz, error } = await supabase.from('businesses').insert({ ...form, user_id: user.id }).select('id').single()
+      if (error) {
+        alert('Failed to create business: ' + error.message)
+        setSaving(false)
+        return
+      }
       // Set cookie so the new business becomes active immediately
       if (newBiz) {
         setActiveBusinessId(newBiz.id)
