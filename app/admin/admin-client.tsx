@@ -132,6 +132,12 @@ interface AuditEntry {
   details: Record<string, unknown> | null
   created_at: string
 }
+interface WaitlistSignup {
+  id: string
+  email: string
+  source: string | null
+  created_at: string
+}
 
 interface AdminClientProps {
   opportunities: Opportunity[]
@@ -151,6 +157,7 @@ interface AdminClientProps {
   currentAdminRole: string
   currentAdminPermissions: Record<string, boolean> | null
   currentUserId: string
+  waitlistSignups: WaitlistSignup[]
 }
 
 type Tab = 'opportunities' | 'marketplace' | 'members' | 'grants' | 'community' | 'research' | 'comments' | 'prices' | 'mentorship' | 'reports' | 'audit_log' | 'notifications' | 'settings'
@@ -206,6 +213,7 @@ export default function AdminClient({
   currentAdminRole,
   currentAdminPermissions,
   currentUserId,
+  waitlistSignups,
 }: AdminClientProps) {
   const isSuperAdmin = currentAdminRole === 'super'
 
@@ -234,6 +242,8 @@ export default function AdminClient({
   const [reportSearch, setReportSearch] = useState('')
   const [oppStatusFilter, setOppStatusFilter] = useState<'all' | 'active' | 'pending' | 'hidden'>('all')
   const [listingStatusFilter, setListingStatusFilter] = useState<'all' | 'active' | 'pending' | 'hidden'>('all')
+  const [membersView, setMembersView] = useState<'registered' | 'waitlist'>('registered')
+  const [waitlistSearch, setWaitlistSearch] = useState('')
   const [memberRoleFilter, setMemberRoleFilter] = useState<'all' | 'admin' | 'verified' | 'elite' | 'suspended'>('all')
   const [grantStatusFilter, setGrantStatusFilter] = useState<'all' | 'open' | 'closed'>('all')
 
@@ -600,6 +610,41 @@ export default function AdminClient({
       {/* ── Members ── */}
       {activeTab === 'members' && (
         <div>
+          {/* Registered / Waitlist toggle */}
+          <div className="flex gap-1 mb-4 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 w-fit">
+            <button onClick={() => setMembersView('registered')}
+              className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${membersView === 'registered' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}`}>
+              Registered ({members.length})
+            </button>
+            <button onClick={() => setMembersView('waitlist')}
+              className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${membersView === 'waitlist' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}`}>
+              Waitlist ({waitlistSignups.length})
+            </button>
+          </div>
+
+          {/* Waitlist view */}
+          {membersView === 'waitlist' && (
+            <div>
+              <SearchBar value={waitlistSearch} onChange={setWaitlistSearch} placeholder="Search waitlist by email..." />
+              <div className="space-y-2">
+                {waitlistSignups.length === 0 && <p className="text-gray-500 dark:text-gray-400 text-sm">No waitlist signups yet.</p>}
+                {waitlistSignups
+                  .filter(w => !waitlistSearch || w.email.toLowerCase().includes(waitlistSearch.toLowerCase()))
+                  .map((w) => (
+                  <div key={w.id} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg px-4 py-3 flex items-center justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{w.email}</p>
+                      {w.source && <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Source: {w.source}</p>}
+                    </div>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">{fmt(w.created_at)}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Registered members view */}
+          {membersView === 'registered' && (<>
           <SearchBar value={memberSearch} onChange={setMemberSearch} placeholder="Search members by name, email, or username..." />
           <FilterPills value={memberRoleFilter} onChange={(v) => setMemberRoleFilter(v as typeof memberRoleFilter)} options={[
             { id: 'all', label: `All (${members.length})` },
@@ -745,6 +790,7 @@ export default function AdminClient({
             )
           })}
           </div>
+          </>)}
         </div>
       )}
 

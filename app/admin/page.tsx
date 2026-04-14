@@ -56,7 +56,7 @@ export default async function AdminPage() {
     { data: settingsRows },
     { data: reports },
     { data: auditLog },
-    { count: waitlistCount },
+    { data: waitlistSignups },
   ] = await Promise.all([
     supabaseAny.from('opportunities').select('*').order('created_at', { ascending: false }),
     supabaseAny.from('marketplace_listings').select('*').order('created_at', { ascending: false }),
@@ -71,7 +71,7 @@ export default async function AdminPage() {
     adminAny.from('settings').select('key, value'),
     adminAny.from('reports').select('*').order('created_at', { ascending: false }),
     adminAny.from('admin_audit_log').select('id, admin_id, action, target_type, target_id, details, created_at').order('created_at', { ascending: false }).limit(100),
-    adminAny.from('waitlist_signups').select('*', { count: 'exact', head: true }),
+    adminAny.from('waitlist_signups').select('*').order('created_at', { ascending: false }),
   ])
 
   const profilesMap: Record<string, { first_name: string | null; last_name: string | null; email: string | null; username: string | null }> = {}
@@ -165,7 +165,7 @@ export default async function AdminPage() {
         {/* Stats */}
         <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 gap-3 mb-8">
           {[
-            { label: 'Waitlist',      value: waitlistCount ?? 0 },
+            { label: 'Waitlist',      value: (waitlistSignups ?? []).length },
             { label: 'Members',       value: membersCount },
             { label: 'Opportunities', value: oppsCount },
             { label: 'Grants',        value: grantsCount },
@@ -198,6 +198,7 @@ export default async function AdminPage() {
           currentAdminRole={currentAdminRole}
           currentAdminPermissions={currentAdminPermissions}
           currentUserId={user.id}
+          waitlistSignups={waitlistSignups ?? []}
         />
       </div>
     </div>
