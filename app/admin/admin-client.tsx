@@ -279,6 +279,10 @@ export default function AdminClient({
   const [mentorshipRequiresVerification, setMentorshipRequiresVerification] = useState(settingsMap.mentorship_requires_verification === 'true')
   const [savingSettings, setSavingSettings] = useState(false)
   const [settingsSaved, setSettingsSaved] = useState(false)
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
+    access: true, moderation: false, mentorship: false, email: false, pricing: false, features: false,
+  })
+  const toggleSection = (key: string) => setOpenSections(prev => ({ ...prev, [key]: !prev[key] }))
 
   // ── Helpers ──
 
@@ -883,281 +887,346 @@ export default function AdminClient({
 
       {/* ── Settings ── */}
       {activeTab === 'settings' && isSuperAdmin && (
-        <div className="space-y-6 max-w-2xl">
-          {/* Member Registration */}
-          <div className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-lg p-4">
-            <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Member Registration</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Allow or block new members from creating accounts.</p>
-            <div className="flex items-center gap-3">
-              <button onClick={() => setRegistrationEnabled(!registrationEnabled)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${registrationEnabled ? 'bg-green-600' : 'bg-gray-300 dark:bg-gray-600'}`}>
-                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${registrationEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
-              </button>
-              <span className="text-sm text-gray-700 dark:text-gray-300">{registrationEnabled ? 'Registration open' : 'Registration closed'}</span>
-            </div>
-          </div>
+        <div className="space-y-3 max-w-2xl">
 
-          {/* Post Moderation */}
-          <div className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-lg p-4">
-            <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Post Moderation</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Choose whether new posts go live immediately or require admin approval.</p>
-            <div className="flex gap-3">
-              {(['immediate', 'approval'] as const).map(mode => (
-                <button key={mode} onClick={() => setModerationMode(mode)}
-                  className={`flex-1 py-2 px-3 rounded-md border text-sm font-medium transition-colors ${
-                    moderationMode === mode
-                      ? 'bg-green-600 text-white border-green-600'
-                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
-                  }`}>
-                  {mode === 'immediate' ? 'Immediate' : 'Requires Approval'}
-                </button>
-              ))}
-            </div>
-            {moderationMode === 'approval' && (
-              <p className="text-xs text-yellow-700 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 rounded-md px-3 py-2 mt-3">
-                All new posts will be hidden until approved in the Opportunities or Marketplace tabs.
-              </p>
-            )}
-          </div>
-
-          {/* Verification Grace Period */}
-          <div className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-lg p-4">
-            <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Verification Grace Period</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Days after subscription expiry before the verified badge is removed.</p>
-            <div className="flex items-center gap-3">
-              <input type="number" min={0} max={90} value={graceDays}
-                onChange={(e) => setGraceDays(parseInt(e.target.value, 10) || 0)}
-                className={`w-24 ${sInput}`} />
-              <span className="text-sm text-gray-600 dark:text-gray-400">days</span>
-            </div>
-            <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">Set to 0 to revoke verification immediately on expiry.</p>
-          </div>
-
-          {/* Announcement Banner */}
-          <div className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-lg p-4">
-            <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Announcement Banner</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Show a platform-wide banner at the top of every page.</p>
-            <div className="flex items-center gap-3 mb-3">
-              <button onClick={() => setAnnouncementEnabled(!announcementEnabled)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${announcementEnabled ? 'bg-green-600' : 'bg-gray-300 dark:bg-gray-600'}`}>
-                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${announcementEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
-              </button>
-              <span className="text-sm text-gray-700 dark:text-gray-300">{announcementEnabled ? 'Banner visible' : 'Banner hidden'}</span>
-            </div>
-            {announcementEnabled && (
-              <div className="space-y-3">
-                <textarea value={announcementText} onChange={(e) => setAnnouncementText(e.target.value)}
-                  placeholder="Enter announcement message..." rows={2}
-                  className={`w-full resize-none ${sInput}`} />
-                <div className="flex gap-2">
-                  {(['green', 'yellow', 'red', 'blue'] as const).map((color) => (
-                    <button key={color} onClick={() => setAnnouncementColor(color)}
-                      className={`px-3 py-1.5 rounded-md text-xs font-medium border-2 transition-all ${
-                        announcementColor === color ? 'border-gray-800 dark:border-gray-300 scale-105' : 'border-transparent'
-                      } ${
-                        color === 'green'  ? 'bg-green-100 text-green-800'
-                        : color === 'yellow' ? 'bg-yellow-100 text-yellow-800'
-                        : color === 'red'    ? 'bg-red-100 text-red-800'
-                        : 'bg-blue-100 text-blue-800'
-                      }`}>
-                      {color.charAt(0).toUpperCase() + color.slice(1)}
+          {/* ═══ Section: Platform Access ═══ */}
+          <div className="border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden">
+            <button onClick={() => toggleSection('access')}
+              className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-900/60 hover:bg-gray-100 dark:hover:bg-gray-800/60 transition-colors">
+              <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">Platform Access</span>
+              <svg className={`w-4 h-4 text-gray-400 transition-transform ${openSections.access ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+            </button>
+            {openSections.access && (
+              <div className="p-4 space-y-5 bg-white dark:bg-gray-900">
+                {/* Member Registration */}
+                <div>
+                  <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1 text-sm">Member Registration</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Allow or block new members from creating accounts.</p>
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => setRegistrationEnabled(!registrationEnabled)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${registrationEnabled ? 'bg-green-600' : 'bg-gray-300 dark:bg-gray-600'}`}>
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${registrationEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
                     </button>
-                  ))}
+                    <span className="text-sm text-gray-700 dark:text-gray-300">{registrationEnabled ? 'Registration open' : 'Registration closed'}</span>
+                  </div>
+                </div>
+                <hr className="border-gray-100 dark:border-gray-800" />
+                {/* Maintenance Mode */}
+                <div>
+                  <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1 text-sm">Maintenance Mode</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Display a full-page maintenance notice to all users (except admins). Use during database migrations or major updates.</p>
+                  <div className="flex items-center gap-3 mb-3">
+                    <button onClick={() => setMaintenanceEnabled(!maintenanceEnabled)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${maintenanceEnabled ? 'bg-red-600' : 'bg-gray-300 dark:bg-gray-600'}`}>
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${maintenanceEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                    </button>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">{maintenanceEnabled ? 'Maintenance ON — site locked' : 'Normal operation'}</span>
+                  </div>
+                  {maintenanceEnabled && (
+                    <div className="space-y-2">
+                      <textarea value={maintenanceMessage} onChange={(e) => setMaintenanceMessage(e.target.value)}
+                        placeholder="We're upgrading the platform. Back shortly!" rows={2}
+                        className={`w-full resize-none ${sInput}`} />
+                      <p className="text-xs text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-md px-3 py-2">
+                        All non-admin users will see a maintenance page instead of the platform. Admins can still access everything normally.
+                      </p>
+                    </div>
+                  )}
+                </div>
+                <hr className="border-gray-100 dark:border-gray-800" />
+                {/* Announcement Banner */}
+                <div>
+                  <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1 text-sm">Announcement Banner</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Show a platform-wide banner at the top of every page.</p>
+                  <div className="flex items-center gap-3 mb-3">
+                    <button onClick={() => setAnnouncementEnabled(!announcementEnabled)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${announcementEnabled ? 'bg-green-600' : 'bg-gray-300 dark:bg-gray-600'}`}>
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${announcementEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                    </button>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">{announcementEnabled ? 'Banner visible' : 'Banner hidden'}</span>
+                  </div>
+                  {announcementEnabled && (
+                    <div className="space-y-3">
+                      <textarea value={announcementText} onChange={(e) => setAnnouncementText(e.target.value)}
+                        placeholder="Enter announcement message..." rows={2}
+                        className={`w-full resize-none ${sInput}`} />
+                      <div className="flex gap-2">
+                        {(['green', 'yellow', 'red', 'blue'] as const).map((color) => (
+                          <button key={color} onClick={() => setAnnouncementColor(color)}
+                            className={`px-3 py-1.5 rounded-md text-xs font-medium border-2 transition-all ${
+                              announcementColor === color ? 'border-gray-800 dark:border-gray-300 scale-105' : 'border-transparent'
+                            } ${
+                              color === 'green'  ? 'bg-green-100 text-green-800'
+                              : color === 'yellow' ? 'bg-yellow-100 text-yellow-800'
+                              : color === 'red'    ? 'bg-red-100 text-red-800'
+                              : 'bg-blue-100 text-blue-800'
+                            }`}>
+                            {color.charAt(0).toUpperCase() + color.slice(1)}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
           </div>
 
-          {/* Content Types */}
-          <div className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-lg p-4">
-            <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Content Types</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Manage opportunity types and marketplace categories available to members.</p>
-            <div className="mb-5">
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Opportunity Types</p>
-              <div className="flex flex-wrap gap-2 mb-2">
-                {opportunityTypes.map((type) => (
-                  <span key={type} className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs px-2.5 py-1 rounded-full">
-                    {type}
-                    <button onClick={() => removeOpportunityType(type)} className="text-gray-400 hover:text-red-500 ml-0.5 leading-none text-base">×</button>
-                  </span>
-                ))}
+          {/* ═══ Section: Content & Moderation ═══ */}
+          <div className="border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden">
+            <button onClick={() => toggleSection('moderation')}
+              className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-900/60 hover:bg-gray-100 dark:hover:bg-gray-800/60 transition-colors">
+              <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">Content &amp; Moderation</span>
+              <svg className={`w-4 h-4 text-gray-400 transition-transform ${openSections.moderation ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+            </button>
+            {openSections.moderation && (
+              <div className="p-4 space-y-5 bg-white dark:bg-gray-900">
+                {/* Post Moderation */}
+                <div>
+                  <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1 text-sm">Post Moderation</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Choose whether new posts go live immediately or require admin approval.</p>
+                  <div className="flex gap-3">
+                    {(['immediate', 'approval'] as const).map(mode => (
+                      <button key={mode} onClick={() => setModerationMode(mode)}
+                        className={`flex-1 py-2 px-3 rounded-md border text-sm font-medium transition-colors ${
+                          moderationMode === mode
+                            ? 'bg-green-600 text-white border-green-600'
+                            : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
+                        }`}>
+                        {mode === 'immediate' ? 'Immediate' : 'Requires Approval'}
+                      </button>
+                    ))}
+                  </div>
+                  {moderationMode === 'approval' && (
+                    <p className="text-xs text-yellow-700 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 rounded-md px-3 py-2 mt-3">
+                      All new posts will be hidden until approved in the Opportunities or Marketplace tabs.
+                    </p>
+                  )}
+                </div>
+                <hr className="border-gray-100 dark:border-gray-800" />
+                {/* Daily Post Limits */}
+                <div>
+                  <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1 text-sm">Daily Post Limits</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Maximum posts a member can create per day across each section.</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">Opportunities / day</label>
+                      <input type="number" min={1} value={opportunityLimit} onChange={(e) => setOpportunityLimit(e.target.value)} className={`w-full ${sInput}`} />
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">Listings / day</label>
+                      <input type="number" min={1} value={listingLimit} onChange={(e) => setListingLimit(e.target.value)} className={`w-full ${sInput}`} />
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">Community posts / day</label>
+                      <input type="number" min={1} value={communityDailyLimit} onChange={(e) => setCommunityDailyLimit(e.target.value)} className={`w-full ${sInput}`} />
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">Research posts / day</label>
+                      <input type="number" min={1} value={researchDailyLimit} onChange={(e) => setResearchDailyLimit(e.target.value)} className={`w-full ${sInput}`} />
+                    </div>
+                  </div>
+                </div>
+                <hr className="border-gray-100 dark:border-gray-800" />
+                {/* Report Threshold */}
+                <div>
+                  <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1 text-sm">Report Threshold</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Number of reports before a post is automatically hidden pending review.</p>
+                  <div className="flex items-center gap-3">
+                    <input type="number" min={1} max={50} value={reportThreshold} onChange={(e) => setReportThreshold(e.target.value)} className={`w-24 ${sInput}`} />
+                    <span className="text-sm text-gray-600 dark:text-gray-400">reports</span>
+                  </div>
+                </div>
+                <hr className="border-gray-100 dark:border-gray-800" />
+                {/* Admin Notification Email */}
+                <div>
+                  <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1 text-sm">Admin Notification Email</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Email address that receives an alert whenever a post is reported. Leave empty to disable.</p>
+                  <input type="email" value={adminNotificationEmail} onChange={(e) => setAdminNotificationEmail(e.target.value)}
+                    placeholder="admin@agroyield.africa" className={`w-full ${sInput}`} />
+                  {adminNotificationEmail && (
+                    <p className="text-xs text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 rounded-md px-3 py-2 mt-2">
+                      Alerts will be sent to {adminNotificationEmail} on every new report.
+                    </p>
+                  )}
+                </div>
+                <hr className="border-gray-100 dark:border-gray-800" />
+                {/* Content Types */}
+                <div>
+                  <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1 text-sm">Content Types</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Manage opportunity types and marketplace categories available to members.</p>
+                  <div className="mb-5">
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Opportunity Types</p>
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {opportunityTypes.map((type) => (
+                        <span key={type} className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs px-2.5 py-1 rounded-full">
+                          {type}
+                          <button onClick={() => removeOpportunityType(type)} className="text-gray-400 hover:text-red-500 ml-0.5 leading-none text-base">×</button>
+                        </span>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <input type="text" value={newOpportunityType} onChange={(e) => setNewOpportunityType(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && addOpportunityType()}
+                        placeholder="Add type..." className={`flex-1 ${sInput}`} />
+                      <button onClick={addOpportunityType} className="bg-green-600 text-white px-3 py-1.5 rounded text-sm hover:bg-green-700">Add</button>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Marketplace Categories</p>
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {marketplaceCategories.map((cat) => (
+                        <span key={cat} className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs px-2.5 py-1 rounded-full">
+                          {cat}
+                          <button onClick={() => removeMarketplaceCategory(cat)} className="text-gray-400 hover:text-red-500 ml-0.5 leading-none text-base">×</button>
+                        </span>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <input type="text" value={newMarketplaceCategory} onChange={(e) => setNewMarketplaceCategory(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && addMarketplaceCategory()}
+                        placeholder="Add category..." className={`flex-1 ${sInput}`} />
+                      <button onClick={addMarketplaceCategory} className="bg-green-600 text-white px-3 py-1.5 rounded text-sm hover:bg-green-700">Add</button>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <input type="text" value={newOpportunityType} onChange={(e) => setNewOpportunityType(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && addOpportunityType()}
-                  placeholder="Add type..." className={`flex-1 ${sInput}`} />
-                <button onClick={addOpportunityType} className="bg-green-600 text-white px-3 py-1.5 rounded text-sm hover:bg-green-700">Add</button>
-              </div>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Marketplace Categories</p>
-              <div className="flex flex-wrap gap-2 mb-2">
-                {marketplaceCategories.map((cat) => (
-                  <span key={cat} className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs px-2.5 py-1 rounded-full">
-                    {cat}
-                    <button onClick={() => removeMarketplaceCategory(cat)} className="text-gray-400 hover:text-red-500 ml-0.5 leading-none text-base">×</button>
-                  </span>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <input type="text" value={newMarketplaceCategory} onChange={(e) => setNewMarketplaceCategory(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && addMarketplaceCategory()}
-                  placeholder="Add category..." className={`flex-1 ${sInput}`} />
-                <button onClick={addMarketplaceCategory} className="bg-green-600 text-white px-3 py-1.5 rounded text-sm hover:bg-green-700">Add</button>
-              </div>
-            </div>
-          </div>
-
-          {/* Subscription Pricing */}
-          <div className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-lg p-4">
-            <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Subscription Pricing</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Set the verified membership prices displayed on the platform.</p>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">Monthly Price (₦)</label>
-                <input type="number" value={monthlyPrice} onChange={(e) => setMonthlyPrice(e.target.value)} className={`w-full ${sInput}`} />
-              </div>
-              <div>
-                <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">Annual Price (₦)</label>
-                <input type="number" value={annualPrice} onChange={(e) => setAnnualPrice(e.target.value)} className={`w-full ${sInput}`} />
-              </div>
-            </div>
-          </div>
-
-          {/* Rate Limits */}
-          <div className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-lg p-4">
-            <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Rate Limits</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Maximum posts a member can create per day.</p>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">Opportunities / day</label>
-                <input type="number" min={1} value={opportunityLimit} onChange={(e) => setOpportunityLimit(e.target.value)} className={`w-full ${sInput}`} />
-              </div>
-              <div>
-                <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">Listings / day</label>
-                <input type="number" min={1} value={listingLimit} onChange={(e) => setListingLimit(e.target.value)} className={`w-full ${sInput}`} />
-              </div>
-            </div>
-          </div>
-
-          {/* Report Threshold */}
-          <div className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-lg p-4">
-            <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Report Threshold</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Number of reports before a post is automatically hidden pending review.</p>
-            <div className="flex items-center gap-3">
-              <input type="number" min={1} max={50} value={reportThreshold} onChange={(e) => setReportThreshold(e.target.value)} className={`w-24 ${sInput}`} />
-              <span className="text-sm text-gray-600 dark:text-gray-400">reports</span>
-            </div>
-          </div>
-
-          {/* Admin Notification Email */}
-          <div className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-lg p-4">
-            <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Admin Notification Email</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Email address that receives an alert whenever a post is reported. Leave empty to disable.</p>
-            <input type="email" value={adminNotificationEmail} onChange={(e) => setAdminNotificationEmail(e.target.value)}
-              placeholder="admin@agroyield.africa" className={`w-full ${sInput}`} />
-            {adminNotificationEmail && (
-              <p className="text-xs text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 rounded-md px-3 py-2 mt-2">
-                Alerts will be sent to {adminNotificationEmail} on every new report.
-              </p>
             )}
           </div>
 
-          {/* Multi-Business (Feature Flag) */}
-          <div className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-lg p-4">
-            <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Multi-Business Support</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Allow members to create and manage more than one business. Turn this on after the multi-business feature is fully built.</p>
-            <div className="flex items-center gap-3">
-              <button onClick={() => setAllowMultiBusiness(!allowMultiBusiness)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${allowMultiBusiness ? 'bg-green-600' : 'bg-gray-300 dark:bg-gray-600'}`}>
-                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${allowMultiBusiness ? 'translate-x-6' : 'translate-x-1'}`} />
-              </button>
-              <span className="text-sm text-gray-700 dark:text-gray-300">{allowMultiBusiness ? 'Multi-business enabled' : 'Single business only'}</span>
-            </div>
-            {!allowMultiBusiness && (
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">Members are limited to one business each. Enable this post-launch to unlock multi-business workflows.</p>
+          {/* ═══ Section: Mentorship ═══ */}
+          <div className="border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden">
+            <button onClick={() => toggleSection('mentorship')}
+              className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-900/60 hover:bg-gray-100 dark:hover:bg-gray-800/60 transition-colors">
+              <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">Mentorship</span>
+              <svg className={`w-4 h-4 text-gray-400 transition-transform ${openSections.mentorship ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+            </button>
+            {openSections.mentorship && (
+              <div className="p-4 space-y-5 bg-white dark:bg-gray-900">
+                {/* Mentorship Module */}
+                <div>
+                  <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1 text-sm">Mentorship Module</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Enable or disable the entire mentorship module. When disabled, the mentorship page shows a &ldquo;coming soon&rdquo; message and mentor registration is blocked.</p>
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => setMentorshipEnabled(!mentorshipEnabled)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${mentorshipEnabled ? 'bg-green-600' : 'bg-gray-300 dark:bg-gray-600'}`}>
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${mentorshipEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                    </button>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">{mentorshipEnabled ? 'Mentorship active' : 'Mentorship disabled'}</span>
+                  </div>
+                </div>
+                <hr className="border-gray-100 dark:border-gray-800" />
+                {/* Mentorship Verification Gate */}
+                <div>
+                  <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1 text-sm">Verification Gate</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Require members to have an active verified subscription before they can register as a mentor or send mentorship requests.</p>
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => setMentorshipRequiresVerification(!mentorshipRequiresVerification)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${mentorshipRequiresVerification ? 'bg-green-600' : 'bg-gray-300 dark:bg-gray-600'}`}>
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${mentorshipRequiresVerification ? 'translate-x-6' : 'translate-x-1'}`} />
+                    </button>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">{mentorshipRequiresVerification ? 'Verified members only' : 'Open to all members'}</span>
+                  </div>
+                  {mentorshipRequiresVerification && (
+                    <p className="text-xs text-yellow-700 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 rounded-md px-3 py-2 mt-3">
+                      Only members with an active subscription can access mentorship features. This also creates a subscription incentive.
+                    </p>
+                  )}
+                </div>
+              </div>
             )}
           </div>
 
-          {/* ── Mentorship Module Toggle ── */}
-          <div className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-lg p-4">
-            <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Mentorship Module</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Enable or disable the entire mentorship module. When disabled, the mentorship page shows a &ldquo;coming soon&rdquo; message and mentor registration is blocked.</p>
-            <div className="flex items-center gap-3">
-              <button onClick={() => setMentorshipEnabled(!mentorshipEnabled)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${mentorshipEnabled ? 'bg-green-600' : 'bg-gray-300 dark:bg-gray-600'}`}>
-                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${mentorshipEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
-              </button>
-              <span className="text-sm text-gray-700 dark:text-gray-300">{mentorshipEnabled ? 'Mentorship active' : 'Mentorship disabled'}</span>
-            </div>
-          </div>
-
-          {/* ── Mentorship Requires Verification ── */}
-          <div className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-lg p-4">
-            <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Mentorship Verification Gate</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Require members to have an active verified subscription before they can register as a mentor or send mentorship requests.</p>
-            <div className="flex items-center gap-3">
-              <button onClick={() => setMentorshipRequiresVerification(!mentorshipRequiresVerification)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${mentorshipRequiresVerification ? 'bg-green-600' : 'bg-gray-300 dark:bg-gray-600'}`}>
-                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${mentorshipRequiresVerification ? 'translate-x-6' : 'translate-x-1'}`} />
-              </button>
-              <span className="text-sm text-gray-700 dark:text-gray-300">{mentorshipRequiresVerification ? 'Verified members only' : 'Open to all members'}</span>
-            </div>
-            {mentorshipRequiresVerification && (
-              <p className="text-xs text-yellow-700 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 rounded-md px-3 py-2 mt-3">
-                Only members with an active subscription can access mentorship features. This also creates a subscription incentive.
-              </p>
+          {/* ═══ Section: Email & Notifications ═══ */}
+          <div className="border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden">
+            <button onClick={() => toggleSection('email')}
+              className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-900/60 hover:bg-gray-100 dark:hover:bg-gray-800/60 transition-colors">
+              <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">Email &amp; Notifications</span>
+              <svg className={`w-4 h-4 text-gray-400 transition-transform ${openSections.email ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+            </button>
+            {openSections.email && (
+              <div className="p-4 space-y-5 bg-white dark:bg-gray-900">
+                {/* Weekly Digest */}
+                <div>
+                  <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1 text-sm">Weekly Digest Email</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Send a weekly summary email to all members with new opportunities and member highlights. Disable this before launch or if there isn&apos;t enough content to fill a useful digest.</p>
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => setDigestEnabled(!digestEnabled)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${digestEnabled ? 'bg-green-600' : 'bg-gray-300 dark:bg-gray-600'}`}>
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${digestEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                    </button>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">{digestEnabled ? 'Digest active — emails sent weekly' : 'Digest paused — no emails'}</span>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
 
-          {/* ── Community & Research Limits ── */}
-          <div className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-lg p-4">
-            <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Community &amp; Research Limits</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Maximum posts a member can create per day in the community feed and research section. Prevents spam without restricting normal use.</p>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">Community posts / day</label>
-                <input type="number" min={1} value={communityDailyLimit} onChange={(e) => setCommunityDailyLimit(e.target.value)} className={`w-full ${sInput}`} />
+          {/* ═══ Section: Pricing & Subscriptions ═══ */}
+          <div className="border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden">
+            <button onClick={() => toggleSection('pricing')}
+              className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-900/60 hover:bg-gray-100 dark:hover:bg-gray-800/60 transition-colors">
+              <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">Pricing &amp; Subscriptions</span>
+              <svg className={`w-4 h-4 text-gray-400 transition-transform ${openSections.pricing ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+            </button>
+            {openSections.pricing && (
+              <div className="p-4 space-y-5 bg-white dark:bg-gray-900">
+                {/* Subscription Pricing */}
+                <div>
+                  <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1 text-sm">Subscription Pricing</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Set the verified membership prices displayed on the platform.</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">Monthly Price (&#8358;)</label>
+                      <input type="number" value={monthlyPrice} onChange={(e) => setMonthlyPrice(e.target.value)} className={`w-full ${sInput}`} />
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">Annual Price (&#8358;)</label>
+                      <input type="number" value={annualPrice} onChange={(e) => setAnnualPrice(e.target.value)} className={`w-full ${sInput}`} />
+                    </div>
+                  </div>
+                </div>
+                <hr className="border-gray-100 dark:border-gray-800" />
+                {/* Verification Grace Period */}
+                <div>
+                  <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1 text-sm">Verification Grace Period</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Days after subscription expiry before the verified badge is removed.</p>
+                  <div className="flex items-center gap-3">
+                    <input type="number" min={0} max={90} value={graceDays}
+                      onChange={(e) => setGraceDays(parseInt(e.target.value, 10) || 0)}
+                      className={`w-24 ${sInput}`} />
+                    <span className="text-sm text-gray-600 dark:text-gray-400">days</span>
+                  </div>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">Set to 0 to revoke verification immediately on expiry.</p>
+                </div>
               </div>
-              <div>
-                <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">Research posts / day</label>
-                <input type="number" min={1} value={researchDailyLimit} onChange={(e) => setResearchDailyLimit(e.target.value)} className={`w-full ${sInput}`} />
-              </div>
-            </div>
+            )}
           </div>
 
-          {/* ── Weekly Digest Toggle ── */}
-          <div className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-lg p-4">
-            <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Weekly Digest Email</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Send a weekly summary email to all members with new opportunities and member highlights. Disable this before launch or if there isn&apos;t enough content to fill a useful digest.</p>
-            <div className="flex items-center gap-3">
-              <button onClick={() => setDigestEnabled(!digestEnabled)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${digestEnabled ? 'bg-green-600' : 'bg-gray-300 dark:bg-gray-600'}`}>
-                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${digestEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
-              </button>
-              <span className="text-sm text-gray-700 dark:text-gray-300">{digestEnabled ? 'Digest active — emails sent weekly' : 'Digest paused — no emails'}</span>
-            </div>
-          </div>
-
-          {/* ── Maintenance Mode ── */}
-          <div className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-lg p-4">
-            <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Maintenance Mode</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Display a full-page maintenance notice to all users (except admins). Use during database migrations or major updates. Different from closing registration — this blocks access entirely.</p>
-            <div className="flex items-center gap-3 mb-3">
-              <button onClick={() => setMaintenanceEnabled(!maintenanceEnabled)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${maintenanceEnabled ? 'bg-red-600' : 'bg-gray-300 dark:bg-gray-600'}`}>
-                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${maintenanceEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
-              </button>
-              <span className="text-sm text-gray-700 dark:text-gray-300">{maintenanceEnabled ? 'Maintenance ON — site locked' : 'Normal operation'}</span>
-            </div>
-            {maintenanceEnabled && (
-              <div className="space-y-2">
-                <textarea value={maintenanceMessage} onChange={(e) => setMaintenanceMessage(e.target.value)}
-                  placeholder="We're upgrading the platform. Back shortly!" rows={2}
-                  className={`w-full resize-none ${sInput}`} />
-                <p className="text-xs text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-md px-3 py-2">
-                  All non-admin users will see a maintenance page instead of the platform. Admins can still access everything normally.
-                </p>
+          {/* ═══ Section: Feature Flags ═══ */}
+          <div className="border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden">
+            <button onClick={() => toggleSection('features')}
+              className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-900/60 hover:bg-gray-100 dark:hover:bg-gray-800/60 transition-colors">
+              <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">Feature Flags</span>
+              <svg className={`w-4 h-4 text-gray-400 transition-transform ${openSections.features ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+            </button>
+            {openSections.features && (
+              <div className="p-4 space-y-5 bg-white dark:bg-gray-900">
+                {/* Multi-Business */}
+                <div>
+                  <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1 text-sm">Multi-Business Support</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Allow members to create and manage more than one business. Turn this on after the multi-business feature is fully built.</p>
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => setAllowMultiBusiness(!allowMultiBusiness)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${allowMultiBusiness ? 'bg-green-600' : 'bg-gray-300 dark:bg-gray-600'}`}>
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${allowMultiBusiness ? 'translate-x-6' : 'translate-x-1'}`} />
+                    </button>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">{allowMultiBusiness ? 'Multi-business enabled' : 'Single business only'}</span>
+                  </div>
+                  {!allowMultiBusiness && (
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">Members are limited to one business each. Enable this post-launch to unlock multi-business workflows.</p>
+                  )}
+                </div>
               </div>
             )}
           </div>
