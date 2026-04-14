@@ -252,6 +252,13 @@ export async function GET(request: Request) {
 
   const supabaseAdmin = getSupabaseAdmin()
 
+  // Check if digest is enabled (default: enabled)
+  const { data: digestSetting } = await (supabaseAdmin as any)
+    .from('settings').select('value').eq('key', 'digest_enabled').maybeSingle()
+  if (digestSetting?.value === 'false') {
+    return NextResponse.json({ skipped: true, reason: 'Weekly digest is disabled in admin settings' })
+  }
+
   const since = new Date()
   since.setDate(since.getDate() - 7)
   const sinceISO = since.toISOString()

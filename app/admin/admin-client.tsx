@@ -269,6 +269,14 @@ export default function AdminClient({
   const [reportThreshold, setReportThreshold] = useState(settingsMap.report_threshold ?? '3')
   const [adminNotificationEmail, setAdminNotificationEmail] = useState(settingsMap.admin_notification_email ?? '')
   const [allowMultiBusiness, setAllowMultiBusiness] = useState(settingsMap.allow_multi_business === 'true')
+  // New settings (batch 2)
+  const [mentorshipEnabled, setMentorshipEnabled] = useState(settingsMap.mentorship_enabled !== 'false')
+  const [digestEnabled, setDigestEnabled] = useState(settingsMap.digest_enabled !== 'false')
+  const [maintenanceEnabled, setMaintenanceEnabled] = useState(settingsMap.maintenance_enabled === 'true')
+  const [maintenanceMessage, setMaintenanceMessage] = useState(settingsMap.maintenance_message ?? '')
+  const [communityDailyLimit, setCommunityDailyLimit] = useState(settingsMap.community_daily_limit ?? '10')
+  const [researchDailyLimit, setResearchDailyLimit] = useState(settingsMap.research_daily_limit ?? '5')
+  const [mentorshipRequiresVerification, setMentorshipRequiresVerification] = useState(settingsMap.mentorship_requires_verification === 'true')
   const [savingSettings, setSavingSettings] = useState(false)
   const [settingsSaved, setSettingsSaved] = useState(false)
 
@@ -306,6 +314,13 @@ export default function AdminClient({
           report_threshold: reportThreshold,
           admin_notification_email: adminNotificationEmail,
           allow_multi_business: String(allowMultiBusiness),
+          mentorship_enabled: String(mentorshipEnabled),
+          digest_enabled: String(digestEnabled),
+          maintenance_enabled: String(maintenanceEnabled),
+          maintenance_message: maintenanceMessage,
+          community_daily_limit: communityDailyLimit,
+          research_daily_limit: researchDailyLimit,
+          mentorship_requires_verification: String(mentorshipRequiresVerification),
         }),
       })
       setSettingsSaved(true)
@@ -1061,6 +1076,89 @@ export default function AdminClient({
             </div>
             {!allowMultiBusiness && (
               <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">Members are limited to one business each. Enable this post-launch to unlock multi-business workflows.</p>
+            )}
+          </div>
+
+          {/* ── Mentorship Module Toggle ── */}
+          <div className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-lg p-4">
+            <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Mentorship Module</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Enable or disable the entire mentorship module. When disabled, the mentorship page shows a &ldquo;coming soon&rdquo; message and mentor registration is blocked.</p>
+            <div className="flex items-center gap-3">
+              <button onClick={() => setMentorshipEnabled(!mentorshipEnabled)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${mentorshipEnabled ? 'bg-green-600' : 'bg-gray-300 dark:bg-gray-600'}`}>
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${mentorshipEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
+              <span className="text-sm text-gray-700 dark:text-gray-300">{mentorshipEnabled ? 'Mentorship active' : 'Mentorship disabled'}</span>
+            </div>
+          </div>
+
+          {/* ── Mentorship Requires Verification ── */}
+          <div className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-lg p-4">
+            <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Mentorship Verification Gate</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Require members to have an active verified subscription before they can register as a mentor or send mentorship requests.</p>
+            <div className="flex items-center gap-3">
+              <button onClick={() => setMentorshipRequiresVerification(!mentorshipRequiresVerification)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${mentorshipRequiresVerification ? 'bg-green-600' : 'bg-gray-300 dark:bg-gray-600'}`}>
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${mentorshipRequiresVerification ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
+              <span className="text-sm text-gray-700 dark:text-gray-300">{mentorshipRequiresVerification ? 'Verified members only' : 'Open to all members'}</span>
+            </div>
+            {mentorshipRequiresVerification && (
+              <p className="text-xs text-yellow-700 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 rounded-md px-3 py-2 mt-3">
+                Only members with an active subscription can access mentorship features. This also creates a subscription incentive.
+              </p>
+            )}
+          </div>
+
+          {/* ── Community & Research Limits ── */}
+          <div className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-lg p-4">
+            <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Community &amp; Research Limits</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Maximum posts a member can create per day in the community feed and research section. Prevents spam without restricting normal use.</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">Community posts / day</label>
+                <input type="number" min={1} value={communityDailyLimit} onChange={(e) => setCommunityDailyLimit(e.target.value)} className={`w-full ${sInput}`} />
+              </div>
+              <div>
+                <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">Research posts / day</label>
+                <input type="number" min={1} value={researchDailyLimit} onChange={(e) => setResearchDailyLimit(e.target.value)} className={`w-full ${sInput}`} />
+              </div>
+            </div>
+          </div>
+
+          {/* ── Weekly Digest Toggle ── */}
+          <div className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-lg p-4">
+            <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Weekly Digest Email</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Send a weekly summary email to all members with new opportunities and member highlights. Disable this before launch or if there isn&apos;t enough content to fill a useful digest.</p>
+            <div className="flex items-center gap-3">
+              <button onClick={() => setDigestEnabled(!digestEnabled)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${digestEnabled ? 'bg-green-600' : 'bg-gray-300 dark:bg-gray-600'}`}>
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${digestEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
+              <span className="text-sm text-gray-700 dark:text-gray-300">{digestEnabled ? 'Digest active — emails sent weekly' : 'Digest paused — no emails'}</span>
+            </div>
+          </div>
+
+          {/* ── Maintenance Mode ── */}
+          <div className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-lg p-4">
+            <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Maintenance Mode</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Display a full-page maintenance notice to all users (except admins). Use during database migrations or major updates. Different from closing registration — this blocks access entirely.</p>
+            <div className="flex items-center gap-3 mb-3">
+              <button onClick={() => setMaintenanceEnabled(!maintenanceEnabled)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${maintenanceEnabled ? 'bg-red-600' : 'bg-gray-300 dark:bg-gray-600'}`}>
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${maintenanceEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
+              <span className="text-sm text-gray-700 dark:text-gray-300">{maintenanceEnabled ? 'Maintenance ON — site locked' : 'Normal operation'}</span>
+            </div>
+            {maintenanceEnabled && (
+              <div className="space-y-2">
+                <textarea value={maintenanceMessage} onChange={(e) => setMaintenanceMessage(e.target.value)}
+                  placeholder="We're upgrading the platform. Back shortly!" rows={2}
+                  className={`w-full resize-none ${sInput}`} />
+                <p className="text-xs text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-md px-3 py-2">
+                  All non-admin users will see a maintenance page instead of the platform. Admins can still access everything normally.
+                </p>
+              </div>
             )}
           </div>
 

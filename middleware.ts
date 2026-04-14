@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
+import { createClient } from '@supabase/supabase-js'
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request })
@@ -26,6 +27,30 @@ export async function middleware(request: NextRequest) {
 
   if (!user) {
     return NextResponse.redirect(new URL('/login', request.url))
+  }
+
+  // ── Maintenance mode check ──
+  // Skip for admin page so admins can still access the dashboard to toggle it off
+  if (!request.nextUrl.pathname.startsWith('/admin')) {
+    try {
+      const adminDb = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+      )
+      const { data: maintenanceSetting } = await (adminDb as any)
+        .from('settings').select('value').eq('key', 'maintenance_enabled').maybeSingle()
+
+      if (maintenanceSetting?.value === 'true') {
+        // Check if user is admin — admins bypass maintenance
+        const { data: profile } = await (adminDb as any)
+          .from('profiles').select('is_admin').eq('id', user.id).single()
+        if (!profile?.is_admin) {
+          return NextResponse.redirect(new URL('/maintenance', request.url))
+        }
+      }
+    } catch {
+      // If settings check fails, don't block the user
+    }
   }
 
   return response

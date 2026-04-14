@@ -3,11 +3,56 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import AppNav from '@/app/components/AppNav'
 import MentorBrowser from './mentor-browser'
+import { getSettings } from '@/lib/settings'
 
 export default async function MentorshipPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+
+  // Check mentorship settings
+  const settings = await getSettings(['mentorship_enabled', 'mentorship_requires_verification'])
+  const mentorshipEnabled = settings.mentorship_enabled !== 'false'
+  if (!mentorshipEnabled) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+        <AppNav />
+        <main className="max-w-2xl mx-auto px-4 py-20 text-center">
+          <div className="text-5xl mb-4">🌱</div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Mentorship Coming Soon</h1>
+          <p className="text-gray-500 dark:text-gray-400">
+            The mentorship module is currently being set up. Check back soon to connect with experienced agricultural professionals.
+          </p>
+          <Link href="/dashboard" className="inline-block mt-6 bg-green-600 text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors">
+            Back to Dashboard
+          </Link>
+        </main>
+      </div>
+    )
+  }
+
+  // Check if verification is required for mentorship
+  if (settings.mentorship_requires_verification === 'true') {
+    const { data: userProfile } = await (supabase as any)
+      .from('profiles').select('is_verified').eq('id', user.id).single()
+    if (!userProfile?.is_verified) {
+      return (
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+          <AppNav />
+          <main className="max-w-2xl mx-auto px-4 py-20 text-center">
+            <div className="text-5xl mb-4">🔒</div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Verified Members Only</h1>
+            <p className="text-gray-500 dark:text-gray-400 mb-6">
+              Mentorship features are available to verified members. Subscribe to unlock access to mentors and mentorship requests.
+            </p>
+            <Link href="/verify" className="inline-block bg-green-600 text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors">
+              Get Verified
+            </Link>
+          </main>
+        </div>
+      )
+    }
+  }
 
   // Fetch active mentor profiles with user info
   const { data: mentors } = await supabase

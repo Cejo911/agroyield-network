@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { getSetting } from '@/lib/settings'
 
 export async function GET() {
   return NextResponse.json({ status: 'ok' })
@@ -23,6 +24,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Title, type and content are required' },
         { status: 400 }
+      )
+    }
+
+    // Daily rate limit check
+    const limitStr = await getSetting('research_daily_limit')
+    const rateLimit = parseInt(limitStr ?? '5', 10) || 5
+    const since = new Date()
+    since.setHours(0, 0, 0, 0)
+    const { count } = await (supabase as any)
+      .from('research_posts')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .gte('created_at', since.toISOString())
+    if ((count ?? 0) >= rateLimit) {
+      return NextResponse.json(
+        { error: `You can post a maximum of ${rateLimit} research posts per 24 hours. Please try again later.` },
+        { status: 429 }
       )
     }
 

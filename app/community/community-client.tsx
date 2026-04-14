@@ -69,6 +69,22 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
     if (!content.trim()) return
     setPosting(true)
 
+    // Check daily post limit
+    const limitRes = await (supabase as any).from('settings').select('value').eq('key', 'community_daily_limit').maybeSingle()
+    const dailyLimit = parseInt(limitRes.data?.value ?? '10', 10) || 10
+    const todayStart = new Date()
+    todayStart.setHours(0, 0, 0, 0)
+    const { count: todayCount } = await (supabase as any)
+      .from('community_posts')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', currentUserId)
+      .gte('created_at', todayStart.toISOString())
+    if ((todayCount ?? 0) >= dailyLimit) {
+      alert(`You can post a maximum of ${dailyLimit} community posts per day. Please try again tomorrow.`)
+      setPosting(false)
+      return
+    }
+
     const payload: any = {
       user_id: currentUserId,
       post_type: postType,

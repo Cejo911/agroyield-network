@@ -24,6 +24,8 @@ export default function BecomeMentorPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [isEdit, setIsEdit] = useState(false)
+  const [moduleDisabled, setModuleDisabled] = useState(false)
+  const [verificationRequired, setVerificationRequired] = useState(false)
   const [form, setForm] = useState({
     headline: '',
     expertise: [] as string[],
@@ -41,6 +43,29 @@ export default function BecomeMentorPage() {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
+
+      // Check mentorship settings
+      const { data: settingsRows } = await (supabase as any)
+        .from('settings').select('key, value').in('key', ['mentorship_enabled', 'mentorship_requires_verification'])
+      const settingsMap: Record<string, string> = {}
+      for (const s of (settingsRows ?? [])) settingsMap[s.key] = s.value
+
+      if (settingsMap.mentorship_enabled === 'false') {
+        setModuleDisabled(true)
+        setLoading(false)
+        return
+      }
+
+      // Check verification requirement
+      if (settingsMap.mentorship_requires_verification === 'true') {
+        const { data: userProfile } = await (supabase as any)
+          .from('profiles').select('is_verified').eq('id', user.id).single()
+        if (!userProfile?.is_verified) {
+          setVerificationRequired(true)
+          setLoading(false)
+          return
+        }
+      }
 
       // Fetch mentor profile and user profile in parallel
       const [{ data: existing }, { data: profile }] = await Promise.all([
@@ -134,6 +159,35 @@ export default function BecomeMentorPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <AppNav />
       <div className="text-gray-400 text-sm p-8 text-center">Loading...</div>
+    </div>
+  )
+
+  if (moduleDisabled) return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+      <AppNav />
+      <main className="max-w-2xl mx-auto px-4 py-20 text-center">
+        <div className="text-5xl mb-4">🌱</div>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Mentorship Coming Soon</h1>
+        <p className="text-gray-500 dark:text-gray-400">
+          The mentorship module is currently being set up. Check back soon!
+        </p>
+      </main>
+    </div>
+  )
+
+  if (verificationRequired) return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+      <AppNav />
+      <main className="max-w-2xl mx-auto px-4 py-20 text-center">
+        <div className="text-5xl mb-4">🔒</div>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Verified Members Only</h1>
+        <p className="text-gray-500 dark:text-gray-400 mb-6">
+          Mentor registration is available to verified members. Subscribe to unlock this feature.
+        </p>
+        <a href="/verify" className="inline-block bg-green-600 text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors">
+          Get Verified
+        </a>
+      </main>
     </div>
   )
 
