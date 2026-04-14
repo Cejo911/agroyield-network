@@ -940,7 +940,7 @@ export default function AdminClient({
         </>)
 
         return (
-        <div className="space-y-2 max-w-2xl">
+        <div className="space-y-2">
 
           {/* ═══ Section: Platform Access ═══ */}
           <div className={`border rounded-lg overflow-hidden ${maintenanceEnabled ? 'border-red-300 dark:border-red-800' : 'border-gray-200 dark:border-gray-800'}`}>

@@ -1,6 +1,6 @@
 # AgroYield Network — Project Status
 
-> **Last updated:** 14 April 2026 (Checkpoint 9)
+> **Last updated:** 14 April 2026 (Checkpoint 10)
 > **Maintained by:** Okoli (okolichijiokei@gmail.com)
 > **Launch Target:** 5 July 2026 (~12 weeks remaining)
 > **Purpose:** Permanent reference for any developer or Claude session to get up to speed instantly.
@@ -234,10 +234,19 @@
 | Centralised email senders                | ✅ Done | `lib/email/senders.ts` — SENDERS / INBOXES with env-var overrides (`RESEND_FROM_*`, `CONTACT_INBOX`) |
 | Lazy Resend client                       | ✅ Done | `lib/email/client.ts` — `getResend()` to avoid Next.js 16 build-time module-eval crash             |
 | Lazy Supabase clients                    | ✅ Done | `lib/supabase/admin.ts` — `getSupabaseAdmin()` / `getSupabaseAnon()` for the same reason           |
+| Maintenance mode                         | ✅ Done | Middleware redirect for non-admin users, branded `/maintenance` page, admin bypass, toggle in settings |
+| Admin settings panel (5 operational controls) | ✅ Done | Mentorship toggle, digest toggle, maintenance mode, community/research daily limits, mentorship verification gate |
+| Admin settings UI (grouped accordion)    | ✅ Done | 6 collapsible sections with status badges on collapsed headers, red highlight for active maintenance |
+| Server-side settings helper              | ✅ Done | `lib/settings.ts` — `getSetting()` / `getSettings()` using admin client to bypass RLS             |
+| Community daily post rate limit          | ✅ Done | Client-side check against `community_daily_limit` setting before insert                            |
+| Research daily post rate limit           | ✅ Done | Server-side check in `app/api/research/route.ts` against `research_daily_limit` setting            |
+| Mentorship verification gate             | ✅ Done | Both `/mentorship` (server) and `/mentorship/become-mentor` (client) check settings, show gate screens |
+| Weekly digest admin toggle               | ✅ Done | Cron early-exits when `digest_enabled` is `false` in settings                                      |
+| Consistent logo sizing                   | ✅ Done | AppNav 200×50 (desktop), 44×44 (mobile). Signup matched to login/reset (nav 58px, card 120px)      |
 
 ---
 
-## Known Issues & Technical Debt (as of April 12, 2026)
+## Known Issues & Technical Debt (as of April 14, 2026)
 
 ### Resolved (Checkpoint 3)
 
@@ -282,7 +291,7 @@
 | `subscriptions`        | Paystack subscription records                                                |
 | `waitlist_signups`     | Pre-launch waitlist entries                                                  |
 | `contact_messages`     | Contact form submissions                                                     |
-| `settings`             | Platform-wide settings (pricing, rate limits, moderation mode)               |
+| `settings`             | Platform-wide key-value settings (pricing, rate limits, moderation mode, maintenance, mentorship, digest, feature flags) |
 | `notifications`        | In-app notifications (follow, invite, comment, system) with read_at tracking |
 | `mentor_profiles`      | Mentor availability, expertise, bio, session formats                         |
 | `mentorship_requests`  | Mentorship request lifecycle (pending/accepted/declined/withdrawn/completed) |

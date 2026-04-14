@@ -164,6 +164,20 @@ Features that drive daily engagement and create network effects.
 > - **API:** Created `/api/admin/grant` PATCH endpoint for grant admin actions.
 > **Status:** ✅ Completed (14 Apr 2026)
 
+### 3.4c — Admin Settings Panel + Maintenance Mode + Operational Controls
+
+> **Why:** The Settings tab in the admin dashboard had no actual controls — all settings were hardcoded or required DB edits. Platform needed operational kill switches, spam prevention, and access gating before launch.
+> **Scope:**
+> - **5 new admin settings:** Mentorship module toggle (on/off kill switch), weekly digest email toggle (pause/resume cron), maintenance mode (full-site lockout with admin bypass), community & research daily post limits (spam prevention), mentorship verification gate (require paid subscription for mentorship access).
+> - **Maintenance mode infrastructure:** Middleware intercept on all non-admin routes, redirects non-admin users to `/maintenance` page. Admin bypass via `is_admin` check. Branded maintenance page with auto-redirect when mode is turned off.
+> - **Settings UI redesign:** Collapsible accordion sections (6 groups: Platform Access, Content & Moderation, Mentorship, Email & Notifications, Pricing & Subscriptions, Feature Flags). Status badges on collapsed headers for at-a-glance state. Tighter spacing, condensed descriptions, red border highlight on active maintenance mode.
+> - **Rate limiting enforcement:** Community posts checked client-side against `community_daily_limit` setting. Research posts checked server-side in API route against `research_daily_limit` setting.
+> - **Mentorship gating:** Both `/mentorship` (server component) and `/mentorship/become-mentor` (client component) check `mentorship_enabled` and `mentorship_requires_verification` settings. Shows appropriate gate screens.
+> - **Digest toggle:** Weekly digest cron early-exits when `digest_enabled` is `false`.
+> - **Server-side settings helper:** `lib/settings.ts` with `getSetting()` and `getSettings()` using admin client to bypass RLS.
+> - **Logo sizing consistency:** Increased AppNav desktop logo from 160×40 to 200×50, mobile icon from 40 to 44. Matched signup page logos to login/reset sizes (nav 58px, card 120px).
+> **Status:** ✅ Completed (14 Apr 2026)
+
 ### 3.5 — Subscription Tiers
 
 > **Why:** Single subscription tier limits revenue. Need freemium + pro + growth tiers.

@@ -41,7 +41,7 @@ export default function NotifyPanel() {
   }
 
   return (
-    <div className="max-w-xl space-y-4">
+    <div className="space-y-4">
       <div className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-lg p-4 space-y-4">
         <div>
           <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Send Platform Notification</h3>
