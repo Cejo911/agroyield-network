@@ -456,8 +456,16 @@ export default function AdminClient({
 
   const tabs = allTabs.filter(t => canAccess(t.id))
 
+  // TEMPORARY DEBUG
+  const debugMember = members[0]
+  const debugProfile = Object.entries(profilesMap)[0]
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
+      {/* TEMPORARY DEBUG — remove after diagnosis */}
+      <pre className="mb-4 p-2 bg-red-100 text-xs text-black rounded overflow-x-auto">
+        CLIENT DEBUG: member[0].first_name={JSON.stringify(debugMember?.first_name)} | member[0].last_name={JSON.stringify(debugMember?.last_name)} | member[0].email={JSON.stringify(debugMember?.email)} | getDisplayName={getDisplayName(debugMember?.id ?? '')} | profilesMap[0]={JSON.stringify(debugProfile)}
+      </pre>
       {/* Tab bar */}
       <div className="border-b border-gray-200 dark:border-gray-800 mb-6">
         <nav className="-mb-px flex gap-4 overflow-x-auto">
