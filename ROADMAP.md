@@ -147,16 +147,22 @@ Features that drive daily engagement and create network effects.
 
 > **Why:** Agripreneurs run multiple ventures. Accountants serve multiple clients. `business_team` table already supports this.
 > **Scope:** Business switcher in sidebar. Create multiple businesses. See all businesses you own or are invited to. Consolidated reporting.
-> **Status:** ⬜ Post-launch — gated behind `allow_multi_business` feature flag in Admin Dashboard
+> **Status:** ✅ Core completed (14 Apr 2026) — Business switcher dropdown with cookie persistence (`active_biz_id`), "Create another business" flow via `/business/setup?new=true`, Suspense boundary fix, gated behind `allow_multi_business` feature flag. RLS audit and consolidated reporting deferred to post-launch.
 >
-> **Implementation plan (saved for post-launch):**
-> 1. **`getBusinessAccess()` refactor** (`lib/business-access.ts`) — currently uses `.single()` assuming one business per user. Change to return all businesses the user owns or is a team member of. Add optional `businessId` parameter so pages can request a specific one.
-> 2. **Business switcher component** — dropdown in the business sidebar listing all accessible businesses. Selected business ID stored in cookie or URL search param so it persists across page navigations without server state.
-> 3. **Business setup unlocked** — `app/business/setup/page.tsx` currently updates-if-exists / inserts-if-not. Add a "Create another business" entry point, visible only when feature flag is on.
-> 4. **RLS audit** — confirm all business-table policies (`invoices`, `customers`, `business_products`, `business_expenses`, `business_assets`, `stock_movements`) scope on `business_id` via the team access helper, not just `user_id`. Any policy that assumes one-business-per-user will leak cross-business data.
-> 5. **Consolidated reporting** — optional dashboard view aggregating revenue/expenses across all businesses the user has access to.
->
-> **Data model readiness:** All child tables already have `business_id` FK. No schema changes needed. The bottleneck is the access layer + UI.
+> **Remaining (post-launch):**
+> 1. **RLS audit** — confirm all business-table policies scope on `business_id` via the team access helper, not just `user_id`. Any policy that assumes one-business-per-user will leak cross-business data.
+> 2. **Consolidated reporting** — optional dashboard view aggregating revenue/expenses across all businesses.
+
+### 3.4b — Module Separation + Image Uploads + Admin Dashboard Hardening
+
+> **Why:** Opportunities and Grants had overlapping types (both offered grants/fellowships). Admin dashboard lacked search/filter at scale and had no visibility into grants. Several sub-pages had no back navigation.
+> **Scope:**
+> - **Module separation:** Opportunities narrowed to non-funding types (job, internship, partnership, training, conference). Grants owns all funding types (grants, fellowships, scholarships). Updated DB constraints, settings, UI types, landing page, dashboard descriptions.
+> - **Image uploads:** Community posts support image attachments. Opportunities and Grants forms support thumbnail upload. Thumbnails displayed on listing cards.
+> - **Back navigation audit:** Added `BackButton` or `<Link>` to all 8 sub-pages missing back navigation (opportunities new/edit, grants detail, marketplace detail/new/edit, research new/edit).
+> - **Admin dashboard:** Search bars + status filter pills on all content tabs (Opportunities, Marketplace, Members, Reports). New Grants tab with feature/close toggle actions. Grants stat card. Fixed rate limit settings key mismatch (`rate_limit_opportunities` → `opportunity_daily_limit`). Fixed opportunity types fallback to exclude grants.
+> - **API:** Created `/api/admin/grant` PATCH endpoint for grant admin actions.
+> **Status:** ✅ Completed (14 Apr 2026)
 
 ### 3.5 — Subscription Tiers
 

@@ -1,6 +1,6 @@
 # AgroYield Network — Project Status
 
-> **Last updated:** 14 April 2026 (Checkpoint 8)
+> **Last updated:** 14 April 2026 (Checkpoint 9)
 > **Maintained by:** Okoli (okolichijiokei@gmail.com)
 > **Launch Target:** 5 July 2026 (~12 weeks remaining)
 > **Purpose:** Permanent reference for any developer or Claude session to get up to speed instantly.
@@ -53,14 +53,17 @@
 
 ### Module 2 — Opportunities
 
-| Feature                                                      | Status  | Location                                  |
-| ------------------------------------------------------------ | ------- | ----------------------------------------- |
-| List opportunities (grants, fellowships, jobs, partnerships) | ✅ Done | `app/opportunities/`                      |
-| Create / edit / close opportunity                            | ✅ Done | `app/opportunities/new/`, `[id]/edit/`    |
-| Apply to opportunity                                         | ✅ Done | `app/opportunities/[id]/apply-button.tsx` |
-| Rate limiting (configurable per 24h)                         | ✅ Done | Via `settings` table                      |
-| Moderation modes (immediate / approval)                      | ✅ Done | Admin configurable                        |
-| Comments                                                     | ✅ Done | `CommentsSection.tsx`                     |
+| Feature                                                          | Status  | Location                                  |
+| ---------------------------------------------------------------- | ------- | ----------------------------------------- |
+| List opportunities (jobs, internships, partnerships, training)   | ✅ Done | `app/opportunities/`                      |
+| Create / edit / close opportunity                                | ✅ Done | `app/opportunities/new/`, `[id]/edit/`    |
+| Thumbnail image upload on create/edit                            | ✅ Done | `ImageUploader` component                 |
+| Search + type filter on listing page                             | ✅ Done | `app/opportunities/opportunities-client.tsx` |
+| Apply to opportunity                                             | ✅ Done | `app/opportunities/[id]/apply-button.tsx` |
+| Rate limiting (configurable per 24h)                             | ✅ Done | Via `settings` table (`opportunity_daily_limit`) |
+| Moderation modes (immediate / approval)                          | ✅ Done | Admin configurable                        |
+| Comments                                                         | ✅ Done | `CommentsSection.tsx`                     |
+| Back navigation on all sub-pages                                 | ✅ Done | `BackButton` on new + edit pages          |
 
 ### Module 3 — Price Tracker
 
@@ -81,8 +84,9 @@
 | Browse listings with filters        | ✅ Done | `app/marketplace/`                   |
 | Create / edit / close listing       | ✅ Done | `app/marketplace/new/`, `[id]/edit/` — image upload/removal on both forms |
 | Listing detail with contact actions | ✅ Done | `app/marketplace/[id]/page.tsx`      |
-| Rate limiting                       | ✅ Done | Via `settings` table                 |
+| Rate limiting                       | ✅ Done | Via `settings` table (`listing_daily_limit`) |
 | Admin moderation                    | ✅ Done | `app/api/admin/listing/route.ts`     |
+| Back navigation on all sub-pages    | ✅ Done | `BackButton` on new + edit, `<Link>` on detail |
 
 ### Module 5 — Research Board
 
@@ -92,6 +96,7 @@
 | Create / edit research post                               | ✅ Done | `app/research/new/`, `[id]/edit/`  |
 | Tags and type filtering                                   | ✅ Done | `app/research/research-client.tsx` |
 | Admin moderation (lock/unlock, activate/deactivate)       | ✅ Done | `app/api/admin/`                   |
+| Back navigation on all sub-pages                          | ✅ Done | `BackButton` on new + edit pages   |
 
 ### Module 6 — Business Suite
 
@@ -147,13 +152,16 @@
 | Feature                                        | Status  | Location                                         |
 | ---------------------------------------------- | ------- | ------------------------------------------------ |
 | Browse grants with category + status filters   | ✅ Done | `app/grants/grants-client.tsx`                   |
-| Admin grant posting                            | ✅ Done | `app/grants/post/page.tsx`                       |
+| Admin grant posting with thumbnail             | ✅ Done | `app/grants/post/page.tsx` — `ImageUploader`     |
+| Thumbnail displayed on listing cards           | ✅ Done | `app/grants/grants-client.tsx`                   |
 | Application tracker (status pipeline)          | ✅ Done | `app/grants/[id]/grant-detail.tsx`               |
 | Document checklist (6 defaults + custom)       | ✅ Done | `app/grants/[id]/grant-detail.tsx`               |
 | Auto-populate profile info                     | ✅ Done | Pulls name, email, institution, LinkedIn         |
 | My Applications dashboard with stats           | ✅ Done | `app/grants/my-applications/page.tsx`            |
 | Deadline reminder notifications                | ✅ Done | `app/api/grants/deadline-reminders/route.ts`     |
 | How-to-use guide                               | ✅ Done | Green info box on grant detail page              |
+| Admin management (feature/close toggle)        | ✅ Done | Admin dashboard Grants tab, `/api/admin/grant`   |
+| Back navigation on detail page                 | ✅ Done | `<Link>` back to `/grants`                       |
 
 ### Module 9 — Community Feed
 
@@ -167,6 +175,7 @@
 | Comments on posts                                                    | ✅ Done | `app/community/[id]/page.tsx` + CommentsSection      |
 | Post detail page                                                     | ✅ Done | `app/community/[id]/page.tsx`                        |
 | Pinned post support                                                  | ✅ Done | `is_pinned` column, sorted to top                    |
+| Image attachment on posts                                            | ✅ Done | `ImageUploader` in `community-client.tsx`, stored in `community-images` bucket |
 | Delete own posts (soft delete)                                       | ✅ Done | Sets `is_active = false`                             |
 | Loading + error boundaries                                           | ✅ Done | `app/community/loading.tsx`, `error.tsx`             |
 
@@ -213,7 +222,10 @@
 | Subscription expiry cron                 | ✅ Done | `app/api/cron/expire-subscriptions/route.ts`                                                       |
 | Expiry reminder emails                   | ✅ Done | `app/api/cron/expiry-reminder/route.ts`                                                            |
 | Data deletion page                       | ✅ Done | `app/data-deletion/page.tsx`                                                                       |
-| History-aware back button                | ✅ Done | `app/components/BackButton.tsx` — used on directory + public profiles                              |
+| History-aware back button                | ✅ Done | `app/components/BackButton.tsx` — used on all sub-pages (directory, opportunities, marketplace, research, grants, public profiles) |
+| Admin search/filter on all tabs          | ✅ Done | Search bars + status filter pills on Opportunities, Marketplace, Members, Grants, Reports tabs     |
+| Admin Grants management tab              | ✅ Done | Feature/close toggle, status filters, search — `app/api/admin/grant/route.ts`                      |
+| Multi-business support (feature-flagged) | ✅ Done | `BusinessSwitcher.tsx`, cookie persistence, `?new=true` flow, gated by `allow_multi_business`      |
 | Clickable follower/following counts      | ✅ Done | `app/directory/[id]/page.tsx`, `app/u/[slug]/page.tsx`                                             |
 | Branded 404 page with logo               | ✅ Done | `app/not-found.tsx` — updated from emoji to `/logo-horizontal-white.png`                           |
 | Footer-linked pages theme-aware logos    | ✅ Done | About, Contact, Privacy, Terms — dual light/dark brand assets synced to theme toggle               |
@@ -300,6 +312,26 @@ Note: `/insights`, `/connections` are pre-registered for future modules.
 ---
 
 ## Changelog
+
+### Checkpoint 9 — April 14, 2026 (Module separation + image uploads + admin dashboard hardening)
+
+- Added: Multi-business support — `BusinessSwitcher` dropdown with cookie persistence (`active_biz_id`), "Create another business" flow via `/business/setup?new=true`, Suspense boundary fix, gated behind `allow_multi_business` feature flag
+- Added: Community post image attachments — `ImageUploader` on new post form, images stored in `community-images` bucket, displayed inline on feed cards
+- Added: Thumbnail upload on Opportunities (new + edit), Grants (post form) — thumbnails displayed on listing cards
+- Added: Search + type filter on Opportunities main listing page
+- Added: Admin dashboard search bars + status filter pills on all 5 content tabs (Opportunities, Marketplace, Members, Grants, Reports)
+- Added: Admin Grants tab — browse all grants, feature/unfeature toggle, open/close status toggle, search + status filters
+- Added: `/api/admin/grant` PATCH endpoint (admin-gated) for grant feature + status toggling
+- Added: Grants stat card on admin dashboard header (6-column grid)
+- Added: Back navigation to 8 sub-pages — `BackButton` on opportunities new/edit, marketplace new/edit, research new/edit; `<Link>` on grants detail, marketplace detail
+- Changed: Opportunities module narrowed to non-funding types only (job, internship, partnership, training, conference) — grants/fellowships removed from types, DB constraint updated, settings updated, landing page + dashboard descriptions updated
+- Changed: Grants module confirmed as sole owner of all funding types (grants, fellowships, scholarships)
+- Changed: Admin opportunity types fallback updated from `['Job', 'Internship', 'Grant', 'Fellowship', 'Training', 'Conference']` to `['Job', 'Internship', 'Partnership', 'Training', 'Conference']`
+- Fixed: Rate limit settings key mismatch — admin UI saved `opportunity_daily_limit` / `listing_daily_limit` but APIs read `rate_limit_opportunities` / `rate_limit_marketplace`; unified to admin keys
+- Fixed: `businesses_user_id_key` UNIQUE constraint blocking multi-business creation — dropped constraint
+- Fixed: `BusinessSwitcher` not refreshing after new business creation — changed from `router.push` to `window.location.href` for hard navigation
+- Fixed: `opportunities_type_check` constraint violations from capitalized/legacy types in settings
+- SQL required: `DELETE FROM public.settings WHERE key IN ('rate_limit_opportunities', 'rate_limit_marketplace');`
 
 ### Checkpoint 8 — April 14, 2026 (Mentorship module hardening — scheduling, reviews, security)
 
