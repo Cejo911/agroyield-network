@@ -23,6 +23,12 @@ export async function middleware(request: NextRequest) {
     }
   )
 
+  // ── Public community post pages (SEO) — allow anonymous read access ──
+  const communityPostMatch = request.nextUrl.pathname.match(/^\/community\/([^/]+)$/)
+  if (communityPostMatch) {
+    return response // let the page handle auth-optional logic
+  }
+
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {

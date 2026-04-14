@@ -1,19 +1,78 @@
 import { createClient } from '@/lib/supabase/server'
-import { redirect, notFound } from 'next/navigation'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
+import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import type { Metadata } from 'next'
 import AppNav from '@/app/components/AppNav'
 import CommentsSection from '@/app/components/CommentsSection'
+
+// ── SEO: generate metadata for public indexing ──
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params
+  const adminDb = createAdminClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: post } = await (adminDb as any)
+    .from('community_posts')
+    .select('content, post_type, user_id, created_at')
+    .eq('id', id)
+    .eq('is_active', true)
+    .single()
+
+  if (!post) return { title: 'Post Not Found — AgroYield Network' }
+
+  // Fetch author name
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: profile } = await (adminDb as any)
+    .from('profiles')
+    .select('first_name, last_name')
+    .eq('id', post.user_id)
+    .single()
+
+  const authorName = profile
+    ? `${profile.first_name ?? ''} ${profile.last_name ?? ''}`.trim() || 'AgroYield Member'
+    : 'AgroYield Member'
+
+  const snippet = post.content.length > 160
+    ? post.content.slice(0, 157) + '...'
+    : post.content
+
+  const typeLabel = post.post_type.charAt(0).toUpperCase() + post.post_type.slice(1)
+
+  return {
+    title: `${typeLabel} by ${authorName} — AgroYield Community`,
+    description: snippet,
+    openGraph: {
+      title: `${typeLabel} by ${authorName} — AgroYield Community`,
+      description: snippet,
+      type: 'article',
+      siteName: 'AgroYield Network',
+      publishedTime: post.created_at,
+    },
+    twitter: {
+      card: 'summary',
+      title: `${typeLabel} by ${authorName}`,
+      description: snippet,
+    },
+  }
+}
 
 export default async function CommunityPostPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
 
+  // Use service role to read post (works for both anonymous and logged-in users)
+  const adminDb = createAdminClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const supabaseAny = supabase as any
+  const adminAny = adminDb as any
 
-  const { data: post } = await supabaseAny
+  const { data: post } = await adminAny
     .from('community_posts')
     .select('*')
     .eq('id', id)
@@ -23,14 +82,17 @@ export default async function CommunityPostPage({ params }: { params: Promise<{ 
   if (!post) notFound()
 
   // Fetch author profile + like data in parallel
-  const [{ data: profile }, { data: allLikes }, { data: userLike }] = await Promise.all([
-    supabase.from('profiles').select('first_name, last_name, role, avatar_url, username').eq('id', post.user_id).single(),
-    supabaseAny.from('likes').select('post_id').eq('post_type', 'community').eq('post_id', id),
-    supabaseAny.from('likes').select('post_id').eq('post_type', 'community').eq('user_id', user.id).eq('post_id', id),
+  const [{ data: profile }, { data: allLikes }, userLikeResult] = await Promise.all([
+    adminAny.from('profiles').select('first_name, last_name, role, avatar_url, username').eq('id', post.user_id).single(),
+    adminAny.from('likes').select('post_id').eq('post_type', 'community').eq('post_id', id),
+    // Only fetch user's like if logged in
+    user
+      ? adminAny.from('likes').select('post_id').eq('post_type', 'community').eq('user_id', user.id).eq('post_id', id)
+      : Promise.resolve({ data: [] }),
   ])
 
   const likeCount = (allLikes ?? []).length
-  const liked = (userLike ?? []).length > 0
+  const liked = user ? (userLikeResult.data ?? []).length > 0 : false
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const prof = profile as any
@@ -63,7 +125,7 @@ export default async function CommunityPostPage({ params }: { params: Promise<{ 
   // Poll data
   const votes = post.poll_votes || {}
   const totalVotes = Object.values(votes).reduce((sum: number, arr: unknown) => sum + (Array.isArray(arr) ? arr.length : 0), 0) as number
-  const hasVoted = Object.values(votes).some((arr: unknown) => Array.isArray(arr) && arr.includes(user.id))
+  const hasVoted = user ? Object.values(votes).some((arr: unknown) => Array.isArray(arr) && arr.includes(user.id)) : false
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
@@ -102,7 +164,7 @@ export default async function CommunityPostPage({ params }: { params: Promise<{ 
               <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{timeAgo(post.created_at)}</p>
             </div>
             {post.is_pinned && (
-              <span className="text-xs text-yellow-600 dark:text-yellow-400 font-semibold">📌 Pinned</span>
+              <span className="text-xs text-yellow-600 dark:text-yellow-400 font-semibold">Pinned</span>
             )}
           </div>
 
@@ -111,11 +173,18 @@ export default async function CommunityPostPage({ params }: { params: Promise<{ 
             {post.content}
           </p>
 
+          {/* Image */}
+          {post.image_url && (
+            <div className="mb-4 rounded-lg overflow-hidden">
+              <img src={post.image_url} alt="Post image" className="w-full max-h-[500px] object-cover" />
+            </div>
+          )}
+
           {/* Link preview */}
           {post.link_url && (
             <a href={post.link_url} target="_blank" rel="noopener noreferrer"
               className="inline-block text-sm text-green-600 hover:underline mb-4 break-all">
-              🔗 {post.link_url}
+              {post.link_url}
             </a>
           )}
 
@@ -125,7 +194,7 @@ export default async function CommunityPostPage({ params }: { params: Promise<{ 
               {(post.poll_options as string[]).map((option: string, i: number) => {
                 const optVotes = Array.isArray(votes[String(i)]) ? votes[String(i)].length : 0
                 const pct = totalVotes > 0 ? Math.round((optVotes / totalVotes) * 100) : 0
-                const userVotedThis = Array.isArray(votes[String(i)]) && votes[String(i)].includes(user.id)
+                const userVotedThis = user && Array.isArray(votes[String(i)]) && votes[String(i)].includes(user.id)
 
                 return (
                   <div
@@ -152,13 +221,30 @@ export default async function CommunityPostPage({ params }: { params: Promise<{ 
 
           {/* Like count */}
           <div className="flex items-center gap-2 text-sm text-gray-400 dark:text-gray-500 pt-3 border-t border-gray-100 dark:border-gray-800">
-            <span>{liked ? '♥' : '♡'}</span>
+            <span>{liked ? '\u2665' : '\u2661'}</span>
             <span>{likeCount} like{likeCount !== 1 ? 's' : ''}</span>
           </div>
 
-          {/* Comments section — reuses existing CommentsSection component */}
+          {/* Comments section — works for both logged-in and anonymous */}
           <CommentsSection postId={id} postType="community" />
         </div>
+
+        {/* Prompt anonymous users to join */}
+        {!user && (
+          <div className="mt-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-5 text-center">
+            <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
+              Join AgroYield Network to like, comment, and participate in the community.
+            </p>
+            <div className="flex justify-center gap-3">
+              <Link href="/login" className="px-4 py-2 text-sm font-medium text-green-700 dark:text-green-400 bg-white dark:bg-gray-900 border border-green-300 dark:border-green-700 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/40 transition-colors">
+                Sign In
+              </Link>
+              <Link href="/signup" className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors">
+                Join Free
+              </Link>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   )
