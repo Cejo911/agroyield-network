@@ -121,13 +121,16 @@ function describeAction(action: string, targetType: string, targetId: string | n
 
   if (verbLabels[verb]) return verbLabels[verb]
 
-  // Notification broadcasts
-  if (action === 'notification.broadcast' || action === 'notification.send') {
-    const title = d.title as string | undefined
-    const count = d.count as number | undefined
-    if (title && count) return `Sent notification "${title}" to ${count} user(s)`
-    if (title) return `Sent notification "${title}"`
-    return 'Sent a platform notification'
+  // Notification broadcasts — API logs as notify.broadcast / notify.user
+  if (action === 'notify.broadcast' || action === 'notification.broadcast') {
+    const msg = d.message as string | undefined
+    if (msg) return `Broadcast notification to all users: "${msg}"`
+    return 'Broadcast a notification to all users'
+  }
+  if (action === 'notify.user' || action === 'notification.send') {
+    const msg = d.message as string | undefined
+    if (msg) return `Sent notification to a user: "${msg}"`
+    return 'Sent a notification to a specific user'
   }
 
   // Report actions
@@ -179,12 +182,6 @@ export default function AuditLogTab({
 
   return (
     <div>
-      {/* TEMPORARY DEBUG */}
-      {entries[0] && (
-        <pre className="mb-4 p-2 bg-orange-100 text-xs text-black rounded overflow-x-auto">
-          AUDIT DEBUG: admin_id={JSON.stringify(entries[0].admin_id)} | target_id={JSON.stringify(entries[0].target_id)} | getDisplayName(admin_id)={getDisplayName(entries[0].admin_id)} | getDisplayName(target_id)={entries[0].target_id ? getDisplayName(entries[0].target_id) : 'N/A'} | action={entries[0].action}
-        </pre>
-      )}
       <SearchBar value={search} onChange={setSearch} placeholder="Search audit log by action, admin, or description..." />
       <div className="space-y-2">
         {filtered.length === 0 && <p className="text-gray-500 dark:text-gray-400 text-sm">No audit log entries found.</p>}

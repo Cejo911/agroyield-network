@@ -160,10 +160,6 @@ export default async function AdminPage() {
           <p className="text-gray-500 dark:text-gray-400 mt-1">
             {currentAdminRole === 'super' ? 'Super Admin' : 'Moderator'} · Manage content and members on AgroYield Network
           </p>
-          {/* TEMPORARY DEBUG — remove after diagnosis */}
-          <pre className="mt-2 p-2 bg-yellow-100 text-xs text-black rounded overflow-x-auto">
-            DEBUG: members={String((members ?? []).length)} | first_member={JSON.stringify((members ?? [])[0] ?? 'EMPTY')} | profilesMap_sample={JSON.stringify(Object.entries(profilesMap)[0] ?? 'EMPTY')}
-          </pre>
         </div>
 
         {/* Stats */}
