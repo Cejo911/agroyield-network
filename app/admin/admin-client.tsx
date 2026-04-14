@@ -556,26 +556,28 @@ export default function AdminClient({
     <div className="max-w-5xl mx-auto px-4 py-8">
       {/* Tab bar */}
       <div className="border-b border-gray-200 dark:border-gray-800 mb-6">
-        <nav className="-mb-px flex gap-4 overflow-x-auto items-center">
-          {tabs.map((tab) => (
-            <button key={tab.id} onClick={() => { setActiveTab(tab.id); setAdminMenuOpen(false) }}
-              className={`pb-3 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
-                activeTab === tab.id && !isSuperAdminTab(activeTab)
-                  ? 'border-green-600 text-green-600'
-                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-              }`}>
-              {tab.label}
-              {tab.badge ? (
-                <span className="ml-2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-xs px-1.5 py-0.5 rounded-full">
-                  {tab.badge}
-                </span>
-              ) : null}
-            </button>
-          ))}
+        <div className="flex items-end gap-4">
+          <nav className="-mb-px flex gap-4 overflow-x-auto flex-1">
+            {tabs.map((tab) => (
+              <button key={tab.id} onClick={() => { setActiveTab(tab.id); setAdminMenuOpen(false) }}
+                className={`pb-3 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
+                  activeTab === tab.id && !isSuperAdminTab(activeTab)
+                    ? 'border-green-600 text-green-600'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                }`}>
+                {tab.label}
+                {tab.badge ? (
+                  <span className="ml-2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-xs px-1.5 py-0.5 rounded-full">
+                    {tab.badge}
+                  </span>
+                ) : null}
+              </button>
+            ))}
+          </nav>
 
-          {/* Super Admin dropdown */}
+          {/* Super Admin dropdown — outside nav to avoid overflow-x-auto clipping */}
           {isSuperAdmin && (
-            <div className="relative ml-auto">
+            <div className="relative shrink-0">
               <button onClick={() => setAdminMenuOpen(!adminMenuOpen)}
                 className={`pb-3 text-sm font-medium border-b-2 whitespace-nowrap transition-colors flex items-center gap-1 ${
                   isSuperAdminTab(activeTab)
@@ -604,7 +606,7 @@ export default function AdminClient({
               )}
             </div>
           )}
-        </nav>
+        </div>
       </div>
 
       {/* ── Opportunities ── */}
