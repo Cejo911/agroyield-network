@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { cookies } from 'next/headers'
 import { notFound } from 'next/navigation'
 import InvoiceActions from './InvoiceActions'
 import { getBusinessAccess } from '@/lib/business-access'
@@ -20,7 +21,8 @@ export default async function InvoiceViewPage({ params }: { params: Promise<{ id
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const access = await getBusinessAccess(supabase, user!.id)
+  const cookieStore = await cookies()
+  const access = await getBusinessAccess(supabase, user!.id, cookieStore.get('active_biz_id')?.value)
   if (!access) notFound()
 
   const { data: inv } = await supabase

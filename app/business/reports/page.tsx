@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { cookies } from 'next/headers'
 import Link from 'next/link'
 import ReportExport from './ReportExport'
 import { getBusinessAccess } from '@/lib/business-access'
@@ -19,8 +20,9 @@ export default async function ReportsPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  // Business access (owner or team member)
-  const access = await getBusinessAccess(supabase, user.id)
+  // Business access (owner or team member) — respects active business cookie
+  const cookieStore = await cookies()
+  const access = await getBusinessAccess(supabase, user.id, cookieStore.get('active_biz_id')?.value)
   const businessId = access?.businessId || ''
 
   // Get business

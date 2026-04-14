@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { getBusinessAccess } from '@/lib/business-access'
+import { getActiveBusinessId } from '@/lib/business-cookie'
 
 interface LineItem {
   product_id: string
@@ -59,7 +60,7 @@ export default function NewInvoicePage() {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
-      const access = await getBusinessAccess(supabase, user.id)
+      const access = await getBusinessAccess(supabase, user.id, getActiveBusinessId())
       if (!access) return
       const { data: biz } = await supabase
         .from('businesses')

@@ -1,12 +1,15 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { getBusinessAccess } from '@/lib/business-access'
+import { getActiveBusinessId, setActiveBusinessId } from '@/lib/business-cookie'
 
 export default function BusinessSetup() {
   const supabase = createClient()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const isNewMode = searchParams.get('new') === 'true'
   const fileRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -24,27 +27,32 @@ export default function BusinessSetup() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
       setUserId(user.id)
-      const access = await getBusinessAccess(supabase, user.id)
-      const { data } = access
-        ? await supabase.from('businesses').select('*').eq('id', access.businessId).single()
-        : { data: null }
-      if (data) {
-        setBusinessId(data.id)
-        setForm({
-          name: data.name ?? '',
-          address: data.address ?? '',
-          phone: data.phone ?? '',
-          email: data.email ?? '',
-          bank_name: data.bank_name ?? '',
-          account_name: data.account_name ?? '',
-          account_number: data.account_number ?? '',
-          invoice_prefix: data.invoice_prefix ?? 'INV',
-          logo_url: data.logo_url ?? '',
-        })
+
+      // In "new business" mode, skip loading the existing business — show blank form
+      if (!isNewMode) {
+        const access = await getBusinessAccess(supabase, user.id, getActiveBusinessId())
+        const { data } = access
+          ? await supabase.from('businesses').select('*').eq('id', access.businessId).single()
+          : { data: null }
+        if (data) {
+          setBusinessId(data.id)
+          setForm({
+            name: data.name ?? '',
+            address: data.address ?? '',
+            phone: data.phone ?? '',
+            email: data.email ?? '',
+            bank_name: data.bank_name ?? '',
+            account_name: data.account_name ?? '',
+            account_number: data.account_number ?? '',
+            invoice_prefix: data.invoice_prefix ?? 'INV',
+            logo_url: data.logo_url ?? '',
+          })
+        }
       }
       setLoading(false)
     }
     load()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -52,7 +60,9 @@ export default function BusinessSetup() {
     if (!file || !userId) return
     setUploading(true)
     const ext = file.name.split('.').pop()
-    const path = `${userId}/logo.${ext}`
+    // Use businessId if editing, or a timestamp for new businesses (will be unique)
+    const folder = businessId || `${userId}/new_${Date.now()}`
+    const path = `${folder}/logo.${ext}`
     const { error } = await supabase.storage
       .from('business-logos')
       .upload(path, file, { upsert: true })
@@ -85,7 +95,11 @@ export default function BusinessSetup() {
           return
         }
       }
-      await supabase.from('businesses').insert({ ...form, user_id: user.id })
+      const { data: newBiz } = await supabase.from('businesses').insert({ ...form, user_id: user.id }).select('id').single()
+      // Set cookie so the new business becomes active immediately
+      if (newBiz) {
+        setActiveBusinessId(newBiz.id)
+      }
     }
     setSaving(false)
     router.push('/business')
@@ -110,7 +124,7 @@ export default function BusinessSetup() {
   return (
     <div className="max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-        {businessId ? 'Business Settings' : 'Set Up Your Business'}
+        {businessId ? 'Business Settings' : isNewMode ? 'Create New Business' : 'Set Up Your Business'}
       </h1>
       <form onSubmit={handleSubmit} className="space-y-6">
 

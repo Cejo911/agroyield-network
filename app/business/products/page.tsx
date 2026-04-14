@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getBusinessAccess } from '@/lib/business-access'
+import { getActiveBusinessId } from '@/lib/business-cookie'
 
 type Product = {
   id: string
@@ -62,7 +63,7 @@ export default function ProductsPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
     setUserId(user.id)
-    const access = await getBusinessAccess(supabase, user.id)
+    const access = await getBusinessAccess(supabase, user.id, getActiveBusinessId())
     if (!access) { setLoading(false); return }
     setBusinessId(access.businessId)
     const { data } = await supabase.from('business_products').select('*').eq('business_id', access.businessId).eq('is_active', true).order('name')

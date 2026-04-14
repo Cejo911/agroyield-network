@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { cookies } from 'next/headers'
 import PrintButton from './PrintButton'
 import { getBusinessAccess } from '@/lib/business-access'
 
@@ -30,7 +31,8 @@ export default async function ReportsPrintPage({
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) redirect('/login')
 
-  const access = await getBusinessAccess(supabase, user.id)
+  const cookieStore = await cookies()
+  const access = await getBusinessAccess(supabase, user.id, cookieStore.get('active_biz_id')?.value)
   const bizId = access?.businessId || ''
 
   const [invoicesRes, expensesRes, customersRes, businessRes] = await Promise.all([

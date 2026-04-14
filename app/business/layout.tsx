@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import Image from 'next/image'
 import MobileNav from './MobileNav'
 import SidebarThemeToggle from './SidebarThemeToggle'
+import BusinessSwitcher from './BusinessSwitcher'
 
 export default async function BusinessLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -26,6 +27,11 @@ export default async function BusinessLayout({ children }: { children: React.Rea
                   height={50}
                 />
               </div>
+              <div className="border-t border-gray-100 dark:border-gray-800 my-1" />
+
+              {/* Business switcher — shows dropdown when user has multiple businesses */}
+              <BusinessSwitcher />
+
               <div className="border-t border-gray-100 dark:border-gray-800 my-1" />
               {/* Back to main dashboard */}
               <Link

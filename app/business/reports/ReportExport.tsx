@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import ExcelJS from 'exceljs'
 import { getBusinessAccess } from '@/lib/business-access'
+import { getActiveBusinessId } from '@/lib/business-cookie'
 
 export default function ReportExport({ period }: { period: string }) {
   const [loading, setLoading] = useState<'excel' | null>(null)
@@ -12,7 +13,7 @@ export default function ReportExport({ period }: { period: string }) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return null
 
-    const access = await getBusinessAccess(supabase, user.id)
+    const access = await getBusinessAccess(supabase, user.id, getActiveBusinessId())
     if (!access) return null
 
     const [invoicesRes, expensesRes, customersRes, businessRes] = await Promise.all([

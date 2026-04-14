@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { cookies } from 'next/headers'
 import Link from 'next/link'
 import PeriodToggle from './PeriodToggle'
 import { getBusinessAccess } from '@/lib/business-access'
@@ -42,8 +43,10 @@ export default async function BusinessDashboard({
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  // Business access (owner or team member)
-  const access = await getBusinessAccess(supabase, user.id)
+  // Business access (owner or team member) — respects the active business cookie
+  const cookieStore = await cookies()
+  const activeBizId = cookieStore.get('active_biz_id')?.value
+  const access = await getBusinessAccess(supabase, user.id, activeBizId)
 
   // Business profile
   const business = access ? await supabase

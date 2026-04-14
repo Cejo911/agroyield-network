@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { cookies } from 'next/headers'
 import Link from 'next/link'
 import InvoicesTable from './InvoicesTable'
 import { getBusinessAccess } from '@/lib/business-access'
@@ -7,7 +8,8 @@ export default async function InvoicesPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const access = await getBusinessAccess(supabase, user!.id)
+  const cookieStore = await cookies()
+  const access = await getBusinessAccess(supabase, user!.id, cookieStore.get('active_biz_id')?.value)
   const business = access ? { id: access.businessId } : null
 
   if (!business) return (

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { cookies } from 'next/headers'
 import Link from 'next/link'
 import StatementControls from './StatementControls'
 import { getBusinessAccess } from '@/lib/business-access'
@@ -37,7 +38,8 @@ export default async function CustomerStatementPage({
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const access = await getBusinessAccess(supabase, user.id)
+  const cookieStore = await cookies()
+  const access = await getBusinessAccess(supabase, user.id, cookieStore.get('active_biz_id')?.value)
   const { data: business } = access ? await supabase
     .from('businesses')
     .select('id, name')

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getBusinessAccess } from '@/lib/business-access'
+import { getActiveBusinessId } from '@/lib/business-cookie'
 
 const CATEGORIES = [
   'Input Costs',
@@ -63,7 +64,7 @@ export default function ExpensesPage() {
   async function load() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-    const access = await getBusinessAccess(supabase, user.id)
+    const access = await getBusinessAccess(supabase, user.id, getActiveBusinessId())
     if (!access) return
     setBusiness({ id: access.businessId })
     const { data } = await supabase

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getBusinessAccess, canManageTeam } from '@/lib/business-access'
+import { getActiveBusinessId } from '@/lib/business-cookie'
 
 interface TeamMember {
   id: string
@@ -55,7 +56,7 @@ export default function TeamPage() {
     if (!user) return
     setUserId(user.id)
 
-    const access = await getBusinessAccess(supabase, user.id)
+    const access = await getBusinessAccess(supabase, user.id, getActiveBusinessId())
     if (!access) { setLoading(false); return }
     setBusinessId(access.businessId)
 
