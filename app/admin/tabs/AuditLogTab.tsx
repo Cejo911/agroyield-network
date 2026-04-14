@@ -179,6 +179,12 @@ export default function AuditLogTab({
 
   return (
     <div>
+      {/* TEMPORARY DEBUG */}
+      {entries[0] && (
+        <pre className="mb-4 p-2 bg-orange-100 text-xs text-black rounded overflow-x-auto">
+          AUDIT DEBUG: admin_id={JSON.stringify(entries[0].admin_id)} | target_id={JSON.stringify(entries[0].target_id)} | getDisplayName(admin_id)={getDisplayName(entries[0].admin_id)} | getDisplayName(target_id)={entries[0].target_id ? getDisplayName(entries[0].target_id) : 'N/A'} | action={entries[0].action}
+        </pre>
+      )}
       <SearchBar value={search} onChange={setSearch} placeholder="Search audit log by action, admin, or description..." />
       <div className="space-y-2">
         {filtered.length === 0 && <p className="text-gray-500 dark:text-gray-400 text-sm">No audit log entries found.</p>}
