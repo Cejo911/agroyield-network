@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
 
     // Read rate limit from settings (fallback: 3)
     const { data: rateSetting } = await supabaseAny
-      .from('settings').select('value').eq('key', 'rate_limit_opportunities').single()
+      .from('settings').select('value').eq('key', 'opportunity_daily_limit').single()
     const rateLimit = parseInt(
       (rateSetting as Record<string, unknown>)?.value as string ?? '3', 10
     )
