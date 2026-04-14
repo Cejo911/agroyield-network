@@ -3,7 +3,6 @@ import { useState } from 'react'
 import { SearchBar, FilterPills } from './AdminSearchBar'
 
 interface MentorProfile {
-  id: string
   user_id: string
   headline: string | null
   expertise: string | null
@@ -42,7 +41,7 @@ export default function MentorshipTab({
   // Mentor actions
   const mentorAction = async (id: string, mentorActionType: string) => {
     setMentors(prev => prev.map(m => {
-      if (m.id !== id) return m
+      if (m.user_id !== id) return m
       if (mentorActionType === 'deactivate') return { ...m, is_active: false }
       if (mentorActionType === 'reactivate') return { ...m, is_active: true }
       return m
@@ -115,7 +114,7 @@ export default function MentorshipTab({
           <div className="space-y-3">
             {filteredMentors.length === 0 && <p className="text-gray-500 dark:text-gray-400 text-sm">No mentor profiles found.</p>}
             {filteredMentors.map(m => (
-              <div key={m.id} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4 flex items-start justify-between gap-4">
+              <div key={m.user_id} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4 flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-medium text-gray-900 dark:text-gray-100">{getDisplayName(m.user_id)}</span>
@@ -132,9 +131,9 @@ export default function MentorshipTab({
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   {m.is_active ? (
-                    <button onClick={() => mentorAction(m.id, 'deactivate')} className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-3 py-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700">Deactivate</button>
+                    <button onClick={() => mentorAction(m.user_id, 'deactivate')} className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-3 py-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700">Deactivate</button>
                   ) : (
-                    <button onClick={() => mentorAction(m.id, 'reactivate')} className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-3 py-1.5 rounded-md hover:bg-green-200">Reactivate</button>
+                    <button onClick={() => mentorAction(m.user_id, 'reactivate')} className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-3 py-1.5 rounded-md hover:bg-green-200">Reactivate</button>
                   )}
                 </div>
               </div>

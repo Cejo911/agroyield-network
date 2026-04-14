@@ -38,9 +38,9 @@ export async function PATCH(request: NextRequest) {
 
     if (targetType === 'mentor') {
       if (mentorAction === 'deactivate') {
-        await adminAny.from('mentor_profiles').update({ availability: 'Closed' }).eq('id', id)
+        await adminAny.from('mentor_profiles').update({ is_active: false }).eq('user_id', id)
       } else if (mentorAction === 'reactivate') {
-        await adminAny.from('mentor_profiles').update({ availability: 'Open' }).eq('id', id)
+        await adminAny.from('mentor_profiles').update({ is_active: true }).eq('user_id', id)
       }
     } else if (targetType === 'request') {
       if (mentorAction === 'cancel') {

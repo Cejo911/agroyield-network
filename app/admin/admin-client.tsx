@@ -108,7 +108,6 @@ interface PriceReport {
   is_active?: boolean
 }
 interface MentorProfile {
-  id: string
   user_id: string
   headline: string | null
   expertise: string | null
