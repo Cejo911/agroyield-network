@@ -313,8 +313,13 @@ export default function AdminClient({
     try { return settingsMap.marketplace_categories ? JSON.parse(settingsMap.marketplace_categories) : ['Equipment', 'Seeds', 'Fertilizer', 'Services', 'Land', 'Other'] }
     catch { return ['Equipment', 'Seeds', 'Fertilizer', 'Services', 'Land', 'Other'] }
   })
+  const [commodityCategories, setCommodityCategories] = useState<string[]>(() => {
+    try { return settingsMap.commodity_categories ? JSON.parse(settingsMap.commodity_categories) : ['Grains', 'Legumes', 'Tubers', 'Vegetables', 'Fruits', 'Livestock', 'Cash Crops'] }
+    catch { return ['Grains', 'Legumes', 'Tubers', 'Vegetables', 'Fruits', 'Livestock', 'Cash Crops'] }
+  })
   const [newOpportunityType, setNewOpportunityType] = useState('')
   const [newMarketplaceCategory, setNewMarketplaceCategory] = useState('')
+  const [newCommodityCategory, setNewCommodityCategory] = useState('')
   const [proMonthlyPrice, setProMonthlyPrice] = useState(settingsMap.tier_pro_monthly ?? '2000')
   const [proAnnualPrice, setProAnnualPrice] = useState(settingsMap.tier_pro_annual ?? '20000')
   const [growthMonthlyPrice, setGrowthMonthlyPrice] = useState(settingsMap.tier_growth_monthly ?? '5000')
@@ -401,6 +406,7 @@ export default function AdminClient({
           announcement_color: announcementColor,
           opportunity_types: JSON.stringify(opportunityTypes),
           marketplace_categories: JSON.stringify(marketplaceCategories),
+          commodity_categories: JSON.stringify(commodityCategories),
           tier_pro_monthly: proMonthlyPrice,
           tier_pro_annual: proAnnualPrice,
           tier_growth_monthly: growthMonthlyPrice,
@@ -478,6 +484,11 @@ export default function AdminClient({
     if (t && !marketplaceCategories.includes(t)) { setMarketplaceCategories(prev => [...prev, t]); setNewMarketplaceCategory('') }
   }
   const removeMarketplaceCategory = (cat: string) => setMarketplaceCategories(prev => prev.filter(c => c !== cat))
+  const addCommodityCategory = () => {
+    const t = newCommodityCategory.trim()
+    if (t && !commodityCategories.includes(t)) { setCommodityCategories(prev => [...prev, t]); setNewCommodityCategory('') }
+  }
+  const removeCommodityCategory = (cat: string) => setCommodityCategories(prev => prev.filter(c => c !== cat))
 
   // Grant actions
   const toggleGrantFeatured = async (id: string, featured: boolean) => {
@@ -1494,7 +1505,7 @@ export default function AdminClient({
                 {/* Content Types */}
                 <div>
                   <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1 text-sm">Content Types</h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Opportunity types and marketplace categories available to members.</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Opportunity types, marketplace categories, and commodity categories available to members.</p>
                   <div className="mb-4">
                     <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Opportunity Types</p>
                     <div className="flex flex-wrap gap-1.5 mb-2">
@@ -1527,6 +1538,23 @@ export default function AdminClient({
                         onKeyDown={(e) => e.key === 'Enter' && addMarketplaceCategory()}
                         placeholder="Add category..." className={`flex-1 ${sInput}`} />
                       <button onClick={addMarketplaceCategory} className="bg-green-600 text-white px-3 py-1.5 rounded text-sm hover:bg-green-700">Add</button>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Commodity Categories (Price Tracker)</p>
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {commodityCategories.map((cat) => (
+                        <span key={cat} className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs px-2 py-0.5 rounded-full">
+                          {cat}
+                          <button onClick={() => removeCommodityCategory(cat)} className="text-gray-400 hover:text-red-500 ml-0.5 leading-none text-base">×</button>
+                        </span>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <input type="text" value={newCommodityCategory} onChange={(e) => setNewCommodityCategory(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && addCommodityCategory()}
+                        placeholder="Add category..." className={`flex-1 ${sInput}`} />
+                      <button onClick={addCommodityCategory} className="bg-green-600 text-white px-3 py-1.5 rounded text-sm hover:bg-green-700">Add</button>
                     </div>
                   </div>
                 </div>
