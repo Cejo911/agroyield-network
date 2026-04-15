@@ -6,7 +6,7 @@ import ReportButton from '@/app/components/ReportButton'
 import { useSearchLog } from '@/lib/useSearchLog'
 import { createClient } from '@/lib/supabase/client'
 
-const CATEGORIES = ['All', 'Grains', 'Tubers', 'Legumes', 'Vegetables', 'Oils', 'Livestock', 'Other']
+const FALLBACK_CATEGORIES = ['Grains', 'Tubers', 'Legumes', 'Vegetables', 'Fruits', 'Livestock', 'Cash Crops']
 const CATEGORY_COLOURS: Record<string, string> = {
   grains:     'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400',
   tubers:     'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400',
@@ -38,10 +38,13 @@ type PriceReport = {
 export default function PricesClient({
   reports,
   userId,
+  categories: categoriesProp,
 }: {
   reports: PriceReport[]
   userId: string
+  categories?: string[]
 }) {
+  const CATEGORIES = ['All', ...(categoriesProp ?? FALLBACK_CATEGORIES)]
   const router = useRouter()
   const [search, setSearch] = useState('')
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'price_low' | 'price_high'>('newest')

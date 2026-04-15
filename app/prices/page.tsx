@@ -7,6 +7,7 @@ import FAQAccordion from '@/app/components/FAQAccordion'
 import { MODULE_FAQS } from '@/lib/faq-data'
 import AppNav from '@/app/components/AppNav'
 import PricesTabs from './prices-tabs'
+import { getSettings } from '@/lib/settings'
 
 export default async function PricesPage() {
   const supabase = await createClient()
@@ -36,6 +37,13 @@ export default async function PricesPage() {
     profiles: profileMap.get(r.user_id) || null,
   }))
 
+  // Fetch commodity categories from admin settings
+  const settings = await getSettings(['commodity_categories'])
+  let categories: string[] = ['Grains', 'Tubers', 'Legumes', 'Vegetables', 'Fruits', 'Livestock', 'Cash Crops']
+  try {
+    if (settings.commodity_categories) categories = JSON.parse(settings.commodity_categories)
+  } catch { /* use defaults */ }
+
   // Fetch user's price alerts
   const { data: alerts } = await supabase
     .from('price_alerts')
@@ -60,7 +68,7 @@ export default async function PricesPage() {
           </Link>
         </div>
         <PricesTabs
-          reportsTab={<PricesClient reports={reports} userId={user.id} />}
+          reportsTab={<PricesClient reports={reports} userId={user.id} categories={categories} />}
           intelligenceTab={
             <PriceIntelligence
               reports={reports as any}
