@@ -8,6 +8,7 @@ import MessageButton from '@/app/components/MessageButton'
 import BackButton from '@/app/components/BackButton'
 import VerifiedBadge from '@/app/components/VerifiedBadge'
 import EliteBadge from '@/app/components/EliteBadge'
+import { getEffectiveTier } from '@/lib/tiers'
 
 export async function generateMetadata(
   { params }: { params: Promise<{ slug: string }> }
@@ -88,12 +89,11 @@ export default async function PublicProfilePage(
   const profileId   = typeof raw.id          === 'string' ? raw.id          : ''
   const interests   = Array.isArray(raw.interests) ? raw.interests as string[] : []
 
-  // Tier badges — determine effective tier (expired = free)
-  const rawTier = typeof raw.subscription_tier === 'string' ? raw.subscription_tier : 'free'
-  const expired = raw.subscription_expires_at
-    ? new Date(raw.subscription_expires_at as string) <= new Date()
-    : false
-  const effectiveTier = expired ? 'free' : rawTier
+  // Tier badges — single source of truth via lib/tiers.ts
+  const effectiveTier = getEffectiveTier({
+    subscription_tier: typeof raw.subscription_tier === 'string' ? raw.subscription_tier : null,
+    subscription_expires_at: typeof raw.subscription_expires_at === 'string' ? raw.subscription_expires_at : null,
+  })
   const isVerified = effectiveTier === 'pro' || effectiveTier === 'growth'
   const isElite = effectiveTier === 'growth'
 

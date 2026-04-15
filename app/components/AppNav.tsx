@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { getEffectiveTier } from '@/lib/tiers'
 import ThemeToggle from './ThemeToggle'
 import NotificationBell from './NotificationBell'
 import Image from 'next/image'
@@ -50,9 +51,7 @@ export default function AppNav() {
             setUserInitial((data.first_name || user.email || '?')[0].toUpperCase())
             setUserAvatar(data.avatar_url || null)
             // Determine effective tier (expired subscriptions fall back to free)
-            const tier = data.subscription_tier || 'free'
-            const expired = data.subscription_expires_at && new Date(data.subscription_expires_at) <= new Date()
-            setUserTier(expired ? 'free' : tier)
+            setUserTier(getEffectiveTier(data))
           }
         })
 

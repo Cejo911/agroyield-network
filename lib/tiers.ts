@@ -122,6 +122,17 @@ export function getEffectiveTier(profile: {
 }
 
 /**
+ * Check if a user has an active paid subscription (pro or growth).
+ * Shorthand for `getEffectiveTier(profile) !== 'free'`.
+ */
+export function hasTierAccess(profile: {
+  subscription_tier?: string | null
+  subscription_expires_at?: string | null
+}): boolean {
+  return getEffectiveTier(profile) !== 'free'
+}
+
+/**
  * Get tier limits for a given tier name.
  */
 export function getTierLimits(tier: TierName): TierConfig {

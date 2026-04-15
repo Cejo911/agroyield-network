@@ -301,3 +301,17 @@ Once an SME runs their invoicing, expenses, and inventory through AgroYield, swi
 
 **8. Girl-Child & Inclusion as Impact Metric**
 Impact investors (Omidyar, Acumen, Shell Foundation) increasingly fund platforms with measurable social impact. AgroYield's gender field on profiles + community features + mentorship can produce real metrics: "X% of mentorship sessions involve female mentees", "Y female-led businesses onboarded." **Action:** Build gender-disaggregated stats into the Analytics tab. This becomes part of impact reports for grant applications and impact investor pitches.
+
+### 15 April 2026
+
+**9. No-Card-on-File Free Trial = Conversion Nudge Imperative**
+The free trial doesn't capture payment details upfront — the right call given Nigerian payment friction (card failures, bank token issues, general distrust of auto-debit). But it means zero automatic conversion. When that trial clock runs out, the user simply falls to free tier with no friction in the *wrong* direction. You need an in-app nudge sequence starting 7 days before expiry: banner on dashboard, push notification if mobile comes later, and the expiry email we already built. Without this, free trial → churn will be the biggest leak in the funnel. **Action:** Build a `TrialExpiryBanner` component that shows on the dashboard when `subscription_expires_at` is within 7 days. Add a 1-day and same-day email to complement the existing 3-day reminder.
+
+**10. Pricing Headroom for Enterprise Tier**
+₦2,000/month (Pro) and ₦5,000/month (Growth) are individual/SME price points. There's clear headroom for an Enterprise tier later — ₦25,000–₦50,000/month for multi-user org accounts, API access to price data, dedicated support, and white-label reports. This tier would serve agricultural cooperatives, state extension services, and agri-input companies. The `subscription_tier` column already supports it — just add `'enterprise'` to the enum. **Action:** Don't build this now. But when BD conversations start with institutions, have the tier ready to activate. The schema supports it with zero migration.
+
+**11. Build Behind Abstractions Early — The 13-File Lesson**
+Today's tier migration touched 13 files because `is_verified` and `is_elite` were checked inline everywhere. If we'd had a `getEffectiveTier(profile)` utility from day one, the migration would have been a one-file change. Lesson: any value that gates access or changes UI should be derived through a single utility function, not checked inline. This applies going forward to any new access controls (e.g., feature flags, role checks, trial status). **Action:** Create `lib/utils/tier.ts` with `getEffectiveTier()` and `hasTierAccess()` helpers. Refactor existing inline checks to use them. Future tier changes become one-file edits.
+
+**12. Fail-Open on Tier Checks — Never Break Core for Billing**
+During the migration, we ensured that if the tier API fails or `subscription_tier` is null, users default to `'free'` rather than being locked out entirely. This "fail open" pattern is critical — a billing infrastructure bug should never prevent a farmer from viewing commodity prices or browsing the directory. Paid features gate *enhancements* (mentorship, priority listing, badges), not *core access*. **Action:** Document this as a design principle. Any new feature gate should ask: "If this check fails, does the user lose access to something they need, or something they want?" Need → fail open. Want → fail closed is acceptable.

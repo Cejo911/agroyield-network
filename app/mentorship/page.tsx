@@ -4,6 +4,7 @@ import Link from 'next/link'
 import AppNav from '@/app/components/AppNav'
 import MentorBrowser from './mentor-browser'
 import { getSettings } from '@/lib/settings'
+import { getEffectiveTier } from '@/lib/tiers'
 
 export default async function MentorshipPage() {
   const supabase = await createClient()
@@ -35,9 +36,8 @@ export default async function MentorshipPage() {
   if (settings.mentorship_requires_verification === 'true') {
     const { data: userProfile } = await (supabase as any)
       .from('profiles').select('subscription_tier, subscription_expires_at').eq('id', user.id).single()
-    const tier = userProfile?.subscription_tier || 'free'
-    const expired = userProfile?.subscription_expires_at && new Date(userProfile.subscription_expires_at) <= new Date()
-    if (tier === 'free' || expired) {
+    const effectiveTier = getEffectiveTier(userProfile ?? {})
+    if (effectiveTier === 'free') {
       return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
           <AppNav />

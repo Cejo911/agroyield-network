@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import AppNav from '@/app/components/AppNav'
+import { getEffectiveTier } from '@/lib/tiers'
 
 const EXPERTISE_TAGS = [
   'Crop Farming', 'Poultry', 'Aquaculture', 'Livestock', 'Agribusiness',
@@ -60,9 +61,8 @@ export default function BecomeMentorPage() {
       if (settingsMap.mentorship_requires_verification === 'true') {
         const { data: userProfile } = await (supabase as any)
           .from('profiles').select('subscription_tier, subscription_expires_at').eq('id', user.id).single()
-        const tier = userProfile?.subscription_tier || 'free'
-        const expired = userProfile?.subscription_expires_at && new Date(userProfile.subscription_expires_at) <= new Date()
-        if (tier === 'free' || expired) {
+        const effectiveTier = getEffectiveTier(userProfile ?? {})
+        if (effectiveTier === 'free') {
           setVerificationRequired(true)
           setLoading(false)
           return
