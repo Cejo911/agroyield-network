@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import Link from 'next/link'
 import PeriodToggle from './PeriodToggle'
+import FAQAccordion from '@/app/components/FAQAccordion'
+import { MODULE_FAQS } from '@/lib/faq-data'
 import { getBusinessAccess } from '@/lib/business-access'
 
 function fmt(n: number) {
@@ -541,6 +543,7 @@ export default async function BusinessDashboard({
         ))}
       </div>
 
+      <FAQAccordion items={MODULE_FAQS.business} title="Frequently Asked Questions" subtitle="Common questions about the Business Suite" compact />
     </div>
   )
 }

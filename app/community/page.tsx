@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import AppNav from '@/app/components/AppNav'
 import CommunityClient from './community-client'
+import FAQAccordion from '@/app/components/FAQAccordion'
+import { MODULE_FAQS } from '@/lib/faq-data'
 
 export default async function CommunityPage() {
   const supabase = await createClient()
@@ -85,6 +87,7 @@ export default async function CommunityPage() {
           commentCountMap={commentCountMap}
           currentUserId={user.id}
         />
+        <FAQAccordion items={MODULE_FAQS.community} title="Frequently Asked Questions" subtitle="Common questions about Community" compact />
       </main>
     </div>
   )

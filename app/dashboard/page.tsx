@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import AppNav from '@/app/components/AppNav'
 import OnboardingWizard from '@/app/components/OnboardingWizard'
+import FAQAccordion from '@/app/components/FAQAccordion'
+import { MODULE_FAQS } from '@/lib/faq-data'
 
 const MODULES = [
   {
@@ -126,6 +128,7 @@ export default async function Dashboard() {
             </Link>
           ))}
         </div>
+        <FAQAccordion items={MODULE_FAQS.dashboard} title="Frequently Asked Questions" subtitle="Common questions about the Dashboard" compact />
       </main>
     </div>
   )

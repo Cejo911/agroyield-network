@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import PricesClient from './prices-client'
 import PriceIntelligence from './price-intelligence'
+import FAQAccordion from '@/app/components/FAQAccordion'
+import { MODULE_FAQS } from '@/lib/faq-data'
 import AppNav from '@/app/components/AppNav'
 import PricesTabs from './prices-tabs'
 
@@ -67,6 +69,7 @@ export default async function PricesPage() {
             />
           }
         />
+        <FAQAccordion items={MODULE_FAQS.prices} title="Frequently Asked Questions" subtitle="Common questions about Price Tracker" compact />
       </main>
     </div>
   )

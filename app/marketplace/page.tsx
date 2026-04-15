@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import AppNav from '@/app/components/AppNav'
 import MarketplaceClient from './marketplace-client'
+import FAQAccordion from '@/app/components/FAQAccordion'
+import { MODULE_FAQS } from '@/lib/faq-data'
 
 export default async function MarketplacePage() {
   const supabase = await createClient()
@@ -44,6 +46,7 @@ export default async function MarketplacePage() {
           </Link>
         </div>
         <MarketplaceClient listings={listingList} profileMap={profileMap} userId={user.id} />
+        <FAQAccordion items={MODULE_FAQS.marketplace} title="Frequently Asked Questions" subtitle="Common questions about Marketplace" compact />
       </main>
     </div>
   )

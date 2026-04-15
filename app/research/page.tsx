@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import AppNav from '@/app/components/AppNav'
 import ResearchClient from './research-client'
+import FAQAccordion from '@/app/components/FAQAccordion'
+import { MODULE_FAQS } from '@/lib/faq-data'
 
 export default async function ResearchPage() {
   const supabase = await createClient()
@@ -41,6 +43,7 @@ export default async function ResearchPage() {
           </Link>
         </div>
         <ResearchClient posts={postList} profileMap={profileMap} userId={user.id} />
+        <FAQAccordion items={MODULE_FAQS.research} title="Frequently Asked Questions" subtitle="Common questions about the Research Hub" compact />
       </main>
     </div>
   )

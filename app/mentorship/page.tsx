@@ -5,6 +5,8 @@ import AppNav from '@/app/components/AppNav'
 import MentorBrowser from './mentor-browser'
 import { getSettings } from '@/lib/settings'
 import { getEffectiveTier } from '@/lib/tiers'
+import FAQAccordion from '@/app/components/FAQAccordion'
+import { MODULE_FAQS } from '@/lib/faq-data'
 
 export default async function MentorshipPage() {
   const supabase = await createClient()
@@ -116,6 +118,7 @@ export default async function MentorshipPage() {
           </div>
         </div>
         <MentorBrowser mentors={mentorsWithRatings} userId={user.id} />
+        <FAQAccordion items={MODULE_FAQS.mentorship} title="Frequently Asked Questions" subtitle="Common questions about Mentorship" compact />
       </main>
     </div>
   )

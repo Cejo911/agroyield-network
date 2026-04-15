@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import OpportunitiesClient from './opportunities-client'
 import AppNav from '@/app/components/AppNav'
+import FAQAccordion from '@/app/components/FAQAccordion'
+import { MODULE_FAQS } from '@/lib/faq-data'
 
 export default async function OpportunitiesPage() {
   const supabase = await createClient()
@@ -31,6 +33,7 @@ export default async function OpportunitiesPage() {
           </Link>
         </div>
         <OpportunitiesClient opportunities={(opportunities ?? []) as any} userId={user.id} />
+        <FAQAccordion items={MODULE_FAQS.opportunities} title="Frequently Asked Questions" subtitle="Common questions about Opportunities" compact />
       </main>
     </div>
   )

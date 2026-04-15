@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import AppNav from '@/app/components/AppNav'
 import GrantsClient from './grants-client'
+import FAQAccordion from '@/app/components/FAQAccordion'
+import { MODULE_FAQS } from '@/lib/faq-data'
 
 export default async function GrantsPage() {
   const supabase = await createClient()
@@ -65,6 +67,7 @@ export default async function GrantsPage() {
           </div>
         </div>
         <GrantsClient grants={grants ?? []} applicationMap={applicationMap} />
+        <FAQAccordion items={MODULE_FAQS.grants} title="Frequently Asked Questions" subtitle="Common questions about Grants" compact />
       </main>
     </div>
   )

@@ -19,6 +19,7 @@ const NAV_LINKS = [
   { href: '/research',      label: 'Research' },
   { href: '/mentorship',    label: 'Mentorship' },
   { href: '/business',      label: 'Business' },
+  { href: '/faq',           label: 'FAQ' },
 ]
 
 export default function AppNav() {

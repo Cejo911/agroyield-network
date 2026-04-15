@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import DirectoryClient from './directory-client'
 import AppNav from '@/app/components/AppNav'
+import FAQAccordion from '@/app/components/FAQAccordion'
+import { MODULE_FAQS } from '@/lib/faq-data'
 
 export default async function DirectoryPage() {
   const supabase = await createClient()
@@ -78,6 +80,7 @@ export default async function DirectoryPage() {
           mentorIds={mentorIds}
           menteeIds={menteeIds}
         />
+        <FAQAccordion items={MODULE_FAQS.directory} title="Frequently Asked Questions" subtitle="Common questions about the Directory" compact />
       </main>
     </div>
   )
