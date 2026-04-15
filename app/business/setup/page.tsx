@@ -114,18 +114,26 @@ function BusinessSetup() {
     const file = e.target.files?.[0]
     if (!file || !userId) return
     setUploading(true)
-    const ext = file.name.split('.').pop()
-    // Use businessId if editing, or a timestamp for new businesses (will be unique)
-    const folder = businessId || `${userId}/new_${Date.now()}`
-    const path = `${folder}/logo.${ext}`
-    const { error } = await supabase.storage
-      .from('business-logos')
-      .upload(path, file, { upsert: true })
-    if (!error) {
-      const { data: { publicUrl } } = supabase.storage
+    try {
+      const ext = file.name.split('.').pop()
+      // Use businessId if editing, or a timestamp for new businesses (will be unique)
+      const folder = businessId || `${userId}/new_${Date.now()}`
+      const path = `${folder}/logo.${ext}`
+      const { error } = await supabase.storage
         .from('business-logos')
-        .getPublicUrl(path)
-      setForm(f => ({ ...f, logo_url: publicUrl }))
+        .upload(path, file, { upsert: true })
+      if (error) {
+        console.error('Logo upload error:', error)
+        alert('Failed to upload logo: ' + error.message)
+      } else {
+        const { data: { publicUrl } } = supabase.storage
+          .from('business-logos')
+          .getPublicUrl(path)
+        setForm(f => ({ ...f, logo_url: publicUrl }))
+      }
+    } catch (err: unknown) {
+      console.error('Logo upload exception:', err)
+      alert('Upload failed — please try again.')
     }
     setUploading(false)
   }

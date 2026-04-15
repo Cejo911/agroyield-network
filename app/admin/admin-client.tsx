@@ -903,6 +903,20 @@ export default function AdminClient({
                         Suspend
                       </button>
                     )}
+                    {/* View Business link — shown if member has a business */}
+                    {(() => {
+                      const memberBiz = businesses.find(b => b.user_id === member.id)
+                      return memberBiz ? (
+                        <a
+                          href={`/admin/business-preview/${memberBiz.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 px-3 py-1.5 rounded-md hover:bg-indigo-100 dark:hover:bg-indigo-900/40 inline-flex items-center gap-1"
+                        >
+                          👁 View Business
+                        </a>
+                      ) : null
+                    })()}
                     {isSuperAdmin && (
                       <>
                         {/* Tier selector */}
