@@ -8,9 +8,9 @@ function getAdminClient() {
   )
 }
 
-function getExpiryDate(plan: string): string {
+function getExpiryDate(billing: string): string {
   const date = new Date()
-  if (plan === 'annual') {
+  if (billing === 'annual') {
     date.setFullYear(date.getFullYear() + 1)
   } else {
     date.setMonth(date.getMonth() + 1)
@@ -43,37 +43,32 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Payment not successful' }, { status: 400 })
     }
 
-    const { userId, plan } = paystackData.data.metadata as {
-      userId: string
-      plan: 'monthly' | 'annual'
-    }
+    const metadata = paystackData.data.metadata as Record<string, string>
+    const userId = metadata?.userId
+    const tier = metadata?.tier ?? 'pro' // Default to pro for legacy payments
+    const billing = metadata?.billing ?? metadata?.plan ?? 'monthly'
 
-    if (!userId || !plan) {
+    if (!userId) {
       return NextResponse.json({ error: 'Invalid payment metadata' }, { status: 400 })
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const adminAny = getAdminClient() as any
 
-    // Check if this reference was already processed (idempotency)
-    const { data: existing } = await adminAny
-      .from('profiles')
-      .select('id, subscription_plan')
-      .eq('id', userId)
-      .single()
-
-    // Update profile — idempotent, safe to call multiple times
+    // Update profile with tier and billing info
     const { error: updateError } = await adminAny
       .from('profiles')
       .update({
         is_verified: true,
-        subscription_plan: plan,
-        subscription_expires_at: getExpiryDate(plan),
+        subscription_tier: tier,
+        subscription_plan: billing,
+        subscription_expires_at: getExpiryDate(billing),
       })
       .eq('id', userId)
 
     if (updateError) throw updateError
 
-    return NextResponse.json({ success: true, plan })
+    return NextResponse.json({ success: true, tier, billing })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unexpected error'
     return NextResponse.json({ error: message }, { status: 500 })

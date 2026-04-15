@@ -8,7 +8,7 @@ import jsPDF from 'jspdf'
 
 // ── Types ──
 interface AnalyticsProps {
-  members: { id: string; gender: string | null; created_at: string; is_verified: boolean; is_elite: boolean; is_suspended: boolean; subscription_plan: string | null; subscription_expires_at: string | null }[]
+  members: { id: string; gender: string | null; created_at: string; is_verified: boolean; is_elite: boolean; is_suspended: boolean; subscription_tier: string | null; subscription_plan: string | null; subscription_expires_at: string | null }[]
   waitlistSignups: { id: string; created_at: string }[]
   communityPosts: { id: string; user_id: string; created_at: string; is_active: boolean }[]
   researchPosts: { id: string; user_id: string; created_at: string }[]
@@ -209,7 +209,10 @@ export default function AnalyticsTab(props: AnalyticsProps) {
     const now = new Date().toISOString()
     const activeSubs = members.filter(m => m.subscription_plan && m.subscription_expires_at && m.subscription_expires_at > now)
     const expiredSubs = members.filter(m => m.subscription_plan && m.subscription_expires_at && m.subscription_expires_at <= now)
-    const freeTier = members.filter(m => !m.subscription_plan)
+    const freeTier = members.filter(m => !m.subscription_tier || m.subscription_tier === 'free')
+    const proTier = members.filter(m => m.subscription_tier === 'pro' && m.subscription_expires_at && m.subscription_expires_at > now)
+    const growthTier = members.filter(m => m.subscription_tier === 'growth' && m.subscription_expires_at && m.subscription_expires_at > now)
+    const trialUsers = members.filter(m => m.subscription_plan === 'trial' && m.subscription_expires_at && m.subscription_expires_at > now)
     const expiringIn30 = members.filter(m => {
       if (!m.subscription_expires_at) return false
       const exp = new Date(m.subscription_expires_at)
@@ -219,11 +222,16 @@ export default function AnalyticsTab(props: AnalyticsProps) {
 
     return {
       pie: [
-        { name: 'Active Subscribers', value: activeSubs.length },
+        { name: 'Pro', value: proTier.length },
+        { name: 'Growth', value: growthTier.length },
+        { name: 'Trial', value: trialUsers.length },
         { name: 'Expired', value: expiredSubs.length },
         { name: 'Free', value: freeTier.length },
       ],
       activeSubs: activeSubs.length,
+      proTier: proTier.length,
+      growthTier: growthTier.length,
+      trialUsers: trialUsers.length,
       expiredSubs: expiredSubs.length,
       freeUsers: freeTier.length,
       expiringIn30: expiringIn30.length,
@@ -727,7 +735,7 @@ export default function AnalyticsTab(props: AnalyticsProps) {
       // ═══════════════════════════════════════════════════════════
       // SUBSCRIPTION + MENTORSHIP (compact)
       // ═══════════════════════════════════════════════════════════
-      sectionHeader('Subscription Health', `${subscriptionData.activeSubs} active · ${subscriptionData.expiringIn30} expiring within 30 days`)
+      sectionHeader('Subscription Health', `${subscriptionData.proTier} Pro · ${subscriptionData.growthTier} Growth · ${subscriptionData.trialUsers} Trial · ${subscriptionData.expiringIn30} expiring 30d`)
       drawTable(
         ['Plan Status', 'Members'],
         subscriptionData.pie.map((p: { name: string; value: number }) => [p.name, String(p.value)]),
@@ -952,12 +960,13 @@ export default function AnalyticsTab(props: AnalyticsProps) {
       <div className="space-y-6">
 
       {/* ── Key Metrics Row ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+      <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 gap-3">
         <StatCard label="Total Members" value={members.length} accent="text-green-600 dark:text-green-400" />
         <StatCard label="Waitlist" value={waitlistSignups.length} />
         <StatCard label="Growth (MoM)" value={`${growthRate >= 0 ? '+' : ''}${growthRate}%`} accent={growthRate >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'} />
         <StatCard label="Active (7d)" value={funnel[funnel.length - 1]?.value ?? 0} sub={`${members.length > 0 ? Math.round((funnel[funnel.length - 1]?.value ?? 0) / members.length * 100) : 0}% of members`} />
-        <StatCard label="Subscribers" value={subscriptionData.activeSubs} sub={`${subscriptionData.expiringIn30} expiring in 30d`} accent="text-amber-600 dark:text-amber-400" />
+        <StatCard label="Pro" value={subscriptionData.proTier} sub={`${subscriptionData.trialUsers} on trial`} accent="text-amber-600 dark:text-amber-400" />
+        <StatCard label="Growth" value={subscriptionData.growthTier} sub={`${subscriptionData.expiringIn30} expiring 30d`} accent="text-purple-600 dark:text-purple-400" />
         <StatCard label="Mentors" value={mentorshipHealth.mentors} sub={`${mentorshipHealth.total} requests`} />
         <StatCard label="Businesses" value={businessHealth.totalBusinesses} sub={`${businessHealth.totalInvoices} invoices`} />
         <StatCard label="Platform GMV" value={fmtNaira(businessHealth.totalRevenue)} sub={`${businessHealth.netProfit >= 0 ? '+' : ''}${fmtNaira(businessHealth.netProfit)} net`} accent="text-green-600 dark:text-green-400" />

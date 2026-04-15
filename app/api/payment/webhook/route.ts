@@ -9,9 +9,9 @@ function getAdminClient() {
   )
 }
 
-function getExpiryDate(plan: string): string {
+function getExpiryDate(billing: string): string {
   const date = new Date()
-  if (plan === 'annual') {
+  if (billing === 'annual') {
     date.setFullYear(date.getFullYear() + 1)
   } else {
     date.setMonth(date.getMonth() + 1)
@@ -47,29 +47,32 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ received: true })
     }
 
-    const userId = metadata?.userId as string | undefined
-    const plan   = metadata?.plan   as 'monthly' | 'annual' | undefined
+    const userId  = metadata?.userId as string | undefined
+    const tier    = (metadata?.tier ?? 'pro') as string
+    const billing = (metadata?.billing ?? metadata?.plan ?? 'monthly') as string
 
-    if (!userId || !plan) {
-      console.error('[webhook] Missing userId or plan in metadata', metadata)
+    if (!userId) {
+      console.error('[webhook] Missing userId in metadata', metadata)
       return NextResponse.json({ received: true })
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const adminAny = getAdminClient() as any
 
     const { error } = await adminAny
       .from('profiles')
       .update({
         is_verified: true,
-        subscription_plan: plan,
-        subscription_expires_at: getExpiryDate(plan),
+        subscription_tier: tier,
+        subscription_plan: billing,
+        subscription_expires_at: getExpiryDate(billing),
       })
       .eq('id', userId)
 
     if (error) {
       console.error('[webhook] Profile update failed:', error)
     } else {
-      console.log(`[webhook] Verified user ${userId} on ${plan} plan`)
+      console.log(`[webhook] Activated ${tier} tier for user ${userId} (${billing})`)
     }
 
     return NextResponse.json({ received: true })

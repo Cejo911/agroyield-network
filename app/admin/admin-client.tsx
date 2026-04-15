@@ -46,6 +46,7 @@ interface Member {
   is_verified: boolean
   is_elite: boolean
   is_suspended: boolean
+  subscription_tier: string | null
   subscription_expires_at: string | null
   subscription_plan: string | null
   created_at: string
@@ -286,7 +287,7 @@ export default function AdminClient({
   const [listingStatusFilter, setListingStatusFilter] = useState<'all' | 'active' | 'pending' | 'hidden'>('all')
   const [membersView, setMembersView] = useState<'registered' | 'waitlist'>('registered')
   const [waitlistSearch, setWaitlistSearch] = useState('')
-  const [memberRoleFilter, setMemberRoleFilter] = useState<'all' | 'admin' | 'verified' | 'elite' | 'suspended'>('all')
+  const [memberRoleFilter, setMemberRoleFilter] = useState<'all' | 'admin' | 'verified' | 'elite' | 'suspended' | 'pro' | 'growth' | 'trial'>('all')
   const [grantStatusFilter, setGrantStatusFilter] = useState<'all' | 'open' | 'closed'>('all')
 
   // Moderator permissions management (expanded member id)
@@ -523,6 +524,9 @@ export default function AdminClient({
       || (memberRoleFilter === 'verified' && m.is_verified)
       || (memberRoleFilter === 'elite' && m.is_elite)
       || (memberRoleFilter === 'suspended' && m.is_suspended)
+      || (memberRoleFilter === 'pro' && m.subscription_tier === 'pro')
+      || (memberRoleFilter === 'growth' && m.subscription_tier === 'growth')
+      || (memberRoleFilter === 'trial' && m.subscription_plan === 'trial')
     return matchesSearch && matchesRole
   })
   const filteredGrants = grants.filter(g => {
@@ -829,6 +833,9 @@ export default function AdminClient({
           <FilterPills value={memberRoleFilter} onChange={(v) => setMemberRoleFilter(v as typeof memberRoleFilter)} options={[
             { id: 'all', label: `All (${members.length})` },
             { id: 'admin', label: `Admins (${members.filter(m => m.is_admin).length})` },
+            { id: 'pro', label: `Pro (${members.filter(m => m.subscription_tier === 'pro').length})` },
+            { id: 'growth', label: `Growth (${members.filter(m => m.subscription_tier === 'growth').length})` },
+            { id: 'trial', label: `Trial (${members.filter(m => m.subscription_plan === 'trial').length})` },
             { id: 'verified', label: `Verified (${members.filter(m => m.is_verified).length})` },
             { id: 'elite', label: `Elite (${members.filter(m => m.is_elite).length})` },
             { id: 'suspended', label: `Suspended (${members.filter(m => m.is_suspended).length})` },

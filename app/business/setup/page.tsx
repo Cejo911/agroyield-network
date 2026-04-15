@@ -100,16 +100,20 @@ function BusinessSetup() {
         return
       }
     } else {
-      // Guard: if multi-business is off, block creating a second business
-      const { data: existing } = await supabase.from('businesses').select('id').eq('user_id', user.id).limit(1)
-      if (existing && existing.length > 0) {
-        const { data: flag } = await supabase.from('settings').select('value').eq('key', 'allow_multi_business').single()
-        if (!flag || flag.value !== 'true') {
-          alert('You already have a business. Multi-business support is not yet available.')
+      // Guard: check tier-based business creation limit
+      try {
+        const tierRes = await fetch('/api/tier/check', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'create_business' }),
+        })
+        const tierCheck = await tierRes.json()
+        if (!tierCheck.allowed) {
+          alert(tierCheck.reason + '. Upgrade your plan at /pricing to create more businesses.')
           setSaving(false)
           return
         }
-      }
+      } catch { /* fail open if tier check fails */ }
       const { data: newBiz, error } = await supabase.from('businesses').insert({ ...form, user_id: user.id }).select('id').single()
       if (error) {
         alert('Failed to create business: ' + error.message)

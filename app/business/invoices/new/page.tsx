@@ -4,6 +4,8 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { getBusinessAccess } from '@/lib/business-access'
 import { getActiveBusinessId } from '@/lib/business-cookie'
+import UpgradePrompt from '@/app/components/UpgradePrompt'
+import type { TierName } from '@/lib/tiers'
 
 interface LineItem {
   product_id: string
@@ -55,6 +57,9 @@ export default function NewInvoicePage() {
   ])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [tierBlock, setTierBlock] = useState<{
+    reason: string; upgradeToTier?: TierName; usage?: number; limit?: number | null
+  } | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -68,6 +73,26 @@ export default function NewInvoicePage() {
         .eq('id', access.businessId)
         .single()
       setBusiness(biz)
+
+      // Check tier limit for invoice creation
+      if (biz) {
+        try {
+          const res = await fetch('/api/tier/check', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'create_invoice', businessId: biz.id }),
+          })
+          const check = await res.json()
+          if (!check.allowed) {
+            setTierBlock({
+              reason: check.reason,
+              upgradeToTier: check.upgradeToTier,
+              usage: check.usage,
+              limit: check.limit,
+            })
+          }
+        } catch { /* fail open — don't block invoice creation if check fails */ }
+      }
       if (biz) {
         const { data: prods } = await supabase
           .from('business_products')
@@ -235,6 +260,24 @@ export default function NewInvoicePage() {
   const inputClass = "w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-800"
   const selectClass = "w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-800"
   const labelClass = "block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1"
+
+  // Block form if tier limit reached
+  if (tierBlock) {
+    return (
+      <div>
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">New Invoice</h1>
+          <p className="text-gray-500 text-sm mt-1">Create a new invoice or receipt</p>
+        </div>
+        <UpgradePrompt
+          reason={tierBlock.reason}
+          upgradeToTier={tierBlock.upgradeToTier}
+          usage={tierBlock.usage}
+          limit={tierBlock.limit}
+        />
+      </div>
+    )
+  }
 
   return (
     <div>

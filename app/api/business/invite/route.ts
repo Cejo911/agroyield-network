@@ -5,6 +5,7 @@ import { createNotification } from '@/lib/notifications'
 import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { SENDERS } from '@/lib/email/senders'
 import { getResend } from '@/lib/email/client'
+import { getEffectiveTier, checkTierLimit } from '@/lib/tiers'
 
 export async function POST(request: Request) {
   try {
@@ -45,6 +46,24 @@ export async function POST(request: Request) {
 
     if (!business) {
       return NextResponse.json({ error: 'Business not found or you are not the owner' }, { status: 403 })
+    }
+
+    // Check tier limit for team invites (only for new invites, not resends)
+    if (!isResend) {
+      const { data: ownerProfile } = await (admin as any)
+        .from('profiles')
+        .select('subscription_tier, subscription_expires_at')
+        .eq('id', user.id)
+        .single()
+      const tier = getEffectiveTier(ownerProfile ?? {})
+      const { count: teamCount } = await (admin as any)
+        .from('business_team')
+        .select('*', { count: 'exact', head: true })
+        .eq('business_id', business_id)
+      const tierCheck = checkTierLimit(tier, 'invite_team', teamCount ?? 0)
+      if (!tierCheck.allowed) {
+        return NextResponse.json({ error: tierCheck.reason }, { status: 403 })
+      }
     }
 
     // Can't invite yourself

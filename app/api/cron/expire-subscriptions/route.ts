@@ -9,6 +9,7 @@ export async function GET(request: Request) {
   }
 
   try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const adminAny = getSupabaseAdmin() as any
 
     // Read grace period from settings (default 7 days)
@@ -27,7 +28,7 @@ export async function GET(request: Request) {
     // Find verified profiles whose subscription expired before the cutoff
     const { data: expiredProfiles, error: fetchError } = await adminAny
       .from('profiles')
-      .select('id, subscription_expires_at')
+      .select('id, subscription_tier, subscription_expires_at')
       .eq('is_verified', true)
       .lt('subscription_expires_at', cutoff.toISOString())
       .not('subscription_expires_at', 'is', null)
@@ -40,15 +41,18 @@ export async function GET(request: Request) {
 
     const ids = expiredProfiles.map((p: any) => p.id)
 
-    // Revoke verified status
+    // Revoke verified status and reset to free tier
     const { error: updateError } = await adminAny
       .from('profiles')
-      .update({ is_verified: false })
+      .update({
+        is_verified: false,
+        subscription_tier: 'free',
+      })
       .in('id', ids)
 
     if (updateError) throw updateError
 
-    console.log(`[expire-subscriptions] Revoked verification for ${ids.length} profiles`)
+    console.log(`[expire-subscriptions] Revoked ${ids.length} profiles — reset to free tier`)
 
     return NextResponse.json({ success: true, revoked: ids.length })
   } catch (err: unknown) {
