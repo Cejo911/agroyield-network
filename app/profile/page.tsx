@@ -81,6 +81,14 @@ export default async function ProfilePage() {
               gender:        (rawProfile?.gender as string) ?? null,
               date_of_birth: (rawProfile?.date_of_birth as string) ?? null,
               notify_on_login: (rawProfile?.notify_on_login as boolean | null) ?? true,
+              account_type:             (rawProfile?.account_type as string) ?? 'individual',
+              institution_type:         (rawProfile?.institution_type as string) ?? null,
+              institution_display_name: (rawProfile?.institution_display_name as string) ?? null,
+              contact_person_name:      (rawProfile?.contact_person_name as string) ?? null,
+              contact_person_role:      (rawProfile?.contact_person_role as string) ?? null,
+              institution_website:      (rawProfile?.institution_website as string) ?? null,
+              institution_cac:          (rawProfile?.institution_cac as string) ?? null,
+              is_institution_verified:  (rawProfile?.is_institution_verified as boolean) ?? false,
             }}
           />
         </div>

@@ -27,6 +27,7 @@ export async function PATCH(request: NextRequest) {
         | 'set_tier'
         | 'makesuper' | 'makemoderator' | 'removeadmin'
         | 'update_permissions'
+        | 'verify_institution'
       permissions?: Record<string, boolean>
       tier?: 'free' | 'pro' | 'growth'
     }
@@ -106,6 +107,10 @@ export async function PATCH(request: NextRequest) {
         is_admin: false,
         admin_role: null,
         admin_permissions: null,
+      }).eq('id', userId)
+    } else if (action === 'verify_institution') {
+      await adminAny.from('profiles').update({
+        is_institution_verified: true,
       }).eq('id', userId)
     } else if (action === 'update_permissions') {
       if (!permissions) {

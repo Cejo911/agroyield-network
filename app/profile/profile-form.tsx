@@ -10,6 +10,13 @@ const ROLES = [
   { value: 'agripreneur', label: 'Agripreneur' },
 ]
 
+const INSTITUTION_TYPES = [
+  { value: 'university',    label: 'University & Research Institute' },
+  { value: 'government',    label: 'Government Agency' },
+  { value: 'ngo',           label: 'NGO & Foundation' },
+  { value: 'agri_company',  label: 'Agri-Company & Cooperative' },
+]
+
 const INTERESTS = [
   'Crop Science', 'Livestock', 'Agritech', 'Soil Health',
   'Irrigation', 'Food Processing', 'Agricultural Finance',
@@ -183,6 +190,14 @@ type ProfileFormProps = {
     gender:        string | null
     date_of_birth: string | null
     notify_on_login?: boolean | null
+    account_type?:             string | null
+    institution_type?:         string | null
+    institution_display_name?: string | null
+    contact_person_name?:      string | null
+    contact_person_role?:      string | null
+    institution_website?:      string | null
+    institution_cac?:          string | null
+    is_institution_verified?:  boolean | null
   }
 }
 
@@ -222,10 +237,19 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
     gender:        initialData.gender        || '',
     date_of_birth: initialData.date_of_birth || '',
     notify_on_login: initialData.notify_on_login ?? true,
+    account_type:             initialData.account_type             || 'individual',
+    institution_type:         initialData.institution_type         || '',
+    institution_display_name: initialData.institution_display_name || '',
+    contact_person_name:      initialData.contact_person_name      || '',
+    contact_person_role:      initialData.contact_person_role      || '',
+    institution_website:      initialData.institution_website      || '',
+    institution_cac:          initialData.institution_cac          || '',
   })
 
+  const isInstitution = form.account_type === 'institution'
+
   // ── Completeness ──
-  const fieldChecks = [
+  const individualChecks = [
     { key: 'first_name',  label: 'First name',                 filled: !!form.first_name },
     { key: 'last_name',   label: 'Last name',                  filled: !!form.last_name },
     { key: 'role',        label: 'Your role',                  filled: !!form.role },
@@ -240,6 +264,19 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
     { key: 'twitter',     label: 'Twitter / X handle',         filled: !!form.twitter },
     { key: 'website',     label: 'Personal website',           filled: !!form.website },
   ]
+  const institutionChecks = [
+    { key: 'institution_display_name', label: 'Institution name',    filled: !!form.institution_display_name },
+    { key: 'institution_type',         label: 'Institution type',    filled: !!form.institution_type },
+    { key: 'contact_person_name',      label: 'Contact person',     filled: !!form.contact_person_name },
+    { key: 'bio',                      label: 'About your institution', filled: !!form.bio },
+    { key: 'location',                 label: 'Location',           filled: !!form.location },
+    { key: 'interests',                label: 'Areas of interest',  filled: form.interests.length > 0 },
+    { key: 'avatar_url',               label: 'Logo / Photo',       filled: !!form.avatar_url },
+    { key: 'phone',                    label: 'Phone number',       filled: !!form.phone },
+    { key: 'institution_website',      label: 'Website',            filled: !!form.institution_website },
+    { key: 'linkedin',                 label: 'LinkedIn page',      filled: !!form.linkedin },
+  ]
+  const fieldChecks = isInstitution ? institutionChecks : individualChecks
   const missing      = fieldChecks.filter(f => !f.filled)
   const percent      = Math.round(((fieldChecks.length - missing.length) / fieldChecks.length) * 100)
   const barColor     = percent >= 70 ? '#16a34a' : percent >= 40 ? '#ca8a04' : '#dc2626'
@@ -394,7 +431,14 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
 
         {/* ── Basic Info ── */}
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Basic Information</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            {isInstitution ? 'Account Holder' : 'Basic Information'}
+          </h2>
+          {isInstitution && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+              The person managing this institutional account on AgroYield.
+            </p>
+          )}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">First Name</label>
@@ -411,58 +455,162 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
           </div>
         </div>
 
-        {/* ── Role ── */}
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Your Role</h2>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {ROLES.map(role => (
-              <button key={role.value} type="button"
-                onClick={() => setForm(prev => ({ ...prev, role: role.value }))}
-                className={`py-3 px-4 rounded-lg border-2 text-sm font-medium transition-colors ${
-                  form.role === role.value
-                    ? 'border-green-600 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-                    : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-green-300 dark:hover:border-green-600'
-                }`}>
-                {role.label}
-              </button>
-            ))}
+        {/* ── Institution verification banner ── */}
+        {isInstitution && (
+          <div className={`flex items-start gap-3 rounded-xl p-4 border ${
+            initialData.is_institution_verified
+              ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+              : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800'
+          }`}>
+            <span className="text-xl">{initialData.is_institution_verified ? '✅' : '⏳'}</span>
+            <div>
+              <p className={`text-sm font-semibold ${
+                initialData.is_institution_verified
+                  ? 'text-green-800 dark:text-green-300'
+                  : 'text-amber-800 dark:text-amber-300'
+              }`}>
+                {initialData.is_institution_verified ? 'Verified Institution' : 'Pending Verification'}
+              </p>
+              <p className={`text-xs ${
+                initialData.is_institution_verified
+                  ? 'text-green-600 dark:text-green-400'
+                  : 'text-amber-600 dark:text-amber-400'
+              }`}>
+                {initialData.is_institution_verified
+                  ? 'Your institution is verified. You can post opportunities, grants, and listings.'
+                  : 'Your institution is awaiting admin verification. You can browse the platform but cannot post until verified.'}
+              </p>
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* ── Personal ── */}
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Personal Details</h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Gender</label>
-              <select value={form.gender}
-                onChange={e => setForm(prev => ({ ...prev, gender: e.target.value }))}
-                className={inputCls}>
-                <option value="">Select gender</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
-                <option value="prefer_not_to_say">Prefer not to say</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date of Birth</label>
-              <input type="date" value={form.date_of_birth}
-                onChange={e => setForm(prev => ({ ...prev, date_of_birth: e.target.value }))}
-                className={inputCls} />
+        {/* ── Institution Details (institution accounts only) ── */}
+        {isInstitution && (
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Institution Details</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Institution Name *</label>
+                <input type="text" value={form.institution_display_name}
+                  onChange={e => setForm(prev => ({ ...prev, institution_display_name: e.target.value }))}
+                  placeholder="e.g. University of Ibadan, IITA, Federal Ministry of Agriculture"
+                  className={inputCls} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Institution Type *</label>
+                <div className="grid grid-cols-2 gap-3">
+                  {INSTITUTION_TYPES.map(t => (
+                    <button key={t.value} type="button"
+                      onClick={() => setForm(prev => ({ ...prev, institution_type: t.value }))}
+                      className={`py-3 px-4 rounded-lg border-2 text-sm font-medium transition-colors ${
+                        form.institution_type === t.value
+                          ? 'border-green-600 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                          : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-green-300 dark:hover:border-green-600'
+                      }`}>
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Contact Person Name *</label>
+                  <input type="text" value={form.contact_person_name}
+                    onChange={e => setForm(prev => ({ ...prev, contact_person_name: e.target.value }))}
+                    placeholder="e.g. Dr. Amina Bello"
+                    className={inputCls} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Contact Person Title</label>
+                  <input type="text" value={form.contact_person_role}
+                    onChange={e => setForm(prev => ({ ...prev, contact_person_role: e.target.value }))}
+                    placeholder="e.g. Head of Research Partnerships"
+                    className={inputCls} />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Website</label>
+                  <input type="url" value={form.institution_website}
+                    onChange={e => setForm(prev => ({ ...prev, institution_website: e.target.value }))}
+                    placeholder="https://www.example.edu.ng"
+                    className={inputCls} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">CAC Registration Number</label>
+                  <input type="text" value={form.institution_cac}
+                    onChange={e => setForm(prev => ({ ...prev, institution_cac: e.target.value }))}
+                    placeholder="e.g. RC-1234567"
+                    className={inputCls} />
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Helps speed up verification</p>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        )}
+
+        {/* ── Role (individual accounts only) ── */}
+        {!isInstitution && (
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Your Role</h2>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {ROLES.map(role => (
+                <button key={role.value} type="button"
+                  onClick={() => setForm(prev => ({ ...prev, role: role.value }))}
+                  className={`py-3 px-4 rounded-lg border-2 text-sm font-medium transition-colors ${
+                    form.role === role.value
+                      ? 'border-green-600 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                      : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-green-300 dark:hover:border-green-600'
+                  }`}>
+                  {role.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Personal (individual accounts only) ── */}
+        {!isInstitution && (
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Personal Details</h2>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Gender</label>
+                <select value={form.gender}
+                  onChange={e => setForm(prev => ({ ...prev, gender: e.target.value }))}
+                  className={inputCls}>
+                  <option value="">Select gender</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                  <option value="prefer_not_to_say">Prefer not to say</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date of Birth</label>
+                <input type="date" value={form.date_of_birth}
+                  onChange={e => setForm(prev => ({ ...prev, date_of_birth: e.target.value }))}
+                  className={inputCls} />
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ── Bio ── */}
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">About You</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            {isInstitution ? 'About Your Institution' : 'About You'}
+          </h2>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Bio</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                {isInstitution ? 'Description' : 'Bio'}
+              </label>
               <textarea value={form.bio} rows={4}
                 onChange={e => setForm(prev => ({ ...prev, bio: e.target.value }))}
-                placeholder="Tell the community a bit about yourself..."
+                placeholder={isInstitution
+                  ? 'Describe your institution, its mission, and areas of focus...'
+                  : 'Tell the community a bit about yourself...'}
                 className={inputCls} />
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import AppNav from '@/app/components/AppNav'
 import useProfileGate from '@/app/hooks/useProfileGate'
 import ProfileGateBanner from '@/app/components/ProfileGateBanner'
+import InstitutionGateBanner from '@/app/components/InstitutionGateBanner'
 import ImageUploader from '@/app/components/ImageUploader'
 import FileUploader from '@/app/components/FileUploader'
 import { createClient } from '@/lib/supabase/client'
@@ -19,7 +20,7 @@ const TAGS = [
 
 export default function NewResearchPage() {
   const router = useRouter()
-  const { ready: gateReady, allowed: profileComplete, missing: profileMissing } = useProfileGate()
+  const { ready: gateReady, allowed: profileComplete, missing: profileMissing, isInstitution, isInstitutionVerified } = useProfileGate()
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [coverImages, setCoverImages] = useState<string[]>([])
@@ -91,6 +92,8 @@ export default function NewResearchPage() {
         </div>
         {gateReady && !profileComplete ? (
           <ProfileGateBanner missing={profileMissing} />
+        ) : gateReady && isInstitution && !isInstitutionVerified ? (
+          <InstitutionGateBanner />
         ) : (
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-8">
           <form onSubmit={handleSubmit} className="space-y-6">

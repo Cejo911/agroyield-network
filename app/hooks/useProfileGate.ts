@@ -11,11 +11,15 @@ import { createClient } from '@/lib/supabase/client'
  *  - `ready`:    true once the check has finished
  *  - `allowed`:  true if all required fields are filled
  *  - `missing`:  list of human-readable missing field names (for display)
+ *  - `isInstitution`:           true if account_type === 'institution'
+ *  - `isInstitutionVerified`:   true if the institution has been admin-verified
  */
 export default function useProfileGate() {
   const [ready, setReady]     = useState(false)
   const [allowed, setAllowed] = useState(false)
   const [missing, setMissing] = useState<string[]>([])
+  const [isInstitution, setIsInstitution] = useState(false)
+  const [isInstitutionVerified, setIsInstitutionVerified] = useState(false)
 
   useEffect(() => {
     const supabase = createClient()
@@ -24,7 +28,7 @@ export default function useProfileGate() {
 
       const { data: profile } = await (supabase as any)
         .from('profiles')
-        .select('first_name, last_name, phone, whatsapp')
+        .select('first_name, last_name, phone, whatsapp, account_type, is_institution_verified')
         .eq('id', user.id)
         .single()
 
@@ -35,9 +39,11 @@ export default function useProfileGate() {
 
       setMissing(gaps)
       setAllowed(gaps.length === 0)
+      setIsInstitution(profile?.account_type === 'institution')
+      setIsInstitutionVerified(!!profile?.is_institution_verified)
       setReady(true)
     })
   }, [])
 
-  return { ready, allowed, missing }
+  return { ready, allowed, missing, isInstitution, isInstitutionVerified }
 }

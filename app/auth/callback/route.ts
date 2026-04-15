@@ -44,12 +44,21 @@ export async function GET(request: Request) {
         const userAgent = request.headers.get('user-agent') ?? 'unknown'
         recordLoginAndNotify({ userId: user.id, userEmail: user.email, ip, userAgent }).catch(() => {})
 
-        const { data: profile } = await supabase
+        const { data: profile } = await (supabase as any)
           .from('profiles')
-          .select('id, first_name')
+          .select('id, first_name, account_type')
           .eq('id', user.id)
           .single()
-        
+
+        // Persist account_type from signup metadata if not already set
+        const metaAccountType = user.user_metadata?.account_type
+        if (profile && metaAccountType && (!profile.account_type || profile.account_type === 'individual') && metaAccountType === 'institution') {
+          await (supabase as any)
+            .from('profiles')
+            .update({ account_type: metaAccountType })
+            .eq('id', user.id)
+        }
+
         if (profile && !profile.first_name) {
           try {
             await getResend().emails.send({

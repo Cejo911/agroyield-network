@@ -4,7 +4,7 @@ import Link from 'next/link'
 import FollowButton from './follow-button'
 import { useSearchLog } from '@/lib/useSearchLog'
 
-const ROLES = ['All', 'Student', 'Researcher', 'Farmer', 'Agripreneur']
+const ROLES = ['All', 'Student', 'Researcher', 'Farmer', 'Agripreneur', 'Institution']
 const INTERESTS = [
   'Crop Science', 'Livestock', 'Agritech', 'Soil Health',
   'Irrigation', 'Food Processing', 'Agricultural Finance',
@@ -33,6 +33,17 @@ type Profile = {
   admin_role: string | null
   avatar_url: string | null
   subscription_tier: string | null
+  account_type?: string | null
+  institution_type?: string | null
+  institution_display_name?: string | null
+  is_institution_verified?: boolean | null
+}
+
+const INST_TYPE_LABELS: Record<string, string> = {
+  university: 'University & Research',
+  government: 'Government Agency',
+  ngo: 'NGO & Foundation',
+  agri_company: 'Agri-Company & Cooperative',
 }
 
 type Props = {
@@ -66,7 +77,7 @@ export default function DirectoryClient({ profiles, currentUserId, followingIds,
       institution.includes(search.toLowerCase())
     const matchesRole =
       roleFilter === 'All' ||
-      p.role?.toLowerCase() === roleFilter.toLowerCase()
+      (roleFilter === 'Institution' ? p.account_type === 'institution' : p.role?.toLowerCase() === roleFilter.toLowerCase())
     const matchesInterest =
       !interestFilter ||
       p.interests?.includes(interestFilter)
@@ -190,16 +201,29 @@ export default function DirectoryClient({ profiles, currentUserId, followingIds,
                 )}
 
                 <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-green-700 dark:group-hover:text-green-400 transition-colors pr-20">
-                  {profile.first_name} {profile.last_name}
+                  {profile.account_type === 'institution'
+                    ? (profile.institution_display_name || [profile.first_name, profile.last_name].filter(Boolean).join(' '))
+                    : `${profile.first_name} ${profile.last_name}`}
                 </h3>
 
-                {/* Role pill + Mentor badge */}
+                {/* Role pill + Mentor badge + Institution badge */}
                 <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                  {profile.role && (
+                  {profile.account_type === 'institution' ? (
+                    <>
+                      <span className="inline-flex items-center gap-0.5 text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400 px-2 py-0.5 rounded-full font-medium">
+                        🏛 {INST_TYPE_LABELS[profile.institution_type ?? ''] || 'Institution'}
+                      </span>
+                      {profile.is_institution_verified && (
+                        <span className="inline-flex items-center gap-0.5 text-xs bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 px-2 py-0.5 rounded-full font-medium border border-green-200 dark:border-green-800">
+                          ✓ Verified
+                        </span>
+                      )}
+                    </>
+                  ) : profile.role ? (
                     <span className="inline-block text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full font-medium capitalize">
                       {profile.role}
                     </span>
-                  )}
+                  ) : null}
                   {mentorSet.has(profile.id) && (
                     <span className="inline-flex items-center gap-0.5 text-xs bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full font-medium border border-green-200 dark:border-green-800">
                       🎓 Mentor

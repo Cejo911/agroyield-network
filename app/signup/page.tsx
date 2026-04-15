@@ -7,7 +7,7 @@ import ThemeToggle from '@/app/components/ThemeToggle'
 
 export default function SignUp() {
   const router = useRouter()
-  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', password: '', confirm: '' })
+  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', password: '', confirm: '', accountType: 'individual' as 'individual' | 'institution' })
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [error, setError] = useState('')
@@ -87,6 +87,7 @@ export default function SignUp() {
           first_name: form.firstName,
           last_name: form.lastName,
           full_name: `${form.firstName} ${form.lastName}`,
+          account_type: form.accountType,
         }
       }
     })
@@ -256,7 +257,7 @@ export default function SignUp() {
                 <Image src="/logo-stacked-white.png" alt="AgroYield Network" width={120} height={120} className="auth-logo-white" style={{ height: 120, width: 'auto' }} />
               </div>
               <h1 style={{ fontSize: 28, fontWeight: 900, color: 'var(--text-primary)', letterSpacing: -1, marginBottom: 8 }}>Create your account</h1>
-              <p style={{ fontSize: 15, color: 'var(--text-secondary)' }}>Join AgroYield Network as a founding member</p>
+              <p style={{ fontSize: 15, color: 'var(--text-secondary)' }}>Join AgroYield Network as a member or institution</p>
             </div>
 
             <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 20, padding: '36px 32px', display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -339,13 +340,49 @@ export default function SignUp() {
 
               {/* Email form */}
               <form onSubmit={handleSignUp} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                {/* Account type selector */}
+                <div>
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text-label)', marginBottom: 8 }}>I am registering as</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    <button type="button" onClick={() => setForm(prev => ({ ...prev, accountType: 'individual' }))}
+                      style={{
+                        padding: '14px 16px', borderRadius: 12, fontSize: 14, fontWeight: 600, fontFamily: 'inherit',
+                        cursor: 'pointer', transition: 'all 0.2s',
+                        background: form.accountType === 'individual' ? 'rgba(34,197,94,0.1)' : 'transparent',
+                        border: form.accountType === 'individual' ? '2px solid #22c55e' : '2px solid var(--border-color)',
+                        color: form.accountType === 'individual' ? '#16a34a' : 'var(--text-secondary)',
+                      }}>
+                      👤 Individual
+                    </button>
+                    <button type="button" onClick={() => setForm(prev => ({ ...prev, accountType: 'institution' }))}
+                      style={{
+                        padding: '14px 16px', borderRadius: 12, fontSize: 14, fontWeight: 600, fontFamily: 'inherit',
+                        cursor: 'pointer', transition: 'all 0.2s',
+                        background: form.accountType === 'institution' ? 'rgba(34,197,94,0.1)' : 'transparent',
+                        border: form.accountType === 'institution' ? '2px solid #22c55e' : '2px solid var(--border-color)',
+                        color: form.accountType === 'institution' ? '#16a34a' : 'var(--text-secondary)',
+                      }}>
+                      🏛 Institution
+                    </button>
+                  </div>
+                  {form.accountType === 'institution' && (
+                    <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8 }}>
+                      For universities, government agencies, NGOs, and agri-companies. Admin verification required before posting.
+                    </p>
+                  )}
+                </div>
+
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text-label)', marginBottom: 8 }}>First name</label>
+                    <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text-label)', marginBottom: 8 }}>
+                      {form.accountType === 'institution' ? 'Contact person first name' : 'First name'}
+                    </label>
                     <input name="firstName" value={form.firstName} onChange={handleChange} placeholder="Chidi" required style={inputStyle} />
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text-label)', marginBottom: 8 }}>Last name</label>
+                    <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text-label)', marginBottom: 8 }}>
+                      {form.accountType === 'institution' ? 'Contact person last name' : 'Last name'}
+                    </label>
                     <input name="lastName" value={form.lastName} onChange={handleChange} placeholder="Okonkwo" required style={inputStyle} />
                   </div>
                 </div>

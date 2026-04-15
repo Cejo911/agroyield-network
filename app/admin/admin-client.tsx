@@ -285,7 +285,7 @@ export default function AdminClient({
   const [reportSearch, setReportSearch] = useState('')
   const [oppStatusFilter, setOppStatusFilter] = useState<'all' | 'active' | 'pending' | 'hidden'>('all')
   const [listingStatusFilter, setListingStatusFilter] = useState<'all' | 'active' | 'pending' | 'hidden'>('all')
-  const [membersView, setMembersView] = useState<'registered' | 'waitlist'>('registered')
+  const [membersView, setMembersView] = useState<'registered' | 'waitlist' | 'institutions'>('registered')
   const [waitlistSearch, setWaitlistSearch] = useState('')
   const [memberRoleFilter, setMemberRoleFilter] = useState<'all' | 'admin' | 'pro' | 'growth' | 'trial' | 'free' | 'suspended'>('all')
   const [grantStatusFilter, setGrantStatusFilter] = useState<'all' | 'open' | 'closed'>('all')
@@ -773,6 +773,10 @@ export default function AdminClient({
               className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${membersView === 'registered' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}`}>
               Registered ({members.length})
             </button>
+            <button onClick={() => setMembersView('institutions')}
+              className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${membersView === 'institutions' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}`}>
+              Institutions ({members.filter(m => (m as any).account_type === 'institution').length})
+            </button>
             <button onClick={() => setMembersView('waitlist')}
               className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${membersView === 'waitlist' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}`}>
               Waitlist ({waitlistSignups.length})
@@ -808,6 +812,102 @@ export default function AdminClient({
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Institutions view */}
+          {membersView === 'institutions' && (
+            <div className="space-y-3">
+              {(() => {
+                const institutions = members.filter(m => (m as any).account_type === 'institution')
+                const pending = institutions.filter(m => !(m as any).is_institution_verified)
+                const verified = institutions.filter(m => (m as any).is_institution_verified)
+                if (institutions.length === 0) return <p className="text-gray-500 dark:text-gray-400 text-sm">No institutional accounts yet.</p>
+                return (
+                  <>
+                    {pending.length > 0 && (
+                      <div className="mb-4">
+                        <h3 className="text-sm font-semibold text-amber-700 dark:text-amber-400 mb-2">⏳ Pending Verification ({pending.length})</h3>
+                        <div className="space-y-2">
+                          {pending.map(inst => {
+                            const instAny = inst as any
+                            const INST_TYPE_LABELS: Record<string, string> = { university: 'University & Research', government: 'Government Agency', ngo: 'NGO & Foundation', agri_company: 'Agri-Company & Cooperative' }
+                            return (
+                              <div key={inst.id} className="bg-white dark:bg-gray-900 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+                                <div className="flex items-start justify-between gap-4">
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-medium text-gray-900 dark:text-gray-100">
+                                      {instAny.institution_display_name || [inst.first_name, inst.last_name].filter(Boolean).join(' ') || 'Unnamed Institution'}
+                                    </p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                      {INST_TYPE_LABELS[instAny.institution_type] || instAny.institution_type || 'Type not set'}
+                                      {instAny.contact_person_name ? ` · Contact: ${instAny.contact_person_name}` : ''}
+                                    </p>
+                                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{inst.email || 'No email'}</p>
+                                    {instAny.institution_website && <p className="text-xs text-blue-500 mt-0.5">{instAny.institution_website}</p>}
+                                    {instAny.institution_cac && <p className="text-xs text-gray-400 mt-0.5">CAC: {instAny.institution_cac}</p>}
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <button
+                                      onClick={async () => {
+                                        const res = await fetch('/api/admin/member', {
+                                          method: 'PATCH',
+                                          headers: { 'Content-Type': 'application/json' },
+                                          body: JSON.stringify({ userId: inst.id, action: 'verify_institution' }),
+                                        })
+                                        if (res.ok) {
+                                          setMembers(prev => prev.map(m => m.id === inst.id ? { ...m, ...({ is_institution_verified: true } as any) } : m))
+                                        }
+                                      }}
+                                      className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-3 py-1.5 rounded-md hover:bg-green-200 dark:hover:bg-green-900/50 font-medium">
+                                      ✓ Verify
+                                    </button>
+                                    <a href={`/directory/${inst.id}`} target="_blank" rel="noopener noreferrer"
+                                      className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-3 py-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700">
+                                      View Profile
+                                    </a>
+                                  </div>
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
+                    {verified.length > 0 && (
+                      <div>
+                        <h3 className="text-sm font-semibold text-green-700 dark:text-green-400 mb-2">✅ Verified ({verified.length})</h3>
+                        <div className="space-y-2">
+                          {verified.map(inst => {
+                            const instAny = inst as any
+                            const INST_TYPE_LABELS: Record<string, string> = { university: 'University & Research', government: 'Government Agency', ngo: 'NGO & Foundation', agri_company: 'Agri-Company & Cooperative' }
+                            return (
+                              <div key={inst.id} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4">
+                                <div className="flex items-start justify-between gap-4">
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-medium text-gray-900 dark:text-gray-100">
+                                      {instAny.institution_display_name || [inst.first_name, inst.last_name].filter(Boolean).join(' ') || 'Unnamed'}
+                                    </p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                      {INST_TYPE_LABELS[instAny.institution_type] || instAny.institution_type || ''}
+                                      {instAny.contact_person_name ? ` · ${instAny.contact_person_name}` : ''}
+                                    </p>
+                                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{inst.email || ''}</p>
+                                  </div>
+                                  <a href={`/directory/${inst.id}`} target="_blank" rel="noopener noreferrer"
+                                    className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-3 py-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700">
+                                    View Profile
+                                  </a>
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )
+              })()}
             </div>
           )}
 

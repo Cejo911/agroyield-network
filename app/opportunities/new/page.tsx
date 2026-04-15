@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import AppNav from '@/app/components/AppNav'
 import useProfileGate from '@/app/hooks/useProfileGate'
 import ProfileGateBanner from '@/app/components/ProfileGateBanner'
+import InstitutionGateBanner from '@/app/components/InstitutionGateBanner'
 import ImageUploader from '@/app/components/ImageUploader'
 import BackButton from '@/app/components/BackButton'
 
@@ -15,7 +16,7 @@ export default function NewOpportunityPage() {
   const [types, setTypes] = useState<string[]>(DEFAULT_TYPES)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
-  const { ready: gateReady, allowed: profileComplete, missing: profileMissing } = useProfileGate()
+  const { ready: gateReady, allowed: profileComplete, missing: profileMissing, isInstitution, isInstitutionVerified } = useProfileGate()
   const [thumbnailUrls, setThumbnailUrls] = useState<string[]>([])
   const [userId, setUserId] = useState<string>('')
   const [form, setForm] = useState({
@@ -71,6 +72,8 @@ export default function NewOpportunityPage() {
         </div>
         {gateReady && !profileComplete ? (
           <ProfileGateBanner missing={profileMissing} />
+        ) : gateReady && isInstitution && !isInstitutionVerified ? (
+          <InstitutionGateBanner />
         ) : (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
           <form onSubmit={handleSubmit} className="space-y-6">

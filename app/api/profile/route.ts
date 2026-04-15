@@ -70,6 +70,14 @@ export async function POST(req: Request) {
       notify_on_login: typeof body.notify_on_login === 'boolean' ? body.notify_on_login : true,
       updated_at:    new Date().toISOString(),
       ...(username ? { username } : {}),
+      // Institution fields
+      account_type:             body.account_type             || 'individual',
+      institution_type:         body.institution_type         || null,
+      institution_display_name: body.institution_display_name || null,
+      contact_person_name:      body.contact_person_name      || null,
+      contact_person_role:      body.contact_person_role      || null,
+      institution_website:      body.institution_website      || null,
+      institution_cac:          body.institution_cac          || null,
     }
 
     const { error } = await supabaseAny

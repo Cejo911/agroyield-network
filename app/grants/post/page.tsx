@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import AppNav from '@/app/components/AppNav'
 import useProfileGate from '@/app/hooks/useProfileGate'
 import ProfileGateBanner from '@/app/components/ProfileGateBanner'
+import InstitutionGateBanner from '@/app/components/InstitutionGateBanner'
 import Link from 'next/link'
 import ImageUploader from '@/app/components/ImageUploader'
 
@@ -17,7 +18,7 @@ export default function PostGrantPage() {
   const [saving, setSaving] = useState(false)
   const [thumbnailUrls, setThumbnailUrls] = useState<string[]>([])
   const [userId, setUserId] = useState<string>('')
-  const { ready: gateReady, allowed: profileComplete, missing: profileMissing } = useProfileGate()
+  const { ready: gateReady, allowed: profileComplete, missing: profileMissing, isInstitution, isInstitutionVerified } = useProfileGate()
   const [form, setForm] = useState({
     title: '',
     funder: '',
@@ -91,6 +92,8 @@ export default function PostGrantPage() {
 
         {gateReady && !profileComplete ? (
           <ProfileGateBanner missing={profileMissing} />
+        ) : gateReady && isInstitution && !isInstitutionVerified ? (
+          <InstitutionGateBanner />
         ) : (
         <form onSubmit={handleSubmit} className="space-y-6 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
           {/* Title */}
