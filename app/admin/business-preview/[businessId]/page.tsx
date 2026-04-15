@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import AppNav from '@/app/components/AppNav'
@@ -28,20 +29,28 @@ export default async function BusinessPreviewPage({ params }: { params: Promise<
     .from('profiles').select('is_admin').eq('id', user.id).single()
   if (!adminProfile?.is_admin) redirect('/dashboard')
 
+  // Service-role client to bypass RLS — admin has already been verified above
+  const admin = createAdminClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const adminAny = admin as any
+
   // Fetch business
-  const { data: business } = await supabase
+  const { data: business } = await admin
     .from('businesses').select('*').eq('id', businessId).single()
   if (!business) notFound()
 
   // Fetch business owner profile
-  const { data: owner } = await (supabase as any)
+  const { data: owner } = await adminAny
     .from('profiles')
     .select('id, first_name, last_name, email, subscription_tier, subscription_expires_at')
     .eq('id', business.user_id)
     .single()
 
   // Fetch recent invoices (last 20)
-  const { data: invoices } = await supabase
+  const { data: invoices } = await admin
     .from('invoices')
     .select('id, invoice_number, document_type, status, total, issue_date, due_date, customers(name)')
     .eq('business_id', businessId)
@@ -49,7 +58,7 @@ export default async function BusinessPreviewPage({ params }: { params: Promise<
     .limit(20)
 
   // Fetch expenses summary
-  const { data: expenses } = await supabase
+  const { data: expenses } = await admin
     .from('expenses')
     .select('id, description, amount, category, date')
     .eq('business_id', businessId)
@@ -57,20 +66,20 @@ export default async function BusinessPreviewPage({ params }: { params: Promise<
     .limit(20)
 
   // Fetch products/inventory
-  const { data: products } = await supabase
+  const { data: products } = await admin
     .from('business_products')
     .select('id, name, unit, unit_price, stock_quantity, is_active')
     .eq('business_id', businessId)
     .order('name')
 
   // Fetch team members
-  const { data: teamRaw } = await (supabase as any)
+  const { data: teamRaw } = await adminAny
     .from('business_team')
     .select('id, role, user_id, profiles(first_name, last_name, email)')
     .eq('business_id', businessId)
 
   // Fetch customers
-  const { data: customers } = await supabase
+  const { data: customers } = await admin
     .from('customers')
     .select('id, name, email, phone')
     .eq('business_id', businessId)
