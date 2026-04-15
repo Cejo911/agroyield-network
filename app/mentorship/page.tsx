@@ -34,19 +34,21 @@ export default async function MentorshipPage() {
   // Check if verification is required for mentorship
   if (settings.mentorship_requires_verification === 'true') {
     const { data: userProfile } = await (supabase as any)
-      .from('profiles').select('is_verified').eq('id', user.id).single()
-    if (!userProfile?.is_verified) {
+      .from('profiles').select('subscription_tier, subscription_expires_at').eq('id', user.id).single()
+    const tier = userProfile?.subscription_tier || 'free'
+    const expired = userProfile?.subscription_expires_at && new Date(userProfile.subscription_expires_at) <= new Date()
+    if (tier === 'free' || expired) {
       return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
           <AppNav />
           <main className="max-w-2xl mx-auto px-4 py-20 text-center">
             <div className="text-5xl mb-4">🔒</div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Verified Members Only</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Subscribers Only</h1>
             <p className="text-gray-500 dark:text-gray-400 mb-6">
-              Mentorship features are available to verified members. Subscribe to unlock access to mentors and mentorship requests.
+              Mentorship features are available to Pro and Growth subscribers. Upgrade your plan to unlock access to mentors and mentorship requests.
             </p>
-            <Link href="/verify" className="inline-block bg-green-600 text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors">
-              Get Verified
+            <Link href="/pricing" className="inline-block bg-green-600 text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors">
+              View Plans
             </Link>
           </main>
         </div>

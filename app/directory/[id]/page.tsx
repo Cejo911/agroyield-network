@@ -76,14 +76,14 @@ export default async function PublicProfilePage({
                     🎓 Mentor
                   </Link>
                 )}
-                {profile.is_elite && (
-                  <span className="inline-flex items-center gap-1 text-xs bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 px-2 py-0.5 rounded-full font-medium border border-yellow-200 dark:border-yellow-800">
-                    👑 Elite
+                {profile.subscription_tier === 'growth' && (
+                  <span className="inline-flex items-center gap-1 text-xs bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full font-medium border border-amber-200 dark:border-amber-800">
+                    ⭐ Growth
                   </span>
                 )}
-                {profile.is_verified && (
-                  <span className="inline-flex items-center gap-1 text-xs bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full font-medium border border-blue-200 dark:border-blue-800">
-                    ✓ Verified
+                {profile.subscription_tier === 'pro' && (
+                  <span className="inline-flex items-center gap-1 text-xs bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 px-2 py-0.5 rounded-full font-medium border border-green-200 dark:border-green-800">
+                    ✓ Pro
                   </span>
                 )}
                 {profile.is_admin && profile.admin_role === 'super' && (

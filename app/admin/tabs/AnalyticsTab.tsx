@@ -145,7 +145,7 @@ export default function AnalyticsTab(props: AnalyticsProps) {
   // ═══════════════════════════════════════════════════════════
   const funnel = useMemo(() => {
     const total = members.length
-    const verified = members.filter(m => m.is_verified).length
+    const subscribed = members.filter(m => m.subscription_tier && m.subscription_tier !== 'free').length
     const sevenDaysAgo = daysAgo(7).toISOString()
 
     // Users who created any content
@@ -177,7 +177,7 @@ export default function AnalyticsTab(props: AnalyticsProps) {
 
     const steps = [
       { name: 'Registered', value: total },
-      { name: 'Verified', value: verified },
+      { name: 'Subscribed', value: subscribed },
       { name: 'Created Content', value: contentCreators.size },
       { name: 'Multi-Module', value: multiModule },
       { name: 'Active (7d)', value: recentActive.size },

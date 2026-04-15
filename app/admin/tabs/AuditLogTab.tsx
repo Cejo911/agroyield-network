@@ -22,8 +22,11 @@ const SETTING_LABELS: Record<string, string> = {
   announcement_color: 'Announcement Color',
   opportunity_types: 'Opportunity Types',
   marketplace_categories: 'Marketplace Categories',
-  monthly_price: 'Monthly Subscription Price',
-  annual_price: 'Annual Subscription Price',
+  tier_pro_monthly: 'Pro Monthly Price',
+  tier_pro_annual: 'Pro Annual Price',
+  tier_growth_monthly: 'Growth Monthly Price',
+  tier_growth_annual: 'Growth Annual Price',
+  free_trial_days: 'Free Trial Duration',
   opportunity_daily_limit: 'Opportunity Daily Limit',
   listing_daily_limit: 'Listing Daily Limit',
   report_threshold: 'Report Threshold',
@@ -66,6 +69,11 @@ function describeAction(action: string, targetType: string, targetId: string | n
 
     if (action === 'member.suspend') return `Suspended ${targetName}`
     if (action === 'member.unsuspend') return `Reinstated ${targetName}`
+    if (action === 'member.set_tier') {
+      const tier = d.tier as string | undefined
+      return tier ? `Set ${targetName} to ${tier.charAt(0).toUpperCase() + tier.slice(1)} tier` : `Changed tier for ${targetName}`
+    }
+    // Legacy actions (old audit entries)
     if (action === 'member.verify') return `Verified ${targetName}`
     if (action === 'member.unverify') return `Removed verification from ${targetName}`
     if (action === 'member.elite') return `Granted Elite status to ${targetName}`

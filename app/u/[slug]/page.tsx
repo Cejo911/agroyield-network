@@ -88,12 +88,14 @@ export default async function PublicProfilePage(
   const profileId   = typeof raw.id          === 'string' ? raw.id          : ''
   const interests   = Array.isArray(raw.interests) ? raw.interests as string[] : []
 
-  // Verification badges
-  const isVerified =
-    raw.is_verified === true &&
-    (raw.subscription_expires_at == null ||
-      new Date(raw.subscription_expires_at as string) > new Date())
-  const isElite = raw.is_elite === true
+  // Tier badges — determine effective tier (expired = free)
+  const rawTier = typeof raw.subscription_tier === 'string' ? raw.subscription_tier : 'free'
+  const expired = raw.subscription_expires_at
+    ? new Date(raw.subscription_expires_at as string) <= new Date()
+    : false
+  const effectiveTier = expired ? 'free' : rawTier
+  const isVerified = effectiveTier === 'pro' || effectiveTier === 'growth'
+  const isElite = effectiveTier === 'growth'
 
   const initials = [firstName, lastName]
     .filter(Boolean).map(n => n.charAt(0).toUpperCase()).join('') || '?'

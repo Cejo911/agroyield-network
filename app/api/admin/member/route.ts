@@ -20,19 +20,19 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const { userId, action, permissions } = await request.json() as {
+    const { userId, action, permissions, tier } = await request.json() as {
       userId: string
       action:
         | 'suspend' | 'unsuspend'
-        | 'verify'  | 'unverify'
-        | 'elite'   | 'unelite'
+        | 'set_tier'
         | 'makesuper' | 'makemoderator' | 'removeadmin'
         | 'update_permissions'
       permissions?: Record<string, boolean>
+      tier?: 'free' | 'pro' | 'growth'
     }
 
     // These actions require super admin
-    const superOnly = ['verify', 'unverify', 'elite', 'unelite', 'makesuper', 'makemoderator', 'removeadmin', 'update_permissions']
+    const superOnly = ['set_tier', 'makesuper', 'makemoderator', 'removeadmin', 'update_permissions']
     if (superOnly.includes(action) && adminProfile.admin_role !== 'super') {
       return NextResponse.json({ error: 'Forbidden — super admin only' }, { status: 403 })
     }
@@ -65,30 +65,30 @@ export async function PATCH(request: NextRequest) {
     } else if (action === 'unsuspend') {
       await adminAny.from('profiles').update({ is_suspended: false }).eq('id', userId)
       await adminClient.auth.admin.updateUserById(userId, { ban_duration: 'none' })
-    } else if (action === 'verify') {
-      await adminAny.from('profiles').update({
-        is_verified: true,
-        verified_at: new Date().toISOString(),
-        subscription_plan: 'admin',
-        subscription_expires_at: null,
-      }).eq('id', userId)
-    } else if (action === 'unverify') {
-      await adminAny.from('profiles').update({
-        is_verified: false,
-        verified_at: null,
-        subscription_plan: null,
-        subscription_expires_at: null,
-      }).eq('id', userId)
-    } else if (action === 'elite') {
-      await adminAny.from('profiles').update({
-        is_elite: true,
-        elite_granted_at: new Date().toISOString(),
-      }).eq('id', userId)
-    } else if (action === 'unelite') {
-      await adminAny.from('profiles').update({
-        is_elite: false,
-        elite_granted_at: null,
-      }).eq('id', userId)
+    } else if (action === 'set_tier') {
+      if (!tier || !['free', 'pro', 'growth'].includes(tier)) {
+        return NextResponse.json({ error: 'Invalid tier' }, { status: 400 })
+      }
+      if (tier === 'free') {
+        // Downgrade to free — clear subscription
+        await adminAny.from('profiles').update({
+          subscription_tier: 'free',
+          is_verified: false,
+          is_elite: false,
+          subscription_plan: null,
+          subscription_expires_at: null,
+          verified_at: null,
+        }).eq('id', userId)
+      } else {
+        // Upgrade to pro or growth — admin-granted, no expiry
+        await adminAny.from('profiles').update({
+          subscription_tier: tier,
+          is_verified: true,
+          verified_at: new Date().toISOString(),
+          subscription_plan: 'admin',
+          subscription_expires_at: null,
+        }).eq('id', userId)
+      }
     } else if (action === 'makesuper') {
       await adminAny.from('profiles').update({
         is_admin: true,

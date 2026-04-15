@@ -20,15 +20,25 @@ export async function POST(request: NextRequest) {
       event: string
       data: {
         status: string
-        metadata: { user_id: string; plan: 'monthly' | 'yearly' }
+        metadata: {
+          user_id: string
+          tier?: 'pro' | 'growth'
+          billing?: 'monthly' | 'annual'
+          plan?: 'monthly' | 'yearly' // Legacy field
+        }
       }
     }
 
     if (event.event === 'charge.success' && event.data.status === 'success') {
-      const { user_id, plan } = event.data.metadata
+      const { user_id, tier, billing, plan } = event.data.metadata
 
+      // Determine tier: new metadata takes precedence over legacy
+      const effectiveTier = tier || 'pro'
+
+      // Determine duration from billing or legacy plan field
+      const isAnnual = billing === 'annual' || plan === 'yearly'
       const expiresAt = new Date()
-      if (plan === 'yearly') {
+      if (isAnnual) {
         expiresAt.setFullYear(expiresAt.getFullYear() + 1)
       } else {
         expiresAt.setMonth(expiresAt.getMonth() + 1)
@@ -41,9 +51,10 @@ export async function POST(request: NextRequest) {
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (adminClient as any).from('profiles').update({
+        subscription_tier: effectiveTier,
         is_verified: true,
         verified_at: new Date().toISOString(),
-        subscription_plan: plan,
+        subscription_plan: billing || plan || 'monthly',
         subscription_expires_at: expiresAt.toISOString(),
       }).eq('id', user_id)
     }

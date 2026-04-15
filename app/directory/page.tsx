@@ -14,10 +14,8 @@ export default async function DirectoryPage() {
   const [{ data: profiles }, { data: followingData }, { data: follows }, { data: mentors }, { data: followerData }, { data: menteeData }] = await Promise.all([
     supabase
       .from('profiles')
-      .select('id, first_name, last_name, role, bio, location, institution, interests, is_verified, is_elite, is_admin, admin_role, avatar_url')
+      .select('id, first_name, last_name, role, bio, location, institution, interests, is_verified, is_elite, is_admin, admin_role, avatar_url, subscription_tier')
       .not('role', 'is', null)
-      .order('is_elite', { ascending: false })
-      .order('is_verified', { ascending: false })
       .order('created_at', { ascending: false }),
     supabaseAny
       .from('follows')

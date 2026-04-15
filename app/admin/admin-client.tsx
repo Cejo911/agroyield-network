@@ -287,7 +287,7 @@ export default function AdminClient({
   const [listingStatusFilter, setListingStatusFilter] = useState<'all' | 'active' | 'pending' | 'hidden'>('all')
   const [membersView, setMembersView] = useState<'registered' | 'waitlist'>('registered')
   const [waitlistSearch, setWaitlistSearch] = useState('')
-  const [memberRoleFilter, setMemberRoleFilter] = useState<'all' | 'admin' | 'verified' | 'elite' | 'suspended' | 'pro' | 'growth' | 'trial'>('all')
+  const [memberRoleFilter, setMemberRoleFilter] = useState<'all' | 'admin' | 'pro' | 'growth' | 'trial' | 'free' | 'suspended'>('all')
   const [grantStatusFilter, setGrantStatusFilter] = useState<'all' | 'open' | 'closed'>('all')
 
   // Moderator permissions management (expanded member id)
@@ -315,8 +315,11 @@ export default function AdminClient({
   })
   const [newOpportunityType, setNewOpportunityType] = useState('')
   const [newMarketplaceCategory, setNewMarketplaceCategory] = useState('')
-  const [monthlyPrice, setMonthlyPrice] = useState(settingsMap.monthly_price ?? '2500')
-  const [annualPrice, setAnnualPrice] = useState(settingsMap.annual_price ?? '25000')
+  const [proMonthlyPrice, setProMonthlyPrice] = useState(settingsMap.tier_pro_monthly ?? '2000')
+  const [proAnnualPrice, setProAnnualPrice] = useState(settingsMap.tier_pro_annual ?? '20000')
+  const [growthMonthlyPrice, setGrowthMonthlyPrice] = useState(settingsMap.tier_growth_monthly ?? '5000')
+  const [growthAnnualPrice, setGrowthAnnualPrice] = useState(settingsMap.tier_growth_annual ?? '50000')
+  const [freeTrialDays, setFreeTrialDays] = useState(settingsMap.free_trial_days ?? '30')
   const [opportunityLimit, setOpportunityLimit] = useState(settingsMap.opportunity_daily_limit ?? '3')
   const [listingLimit, setListingLimit] = useState(settingsMap.listing_daily_limit ?? '3')
   const [reportThreshold, setReportThreshold] = useState(settingsMap.report_threshold ?? '3')
@@ -398,8 +401,11 @@ export default function AdminClient({
           announcement_color: announcementColor,
           opportunity_types: JSON.stringify(opportunityTypes),
           marketplace_categories: JSON.stringify(marketplaceCategories),
-          monthly_price: monthlyPrice,
-          annual_price: annualPrice,
+          tier_pro_monthly: proMonthlyPrice,
+          tier_pro_annual: proAnnualPrice,
+          tier_growth_monthly: growthMonthlyPrice,
+          tier_growth_annual: growthAnnualPrice,
+          free_trial_days: freeTrialDays,
           opportunity_daily_limit: opportunityLimit,
           listing_daily_limit: listingLimit,
           report_threshold: reportThreshold,
@@ -521,12 +527,11 @@ export default function AdminClient({
     const matchesSearch = !q || displayName.toLowerCase().includes(q) || (m.email?.toLowerCase().includes(q)) || (m.username?.toLowerCase().includes(q))
     const matchesRole = memberRoleFilter === 'all'
       || (memberRoleFilter === 'admin' && m.is_admin)
-      || (memberRoleFilter === 'verified' && m.is_verified)
-      || (memberRoleFilter === 'elite' && m.is_elite)
-      || (memberRoleFilter === 'suspended' && m.is_suspended)
       || (memberRoleFilter === 'pro' && m.subscription_tier === 'pro')
       || (memberRoleFilter === 'growth' && m.subscription_tier === 'growth')
       || (memberRoleFilter === 'trial' && m.subscription_plan === 'trial')
+      || (memberRoleFilter === 'free' && (!m.subscription_tier || m.subscription_tier === 'free'))
+      || (memberRoleFilter === 'suspended' && m.is_suspended)
     return matchesSearch && matchesRole
   })
   const filteredGrants = grants.filter(g => {
@@ -815,18 +820,18 @@ export default function AdminClient({
               { header: 'Email', key: 'email', width: 32 },
               { header: 'Username', key: 'username', width: 20 },
               { header: 'Role', key: 'role', width: 16 },
-              { header: 'Verified', key: 'verified', width: 10 },
-              { header: 'Elite', key: 'elite', width: 10 },
-              { header: 'Plan', key: 'plan', width: 14 },
+              { header: 'Tier', key: 'tier', width: 12 },
+              { header: 'Billing', key: 'billing', width: 14 },
+              { header: 'Expires', key: 'expires', width: 16 },
               { header: 'Joined', key: 'joined', width: 16 },
             ], members.map(m => ({
               name: [m.first_name, m.last_name].filter(Boolean).join(' ') || 'N/A',
               email: m.email || 'N/A',
               username: m.username || 'N/A',
               role: m.is_admin ? (m.admin_role === 'super' ? 'Super Admin' : 'Moderator') : 'Member',
-              verified: m.is_verified ? 'Yes' : 'No',
-              elite: m.is_elite ? 'Yes' : 'No',
-              plan: m.subscription_plan || 'Free',
+              tier: (m.subscription_tier || 'free').charAt(0).toUpperCase() + (m.subscription_tier || 'free').slice(1),
+              billing: m.subscription_plan || 'N/A',
+              expires: m.subscription_expires_at ? fmt(m.subscription_expires_at) : 'No expiry',
               joined: fmt(m.created_at),
             })))} />
           </div>
@@ -836,8 +841,7 @@ export default function AdminClient({
             { id: 'pro', label: `Pro (${members.filter(m => m.subscription_tier === 'pro').length})` },
             { id: 'growth', label: `Growth (${members.filter(m => m.subscription_tier === 'growth').length})` },
             { id: 'trial', label: `Trial (${members.filter(m => m.subscription_plan === 'trial').length})` },
-            { id: 'verified', label: `Verified (${members.filter(m => m.is_verified).length})` },
-            { id: 'elite', label: `Elite (${members.filter(m => m.is_elite).length})` },
+            { id: 'free', label: `Free (${members.filter(m => !m.subscription_tier || m.subscription_tier === 'free').length})` },
             { id: 'suspended', label: `Suspended (${members.filter(m => m.is_suspended).length})` },
           ]} />
           <div className="space-y-3">
@@ -853,11 +857,14 @@ export default function AdminClient({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <a href={`/directory/${member.id}`} target="_blank" rel="noopener noreferrer" className="font-medium text-green-700 dark:text-green-400 hover:underline">{displayName}</a>
-                      {member.is_elite && (
-                        <span className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs px-2 py-0.5 rounded-full font-semibold">Elite</span>
+                      {member.subscription_tier === 'growth' && (
+                        <span className="bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-xs px-2 py-0.5 rounded-full font-semibold">Growth</span>
                       )}
-                      {member.is_verified && (
-                        <span className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs px-2 py-0.5 rounded-full">Verified</span>
+                      {member.subscription_tier === 'pro' && (
+                        <span className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs px-2 py-0.5 rounded-full font-semibold">Pro</span>
+                      )}
+                      {member.subscription_plan === 'trial' && (
+                        <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-xs px-2 py-0.5 rounded-full">Trial</span>
                       )}
                       {member.is_admin && (
                         <span className={`text-xs px-2 py-0.5 rounded-full ${
@@ -874,9 +881,10 @@ export default function AdminClient({
                       {isSelf && <span className="text-xs text-gray-400 dark:text-gray-500 italic">You</span>}
                     </div>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{member.email || 'No email'}</p>
-                    {member.subscription_plan && (
+                    {member.subscription_tier && member.subscription_tier !== 'free' && (
                       <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 capitalize">
-                        Plan: {member.subscription_plan}
+                        Tier: {member.subscription_tier}
+                        {member.subscription_plan ? ` · ${member.subscription_plan}` : ''}
                         {member.subscription_expires_at ? ` · Expires ${fmt(member.subscription_expires_at)}` : ' · No expiry'}
                       </p>
                     )}
@@ -897,28 +905,33 @@ export default function AdminClient({
                     )}
                     {isSuperAdmin && (
                       <>
-                        {member.is_verified ? (
-                          <button onClick={() => memberAction(member.id, 'unverify', m => ({ ...m, is_verified: false }))}
-                            className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-3 py-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700">
-                            Unverify
-                          </button>
-                        ) : (
-                          <button onClick={() => memberAction(member.id, 'verify', m => ({ ...m, is_verified: true }))}
-                            className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-3 py-1.5 rounded-md hover:bg-green-200 dark:hover:bg-green-900/50">
-                            Verify
-                          </button>
-                        )}
-                        {member.is_elite ? (
-                          <button onClick={() => memberAction(member.id, 'unelite', m => ({ ...m, is_elite: false }))}
-                            className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-3 py-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700">
-                            Remove Elite
-                          </button>
-                        ) : (
-                          <button onClick={() => memberAction(member.id, 'elite', m => ({ ...m, is_elite: true }))}
-                            className="text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 px-3 py-1.5 rounded-md hover:bg-yellow-200 dark:hover:bg-yellow-900/50">
-                            Make Elite
-                          </button>
-                        )}
+                        {/* Tier selector */}
+                        <select
+                          value={member.subscription_tier || 'free'}
+                          onChange={async (e) => {
+                            const newTier = e.target.value as 'free' | 'pro' | 'growth'
+                            const res = await fetch('/api/admin/member', {
+                              method: 'PATCH',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ userId: member.id, action: 'set_tier', tier: newTier }),
+                            })
+                            if (res.ok) {
+                              setMembers(prev => prev.map(m => m.id === member.id ? {
+                                ...m,
+                                subscription_tier: newTier,
+                                is_verified: newTier !== 'free',
+                                is_elite: false,
+                                subscription_plan: newTier === 'free' ? null : 'admin',
+                                subscription_expires_at: newTier === 'free' ? null : m.subscription_expires_at,
+                              } : m))
+                            }
+                          }}
+                          className="text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 px-2 py-1.5 rounded-md cursor-pointer"
+                        >
+                          <option value="free">Free</option>
+                          <option value="pro">Pro</option>
+                          <option value="growth">Growth</option>
+                        </select>
                         {!member.is_admin && (
                           <>
                             <button onClick={() => memberAction(member.id, 'makemoderator', m => ({ ...m, is_admin: true, admin_role: 'moderator' }))}
@@ -1204,12 +1217,14 @@ export default function AdminClient({
         </>)
         // Pricing section badges
         const pricingBadges = (<>
-          {badge(`₦${Number(monthlyPrice).toLocaleString()}/mo`, 'gray')}
+          {badge(`Pro ₦${Number(proMonthlyPrice).toLocaleString()}/mo`, 'green')}
+          {badge(`Growth ₦${Number(growthMonthlyPrice).toLocaleString()}/mo`, 'yellow')}
           {badge(`${graceDays}d grace`, 'gray')}
         </>)
         // Features section badges
         const featuresBadges = (<>
           {badge(allowMultiBusiness ? 'Multi-biz on' : 'Single biz', allowMultiBusiness ? 'green' : 'gray')}
+          {badge(`${freeTrialDays}d trial`, 'gray')}
         </>)
 
         return (
@@ -1472,23 +1487,49 @@ export default function AdminClient({
             {openSections.pricing && (
               <div className="px-4 py-3 space-y-4 bg-white dark:bg-gray-900">
                 <div>
-                  <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1 text-sm">Subscription Pricing</h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Verified membership prices displayed on the platform.</p>
+                  <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1 text-sm">Pro Tier Pricing</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Prices for the Pro subscription tier.</p>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">Monthly (&#8358;)</label>
-                      <input type="number" value={monthlyPrice} onChange={(e) => setMonthlyPrice(e.target.value)} className={`w-full ${sInput}`} />
+                      <input type="number" value={proMonthlyPrice} onChange={(e) => setProMonthlyPrice(e.target.value)} className={`w-full ${sInput}`} />
                     </div>
                     <div>
                       <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">Annual (&#8358;)</label>
-                      <input type="number" value={annualPrice} onChange={(e) => setAnnualPrice(e.target.value)} className={`w-full ${sInput}`} />
+                      <input type="number" value={proAnnualPrice} onChange={(e) => setProAnnualPrice(e.target.value)} className={`w-full ${sInput}`} />
                     </div>
                   </div>
                 </div>
                 <hr className="border-gray-100 dark:border-gray-800" />
                 <div>
-                  <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1 text-sm">Verification Grace Period</h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Days after expiry before the verified badge is removed.</p>
+                  <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1 text-sm">Growth Tier Pricing</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Prices for the Growth subscription tier.</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">Monthly (&#8358;)</label>
+                      <input type="number" value={growthMonthlyPrice} onChange={(e) => setGrowthMonthlyPrice(e.target.value)} className={`w-full ${sInput}`} />
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">Annual (&#8358;)</label>
+                      <input type="number" value={growthAnnualPrice} onChange={(e) => setGrowthAnnualPrice(e.target.value)} className={`w-full ${sInput}`} />
+                    </div>
+                  </div>
+                </div>
+                <hr className="border-gray-100 dark:border-gray-800" />
+                <div>
+                  <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1 text-sm">Free Trial</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Duration of the free trial for new subscribers.</p>
+                  <div className="flex items-center gap-2">
+                    <input type="number" min={0} max={90} value={freeTrialDays}
+                      onChange={(e) => setFreeTrialDays(e.target.value)}
+                      className={`w-20 ${sInput}`} />
+                    <span className="text-xs text-gray-500">days (0 = no trial)</span>
+                  </div>
+                </div>
+                <hr className="border-gray-100 dark:border-gray-800" />
+                <div>
+                  <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1 text-sm">Subscription Grace Period</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Days after expiry before tier is downgraded to Free.</p>
                   <div className="flex items-center gap-2">
                     <input type="number" min={0} max={90} value={graceDays}
                       onChange={(e) => setGraceDays(parseInt(e.target.value, 10) || 0)}

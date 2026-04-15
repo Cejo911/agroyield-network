@@ -56,11 +56,13 @@ export default function BecomeMentorPage() {
         return
       }
 
-      // Check verification requirement
+      // Check subscription requirement
       if (settingsMap.mentorship_requires_verification === 'true') {
         const { data: userProfile } = await (supabase as any)
-          .from('profiles').select('is_verified').eq('id', user.id).single()
-        if (!userProfile?.is_verified) {
+          .from('profiles').select('subscription_tier, subscription_expires_at').eq('id', user.id).single()
+        const tier = userProfile?.subscription_tier || 'free'
+        const expired = userProfile?.subscription_expires_at && new Date(userProfile.subscription_expires_at) <= new Date()
+        if (tier === 'free' || expired) {
           setVerificationRequired(true)
           setLoading(false)
           return
@@ -180,12 +182,12 @@ export default function BecomeMentorPage() {
       <AppNav />
       <main className="max-w-2xl mx-auto px-4 py-20 text-center">
         <div className="text-5xl mb-4">🔒</div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Verified Members Only</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Subscribers Only</h1>
         <p className="text-gray-500 dark:text-gray-400 mb-6">
-          Mentor registration is available to verified members. Subscribe to unlock this feature.
+          Mentor registration is available to Pro and Growth subscribers. Upgrade your plan to unlock this feature.
         </p>
-        <a href="/verify" className="inline-block bg-green-600 text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors">
-          Get Verified
+        <a href="/pricing" className="inline-block bg-green-600 text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors">
+          View Plans
         </a>
       </main>
     </div>

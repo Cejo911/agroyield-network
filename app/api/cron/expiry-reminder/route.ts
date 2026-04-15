@@ -16,8 +16,8 @@ export async function GET(req: Request) {
 
   const { data: expiring, error } = await getSupabaseAdmin()
     .from('profiles')
-    .select('id, first_name, email, subscription_expires_at, subscription_plan')
-    .eq('is_verified', true)
+    .select('id, first_name, email, subscription_expires_at, subscription_plan, subscription_tier')
+    .neq('subscription_tier', 'free')
     .gte('subscription_expires_at', in3Days.toISOString())
     .lte('subscription_expires_at', in4Days.toISOString())
 
@@ -42,15 +42,17 @@ export async function GET(req: Request) {
       month: 'long',
       year: 'numeric',
     })
-    const planLabel = profile.subscription_plan
-      ? profile.subscription_plan.charAt(0).toUpperCase() + profile.subscription_plan.slice(1)
-      : null
+    const tierLabel = profile.subscription_tier
+      ? profile.subscription_tier.charAt(0).toUpperCase() + profile.subscription_tier.slice(1)
+      : (profile.subscription_plan
+        ? profile.subscription_plan.charAt(0).toUpperCase() + profile.subscription_plan.slice(1)
+        : null)
 
     try {
       await getResend().emails.send({
         from: SENDERS.noreply,
         to: profile.email,
-        subject: 'Your AgroYield verification expires in 3 days',
+        subject: `Your AgroYield ${tierLabel || ''} subscription expires in 3 days`,
         html: `
 <!DOCTYPE html>
 <html>
@@ -76,7 +78,7 @@ export async function GET(req: Request) {
             <td style="padding:40px 40px 32px;">
               <p style="margin:0 0 16px;font-size:16px;color:#374151;">Hi ${profile.first_name ?? 'there'},</p>
               <p style="margin:0 0 24px;font-size:16px;color:#374151;line-height:1.6;">
-                Your <strong>AgroYield Verified</strong> status is set to expire on
+                Your <strong>AgroYield ${tierLabel || 'Pro'}</strong> subscription is set to expire on
                 <strong>${formattedDate}</strong> — just 3 days away.
               </p>
 
@@ -87,13 +89,13 @@ export async function GET(req: Request) {
                   <td style="padding:20px 24px;">
                     <p style="margin:0;font-size:12px;color:#92400e;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Expiry Date</p>
                     <p style="margin:6px 0 0;font-size:20px;font-weight:700;color:#78350f;">${formattedDate}</p>
-                    ${planLabel ? `<p style="margin:4px 0 0;font-size:13px;color:#a16207;">Plan: ${planLabel}</p>` : ''}
+                    ${tierLabel ? `<p style="margin:4px 0 0;font-size:13px;color:#a16207;">Plan: ${tierLabel}</p>` : ''}
                   </td>
                 </tr>
               </table>
 
               <p style="margin:0 0 28px;font-size:15px;color:#6b7280;line-height:1.6;">
-                Renew now to keep your verified badge, maintain trust with other members,
+                Renew now to keep your ${tierLabel || 'Pro'} benefits, maintain trust with other members,
                 and continue accessing all premium features on AgroYield Network.
               </p>
 
@@ -103,7 +105,7 @@ export async function GET(req: Request) {
                   <td style="background:#16a34a;border-radius:10px;">
                     <a href="https://agroyield.africa/pricing"
                       style="display:inline-block;padding:14px 32px;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;">
-                      Renew My Verification →
+                      Renew My Subscription →
                     </a>
                   </td>
                 </tr>
@@ -123,7 +125,7 @@ export async function GET(req: Request) {
                 © ${new Date().getFullYear()} AgroYield Network · Nigeria's Agricultural Professional Community
               </p>
               <p style="margin:8px 0 0;font-size:12px;color:#9ca3af;">
-                You're receiving this because you have an active verified subscription on agroyield.africa
+                You're receiving this because you have an active subscription on agroyield.africa
               </p>
             </td>
           </tr>
