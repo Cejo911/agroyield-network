@@ -109,10 +109,11 @@ export default function NotificationBell() {
       case 'message':         return '✉️'
       case 'grant_deadline':  return '📅'
       case 'system':          return '📢'
-      case 'new_opportunity': return '🚀'
-      case 'new_listing':     return '🛒'
-      case 'new_research':    return '📚'
-      default:                return '🔔'
+      case 'new_opportunity':  return '🚀'
+      case 'new_listing':      return '🛒'
+      case 'new_research':     return '📚'
+      case 'business_welcome': return '💼'
+      default:                 return '🔔'
     }
   }
 

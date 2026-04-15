@@ -179,6 +179,12 @@ function BusinessSetup() {
       // Set cookie so the new business becomes active immediately
       if (newBiz) {
         setActiveBusinessId(newBiz.id)
+        // Fire-and-forget: send welcome notification + email
+        fetch('/api/business/welcome', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ businessId: newBiz.id, businessName: form.name }),
+        }).catch(() => {}) // never block navigation
       }
     }
     setSaving(false)
