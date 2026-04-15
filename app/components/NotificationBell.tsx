@@ -99,17 +99,20 @@ export default function NotificationBell() {
   // Icon per notification type
   const typeIcon = (type: string) => {
     switch (type) {
-      case 'invoice_paid':   return '💰'
-      case 'team_invite':    return '👥'
-      case 'comment':        return '💬'
-      case 'follow':         return '🤝'
-      case 'overdue':        return '⏰'
-      case 'price_alert':    return '🏷️'
-      case 'mentorship':     return '🧭'
-      case 'message':        return '✉️'
-      case 'grant_deadline': return '📅'
-      case 'system':         return '📢'
-      default:               return '🔔'
+      case 'invoice_paid':    return '💰'
+      case 'team_invite':     return '👥'
+      case 'comment':         return '💬'
+      case 'follow':          return '🤝'
+      case 'overdue':         return '⏰'
+      case 'price_alert':     return '🏷️'
+      case 'mentorship':      return '🧭'
+      case 'message':         return '✉️'
+      case 'grant_deadline':  return '📅'
+      case 'system':          return '📢'
+      case 'new_opportunity': return '🚀'
+      case 'new_listing':     return '🛒'
+      case 'new_research':    return '📚'
+      default:                return '🔔'
     }
   }
 
