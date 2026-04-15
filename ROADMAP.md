@@ -180,9 +180,24 @@ Features that drive daily engagement and create network effects.
 
 ### 3.5 — Subscription Tiers
 
-> **Why:** Single subscription tier limits revenue. Need freemium + pro + growth tiers.
-> **Scope:** Free: 1 business, 20 invoices/mo, basic reports. Pro (₦2,500/mo): Unlimited, team, full reports, assets. Growth (₦7,500/mo): Multi-business, benchmarking, API.
-> **Status:** ⬜ Not started
+> **Why:** Single subscription tier limits revenue. Need freemium + pro + growth tiers with feature gating on business limits while keeping social/network features free for all.
+> **Scope:**
+> - **Free tier:** 1 business, 15 invoices/mo, 3 team members. All social/network features (directory, community, prices, research, grants, marketplace, messages) remain free.
+> - **Pro tier (₦2,000/mo or ₦20,000/yr):** 1 business, unlimited invoices + team members, verified badge, full reports, mentorship access.
+> - **Growth tier (₦5,000/mo or ₦50,000/yr):** Unlimited businesses, all Pro features, gold star badge.
+> - **Free trial:** 30 days for first-time subscribers (activates immediately, no Paystack redirect).
+> - **Pricing page:** 3-tier comparison with billing toggle, feature matrix, FAQ section.
+> - **Limit enforcement:** Server-side `/api/tier/check` + client-side `UpgradePrompt` component on invoice creation, business setup, team invites.
+> - **Admin controls:** Tier dropdown on member cards (replaces old Verify/Elite buttons), 4 pricing settings + free trial days in Settings panel.
+> - **Migration:** `subscription_tier` column added to profiles. Existing verified users migrated to Pro. `is_verified`/`is_elite` kept for backward compat but all reads migrated to `subscription_tier`.
+> - **Full codebase migration:** Replaced all old verified/elite markers across 13 files — admin dashboard, directory, profiles, mentorship gate, expiry emails, audit log, analytics. `/verify` redirects to `/pricing`.
+> **Status:** ✅ Completed (15 Apr 2026)
+
+### 3.5b — Poll Closing Date
+
+> **Why:** Community polls remained open indefinitely with no way to close them. Polls need a closing date to drive urgency and reveal final results.
+> **Scope:** `poll_closes_at` timestamptz column on `community_posts`. Date picker in poll creation form. Vote API rejects votes on closed polls. Feed and detail pages show closed status with results auto-revealed.
+> **Status:** ✅ Completed (15 Apr 2026)
 
 ---
 

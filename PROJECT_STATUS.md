@@ -1,8 +1,8 @@
 # AgroYield Network — Project Status
 
-> **Last updated:** 14 April 2026 (Checkpoint 10)
+> **Last updated:** 15 April 2026 (Checkpoint 11)
 > **Maintained by:** Okoli (okolichijiokei@gmail.com)
-> **Launch Target:** 5 July 2026 (~12 weeks remaining)
+> **Launch Target:** 5 July 2026 (~11 weeks remaining)
 > **Purpose:** Permanent reference for any developer or Claude session to get up to speed instantly.
 
 ---
@@ -15,7 +15,7 @@
 | Database & Auth | Supabase                               | PostgreSQL, Row Level Security, email + OAuth auth  |
 | Deployment      | Vercel                                 | Preview deploys on every push                       |
 | Email           | Resend                                 | Sender domain: `agroyield.africa`                   |
-| Payments        | Paystack                               | NGN currency, verification subscriptions            |
+| Payments        | Paystack                               | NGN currency, 3-tier subscriptions (free/pro/growth) |
 | Version Control | GitHub + GitHub Desktop                | macOS local development                             |
 
 **Environment variables:** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`, `PAYSTACK_SECRET_KEY`, `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_SITE_URL`
@@ -214,8 +214,12 @@
 | Like system                              | ✅ Done | `LikeButton.tsx`, `app/api/like/route.ts`                                                          |
 | Comments                                 | ✅ Done | `CommentsSection.tsx`                                                                              |
 | Content reporting                        | ✅ Done | `ReportButton.tsx`, `app/api/report/route.ts`                                                      |
-| Verified badge (paid via Paystack)       | ✅ Done | `verify/page.tsx`, `VerifiedBadge.tsx`                                                             |
-| Elite badge (admin-awarded)              | ✅ Done | `EliteBadge.tsx`                                                                                   |
+| Subscription tiers (free/pro/growth)     | ✅ Done | `lib/tiers.ts`, `app/pricing/`, `app/api/tier/check/`, `app/api/payment/initiate/` — 30-day free trial, Paystack one-time billing |
+| Tier limit enforcement                   | ✅ Done | Server-side `/api/tier/check` + `UpgradePrompt.tsx` on invoice creation, business setup, team invites |
+| Tier badges on profiles                  | ✅ Done | Pro (green ✓) and Growth (gold ⭐) badges on directory, profile pages, admin dashboard             |
+| Tier-aware admin controls                | ✅ Done | Tier dropdown (free/pro/growth) replaces old Verify/Elite buttons, 4 pricing settings + free trial days |
+| /verify → /pricing redirect              | ✅ Done | `app/verify/page.tsx` — server redirect to pricing page                                            |
+| Poll closing date                        | ✅ Done | `poll_closes_at` on community_posts, date picker in form, API enforcement, auto-reveal results     |
 | Announcement banner                      | ✅ Done | `AnnouncementBanner.tsx`                                                                           |
 | Registration open/close toggle           | ✅ Done | Admin settings                                                                                     |
 | Weekly email digest                      | ✅ Done | `app/api/cron/weekly-digest/route.ts`                                                              |
@@ -235,12 +239,12 @@
 | Lazy Resend client                       | ✅ Done | `lib/email/client.ts` — `getResend()` to avoid Next.js 16 build-time module-eval crash             |
 | Lazy Supabase clients                    | ✅ Done | `lib/supabase/admin.ts` — `getSupabaseAdmin()` / `getSupabaseAnon()` for the same reason           |
 | Maintenance mode                         | ✅ Done | Middleware redirect for non-admin users, branded `/maintenance` page, admin bypass, toggle in settings |
-| Admin settings panel (5 operational controls) | ✅ Done | Mentorship toggle, digest toggle, maintenance mode, community/research daily limits, mentorship verification gate |
+| Admin settings panel (8 operational controls) | ✅ Done | Mentorship toggle, digest toggle, maintenance mode, community/research daily limits, mentorship verification gate, 4 tier prices (pro/growth × monthly/annual), free trial duration, subscription grace period |
 | Admin settings UI (grouped accordion)    | ✅ Done | 6 collapsible sections with status badges on collapsed headers, red highlight for active maintenance |
 | Server-side settings helper              | ✅ Done | `lib/settings.ts` — `getSetting()` / `getSettings()` using admin client to bypass RLS             |
 | Community daily post rate limit          | ✅ Done | Client-side check against `community_daily_limit` setting before insert                            |
 | Research daily post rate limit           | ✅ Done | Server-side check in `app/api/research/route.ts` against `research_daily_limit` setting            |
-| Mentorship verification gate             | ✅ Done | Both `/mentorship` (server) and `/mentorship/become-mentor` (client) check settings, show gate screens |
+| Mentorship subscription gate             | ✅ Done | Both `/mentorship` (server) and `/mentorship/become-mentor` (client) check `subscription_tier` — free users see upgrade prompt linking to `/pricing` |
 | Weekly digest admin toggle               | ✅ Done | Cron early-exits when `digest_enabled` is `false` in settings                                      |
 | Consistent logo sizing                   | ✅ Done | AppNav 200×50 (desktop), 44×44 (mobile). Signup matched to login/reset (nav 58px, card 120px)      |
 
@@ -291,7 +295,7 @@
 | `subscriptions`        | Paystack subscription records                                                |
 | `waitlist_signups`     | Pre-launch waitlist entries                                                  |
 | `contact_messages`     | Contact form submissions                                                     |
-| `settings`             | Platform-wide key-value settings (pricing, rate limits, moderation mode, maintenance, mentorship, digest, feature flags) |
+| `settings`             | Platform-wide key-value settings (tier pricing ×4, free trial days, grace period, rate limits, moderation mode, maintenance, mentorship, digest, feature flags) |
 | `notifications`        | In-app notifications (follow, invite, comment, system) with read_at tracking |
 | `mentor_profiles`      | Mentor availability, expertise, bio, session formats                         |
 | `mentorship_requests`  | Mentorship request lifecycle (pending/accepted/declined/withdrawn/completed) |
