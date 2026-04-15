@@ -1,6 +1,6 @@
 # AgroYield Network — Project Status
 
-> **Last updated:** 15 April 2026 (Checkpoint 12)
+> **Last updated:** 15 April 2026 (Checkpoint 13)
 > **Maintained by:** Okoli (okolichijiokei@gmail.com)
 > **Launch Target:** 5 July 2026 (~11 weeks remaining)
 > **Purpose:** Permanent reference for any developer or Claude session to get up to speed instantly.
@@ -62,6 +62,7 @@
 | Create / edit / close opportunity                                | ✅ Done | `app/opportunities/new/`, `[id]/edit/`    |
 | Thumbnail image upload on create/edit                            | ✅ Done | `ImageUploader` component                 |
 | Search + type filter on listing page                             | ✅ Done | `app/opportunities/opportunities-client.tsx` |
+| Sort dropdown (newest/oldest/deadline)                           | ✅ Done | `app/opportunities/opportunities-client.tsx` — client-side sort |
 | Apply to opportunity                                             | ✅ Done | `app/opportunities/[id]/apply-button.tsx` |
 | Rate limiting (configurable per 24h)                             | ✅ Done | Via `settings` table (`opportunity_daily_limit`) |
 | Moderation modes (immediate / approval)                          | ✅ Done | Admin configurable                        |
@@ -79,6 +80,8 @@
 | Price trend charts                                         | ✅ Done | Recharts LineChart (avg/min/max) with commodity + state selectors                                         |
 | Cross-state comparison                                     | ✅ Done | Horizontal BarChart with auto-generated insights                                                          |
 | Poster attribution on cards                                | ✅ Done | Each price card shows poster name, avatar, and link to profile                                            |
+| Sort dropdown (newest/oldest/price low/high)               | ✅ Done | `app/prices/prices-client.tsx` — client-side sort by `reported_at` or `price`                             |
+| Dynamic category tabs from admin settings                  | ✅ Done | `app/prices/page.tsx` fetches `commodity_categories` via `getSettings()`, passes to client as prop        |
 
 ### Module 4 — Marketplace
 
@@ -89,6 +92,8 @@
 | Listing detail with contact actions | ✅ Done | `app/marketplace/[id]/page.tsx`      |
 | Rate limiting                       | ✅ Done | Via `settings` table (`listing_daily_limit`) |
 | Admin moderation                    | ✅ Done | `app/api/admin/listing/route.ts`     |
+| Sort dropdown (newest/oldest/price low/high) | ✅ Done | `app/marketplace/marketplace-client.tsx` — client-side sort |
+| Equipment condition filter (New/Used) | ✅ Done | `app/marketplace/marketplace-client.tsx` — filter pills shown when Equipment selected, auto-reset on category change |
 | Back navigation on all sub-pages    | ✅ Done | `BackButton` on new + edit, `<Link>` on detail |
 
 ### Module 5 — Research Board
@@ -98,6 +103,7 @@
 | Browse research posts (papers, questions, collaborations) | ✅ Done | `app/research/`                    |
 | Create / edit research post                               | ✅ Done | `app/research/new/`, `[id]/edit/`  |
 | Tags and type filtering                                   | ✅ Done | `app/research/research-client.tsx` |
+| Sort dropdown (newest/oldest)                             | ✅ Done | `app/research/research-client.tsx` — client-side sort |
 | Admin moderation (lock/unlock, activate/deactivate)       | ✅ Done | `app/api/admin/`                   |
 | Back navigation on all sub-pages                          | ✅ Done | `BackButton` on new + edit pages   |
 
@@ -106,6 +112,7 @@
 | Feature                                                              | Status  | Location                                                                         |
 | -------------------------------------------------------------------- | ------- | -------------------------------------------------------------------------------- |
 | Business profile setup (name, logo, address, phone, alt phone, WhatsApp, bank details) | ✅ Done | `app/business/setup/page.tsx`                                      |
+| Floating business setup guide (5-step checklist)                                       | ✅ Done | `app/business/setup/BusinessSetupGuide.tsx` — circular progress ring, contextual tips, completion celebration |
 | Product catalogue with stock tracking                                | ✅ Done | `app/business/products/page.tsx`                                                 |
 | Customer management                                                  | ✅ Done | `app/business/customers/page.tsx`                                                |
 | Customer statement generation + print                                | ✅ Done | `app/business/customers/[id]/statement/`                                         |
@@ -138,6 +145,7 @@
 | Feature                                              | Status  | Location                                                        |
 | ---------------------------------------------------- | ------- | --------------------------------------------------------------- |
 | Browse mentors with expertise + availability filters | ✅ Done | `app/mentorship/mentor-browser.tsx`                             |
+| Sort dropdown (newest/oldest)                        | ✅ Done | `app/mentorship/mentor-browser.tsx` — client-side sort          |
 | Mentor profile creation/editing                      | ✅ Done | `app/mentorship/become-mentor/page.tsx`                         |
 | Request workflow (send/accept/decline/withdraw)      | ✅ Done | `app/mentorship/[id]/mentor-detail.tsx`, `app/mentorship/sessions/page.tsx` |
 | Session scheduling (date, duration, format, link)    | ✅ Done | `app/mentorship/sessions/page.tsx` — mentor schedules, both parties see details |
@@ -155,6 +163,7 @@
 | Feature                                        | Status  | Location                                         |
 | ---------------------------------------------- | ------- | ------------------------------------------------ |
 | Browse grants with category + status filters   | ✅ Done | `app/grants/grants-client.tsx`                   |
+| Sort dropdown (featured/deadline/newest/oldest) | ✅ Done | `app/grants/grants-client.tsx` — Featured sort pins featured grants first |
 | Admin grant posting with thumbnail             | ✅ Done | `app/grants/post/page.tsx` — `ImageUploader`     |
 | Thumbnail displayed on listing cards           | ✅ Done | `app/grants/grants-client.tsx`                   |
 | Application tracker (status pipeline)          | ✅ Done | `app/grants/[id]/grant-detail.tsx`               |
@@ -235,6 +244,9 @@
 | UpgradePrompt redesign                   | ✅ Done | Gradient background, benefit pills, color-coded progress bar, gradient CTA                         |
 | Institution posting gate                 | ✅ Done | `InstitutionGateBanner.tsx` on opportunities/marketplace/research/grants creation pages             |
 | Admin Institutions tab                   | ✅ Done | `admin-client.tsx` — pending/verified sections, verify button, institution count                    |
+| Admin commodity categories + items       | ✅ Done | `admin-client.tsx` — JSON-stored `commodity_categories` array + `commodity_items` nested record in settings, per-category pill management |
+| Admin member Excel export (32 columns)   | ✅ Done | `admin-client.tsx` — expanded from 8 to 32 columns (phone, socials, institution, bio, DOB, etc.)   |
+| Content-types API parseList fix          | ✅ Done | `app/api/content-types/route.ts` — `parseList()` tries JSON.parse then comma-split fallback        |
 | Data deletion page                       | ✅ Done | `app/data-deletion/page.tsx`                                                                       |
 | History-aware back button                | ✅ Done | `app/components/BackButton.tsx` — used on all sub-pages (directory, opportunities, marketplace, research, grants, public profiles) |
 | Admin search/filter on all tabs          | ✅ Done | Search bars + status filter pills on Opportunities, Marketplace, Members, Grants, Reports tabs     |
@@ -335,6 +347,21 @@ Note: `/insights`, `/connections` are pre-registered for future modules.
 ---
 
 ## Changelog
+
+### Checkpoint 13 — April 15, 2026 (Sort dropdowns + admin commodity settings + UX enhancements)
+
+- Added: Sort dropdowns on 6 modules — Opportunities (newest/oldest/deadline), Grants (featured/deadline/newest/oldest), Marketplace (newest/oldest/price low/high), Price Tracker (newest/oldest/price low/high), Research (newest/oldest), Mentorship (newest/oldest). All client-side with `[...filtered].sort()` pattern.
+- Added: Admin commodity categories + commodity items management — `commodity_categories` as JSON array, `commodity_items` as nested `Record<string, string[]>` in settings table. Per-category pill UI with add/remove. Key normalisation (`toLowerCase().replace(/\s+/g, '_')`).
+- Added: Dynamic price tracker category tabs — `prices/page.tsx` fetches `commodity_categories` from settings via `getSettings()`, passes as prop to `PricesClient`. Fallback to hardcoded defaults.
+- Added: Marketplace Equipment condition filter — "New" / "Used" filter pills shown when Equipment category is selected. Auto-resets on category change. Wired into `hasActiveFilters` and "Clear all" logic.
+- Added: `BusinessSetupGuide.tsx` — floating 5-step checklist for business setup (logo, details, registration, bank, invoice). Collapsed: circular progress ring badge with step count. Expanded: green gradient header, animated progress bar, contextual tips per step, "All done" celebration, minimise/dismiss controls.
+- Added: `parseList()` helper in `/api/content-types/route.ts` — tries `JSON.parse()` first, falls back to comma-split. Fixes garbled values when admin settings stores JSON arrays.
+- Changed: Admin member Excel export expanded from 8 to 32 columns — added phone, WhatsApp, bio, location, role, institution ×3, interests, LinkedIn, Twitter, Facebook, TikTok, website, DOB, avatar URL, account type, institution type, institution display name, contact person name/role, institution website, institution CAC, is_institution_verified
+- Changed: Admin `profiles` query expanded to fetch all new fields for Excel export
+- Changed: `Member` interface in `admin-client.tsx` expanded from ~17 to ~40 fields
+- Fixed: "Oils" label in Price Tracker search tabs — was hardcoded; now dynamic from admin settings which have the correct "Oil" value
+- Fixed: Equipment condition (New/Used) not showing in Post a Listing form — category values from admin settings came as `"Equipment"` (capital E) but form checks used lowercase `'equipment'`. Changed all 7 comparison sites (3 in new form, 4 in edit form) to `.toLowerCase() === 'equipment'`
+- Pending: Price submit/edit pages (`app/prices/submit/page.tsx`, `app/prices/[id]/edit/page.tsx`) still use hardcoded COMMODITIES — should fetch from settings
 
 ### Checkpoint 12 — April 15, 2026 (Institutional registration + pre-Phase 4 quick wins)
 

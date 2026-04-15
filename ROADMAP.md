@@ -217,6 +217,19 @@ Features that drive daily engagement and create network effects.
 > 6. **UpgradePrompt redesign** — Gradient background, lightning bolt icon, color-coded progress bar, benefit pills with checkmarks, gradient CTA button, "Compare plans" link.
 > **Status:** ✅ Completed (15 Apr 2026) — SQL migration for `alt_phone`/`whatsapp` pending deployment
 
+### 3.5e — Sort, Filter & Admin Enhancements
+
+> **Why:** Users needed sort-by-date across all content modules for better content discovery. Admin needed dynamic control over marketplace categories and price tracker commodities. Several UX gaps in marketplace and business setup needed closing.
+> **Scope:**
+> 1. **Sort dropdowns on 6 modules** — Opportunities (newest/oldest/deadline), Grants (featured/deadline/newest/oldest), Marketplace (newest/oldest/price low/high), Price Tracker (newest/oldest/price low/high), Research (newest/oldest), Mentorship (newest/oldest). Client-side sorting using `[...filtered].sort()` → `sorted` array pattern.
+> 2. **Admin commodity categories + items** — `commodity_categories` (array) and `commodity_items` (nested `Record<string, string[]>`) stored in `settings` table as JSON. Admin UI with per-category pill management (add/remove items). Key normalisation (`toLowerCase().replace(/\s+/g, '_')`).
+> 3. **Dynamic price tracker tabs** — Replaced hardcoded `CATEGORIES` with admin-configurable categories from settings. `prices/page.tsx` fetches via `getSettings()` and passes as prop. Fallback to defaults if settings empty.
+> 4. **Content-types API fix** — New `parseList()` helper in `/api/content-types/route.ts` that tries `JSON.parse()` first, falls back to comma-split. Fixes garbled JSON arrays from admin settings.
+> 5. **Marketplace Equipment condition filter** — New/Used filter pills shown when Equipment category selected. Auto-resets when switching categories. Case-insensitive equipment checks across new listing form (3 sites) and edit listing form (4 sites).
+> 6. **Floating business setup guide** — `BusinessSetupGuide.tsx` component tracking 5 setup steps (logo, details, registration, bank, invoice). Collapsed: circular progress ring badge. Expanded: green gradient header, progress bar, contextual tips, completion celebration. Minimise/dismiss controls.
+> 7. **Expanded member Excel export** — Admin member export expanded from 8 columns to 32 columns (added phone, WhatsApp, bio, location, role, institution ×3, interests, all social media handles, date of birth, avatar, account type, institution fields). Admin profiles query expanded to match.
+> **Status:** ✅ Completed (15 Apr 2026)
+
 ---
 
 ## Phase 4: Polish & Launch (Weeks 9–12)
@@ -360,3 +373,17 @@ We deferred the support ticket system to Phase 4. The token verification idea (e
 
 **17. Featured Marketplace Listings — The Marketplace Monetisation Seed**
 Also deferred to Phase 4, but this is actually the easiest revenue feature after subscriptions. Farmers and agri-businesses already pay for visibility on WhatsApp groups and local noticeboards. A "Boost this listing for ₦500/week" button is immediately understood. The Paystack integration is already in place from subscriptions. The only new logic is auto-expiry of featured status, which is a cron job similar to what we already have. **Action:** When building this, consider a "Featured" badge + sort-to-top rather than a separate section. Users scrolling the marketplace should see featured listings naturally, not in a ghetto.
+
+### 15 April 2026 (Session 2)
+
+**18. Dynamic Settings Are a Schema Debt Trap**
+We now have `commodity_categories`, `commodity_items`, `marketplace_categories`, `opportunity_types`, and various rate limits all stored as JSON strings in a flat key-value `settings` table. This works for now but has no validation — an admin can save malformed JSON and break frontend parsing silently. The `parseList()` helper we built today is a bandaid. Post-launch, consider a typed settings schema or at least a validation layer in `saveSettings()` that JSON.parse-checks all array/object fields before writing. **Action:** Add try/catch validation in `saveSettings()` before persisting. Log malformed values to admin audit log.
+
+**19. Price Submit/Edit Pages Still Hardcoded**
+While we made the price tracker *search* tabs dynamic from admin settings, the price submit form (`app/prices/submit/page.tsx`) and edit form (`app/prices/[id]/edit/page.tsx`) still use hardcoded `COMMODITIES` constant. This means if an admin adds a new commodity category in settings, users can *search* for it but can't *submit* reports for it. Quick fix — wire these forms to fetch from `/api/content-types` the same way the marketplace new/edit forms do. **Action:** Wire up in next session.
+
+**20. Client-Side Sorting Has a Scale Ceiling**
+All 6 sort dropdowns we added today sort in-memory on the client. This is fine now when data sets are small (hundreds of items). But the marketplace and price tracker could grow to thousands of listings. At ~2,000+ records, client-side sorting becomes visibly sluggish on mobile devices. The fix is server-side sorting with cursor pagination — but that's a bigger architectural change. **Action:** Monitor page load times on marketplace and prices. If either hits 1,000+ records, implement server-side sorting with `order()` + `limit()` in the Supabase query.
+
+**21. Business Setup Guide as Onboarding Template**
+The floating `BusinessSetupGuide` we built today is a reusable pattern. The same approach (form state → derived completion checks → floating progress widget) could be applied to: profile completion, first invoice creation, first marketplace listing, first price report. Each of these "first action" flows benefits from contextual tips and visible progress. **Action:** After launch, extract the guide into a generic `SetupGuide` component that accepts steps config. Apply to profile form first (it already has a completeness tracker but no floating UX).
