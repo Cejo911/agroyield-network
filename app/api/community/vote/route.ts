@@ -17,12 +17,17 @@ export async function POST(request: Request) {
   // Fetch current post
   const { data: post, error: fetchErr } = await supabaseAny
     .from('community_posts')
-    .select('poll_votes, poll_options')
+    .select('poll_votes, poll_options, poll_closes_at')
     .eq('id', postId)
     .single()
 
   if (fetchErr || !post) {
     return NextResponse.json({ error: 'Post not found' }, { status: 404 })
+  }
+
+  // Check if poll has closed
+  if (post.poll_closes_at && new Date(post.poll_closes_at) <= new Date()) {
+    return NextResponse.json({ error: 'This poll has closed', poll_votes: post.poll_votes || {} }, { status: 400 })
   }
 
   const votes: Record<string, string[]> = post.poll_votes || {}

@@ -126,6 +126,7 @@ export default async function CommunityPostPage({ params }: { params: Promise<{ 
   const votes = post.poll_votes || {}
   const totalVotes = Object.values(votes).reduce((sum: number, arr: unknown) => sum + (Array.isArray(arr) ? arr.length : 0), 0) as number
   const hasVoted = user ? Object.values(votes).some((arr: unknown) => Array.isArray(arr) && arr.includes(user.id)) : false
+  const pollClosed = post.poll_closes_at ? new Date(post.poll_closes_at) <= new Date() : false
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
@@ -215,7 +216,14 @@ export default async function CommunityPostPage({ params }: { params: Promise<{ 
                   </div>
                 )
               })}
-              <p className="text-xs text-gray-400">{totalVotes} vote{totalVotes !== 1 ? 's' : ''}{hasVoted ? ' · You voted' : ''}</p>
+              <p className="text-xs text-gray-400">
+                {totalVotes} vote{totalVotes !== 1 ? 's' : ''}
+                {hasVoted ? ' · You voted' : ''}
+                {pollClosed && <span className="ml-1 text-red-500 font-medium">· Poll closed</span>}
+                {!pollClosed && post.poll_closes_at && (
+                  <span className="ml-1">· Closes {new Date(post.poll_closes_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                )}
+              </p>
             </div>
           )}
 

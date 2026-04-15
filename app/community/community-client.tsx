@@ -53,6 +53,7 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
   const [content, setContent] = useState('')
   const [linkUrl, setLinkUrl] = useState('')
   const [pollOptions, setPollOptions] = useState(['', ''])
+  const [pollClosesAt, setPollClosesAt] = useState('')
   const [posting, setPosting] = useState(false)
   const [likedSet, setLikedSet] = useState(new Set(initialLiked))
   const [likeCounts, setLikeCounts] = useState(likeCountMap)
@@ -102,6 +103,9 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
       }
       payload.poll_options = opts
       payload.poll_votes = {}
+      if (pollClosesAt) {
+        payload.poll_closes_at = new Date(pollClosesAt).toISOString()
+      }
     }
 
     const { error } = await (supabase as any).from('community_posts').insert(payload)
@@ -116,6 +120,7 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
     setLinkUrl('')
     setImageUrls([])
     setPollOptions(['', ''])
+    setPollClosesAt('')
     setPostType('discussion')
     setShowForm(false)
     router.refresh()
@@ -279,6 +284,19 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
                 <button type="button" onClick={() => setPollOptions(prev => [...prev, ''])}
                   className="text-xs text-green-600 hover:underline font-medium">+ Add option</button>
               )}
+              <div className="mt-3">
+                <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 block mb-1">
+                  Poll closes on
+                </label>
+                <input
+                  type="datetime-local"
+                  value={pollClosesAt}
+                  onChange={e => setPollClosesAt(e.target.value)}
+                  min={new Date().toISOString().slice(0, 16)}
+                  className="w-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+                <p className="text-[10px] text-gray-400 mt-1">Leave empty for no deadline</p>
+              </div>
             </div>
           )}
 
@@ -348,6 +366,7 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
             const votes = pollVotesLocal[post.id] || post.poll_votes || {}
             const totalVotes = Object.values(votes).reduce((sum: number, arr: any) => sum + (Array.isArray(arr) ? arr.length : 0), 0) as number
             const hasVoted = Object.values(votes).some((arr: any) => Array.isArray(arr) && arr.includes(currentUserId))
+            const pollClosed = post.poll_closes_at ? new Date(post.poll_closes_at) <= new Date() : false
 
             return (
               <div key={post.id} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
@@ -455,29 +474,35 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
                       return (
                         <button
                           key={i}
-                          onClick={() => !hasVoted && votePoll(post.id, i)}
-                          disabled={hasVoted}
+                          onClick={() => !hasVoted && !pollClosed && votePoll(post.id, i)}
+                          disabled={hasVoted || pollClosed}
                           className={`w-full text-left relative rounded-lg border px-4 py-2.5 text-sm transition-colors overflow-hidden ${
                             userVotedThis
                               ? 'border-green-400 dark:border-green-600 bg-green-50 dark:bg-green-900/20'
-                              : hasVoted
+                              : (hasVoted || pollClosed)
                                 ? 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50'
                                 : 'border-gray-200 dark:border-gray-700 hover:border-green-300 dark:hover:border-green-600 cursor-pointer'
                           }`}
                         >
-                          {hasVoted && (
+                          {(hasVoted || pollClosed) && (
                             <div className="absolute inset-y-0 left-0 bg-green-100 dark:bg-green-900/30 transition-all" style={{ width: `${pct}%` }} />
                           )}
                           <div className="relative flex items-center justify-between">
                             <span className={`font-medium ${userVotedThis ? 'text-green-700 dark:text-green-400' : 'text-gray-700 dark:text-gray-300'}`}>
                               {option}
                             </span>
-                            {hasVoted && <span className="text-xs text-gray-500 dark:text-gray-400">{pct}%</span>}
+                            {(hasVoted || pollClosed) && <span className="text-xs text-gray-500 dark:text-gray-400">{pct}%</span>}
                           </div>
                         </button>
                       )
                     })}
-                    <p className="text-xs text-gray-400">{totalVotes} vote{totalVotes !== 1 ? 's' : ''}</p>
+                    <p className="text-xs text-gray-400">
+                      {totalVotes} vote{totalVotes !== 1 ? 's' : ''}
+                      {pollClosed && <span className="ml-2 text-red-500 font-medium">· Poll closed</span>}
+                      {!pollClosed && post.poll_closes_at && (
+                        <span className="ml-2">· Closes {new Date(post.poll_closes_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                      )}
+                    </p>
                   </div>
                 )}
 
