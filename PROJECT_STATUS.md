@@ -1,6 +1,6 @@
 # AgroYield Network — Project Status
 
-> **Last updated:** 15 April 2026 (Checkpoint 11)
+> **Last updated:** 15 April 2026 (Checkpoint 12)
 > **Maintained by:** Okoli (okolichijiokei@gmail.com)
 > **Launch Target:** 5 July 2026 (~11 weeks remaining)
 > **Purpose:** Permanent reference for any developer or Claude session to get up to speed instantly.
@@ -38,6 +38,7 @@
 | Forgot password                | ✅ Done    | `app/forgot-password/page.tsx`, `app/api/auth/reset-password/route.ts`        |
 | Password reset                 | ✅ Done    | `app/reset-password/page.tsx`                                                 |
 | New-device login email alerts  | ✅ Done    | `lib/auth/login-notification.ts`, `login_history` table, `security@` sender   |
+| Individual/Institution signup toggle | ✅ Done | `app/signup/page.tsx` — `account_type` saved to profile via auth callback     |
 
 ### Module 1 — Member Directory
 
@@ -48,6 +49,8 @@
 | Follow / unfollow                                         | ✅ Done | `app/directory/follow-button.tsx`, `app/api/follow/route.ts` |
 | Public profile via username slug                          | ✅ Done | `app/u/[slug]/page.tsx`                                      |
 | Shareable profile link                                    | ✅ Done | `app/profile/share-profile-link.tsx`                         |
+| Institution profiles with admin verification              | ✅ Done | `app/profile/profile-form.tsx` — conditional form, `InstitutionGateBanner.tsx`, admin verification workflow |
+| Institution badges + filter in directory                  | ✅ Done | `app/directory/directory-client.tsx` — institution type badges, verified badges, "Institution" role filter |
 | Profile completeness tracker (13 fields)                  | ✅ Done | `app/profile/profile-form.tsx`                               |
 | Avatar upload to Supabase Storage                         | ✅ Done | `app/profile/profile-form.tsx`                               |
 
@@ -102,7 +105,7 @@
 
 | Feature                                                              | Status  | Location                                                                         |
 | -------------------------------------------------------------------- | ------- | -------------------------------------------------------------------------------- |
-| Business profile setup (name, logo, address, phone, bank details)    | ✅ Done | `app/business/setup/page.tsx`                                                    |
+| Business profile setup (name, logo, address, phone, alt phone, WhatsApp, bank details) | ✅ Done | `app/business/setup/page.tsx`                                      |
 | Product catalogue with stock tracking                                | ✅ Done | `app/business/products/page.tsx`                                                 |
 | Customer management                                                  | ✅ Done | `app/business/customers/page.tsx`                                                |
 | Customer statement generation + print                                | ✅ Done | `app/business/customers/[id]/statement/`                                         |
@@ -225,6 +228,13 @@
 | Weekly email digest                      | ✅ Done | `app/api/cron/weekly-digest/route.ts`                                                              |
 | Subscription expiry cron                 | ✅ Done | `app/api/cron/expire-subscriptions/route.ts`                                                       |
 | Expiry reminder emails                   | ✅ Done | `app/api/cron/expiry-reminder/route.ts`                                                            |
+| Birthday + anniversary celebration emails | ✅ Done | `app/api/cron/celebrations/route.ts` — daily 7 AM cron, `SENDERS.hello`, rich HTML templates      |
+| Follow notifications on new content      | ✅ Done | `lib/notify-followers.ts` — notifies followers when user posts opportunities, listings, or research |
+| Multi-email report alerts                | ✅ Done | Admin settings accepts comma-separated emails; `app/api/report/route.ts` sends to all              |
+| Multi-business admin preview             | ✅ Done | Admin panel shows ALL businesses per member, labelled when multiple exist                           |
+| UpgradePrompt redesign                   | ✅ Done | Gradient background, benefit pills, color-coded progress bar, gradient CTA                         |
+| Institution posting gate                 | ✅ Done | `InstitutionGateBanner.tsx` on opportunities/marketplace/research/grants creation pages             |
+| Admin Institutions tab                   | ✅ Done | `admin-client.tsx` — pending/verified sections, verify button, institution count                    |
 | Data deletion page                       | ✅ Done | `app/data-deletion/page.tsx`                                                                       |
 | History-aware back button                | ✅ Done | `app/components/BackButton.tsx` — used on all sub-pages (directory, opportunities, marketplace, research, grants, public profiles) |
 | Admin search/filter on all tabs          | ✅ Done | Search bars + status filter pills on Opportunities, Marketplace, Members, Grants, Reports tabs     |
@@ -325,6 +335,49 @@ Note: `/insights`, `/connections` are pre-registered for future modules.
 ---
 
 ## Changelog
+
+### Checkpoint 12 — April 15, 2026 (Institutional registration + pre-Phase 4 quick wins)
+
+- Added: Institutional member registration — Individual/Institution toggle on signup, conditional profile form, admin verification workflow, directory badges/filters, posting gate on 4 creation pages
+- Added: `InstitutionGateBanner.tsx` — amber banner shown to unverified institutions on all content creation pages
+- Added: Admin "Institutions" tab — pending/verified sections, verify action via `/api/admin/member` with `verify_institution` action
+- Added: 8 profile columns for institutions: `account_type`, `institution_type`, `institution_display_name`, `contact_person_name`, `contact_person_role`, `institution_website`, `institution_cac`, `is_institution_verified`
+- Added: Alt phone + WhatsApp fields on business setup form (`alt_phone`, `whatsapp` columns on `businesses`)
+- Added: Alt phone + WhatsApp display on admin business preview page
+- Added: Multi-email report alerts — admin settings accepts comma-separated emails, API sends to all addresses via Resend array `to`
+- Added: Birthday + anniversary celebration emails — `/api/cron/celebrations/route.ts`, daily 7 AM cron, birthday (matches `date_of_birth` month+day) and anniversary (matches `created_at` month+day, 1+ years), rich HTML templates, `SENDERS.hello`
+- Added: Follower notifications on meaningful actions — `lib/notify-followers.ts` shared utility, wired into `/api/opportunities`, `/api/marketplace`, `/api/research`; fire-and-forget, skips pending-moderation posts; notification types: `new_opportunity`, `new_listing`, `new_research`
+- Added: Vercel cron entry for celebrations (`0 7 * * *`)
+- Changed: Multi-business admin preview — `.find()` → `.filter().map()` to show ALL businesses per member, labelled when multiple exist
+- Changed: `UpgradePrompt.tsx` redesigned — gradient background (green→emerald→amber), lightning bolt icon, color-coded progress bar (green/amber/red), benefit pills with checkmarks, gradient CTA button, "Compare plans" link
+- Changed: Admin report alert input from `type="email"` to `type="text"` with comma-separated hint
+- Changed: `useProfileGate` hook extended with `isInstitution` and `isInstitutionVerified` return values
+- Changed: Directory filter updated from `.not('role', 'is', null)` to `.or('role.not.is.null,account_type.eq.institution')` to include institutions
+- Changed: Auth callback persists `account_type` from signup metadata to profile
+- Fixed: Business preview 404 — admin page used user-scoped Supabase client; RLS blocked reads of other users' businesses. Switched all queries to service-role `admin` client after admin auth check.
+- SQL pending: Institution fields on `profiles` (8 columns), `alt_phone`/`whatsapp` on `businesses` (2 columns)
+
+### Checkpoint 11 — April 15, 2026 (Subscription tiers + poll closing date)
+
+- Added: 3-tier subscription system (free/pro/growth) with `lib/tiers.ts` configuration, Paystack integration, 30-day free trial
+- Added: Pricing page with monthly/annual billing toggle, feature matrix, FAQ section
+- Added: Server-side `/api/tier/check` + client-side `UpgradePrompt.tsx` for tier limit enforcement
+- Added: Tier badges on directory, profile pages, admin dashboard (Pro green ✓, Growth gold ⭐)
+- Added: Admin tier dropdown replacing old Verify/Elite buttons, 4 pricing settings + free trial days
+- Added: Poll closing date — `poll_closes_at` column, date picker, vote API enforcement, auto-reveal results
+- Changed: `/verify` redirects to `/pricing`
+- Changed: 13 files migrated from `is_verified`/`is_elite` to `subscription_tier` checks
+- Added: `subscription_tier` column on profiles with migration of existing verified users to Pro
+
+### Checkpoint 10 — April 14, 2026 (Admin settings panel + maintenance mode + operational controls)
+
+- Added: 5 new admin settings — mentorship toggle, weekly digest toggle, maintenance mode, community/research daily post limits, mentorship verification gate
+- Added: Maintenance mode infrastructure — middleware intercept, admin bypass, branded `/maintenance` page
+- Added: Settings UI redesign — 6 collapsible accordion sections with status badges, red highlight on active maintenance
+- Added: `lib/settings.ts` — `getSetting()` / `getSettings()` using admin client to bypass RLS
+- Added: Rate limiting enforcement on community + research posts via settings
+- Added: Mentorship gating on both server and client components
+- Changed: Consistent logo sizing across AppNav (200×50 desktop, 44×44 mobile) and signup page
 
 ### Checkpoint 9 — April 14, 2026 (Module separation + image uploads + admin dashboard hardening)
 

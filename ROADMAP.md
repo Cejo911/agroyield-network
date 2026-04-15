@@ -199,6 +199,24 @@ Features that drive daily engagement and create network effects.
 > **Scope:** `poll_closes_at` timestamptz column on `community_posts`. Date picker in poll creation form. Vote API rejects votes on closed polls. Feed and detail pages show closed status with results auto-revealed.
 > **Status:** ✅ Completed (15 Apr 2026)
 
+### 3.5c — Institutional Member Registration
+
+> **Why:** Universities, government agencies, NGOs, and agri-companies need to join as institutions — not as individuals. Enables them to post opportunities, list on the directory with institutional badges, and be verified by admin.
+> **Scope:** Individual/Institution toggle on signup. Conditional profile form (institution details vs personal details). Admin verification workflow with "Institutions" tab. Directory integration with institution badges/filters. Posting gate (unverified institutions can't post). `InstitutionGateBanner` component on all 4 creation pages.
+> **Status:** ✅ Completed (15 Apr 2026) — SQL migration pending deployment
+
+### 3.5d — Pre-Phase 4 Quick Wins
+
+> **Why:** Six targeted improvements requested during operational review. Bundled as a single work package since each is small but impactful.
+> **Scope:**
+> 1. **Multi-business admin preview** — Admin "View Business" shows ALL businesses per member (`.find()` → `.filter().map()`), labelled when multiple exist.
+> 2. **Alt phone + WhatsApp in business setup** — Two new fields (`alt_phone`, `whatsapp`) on business setup form + admin business preview page.
+> 3. **Unlimited report alert emails** — Admin settings report alert field accepts comma-separated emails; report API sends to all addresses.
+> 4. **Birthday + anniversary celebration emails** — Daily cron (`/api/cron/celebrations`) at 7 AM. Birthday (matches `date_of_birth` month+day) and membership anniversary (matches `created_at` month+day, 1+ years). Rich HTML templates, sent from `hello@agroyield.africa`.
+> 5. **Meaningful-action follow notifications** — `lib/notify-followers.ts` shared utility. When a user posts an opportunity, marketplace listing, or research post, all followers receive an in-app notification. Fire-and-forget, skips pending-moderation posts.
+> 6. **UpgradePrompt redesign** — Gradient background, lightning bolt icon, color-coded progress bar, benefit pills with checkmarks, gradient CTA button, "Compare plans" link.
+> **Status:** ✅ Completed (15 Apr 2026) — SQL migration for `alt_phone`/`whatsapp` pending deployment
+
 ---
 
 ## Phase 4: Polish & Launch (Weeks 9–12)
@@ -240,6 +258,18 @@ Harden the platform, add differentiators, test with real users.
 > **Why:** Find what you missed. Real users will break things you never thought of.
 > **Scope:** Recruit 10-20 Nigerian SME owners. Give them tasks (create invoice, list product, invite accountant). Collect feedback. Fix top issues.
 > **Status:** ⬜ Not started
+
+### 4.7 — Support Ticket System with Token Verification
+
+> **Why:** Users need a structured way to request support. Token authentication before rendering support prevents impersonation and adds security.
+> **Scope:** Support ticket creation (open/closed states). Token verification via email or SMS (member's choice). Admin support dashboard with ticket queue. Audit trail per ticket.
+> **Status:** ⬜ Not started (deferred from pre-Phase 4 review, 15 Apr 2026)
+
+### 4.8 — Featured Marketplace Listing Billing
+
+> **Why:** Revenue opportunity — members pay to keep their listing promoted for a configurable duration.
+> **Scope:** Featured listing request flow. Duration picker (days/weeks/months). Paystack billing on request. Auto-expire featured status when duration lapses. Visual distinction on marketplace feed.
+> **Status:** ⬜ Not started (deferred from pre-Phase 4 review, 15 Apr 2026)
 
 ---
 
@@ -315,3 +345,18 @@ Today's tier migration touched 13 files because `is_verified` and `is_elite` wer
 
 **12. Fail-Open on Tier Checks — Never Break Core for Billing**
 During the migration, we ensured that if the tier API fails or `subscription_tier` is null, users default to `'free'` rather than being locked out entirely. This "fail open" pattern is critical — a billing infrastructure bug should never prevent a farmer from viewing commodity prices or browsing the directory. Paid features gate *enhancements* (mentorship, priority listing, badges), not *core access*. **Action:** Document this as a design principle. Any new feature gate should ask: "If this check fails, does the user lose access to something they need, or something they want?" Need → fail open. Want → fail closed is acceptable.
+
+**13. Institutional Members as B2B Wedge**
+The institutional registration flow we just built isn't just a feature — it's a B2B wedge. Universities, NGOs, and government agencies registering on AgroYield become potential enterprise customers. They start by posting opportunities and grants for free, then we upsell: "Want priority placement for your fellowship? Want analytics on who applied?" The verification step is key — it makes institutions feel premium while giving us a sales touch point. Every admin verification is a chance for Okoli to personally onboard the institution. **Action:** Track institution signups separately in analytics. Build an "Institutions" dashboard card showing pending/verified/total. When you hit 20 verified institutions, that's the trigger to build the enterprise tier.
+
+**14. Follow Notifications as Engagement Flywheel**
+We just wired follower notifications into content creation. This creates a powerful flywheel: User A follows User B → User B posts an opportunity → User A gets notified → User A engages → User B sees traction → User B posts more. The key metric to watch is follow-to-notification-to-click-through rate. If people follow but ignore notifications, the notification copy needs work. If they click but don't engage, the content quality is the issue. **Action:** After launch, add a `clicked_at` column to notifications to measure CTR. Build a "Notification Performance" card in admin analytics.
+
+**15. Celebration Emails as Retention Touchpoint**
+Birthday and anniversary emails seem like a nice-to-have, but they're actually high-ROI retention touchpoints. They arrive when the user is NOT actively using the platform — exactly when churn risk is highest. A warm "Happy 1-year anniversary" email with a dashboard CTA pulls dormant users back in. The birthday email creates emotional connection with the brand. Nigerian culture values celebrations — this hits different here than it would in a Western SaaS context. **Action:** After launch, A/B test celebration emails with and without a small incentive (e.g., "Enjoy 20% off Pro this week — our birthday gift to you"). Measure reactivation rate.
+
+**16. Support Tickets Need Careful Scoping**
+We deferred the support ticket system to Phase 4. The token verification idea (email or SMS before rendering support) is smart for preventing impersonation but adds complexity. Consider: do you need a full ticket system at launch, or would a simple "Contact Support" form that creates a notification for admins suffice? The ticket system becomes essential at 500+ users; before that, Okoli is personally handling support anyway. **Action:** Build the simple version first (form → notification → admin queue). Add token verification and SLA tracking only when support volume exceeds what one person can manually track.
+
+**17. Featured Marketplace Listings — The Marketplace Monetisation Seed**
+Also deferred to Phase 4, but this is actually the easiest revenue feature after subscriptions. Farmers and agri-businesses already pay for visibility on WhatsApp groups and local noticeboards. A "Boost this listing for ₦500/week" button is immediately understood. The Paystack integration is already in place from subscriptions. The only new logic is auto-expiry of featured status, which is a cron job similar to what we already have. **Action:** When building this, consider a "Featured" badge + sort-to-top rather than a separate section. Users scrolling the marketplace should see featured listings naturally, not in a ghetto.
