@@ -1,8 +1,11 @@
 import type { Metadata, Viewport } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
+import { Analytics } from "@vercel/analytics/react"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 import "./globals.css"
 import AnnouncementBanner from "./components/AnnouncementBanner"
 import ThemeProvider from "./components/ThemeProvider"
+import PostHogProvider from "./components/PostHogProvider"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -93,10 +96,14 @@ export default function RootLayout({
             __html: `(function(){try{var t=localStorage.getItem('theme');if(t==='dark'){document.documentElement.classList.add('dark');document.documentElement.style.backgroundColor='#030712';}else{document.documentElement.style.backgroundColor='#ffffff';}}catch(e){}})()`,
           }}
         />
-        <ThemeProvider>
-          <AnnouncementBanner />
-          {children}
-        </ThemeProvider>
+        <PostHogProvider>
+          <ThemeProvider>
+            <AnnouncementBanner />
+            {children}
+          </ThemeProvider>
+        </PostHogProvider>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   )
