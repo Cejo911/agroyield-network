@@ -40,6 +40,22 @@ interface Member {
   email: string | null
   username: string | null
   gender: string | null
+  phone: string | null
+  whatsapp: string | null
+  bio: string | null
+  location: string | null
+  role: string | null
+  institution: string | null
+  institution_2: string | null
+  institution_3: string | null
+  interests: string[] | null
+  linkedin: string | null
+  twitter: string | null
+  facebook: string | null
+  tiktok: string | null
+  website: string | null
+  date_of_birth: string | null
+  avatar_url: string | null
   is_admin: boolean
   admin_role: string | null
   admin_permissions: Record<string, boolean> | null
@@ -50,6 +66,14 @@ interface Member {
   subscription_expires_at: string | null
   subscription_plan: string | null
   created_at: string
+  account_type: string | null
+  institution_type: string | null
+  institution_display_name: string | null
+  contact_person_name: string | null
+  contact_person_role: string | null
+  institution_website: string | null
+  institution_cac: string | null
+  is_institution_verified: boolean
 }
 interface ReportGroup {
   postId: string
@@ -958,7 +982,31 @@ export default function AdminClient({
               { header: 'Name', key: 'name', width: 28 },
               { header: 'Email', key: 'email', width: 32 },
               { header: 'Username', key: 'username', width: 20 },
-              { header: 'Role', key: 'role', width: 16 },
+              { header: 'Phone', key: 'phone', width: 18 },
+              { header: 'WhatsApp', key: 'whatsapp', width: 18 },
+              { header: 'Gender', key: 'gender', width: 10 },
+              { header: 'Date of Birth', key: 'dob', width: 14 },
+              { header: 'Location', key: 'location', width: 20 },
+              { header: 'Bio', key: 'bio', width: 40 },
+              { header: 'Profile Role', key: 'profileRole', width: 20 },
+              { header: 'Institution', key: 'institution', width: 28 },
+              { header: 'Institution 2', key: 'institution2', width: 28 },
+              { header: 'Institution 3', key: 'institution3', width: 28 },
+              { header: 'Interests', key: 'interests', width: 30 },
+              { header: 'LinkedIn', key: 'linkedin', width: 30 },
+              { header: 'Twitter/X', key: 'twitter', width: 24 },
+              { header: 'Facebook', key: 'facebook', width: 24 },
+              { header: 'TikTok', key: 'tiktok', width: 24 },
+              { header: 'Website', key: 'website', width: 28 },
+              { header: 'Account Type', key: 'accountType', width: 16 },
+              { header: 'Institution Type', key: 'institutionType', width: 18 },
+              { header: 'Institution Name', key: 'institutionDisplayName', width: 28 },
+              { header: 'Contact Person', key: 'contactPerson', width: 24 },
+              { header: 'Contact Role', key: 'contactRole', width: 20 },
+              { header: 'Institution Website', key: 'institutionWebsite', width: 28 },
+              { header: 'Institution CAC', key: 'institutionCac', width: 18 },
+              { header: 'Admin Role', key: 'adminRole', width: 16 },
+              { header: 'Verified', key: 'verified', width: 10 },
               { header: 'Tier', key: 'tier', width: 12 },
               { header: 'Billing', key: 'billing', width: 14 },
               { header: 'Expires', key: 'expires', width: 16 },
@@ -967,7 +1015,31 @@ export default function AdminClient({
               name: [m.first_name, m.last_name].filter(Boolean).join(' ') || 'N/A',
               email: m.email || 'N/A',
               username: m.username || 'N/A',
-              role: m.is_admin ? (m.admin_role === 'super' ? 'Super Admin' : 'Moderator') : 'Member',
+              phone: m.phone || '',
+              whatsapp: m.whatsapp || '',
+              gender: m.gender || '',
+              dob: m.date_of_birth || '',
+              location: m.location || '',
+              bio: m.bio || '',
+              profileRole: m.role || '',
+              institution: m.institution || '',
+              institution2: m.institution_2 || '',
+              institution3: m.institution_3 || '',
+              interests: (m.interests ?? []).join(', '),
+              linkedin: m.linkedin || '',
+              twitter: m.twitter || '',
+              facebook: m.facebook || '',
+              tiktok: m.tiktok || '',
+              website: m.website || '',
+              accountType: m.account_type || 'individual',
+              institutionType: m.institution_type || '',
+              institutionDisplayName: m.institution_display_name || '',
+              contactPerson: m.contact_person_name || '',
+              contactRole: m.contact_person_role || '',
+              institutionWebsite: m.institution_website || '',
+              institutionCac: m.institution_cac || '',
+              adminRole: m.is_admin ? (m.admin_role === 'super' ? 'Super Admin' : 'Moderator') : '',
+              verified: m.is_verified ? 'Yes' : 'No',
               tier: (m.subscription_tier || 'free').charAt(0).toUpperCase() + (m.subscription_tier || 'free').slice(1),
               billing: m.subscription_plan || 'N/A',
               expires: m.subscription_expires_at ? fmt(m.subscription_expires_at) : 'No expiry',
