@@ -156,7 +156,7 @@ export default function NewListingPage() {
                   <button
                     key={cat}
                     type="button"
-                    onClick={() => setForm(prev => ({ ...prev, category: cat, condition: cat === 'equipment' ? prev.condition : '' }))}
+                    onClick={() => setForm(prev => ({ ...prev, category: cat, condition: cat.toLowerCase() === 'equipment' ? prev.condition : '' }))}
                     className={`py-2 px-3 rounded-lg border text-sm font-medium capitalize transition-colors ${
                       form.category === cat
                         ? 'border-green-600 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400'
@@ -169,7 +169,7 @@ export default function NewListingPage() {
             </div>
 
             {/* Condition — only for equipment */}
-            {form.category === 'equipment' && (
+            {form.category.toLowerCase() === 'equipment' && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Condition <span className="text-red-500">*</span>
@@ -290,7 +290,7 @@ export default function NewListingPage() {
             {/* Submit */}
             <button
               type="submit"
-              disabled={loading || !form.title || !form.type || !form.category || (form.category === 'equipment' && !form.condition)}
+              disabled={loading || !form.title || !form.type || !form.category || (form.category.toLowerCase() === 'equipment' && !form.condition)}
               className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white py-3 rounded-lg font-semibold transition-colors">
               {loading ? 'Posting...' : 'Post Listing'}
             </button>

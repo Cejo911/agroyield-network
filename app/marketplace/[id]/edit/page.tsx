@@ -102,7 +102,7 @@ export default function EditListingPage() {
         description:      form.description,
         state:            form.state,
         contact:          form.contact,
-        condition:        form.category === 'equipment' ? (form.condition || null) : null,
+        condition:        form.category.toLowerCase() === 'equipment' ? (form.condition || null) : null,
         image_urls:       images.length ? images : null,
       })
       .eq('id', id)
@@ -184,7 +184,7 @@ export default function EditListingPage() {
               <div className="flex flex-wrap gap-2">
                 {categories.map(cat => (
                   <button key={cat} type="button"
-                    onClick={() => setForm(prev => ({ ...prev, category: cat, condition: cat === 'equipment' ? prev.condition : '' }))}
+                    onClick={() => setForm(prev => ({ ...prev, category: cat, condition: cat.toLowerCase() === 'equipment' ? prev.condition : '' }))}
                     className={`py-2 px-3 rounded-lg border text-sm font-medium capitalize transition-colors ${
                       form.category === cat
                         ? 'border-green-600 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400'
@@ -197,7 +197,7 @@ export default function EditListingPage() {
             </div>
 
             {/* Condition (equipment only) */}
-            {form.category === 'equipment' && (
+            {form.category.toLowerCase() === 'equipment' && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Condition <span className="text-red-500">*</span>
@@ -312,7 +312,7 @@ export default function EditListingPage() {
                 Cancel
               </button>
               <button type="submit"
-                disabled={loading || !form.title || !form.type || !form.category || (form.category === 'equipment' && !form.condition)}
+                disabled={loading || !form.title || !form.type || !form.category || (form.category.toLowerCase() === 'equipment' && !form.condition)}
                 className="flex-1 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white py-3 rounded-lg font-semibold transition-colors">
                 {loading ? 'Saving…' : 'Save Changes'}
               </button>
