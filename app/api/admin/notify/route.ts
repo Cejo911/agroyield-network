@@ -22,14 +22,15 @@ export async function POST(request: NextRequest) {
       if (!perms?.notifications) return NextResponse.json({ error: 'No permission' }, { status: 403 })
     }
 
-    const { message, link, targetUserId } = await request.json() as {
+    const { title, message, link, targetUserId } = await request.json() as {
+      title: string
       message: string
       link?: string
       targetUserId?: string // If set, send to specific user. Otherwise broadcast to all.
     }
 
-    if (!message?.trim()) {
-      return NextResponse.json({ error: 'Message is required' }, { status: 400 })
+    if (!title?.trim() || !message?.trim()) {
+      return NextResponse.json({ error: 'Title and message are required' }, { status: 400 })
     }
 
     const adminClient = createAdminClient(
@@ -41,30 +42,45 @@ export async function POST(request: NextRequest) {
 
     if (targetUserId) {
       // Send to specific user
-      await adminAny.from('notifications').insert({
+      const { error: insertErr } = await adminAny.from('notifications').insert({
         user_id: targetUserId,
         type: 'system',
-        message: message.trim(),
+        title: title.trim(),
+        body: message.trim(),
         link: link?.trim() || null,
       })
+      if (insertErr) {
+        console.error('[notify] Single insert error:', insertErr)
+        return NextResponse.json({ error: insertErr.message }, { status: 500 })
+      }
     } else {
       // Broadcast to all active, non-suspended users
-      const { data: users } = await adminAny
+      const { data: users, error: queryErr } = await adminAny
         .from('profiles')
         .select('id')
         .eq('is_suspended', false)
+
+      if (queryErr) {
+        console.error('[notify] User query error:', queryErr)
+        return NextResponse.json({ error: queryErr.message }, { status: 500 })
+      }
 
       if (users?.length) {
         const notifications = (users as { id: string }[]).map(u => ({
           user_id: u.id,
           type: 'system',
-          message: message.trim(),
+          title: title.trim(),
+          body: message.trim(),
           link: link?.trim() || null,
         }))
 
         // Batch insert in chunks of 500
         for (let i = 0; i < notifications.length; i += 500) {
-          await adminAny.from('notifications').insert(notifications.slice(i, i + 500))
+          const { error: batchErr } = await adminAny.from('notifications').insert(notifications.slice(i, i + 500))
+          if (batchErr) {
+            console.error(`[notify] Batch insert error (chunk ${i}):`, batchErr)
+            return NextResponse.json({ error: batchErr.message }, { status: 500 })
+          }
         }
       }
     }
