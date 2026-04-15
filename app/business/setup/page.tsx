@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getBusinessAccess } from '@/lib/business-access'
 import { getActiveBusinessId, setActiveBusinessId } from '@/lib/business-cookie'
+import BusinessSetupGuide from './BusinessSetupGuide'
 
 /** Wrapper with Suspense boundary — required by Next.js for useSearchParams */
 export default function BusinessSetupPage() {
@@ -339,6 +340,9 @@ function BusinessSetup() {
           {saving ? 'Saving...' : businessId ? 'Save Changes' : 'Create Business'}
         </button>
       </form>
+
+      {/* Floating setup guide */}
+      <BusinessSetupGuide form={form} />
     </div>
   )
 }
