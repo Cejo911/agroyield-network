@@ -27,6 +27,7 @@ function BusinessSetup() {
   const [userId, setUserId] = useState<string | null>(null)
   const [form, setForm] = useState({
     name: '', address: '', phone: '', email: '',
+    cac_number: '', vat_tin: '',
     bank_name: '', account_name: '', account_number: '',
     invoice_prefix: 'INV', logo_url: '',
   })
@@ -50,6 +51,8 @@ function BusinessSetup() {
             address: data.address ?? '',
             phone: data.phone ?? '',
             email: data.email ?? '',
+            cac_number: data.cac_number ?? '',
+            vat_tin: data.vat_tin ?? '',
             bank_name: data.bank_name ?? '',
             account_name: data.account_name ?? '',
             account_number: data.account_number ?? '',
@@ -132,7 +135,7 @@ function BusinessSetup() {
 
   if (loading) return <div className="text-center py-10 text-gray-400">Loading...</div>
 
-  const field = (label: string, key: keyof typeof form, type = 'text', placeholder = '') => (
+  const field = (label: string, key: keyof typeof form, type = 'text', placeholder = '', required = false) => (
     <div>
       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{label}</label>
       <input
@@ -140,6 +143,7 @@ function BusinessSetup() {
         value={form[key]}
         onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
         placeholder={placeholder}
+        required={required}
         className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-green-500"
       />
     </div>
@@ -196,10 +200,18 @@ function BusinessSetup() {
         {/* Business Details */}
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm p-5 space-y-4">
           <h2 className="font-semibold text-gray-800 dark:text-white">Business Details</h2>
-          {field('Business Name *', 'name', 'text', 'e.g. Chidi Farms Ltd')}
-          {field('Address', 'address', 'text', 'Street, City, State')}
-          {field('Phone', 'phone', 'tel', '+234...')}
+          {field('Business Name *', 'name', 'text', 'e.g. Chidi Farms Ltd', true)}
+          {field('Address *', 'address', 'text', 'Street, City, State', true)}
+          {field('Phone *', 'phone', 'tel', '+234...', true)}
           {field('Email', 'email', 'email', 'info@yourbusiness.com')}
+        </div>
+
+        {/* Registration & Tax (optional — shown on invoices when provided) */}
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm p-5 space-y-4">
+          <h2 className="font-semibold text-gray-800 dark:text-white">Registration & Tax</h2>
+          <p className="text-xs text-gray-400">Optional — these appear on your invoices and receipts when provided.</p>
+          {field('CAC Registration Number', 'cac_number', 'text', 'e.g. RC-1234567')}
+          {field('VAT / TIN Number', 'vat_tin', 'text', 'e.g. 12345678-0001')}
         </div>
 
         {/* Bank Details */}
@@ -221,7 +233,7 @@ function BusinessSetup() {
 
         <button
           type="submit"
-          disabled={saving || !form.name}
+          disabled={saving || !form.name || !form.address || !form.phone}
           className="w-full bg-green-600 text-white py-2.5 rounded-lg hover:bg-green-700 font-medium disabled:opacity-50 transition-colors"
         >
           {saving ? 'Saving...' : businessId ? 'Save Changes' : 'Create Business'}

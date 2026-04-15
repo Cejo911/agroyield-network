@@ -170,6 +170,11 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
                   <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: '12px', marginTop: '3px' }}>
                     {[business?.address, business?.phone, business?.email].filter(Boolean).join(' · ')}
                   </div>
+                  {(business?.cac_number || business?.vat_tin) && (
+                    <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '11px', marginTop: '3px' }}>
+                      {[business.cac_number ? `CAC: ${business.cac_number}` : null, business.vat_tin ? `TIN: ${business.vat_tin}` : null].filter(Boolean).join(' · ')}
+                    </div>
+                  )}
                 </div>
               </div>
               <div style={{ textAlign: 'right' }}>
@@ -333,7 +338,7 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
               marginTop: '4px',
             }}>
               <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: '11px' }}>
-                {business?.name} · {business?.address} · {business?.phone}
+                {[business?.name, business?.address, business?.phone, business?.cac_number ? `CAC: ${business.cac_number}` : null].filter(Boolean).join(' · ')}
               </span>
               <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '11px', fontStyle: 'italic' }}>
                 Thank you for your business.

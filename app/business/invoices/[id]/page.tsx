@@ -63,6 +63,12 @@ export default async function InvoiceViewPage({ params }: { params: Promise<{ id
             {business?.address && <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{business.address}</p>}
             {business?.phone && <p className="text-sm text-gray-500 dark:text-gray-400">{business.phone}</p>}
             {business?.email && <p className="text-sm text-gray-500 dark:text-gray-400">{business.email}</p>}
+            {(business?.cac_number || business?.vat_tin) && (
+              <div className="flex flex-wrap gap-x-4 mt-1">
+                {business.cac_number && <p className="text-xs text-gray-400">CAC: {business.cac_number}</p>}
+                {business.vat_tin && <p className="text-xs text-gray-400">TIN: {business.vat_tin}</p>}
+              </div>
+            )}
           </div>
           <div className="sm:text-right">
             <div className="text-2xl font-bold text-gray-400 dark:text-gray-500">{DOC_LABELS[inv.document_type] ?? inv.document_type}</div>

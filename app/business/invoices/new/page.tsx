@@ -25,6 +25,8 @@ interface Customer {
 interface Business {
   id: string
   name: string
+  address: string | null
+  phone: string | null
   invoice_prefix: string | null
   invoice_counter: number | null
 }
@@ -69,7 +71,7 @@ export default function NewInvoicePage() {
       if (!access) return
       const { data: biz } = await supabase
         .from('businesses')
-        .select('id, name, invoice_prefix, invoice_counter')
+        .select('id, name, address, phone, invoice_prefix, invoice_counter')
         .eq('id', access.businessId)
         .single()
       setBusiness(biz)
@@ -260,6 +262,31 @@ export default function NewInvoicePage() {
   const inputClass = "w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-800"
   const selectClass = "w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-800"
   const labelClass = "block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1"
+
+  // Block form if business profile is incomplete (address + phone required for invoicing)
+  if (business && (!business.address || !business.phone)) {
+    return (
+      <div>
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">New Invoice</h1>
+          <p className="text-gray-500 text-sm mt-1">Create a new invoice or receipt</p>
+        </div>
+        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-6 text-center">
+          <div className="text-3xl mb-3">📋</div>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Complete Your Business Profile</h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            A business address and phone number are required before generating invoices. These details appear on your invoices and build trust with customers.
+          </p>
+          <a
+            href="/business/setup"
+            className="inline-block bg-green-600 text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors"
+          >
+            Update Business Settings
+          </a>
+        </div>
+      </div>
+    )
+  }
 
   // Block form if tier limit reached
   if (tierBlock) {
