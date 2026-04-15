@@ -14,6 +14,43 @@ export default function BusinessSetupPage() {
   )
 }
 
+/** Nigerian banks — CBN-licensed commercial banks + popular fintechs/mobile money */
+const NIGERIAN_BANKS = [
+  'Access Bank',
+  'Citibank Nigeria',
+  'Ecobank Nigeria',
+  'Fidelity Bank',
+  'First Bank of Nigeria',
+  'First City Monument Bank (FCMB)',
+  'Globus Bank',
+  'Guaranty Trust Bank (GTBank)',
+  'Heritage Bank',
+  'Jaiz Bank',
+  'Keystone Bank',
+  'Kuda Bank',
+  'Lotus Bank',
+  'Moniepoint',
+  'OPay',
+  'Optimus Bank',
+  'PalmPay',
+  'Parallex Bank',
+  'Polaris Bank',
+  'Premium Trust Bank',
+  'Providus Bank',
+  'Stanbic IBTC Bank',
+  'Standard Chartered Bank',
+  'Sterling Bank',
+  'SunTrust Bank',
+  'TAJBank',
+  'Titan Trust Bank',
+  'Union Bank of Nigeria',
+  'United Bank for Africa (UBA)',
+  'Unity Bank',
+  'VFD Microfinance Bank',
+  'Wema Bank',
+  'Zenith Bank',
+]
+
 function BusinessSetup() {
   const supabase = createClient()
   const router = useRouter()
@@ -25,6 +62,7 @@ function BusinessSetup() {
   const [uploading, setUploading] = useState(false)
   const [businessId, setBusinessId] = useState<string | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
+  const [customBank, setCustomBank] = useState(false)
   const [form, setForm] = useState({
     name: '', address: '', phone: '', email: '',
     cac_number: '', vat_tin: '',
@@ -46,6 +84,7 @@ function BusinessSetup() {
           : { data: null }
         if (data) {
           setBusinessId(data.id)
+          const bankName = data.bank_name ?? ''
           setForm({
             name: data.name ?? '',
             address: data.address ?? '',
@@ -53,12 +92,16 @@ function BusinessSetup() {
             email: data.email ?? '',
             cac_number: data.cac_number ?? '',
             vat_tin: data.vat_tin ?? '',
-            bank_name: data.bank_name ?? '',
+            bank_name: bankName,
             account_name: data.account_name ?? '',
             account_number: data.account_number ?? '',
             invoice_prefix: data.invoice_prefix ?? 'INV',
             logo_url: data.logo_url ?? '',
           })
+          // If existing bank name isn't in the standard list, show custom input
+          if (bankName && !NIGERIAN_BANKS.includes(bankName)) {
+            setCustomBank(true)
+          }
         }
       }
       setLoading(false)
@@ -217,7 +260,46 @@ function BusinessSetup() {
         {/* Bank Details */}
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm p-5 space-y-4">
           <h2 className="font-semibold text-gray-800 dark:text-white">Bank Details</h2>
-          {field('Bank Name', 'bank_name', 'text', 'e.g. Access Bank')}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Bank Name</label>
+            {customBank ? (
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={form.bank_name}
+                  onChange={e => setForm(f => ({ ...f, bank_name: e.target.value }))}
+                  placeholder="Enter bank or institution name"
+                  className="flex-1 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+                <button
+                  type="button"
+                  onClick={() => { setCustomBank(false); setForm(f => ({ ...f, bank_name: '' })) }}
+                  className="text-xs text-green-600 hover:underline whitespace-nowrap px-2"
+                >
+                  ← Back to list
+                </button>
+              </div>
+            ) : (
+              <select
+                value={NIGERIAN_BANKS.includes(form.bank_name) ? form.bank_name : ''}
+                onChange={e => {
+                  if (e.target.value === '__other__') {
+                    setCustomBank(true)
+                    setForm(f => ({ ...f, bank_name: '' }))
+                  } else {
+                    setForm(f => ({ ...f, bank_name: e.target.value }))
+                  }
+                }}
+                className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-green-500"
+              >
+                <option value="">Select bank…</option>
+                {NIGERIAN_BANKS.map(bank => (
+                  <option key={bank} value={bank}>{bank}</option>
+                ))}
+                <option value="__other__">Other (type manually)</option>
+              </select>
+            )}
+          </div>
           {field('Account Name', 'account_name', 'text', 'Name on account')}
           {field('Account Number', 'account_number', 'text', '0123456789')}
         </div>
