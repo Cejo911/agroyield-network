@@ -67,6 +67,7 @@ export default function NotFound() {
       {/* FOOTER */}
       <footer style={{ padding: '20px 40px', borderTop: '1px solid #1c3825', textAlign: 'center' }}>
         <p style={{ fontSize: 12, color: '#4b7a5c', margin: 0 }}>© 2026 AgroYield Network · Nigeria</p>
+        <p style={{ fontSize: 10, color: '#4b7a5c', opacity: 0.6, margin: '4px 0 0' }}>An Agcoms International Project</p>
       </footer>
 
     </main>

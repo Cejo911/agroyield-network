@@ -103,6 +103,7 @@ export default function TermsOfService() {
           © 2026 AgroYield Network · Nigeria ·{' '}
           <a href="/privacy" style={{ color: 'var(--text-footer)', textDecoration: 'underline' }}>Privacy Policy</a>
         </p>
+        <p style={{ fontSize: 10, color: 'var(--text-footer)', opacity: 0.6, margin: '4px 0 0' }}>An Agcoms International Project</p>
       </footer>
     </main>
   )

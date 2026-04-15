@@ -127,6 +127,7 @@ export async function GET(req: Request) {
               <p style="margin:8px 0 0;font-size:12px;color:#9ca3af;">
                 You're receiving this because you have an active subscription on agroyield.africa
               </p>
+              <p style="margin:6px 0 0;font-size:10px;color:#c0c4ca;">An Agcoms International Project</p>
             </td>
           </tr>
 

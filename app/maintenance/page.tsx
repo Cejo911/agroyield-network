@@ -32,6 +32,9 @@ export default async function MaintenancePage() {
         <p className="mt-8 text-xs text-gray-400 dark:text-gray-500">
           AgroYield Network &middot; Nigeria&apos;s Agricultural Professional Network
         </p>
+        <p className="mt-1 text-[10px] text-gray-300 dark:text-gray-600">
+          An Agcoms International Project
+        </p>
       </div>
     </div>
   )

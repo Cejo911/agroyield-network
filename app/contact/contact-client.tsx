@@ -253,6 +253,7 @@ export default function ContactClient() {
       {/* FOOTER */}
       <footer className="agy-footer" style={{ borderTop: '1px solid var(--border-color)' }}>
         <p style={{ fontSize: 13, color: 'var(--text-footer)' }}>© 2026 AgroYield Network. All rights reserved.</p>
+        <p style={{ fontSize: 11, color: 'var(--text-footer)', opacity: 0.6, marginTop: 4 }}>An Agcoms International Project</p>
         <div className="agy-footer-links">
           {['Contact', 'Privacy', 'About', 'Twitter / X', 'LinkedIn'].map(link => (
             <a key={link}

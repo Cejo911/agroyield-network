@@ -61,6 +61,7 @@ export async function POST(request: Request) {
         <tr>
           <td style="padding:24px 48px;border-top:1px solid #1c3825;">
             <p style="font-size:12px;color:#4b7a5c;margin:0;line-height:1.6;">You're receiving this because you contacted us at agroyield.africa/contact.<br>© 2026 AgroYield Network · Nigeria</p>
+            <p style="font-size:10px;color:#4b7a5c;opacity:0.6;margin:4px 0 0;">An Agcoms International Project</p>
           </td>
         </tr>
       </table>

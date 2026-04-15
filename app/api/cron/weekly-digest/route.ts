@@ -227,6 +227,7 @@ function buildDigestHtml(params: {
                   You receive this because you are a member of AgroYield Network.<br>
                   <a href="${APP_URL}/profile" style="color:#9ca3af;">Manage email preferences</a>
                 </p>
+                <p style="margin:6px 0 0;color:#c0c4ca;font-size:10px;">An Agcoms International Project</p>
               </div>
             </td>
           </tr>

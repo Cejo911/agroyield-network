@@ -197,6 +197,7 @@ export async function POST(request: Request) {
               If you didn't expect this email, you can safely ignore it.<br>
               © 2026 AgroYield Network · Nigeria
             </p>
+            <p style="font-size:10px;color:#4b7a5c;opacity:0.6;margin:4px 0 0;">An Agcoms International Project</p>
           </td>
         </tr>
       </table>
