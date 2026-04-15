@@ -73,6 +73,7 @@ const appStatusLabels: Record<string, { label: string; color: string }> = {
 
 export default function GrantsClient({ grants, applicationMap }: Props) {
   const [search, setSearch] = useState('')
+  const [sortBy, setSortBy] = useState<'featured' | 'deadline' | 'newest' | 'oldest'>('featured')
   const [categoryFilter, setCategoryFilter] = useState('All')
   const [statusFilter, setStatusFilter] = useState('All')
 
@@ -91,7 +92,27 @@ export default function GrantsClient({ grants, applicationMap }: Props) {
     return true
   })
 
-  useSearchLog(search, 'grants', filtered.length)
+  // Sort filtered results
+  const sorted = [...filtered].sort((a, b) => {
+    if (sortBy === 'featured') {
+      // Featured first, then by deadline ascending (original server sort)
+      if (a.featured !== b.featured) return a.featured ? -1 : 1
+      if (!a.deadline && !b.deadline) return 0
+      if (!a.deadline) return 1
+      if (!b.deadline) return -1
+      return new Date(a.deadline).getTime() - new Date(b.deadline).getTime()
+    }
+    if (sortBy === 'deadline') {
+      if (!a.deadline && !b.deadline) return 0
+      if (!a.deadline) return 1
+      if (!b.deadline) return -1
+      return new Date(a.deadline).getTime() - new Date(b.deadline).getTime()
+    }
+    if (sortBy === 'oldest') return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime() // newest
+  })
+
+  useSearchLog(search, 'grants', sorted.length)
 
   return (
     <div>
@@ -134,15 +155,23 @@ export default function GrantsClient({ grants, applicationMap }: Props) {
             </button>
           ))}
         </div>
+        <div className="flex items-center justify-between pt-1 border-t border-gray-100 dark:border-gray-800">
+          <p className="text-sm text-gray-500 dark:text-gray-400">{sorted.length} {sorted.length === 1 ? 'grant' : 'grants'} found</p>
+          <select
+            value={sortBy}
+            onChange={e => setSortBy(e.target.value as typeof sortBy)}
+            className="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500"
+          >
+            <option value="featured">Featured first</option>
+            <option value="deadline">Deadline (soonest)</option>
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+          </select>
+        </div>
       </div>
 
-      {/* Results count */}
-      <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
-        {filtered.length} {filtered.length === 1 ? 'grant' : 'grants'} found
-      </p>
-
       {/* Grant cards */}
-      {filtered.length === 0 ? (
+      {sorted.length === 0 ? (
         <div className="text-center py-16 text-gray-400 dark:text-gray-500">
           <p className="text-4xl mb-3">🌱</p>
           <p className="font-medium">No grants match your filters</p>
@@ -150,7 +179,7 @@ export default function GrantsClient({ grants, applicationMap }: Props) {
         </div>
       ) : (
         <div className="space-y-4">
-          {filtered.map(grant => {
+          {sorted.map(grant => {
             const amount = formatAmount(grant.amount_min, grant.amount_max, grant.currency)
             const dl = daysUntil(grant.deadline)
             const appStatus = applicationMap[grant.id]

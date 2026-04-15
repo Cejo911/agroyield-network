@@ -30,6 +30,7 @@ export default function OpportunitiesClient({
 }) {
   const [opportunities, setOpportunities] = useState(initial)
   const [search, setSearch]               = useState('')
+  const [sortBy, setSortBy]               = useState<'newest' | 'oldest' | 'deadline'>('newest')
   const [typeFilter, setTypeFilter]       = useState('all')
   const [confirmingId, setConfirmingId]   = useState<string | null>(null)
   const [deletingId, setDeletingId]       = useState<string | null>(null)
@@ -50,7 +51,20 @@ export default function OpportunitiesClient({
     return matchesType && matchesSearch
   })
 
-  useSearchLog(search, 'opportunities', filtered.length)
+  // Sort filtered results
+  const sorted = [...filtered].sort((a, b) => {
+    if (sortBy === 'oldest') return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    if (sortBy === 'deadline') {
+      // Items without deadlines go last
+      if (!a.deadline && !b.deadline) return 0
+      if (!a.deadline) return 1
+      if (!b.deadline) return -1
+      return new Date(a.deadline).getTime() - new Date(b.deadline).getTime()
+    }
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime() // newest
+  })
+
+  useSearchLog(search, 'opportunities', sorted.length)
 
   const handleDelete = async (id: string) => {
     setDeletingId(id)
@@ -104,16 +118,28 @@ export default function OpportunitiesClient({
             </button>
           ))}
         </div>
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-gray-500 dark:text-gray-400">{sorted.length} {sorted.length === 1 ? 'opportunity' : 'opportunities'}</p>
+          <select
+            value={sortBy}
+            onChange={e => setSortBy(e.target.value as typeof sortBy)}
+            className="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500"
+          >
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+            <option value="deadline">Deadline (soonest)</option>
+          </select>
+        </div>
       </div>
 
-      {filtered.length === 0 ? (
+      {sorted.length === 0 ? (
         <div className="text-center py-12 text-gray-400 dark:text-gray-500">
           <p className="font-medium">No opportunities match your search</p>
           <p className="text-sm mt-1">Try different keywords or clear the filter</p>
         </div>
       ) : null}
 
-      {filtered.map(opportunity => {
+      {sorted.map(opportunity => {
         const isOwner  = opportunity.user_id === userId
         const isClosed = opportunity.is_closed ?? false
         const deadline = opportunity.deadline

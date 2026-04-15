@@ -59,6 +59,7 @@ export default function ResearchClient({
 }) {
   const [posts, setPosts]               = useState(initial)
   const [search, setSearch]             = useState('')
+  const [sortBy, setSortBy]             = useState<'newest' | 'oldest'>('newest')
   const [typeFilter, setTypeFilter]     = useState('All')
   const [tagFilter, setTagFilter]       = useState('')
   const [confirmingId, setConfirmingId] = useState<string | null>(null)
@@ -80,7 +81,13 @@ export default function ResearchClient({
     return matchesSearch && matchesType && matchesTag
   })
 
-  useSearchLog(search, 'research', filtered.length)
+  // Sort filtered results
+  const sorted = [...filtered].sort((a, b) => {
+    if (sortBy === 'oldest') return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime() // newest
+  })
+
+  useSearchLog(search, 'research', sorted.length)
 
   const filterBtn = (active: boolean) =>
     `px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${active ? 'bg-green-600 text-white border-green-600' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-green-400 dark:hover:border-green-500'}`
@@ -109,13 +116,20 @@ export default function ResearchClient({
             ))}
           </div>
         </div>
+        <div className="flex items-center justify-between pt-1 border-t border-gray-100 dark:border-gray-800">
+          <p className="text-sm text-gray-500 dark:text-gray-400">{sorted.length} {sorted.length === 1 ? 'post' : 'posts'} found</p>
+          <select
+            value={sortBy}
+            onChange={e => setSortBy(e.target.value as typeof sortBy)}
+            className="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500"
+          >
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+          </select>
+        </div>
       </div>
 
-      <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
-        {filtered.length} {filtered.length === 1 ? 'post' : 'posts'} found
-      </p>
-
-      {filtered.length === 0 ? (
+      {sorted.length === 0 ? (
         <div className="text-center py-16 text-gray-400 dark:text-gray-500">
           <p className="text-4xl mb-3">🔬</p>
           <p className="font-medium">No research posts match your filters</p>
@@ -123,7 +137,7 @@ export default function ResearchClient({
         </div>
       ) : (
         <div className="space-y-4">
-          {filtered.map(post => {
+          {sorted.map(post => {
             const isOwner = post.user_id === userId
             return (
               <div key={post.id} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md hover:border-green-200 dark:hover:border-green-800 transition-all">

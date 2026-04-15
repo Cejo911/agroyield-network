@@ -44,6 +44,7 @@ export default function PricesClient({
 }) {
   const router = useRouter()
   const [search, setSearch] = useState('')
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'price_low' | 'price_high'>('newest')
   const [categoryFilter, setCategoryFilter] = useState('All')
   const [localReports, setLocalReports] = useState(reports)
   const [confirmingId, setConfirmingId] = useState<string | null>(null)
@@ -61,7 +62,15 @@ export default function PricesClient({
     return matchesSearch && matchesCategory
   })
 
-  useSearchLog(search, 'prices', filtered.length)
+  // Sort filtered results
+  const sorted = [...filtered].sort((a, b) => {
+    if (sortBy === 'oldest') return new Date(a.reported_at).getTime() - new Date(b.reported_at).getTime()
+    if (sortBy === 'price_low') return a.price - b.price
+    if (sortBy === 'price_high') return b.price - a.price
+    return new Date(b.reported_at).getTime() - new Date(a.reported_at).getTime() // newest
+  })
+
+  useSearchLog(search, 'prices', sorted.length)
 
   const formatPrice = (price: number) =>
     new Intl.NumberFormat('en-NG', {
@@ -115,15 +124,23 @@ export default function PricesClient({
             </button>
           ))}
         </div>
+        <div className="flex items-center justify-between pt-1 border-t border-gray-100 dark:border-gray-800">
+          <p className="text-sm text-gray-500 dark:text-gray-400">{sorted.length} {sorted.length === 1 ? 'report' : 'reports'} found</p>
+          <select
+            value={sortBy}
+            onChange={e => setSortBy(e.target.value as typeof sortBy)}
+            className="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500"
+          >
+            <option value="newest">Most recent</option>
+            <option value="oldest">Oldest first</option>
+            <option value="price_low">Price: Low → High</option>
+            <option value="price_high">Price: High → Low</option>
+          </select>
+        </div>
       </div>
 
-      {/* Result count */}
-      <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
-        {filtered.length} {filtered.length === 1 ? 'report' : 'reports'} found
-      </p>
-
       {/* Empty state */}
-      {filtered.length === 0 ? (
+      {sorted.length === 0 ? (
         <div className="text-center py-16 text-gray-400 dark:text-gray-500">
           <p className="text-4xl mb-3">📊</p>
           <p className="font-medium">No prices reported yet</p>
@@ -131,7 +148,7 @@ export default function PricesClient({
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map(report => {
+          {sorted.map(report => {
             const isOwner = report.user_id === userId
             const isConfirming = confirmingId === report.id
             const isDeleting = deletingId === report.id

@@ -78,6 +78,7 @@ export default function MarketplaceClient({
 }) {
   const [listings, setListings]           = useState(initial)
   const [search, setSearch]               = useState('')
+  const [sortBy, setSortBy]               = useState<'newest' | 'oldest' | 'price_low' | 'price_high'>('newest')
   const [categoryFilter, setCategoryFilter] = useState('All')
   const [typeFilter, setTypeFilter]       = useState('All')
   const [stateFilter, setStateFilter]     = useState('All')
@@ -105,7 +106,15 @@ export default function MarketplaceClient({
     return matchesSearch && matchesCategory && matchesType && matchesState && matchesMin && matchesMax
   })
 
-  useSearchLog(search, 'marketplace', filtered.length)
+  // Sort filtered results
+  const sorted = [...filtered].sort((a, b) => {
+    if (sortBy === 'oldest') return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    if (sortBy === 'price_low') return (a.price ?? 0) - (b.price ?? 0)
+    if (sortBy === 'price_high') return (b.price ?? 0) - (a.price ?? 0)
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime() // newest
+  })
+
+  useSearchLog(search, 'marketplace', sorted.length)
 
   const hasActiveFilters = categoryFilter !== 'All' || typeFilter !== 'All' || stateFilter !== 'All' || search || minPrice || maxPrice
 
@@ -144,18 +153,29 @@ export default function MarketplaceClient({
             )}
           </div>
         </div>
-        {hasActiveFilters && (
-          <button onClick={() => { setSearch(''); setCategoryFilter('All'); setTypeFilter('All'); setStateFilter('All'); setMinPrice(''); setMaxPrice('') }} className="text-xs text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 font-medium">
-            Clear all filters
-          </button>
-        )}
+        <div className="flex items-center justify-between pt-1 border-t border-gray-100 dark:border-gray-800">
+          <div className="flex items-center gap-3">
+            {hasActiveFilters && (
+              <button onClick={() => { setSearch(''); setCategoryFilter('All'); setTypeFilter('All'); setStateFilter('All'); setMinPrice(''); setMaxPrice('') }} className="text-xs text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 font-medium">
+                Clear all filters
+              </button>
+            )}
+            <p className="text-sm text-gray-500 dark:text-gray-400">{sorted.length} {sorted.length === 1 ? 'listing' : 'listings'}</p>
+          </div>
+          <select
+            value={sortBy}
+            onChange={e => setSortBy(e.target.value as typeof sortBy)}
+            className="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500"
+          >
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+            <option value="price_low">Price: Low → High</option>
+            <option value="price_high">Price: High → Low</option>
+          </select>
+        </div>
       </div>
 
-      <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
-        {filtered.length} {filtered.length === 1 ? 'listing' : 'listings'} found
-      </p>
-
-      {filtered.length === 0 ? (
+      {sorted.length === 0 ? (
         <div className="text-center py-16 text-gray-400 dark:text-gray-500">
           <p className="text-4xl mb-3">🤝</p>
           <p className="font-medium">No listings match your filters</p>
@@ -163,7 +183,7 @@ export default function MarketplaceClient({
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map(listing => {
+          {sorted.map(listing => {
             const isOwner  = listing.user_id === userId
             const isClosed = listing.is_closed ?? false
             return (

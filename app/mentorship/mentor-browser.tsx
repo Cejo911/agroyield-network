@@ -14,6 +14,7 @@ interface Mentor {
   availability: string
   session_format: string[]
   location: string | null
+  created_at: string
   avgRating: number | null
   reviewCount: number
   profiles: {
@@ -34,6 +35,7 @@ const EXPERTISE_TAGS = [
 
 export default function MentorBrowser({ mentors, userId }: { mentors: Mentor[]; userId: string }) {
   const [search, setSearch] = useState('')
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest'>('newest')
   const [filterExpertise, setFilterExpertise] = useState('All')
   const [filterAvailability, setFilterAvailability] = useState('All')
 
@@ -54,7 +56,13 @@ export default function MentorBrowser({ mentors, userId }: { mentors: Mentor[]; 
     return true
   })
 
-  useSearchLog(search, 'mentorship', filtered.length)
+  // Sort filtered results
+  const sorted = [...filtered].sort((a, b) => {
+    if (sortBy === 'oldest') return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime() // newest
+  })
+
+  useSearchLog(search, 'mentorship', sorted.length)
 
   return (
     <div>
@@ -94,18 +102,26 @@ export default function MentorBrowser({ mentors, userId }: { mentors: Mentor[]; 
             <option value="Waitlist">Waitlist</option>
             <option value="Closed">Closed</option>
           </select>
+          <select
+            value={sortBy}
+            onChange={e => setSortBy(e.target.value as typeof sortBy)}
+            className="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300"
+          >
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+          </select>
         </div>
       </div>
 
       {/* Results */}
-      {filtered.length === 0 ? (
+      {sorted.length === 0 ? (
         <div className="text-center py-16 text-gray-400">
           <p className="text-lg mb-2">No mentors found</p>
           <p className="text-sm">Try adjusting your filters or be the first to <a href="/mentorship/become-mentor" className="text-green-600 hover:underline">become a mentor</a>.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {filtered.map(m => {
+          {sorted.map(m => {
             const name = `${m.profiles?.first_name ?? ''} ${m.profiles?.last_name ?? ''}`.trim() || 'Anonymous'
             const initials = name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
             return (
