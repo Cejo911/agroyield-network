@@ -80,6 +80,7 @@ export default function MarketplaceClient({
   const [search, setSearch]               = useState('')
   const [sortBy, setSortBy]               = useState<'newest' | 'oldest' | 'price_low' | 'price_high'>('newest')
   const [categoryFilter, setCategoryFilter] = useState('All')
+  const [conditionFilter, setConditionFilter] = useState('All')
   const [typeFilter, setTypeFilter]       = useState('All')
   const [stateFilter, setStateFilter]     = useState('All')
   const [minPrice, setMinPrice]           = useState('')
@@ -96,14 +97,15 @@ export default function MarketplaceClient({
 
   const filtered = listings.filter(l => {
     const matchesSearch   = !search || l.title.toLowerCase().includes(search.toLowerCase()) || (l.description ?? '').toLowerCase().includes(search.toLowerCase()) || (l.state ?? '').toLowerCase().includes(search.toLowerCase())
-    const matchesCategory = categoryFilter === 'All' || (l.category ?? '').toLowerCase() === categoryFilter.toLowerCase()
-    const matchesType     = typeFilter === 'All' || (l.type ?? '').toLowerCase() === typeFilter.toLowerCase()
+    const matchesCategory  = categoryFilter === 'All' || (l.category ?? '').toLowerCase() === categoryFilter.toLowerCase()
+    const matchesCondition = conditionFilter === 'All' || (l.condition ?? '').toLowerCase() === conditionFilter.toLowerCase()
+    const matchesType      = typeFilter === 'All' || (l.type ?? '').toLowerCase() === typeFilter.toLowerCase()
     const matchesState    = stateFilter === 'All' || (l.state ?? '').toLowerCase() === stateFilter.toLowerCase()
     const min = minPrice ? parseFloat(minPrice) : null
     const max = maxPrice ? parseFloat(maxPrice) : null
     const matchesMin = min === null || (l.price !== null && l.price >= min)
     const matchesMax = max === null || (l.price !== null && l.price <= max)
-    return matchesSearch && matchesCategory && matchesType && matchesState && matchesMin && matchesMax
+    return matchesSearch && matchesCategory && matchesCondition && matchesType && matchesState && matchesMin && matchesMax
   })
 
   // Sort filtered results
@@ -116,7 +118,7 @@ export default function MarketplaceClient({
 
   useSearchLog(search, 'marketplace', sorted.length)
 
-  const hasActiveFilters = categoryFilter !== 'All' || typeFilter !== 'All' || stateFilter !== 'All' || search || minPrice || maxPrice
+  const hasActiveFilters = categoryFilter !== 'All' || conditionFilter !== 'All' || typeFilter !== 'All' || stateFilter !== 'All' || search || minPrice || maxPrice
 
   const inputClass = "w-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
   const filterBtn  = (active: boolean) => `px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${active ? 'bg-green-600 text-white border-green-600' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-green-400 dark:hover:border-green-500'}`
@@ -126,8 +128,17 @@ export default function MarketplaceClient({
       <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-5 mb-8 space-y-4">
         <input type="text" placeholder="Search listings..." value={search} onChange={e => setSearch(e.target.value)} className={inputClass} />
         <div className="flex flex-wrap gap-2">
-          {CATEGORIES.map(cat => <button key={cat} onClick={() => setCategoryFilter(cat)} className={filterBtn(categoryFilter === cat)}>{cat}</button>)}
+          {CATEGORIES.map(cat => (
+            <button key={cat} onClick={() => { setCategoryFilter(cat); if (cat.toLowerCase() !== 'equipment') setConditionFilter('All') }} className={filterBtn(categoryFilter === cat)}>{cat}</button>
+          ))}
         </div>
+        {categoryFilter.toLowerCase() === 'equipment' && (
+          <div className="flex flex-wrap gap-2">
+            {['All', 'New', 'Used'].map(cond => (
+              <button key={cond} onClick={() => setConditionFilter(cond)} className={filterBtn(conditionFilter === cond)}>{cond === 'All' ? 'All Conditions' : cond}</button>
+            ))}
+          </div>
+        )}
         <div className="flex flex-wrap gap-2">
           {TYPES.map(type => <button key={type} onClick={() => setTypeFilter(type)} className={filterBtn(typeFilter === type)}>{type}</button>)}
         </div>
@@ -156,7 +167,7 @@ export default function MarketplaceClient({
         <div className="flex items-center justify-between pt-1 border-t border-gray-100 dark:border-gray-800">
           <div className="flex items-center gap-3">
             {hasActiveFilters && (
-              <button onClick={() => { setSearch(''); setCategoryFilter('All'); setTypeFilter('All'); setStateFilter('All'); setMinPrice(''); setMaxPrice('') }} className="text-xs text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 font-medium">
+              <button onClick={() => { setSearch(''); setCategoryFilter('All'); setConditionFilter('All'); setTypeFilter('All'); setStateFilter('All'); setMinPrice(''); setMaxPrice('') }} className="text-xs text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 font-medium">
                 Clear all filters
               </button>
             )}
