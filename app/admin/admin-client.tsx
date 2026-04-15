@@ -320,6 +320,20 @@ export default function AdminClient({
   const [newOpportunityType, setNewOpportunityType] = useState('')
   const [newMarketplaceCategory, setNewMarketplaceCategory] = useState('')
   const [newCommodityCategory, setNewCommodityCategory] = useState('')
+  const DEFAULT_COMMODITY_ITEMS: Record<string, string[]> = {
+    grains: ['Maize', 'Rice', 'Sorghum', 'Millet', 'Wheat', 'Barley'],
+    legumes: ['Soybeans', 'Cowpea', 'Groundnut', 'Sesame', 'Beans'],
+    tubers: ['Cassava', 'Yam', 'Sweet Potato', 'Cocoyam', 'Irish Potato'],
+    vegetables: ['Tomato', 'Pepper', 'Onion', 'Cabbage', 'Carrot', 'Spinach'],
+    fruits: ['Banana', 'Plantain', 'Mango', 'Orange', 'Pineapple', 'Watermelon'],
+    livestock: ['Cattle', 'Goat', 'Sheep', 'Pig', 'Poultry', 'Fish'],
+    cash_crops: ['Cocoa', 'Coffee', 'Cotton', 'Rubber', 'Palm Oil', 'Sugarcane'],
+  }
+  const [commodityItems, setCommodityItems] = useState<Record<string, string[]>>(() => {
+    try { return settingsMap.commodity_items ? JSON.parse(settingsMap.commodity_items) : DEFAULT_COMMODITY_ITEMS }
+    catch { return DEFAULT_COMMODITY_ITEMS }
+  })
+  const [newCommodityItem, setNewCommodityItem] = useState<Record<string, string>>({})
   const [proMonthlyPrice, setProMonthlyPrice] = useState(settingsMap.tier_pro_monthly ?? '2000')
   const [proAnnualPrice, setProAnnualPrice] = useState(settingsMap.tier_pro_annual ?? '20000')
   const [growthMonthlyPrice, setGrowthMonthlyPrice] = useState(settingsMap.tier_growth_monthly ?? '5000')
@@ -407,6 +421,7 @@ export default function AdminClient({
           opportunity_types: JSON.stringify(opportunityTypes),
           marketplace_categories: JSON.stringify(marketplaceCategories),
           commodity_categories: JSON.stringify(commodityCategories),
+          commodity_items: JSON.stringify(commodityItems),
           tier_pro_monthly: proMonthlyPrice,
           tier_pro_annual: proAnnualPrice,
           tier_growth_monthly: growthMonthlyPrice,
@@ -489,6 +504,19 @@ export default function AdminClient({
     if (t && !commodityCategories.includes(t)) { setCommodityCategories(prev => [...prev, t]); setNewCommodityCategory('') }
   }
   const removeCommodityCategory = (cat: string) => setCommodityCategories(prev => prev.filter(c => c !== cat))
+  const addCommodityItem = (category: string) => {
+    const key = category.toLowerCase().replace(/\s+/g, '_')
+    const item = (newCommodityItem[key] ?? '').trim()
+    if (!item) return
+    const existing = commodityItems[key] ?? []
+    if (existing.includes(item)) return
+    setCommodityItems(prev => ({ ...prev, [key]: [...existing, item] }))
+    setNewCommodityItem(prev => ({ ...prev, [key]: '' }))
+  }
+  const removeCommodityItem = (category: string, item: string) => {
+    const key = category.toLowerCase().replace(/\s+/g, '_')
+    setCommodityItems(prev => ({ ...prev, [key]: (prev[key] ?? []).filter(i => i !== item) }))
+  }
 
   // Grant actions
   const toggleGrantFeatured = async (id: string, featured: boolean) => {
@@ -1555,6 +1583,42 @@ export default function AdminClient({
                         onKeyDown={(e) => e.key === 'Enter' && addCommodityCategory()}
                         placeholder="Add category..." className={`flex-1 ${sInput}`} />
                       <button onClick={addCommodityCategory} className="bg-green-600 text-white px-3 py-1.5 rounded text-sm hover:bg-green-700">Add</button>
+                    </div>
+                  </div>
+                  {/* Commodity Items per Category */}
+                  <div>
+                    <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Commodities per Category (Price Tracker)</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mb-3">Manage the commodity options available under each category when submitting price reports.</p>
+                    <div className="space-y-3">
+                      {commodityCategories.map(cat => {
+                        const key = cat.toLowerCase().replace(/\s+/g, '_')
+                        const items = commodityItems[key] ?? []
+                        return (
+                          <div key={key} className="border border-gray-100 dark:border-gray-800 rounded-lg p-3">
+                            <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 capitalize">{cat}</p>
+                            <div className="flex flex-wrap gap-1.5 mb-2">
+                              {items.map(item => (
+                                <span key={item} className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs px-2 py-0.5 rounded-full">
+                                  {item}
+                                  <button onClick={() => removeCommodityItem(cat, item)} className="text-gray-400 hover:text-red-500 ml-0.5 leading-none text-base">&times;</button>
+                                </span>
+                              ))}
+                              {items.length === 0 && <span className="text-xs text-gray-400 italic">No commodities yet</span>}
+                            </div>
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                value={newCommodityItem[key] ?? ''}
+                                onChange={e => setNewCommodityItem(prev => ({ ...prev, [key]: e.target.value }))}
+                                onKeyDown={e => e.key === 'Enter' && addCommodityItem(cat)}
+                                placeholder={`Add commodity to ${cat}...`}
+                                className={`flex-1 ${sInput}`}
+                              />
+                              <button onClick={() => addCommodityItem(cat)} className="bg-green-600 text-white px-3 py-1.5 rounded text-sm hover:bg-green-700">Add</button>
+                            </div>
+                          </div>
+                        )
+                      })}
                     </div>
                   </div>
                 </div>
