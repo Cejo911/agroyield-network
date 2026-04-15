@@ -99,10 +99,14 @@ export async function POST(request: NextRequest) {
     try {
       const { data: emailSetting } = await adminAny.from('settings')
         .select('value').eq('key', 'admin_notification_email').maybeSingle()
-      const notificationEmail =
+      const rawEmails =
         (emailSetting as Record<string, unknown> | null)?.value as string | undefined
+      // Support comma-separated list of emails
+      const notificationEmails = rawEmails
+        ? rawEmails.split(',').map(e => e.trim()).filter(e => e.length > 0)
+        : []
 
-      if (notificationEmail) {
+      if (notificationEmails.length > 0) {
         const postLabel =
           postType === 'opportunity'  ? 'Opportunity'
         : postType === 'price_report' ? 'Price report'
@@ -117,7 +121,7 @@ export async function POST(request: NextRequest) {
 
         await getResend().emails.send({
           from: SENDERS.noreply,
-          to: notificationEmail,
+          to: notificationEmails,
           subject: autoHidden
             ? `⚠️ Post auto-hidden after ${totalReports} reports — AgroYield`
             : `New report submitted — AgroYield`,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getSetting } from '@/lib/settings'
+import { notifyFollowers } from '@/lib/notify-followers'
 
 export async function GET() {
   return NextResponse.json({ status: 'ok' })
@@ -63,6 +64,20 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    // Notify followers (fire-and-forget)
+    if (data?.id) {
+      const { data: profile } = await (supabase as any)
+        .from('profiles').select('first_name, last_name').eq('id', user.id).single()
+      const name = [profile?.first_name, profile?.last_name].filter(Boolean).join(' ') || 'Someone'
+      notifyFollowers({
+        actorId: user.id,
+        actorName: name,
+        contentType: 'research',
+        contentTitle: body.title,
+        contentId: data.id,
+      })
     }
 
     return NextResponse.json({ success: true, id: data.id })

@@ -64,7 +64,7 @@ function BusinessSetup() {
   const [userId, setUserId] = useState<string | null>(null)
   const [customBank, setCustomBank] = useState(false)
   const [form, setForm] = useState({
-    name: '', address: '', phone: '', email: '',
+    name: '', address: '', phone: '', alt_phone: '', whatsapp: '', email: '',
     cac_number: '', vat_tin: '',
     bank_name: '', account_name: '', account_number: '',
     invoice_prefix: 'INV', logo_url: '',
@@ -89,6 +89,8 @@ function BusinessSetup() {
             name: data.name ?? '',
             address: data.address ?? '',
             phone: data.phone ?? '',
+            alt_phone: data.alt_phone ?? '',
+            whatsapp: data.whatsapp ?? '',
             email: data.email ?? '',
             cac_number: data.cac_number ?? '',
             vat_tin: data.vat_tin ?? '',
@@ -254,6 +256,8 @@ function BusinessSetup() {
           {field('Business Name *', 'name', 'text', 'e.g. Chidi Farms Ltd', true)}
           {field('Address *', 'address', 'text', 'Street, City, State', true)}
           {field('Phone *', 'phone', 'tel', '+234...', true)}
+          {field('Alternative Phone', 'alt_phone', 'tel', '+234...')}
+          {field('WhatsApp Number', 'whatsapp', 'tel', '+234...')}
           {field('Email', 'email', 'email', 'info@yourbusiness.com')}
         </div>
 

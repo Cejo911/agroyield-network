@@ -1003,20 +1003,18 @@ export default function AdminClient({
                         Suspend
                       </button>
                     )}
-                    {/* View Business link — shown if member has a business */}
-                    {(() => {
-                      const memberBiz = businesses.find(b => b.user_id === member.id)
-                      return memberBiz ? (
-                        <a
-                          href={`/admin/business-preview/${memberBiz.id}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 px-3 py-1.5 rounded-md hover:bg-indigo-100 dark:hover:bg-indigo-900/40 inline-flex items-center gap-1"
-                        >
-                          👁 View Business
-                        </a>
-                      ) : null
-                    })()}
+                    {/* View Business links — shown for each business the member owns */}
+                    {businesses.filter(b => b.user_id === member.id).map((biz, idx) => (
+                      <a
+                        key={biz.id}
+                        href={`/admin/business-preview/${biz.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 px-3 py-1.5 rounded-md hover:bg-indigo-100 dark:hover:bg-indigo-900/40 inline-flex items-center gap-1"
+                      >
+                        👁 {businesses.filter(b2 => b2.user_id === member.id).length > 1 ? `Business ${idx + 1}: ${biz.name}` : 'View Business'}
+                      </a>
+                    ))}
                     {isSuperAdmin && (
                       <>
                         {/* Tier selector */}
@@ -1487,9 +1485,9 @@ export default function AdminClient({
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1 text-sm">Report Alerts</h3>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Email on new reports.</p>
-                    <input type="email" value={adminNotificationEmail} onChange={(e) => setAdminNotificationEmail(e.target.value)}
-                      placeholder="admin@..." className={`w-full ${sInput}`} />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Emails to notify on new reports. Separate multiple addresses with commas.</p>
+                    <input type="text" value={adminNotificationEmail} onChange={(e) => setAdminNotificationEmail(e.target.value)}
+                      placeholder="admin@agroyield.com, support@agroyield.com" className={`w-full ${sInput}`} />
                   </div>
                 </div>
                 <hr className="border-gray-100 dark:border-gray-800" />

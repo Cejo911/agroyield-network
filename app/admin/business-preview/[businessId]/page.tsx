@@ -158,6 +158,8 @@ export default async function BusinessPreviewPage({ params }: { params: Promise<
             {[
               ['Address', business.address],
               ['Phone', business.phone],
+              ['Alt Phone', business.alt_phone],
+              ['WhatsApp', business.whatsapp],
               ['Email', business.email],
               ['CAC Number', business.cac_number],
               ['VAT / TIN', business.vat_tin],
