@@ -1,6 +1,6 @@
 # AgroYield Network — Project Status
 
-> **Last updated:** 16 April 2026 (Checkpoint 17)
+> **Last updated:** 16 April 2026 (Checkpoint 18)
 > **Maintained by:** Okoli (okolichijiokei@gmail.com)
 > **Launch Target:** 5 July 2026 (~11 weeks remaining)
 > **Purpose:** Permanent reference for any developer or Claude session to get up to speed instantly.
@@ -347,6 +347,27 @@ Note: `/insights`, `/connections` are pre-registered for future modules.
 ---
 
 ## Changelog
+
+### Checkpoint 18 — April 16, 2026 (Marketplace Escrow — Phase 4.1)
+
+- Added: `supabase/migrations/20260416_marketplace_escrow.sql` — 3 tables: `seller_bank_accounts` (Paystack recipient codes), `marketplace_orders` (full lifecycle with 7 statuses, payment tracking, delivery deadline), `marketplace_disputes` (buyer/seller disputes with admin resolution). Full RLS: sellers see own bank account, buyer+seller see own orders, order participants see/raise disputes. Indexes on buyer_id, seller_id, listing_id, status, paystack_reference, delivery_deadline.
+- Added: `app/api/marketplace/bank-account/route.ts` — GET/POST seller bank account. POST resolves account name via Paystack, fetches bank name, creates Paystack transfer recipient, upserts in DB. Rate limited.
+- Added: `app/api/marketplace/orders/route.ts` — GET lists user's orders (buyer/seller/all filter), POST creates order + initializes Paystack payment. Validates listing (sell type, price > 0, not own, not closed, seller has bank account, no existing active order). 3% commission. Returns Paystack authorization_url.
+- Added: `app/api/marketplace/orders/[id]/route.ts` — GET order detail (buyer/seller/admin only, includes dispute + profiles). PATCH handles 5 actions: `ship` (seller marks shipped, sets 7-day auto-release deadline), `confirm` (buyer confirms delivery, triggers Paystack Transfer to seller), `cancel` (before shipping, auto-refunds if paid), `admin_release` (force release to seller), `admin_refund` (refund buyer). All actions send notifications + Slack alerts + audit logs.
+- Added: `app/api/marketplace/orders/[id]/dispute/route.ts` — POST raises dispute (buyer or seller, only on paid/shipped orders, one per order). PATCH admin-only resolution: `resolved_seller` (releases funds via Transfer) or `resolved_buyer` (refunds via Paystack Refund API). Audit logged.
+- Added: `app/api/marketplace/orders/auto-release/route.ts` — Cron endpoint (CRON_SECRET auth). Finds shipped orders past delivery_deadline, releases funds via Paystack Transfer, notifies both parties. Slack summary with released/failed counts.
+- Added: `app/api/admin/marketplace-orders/route.ts` — Admin-only endpoint returning all orders + disputes for admin tab.
+- Added: `app/marketplace/bank-account/page.tsx` + `bank-account-form.tsx` — Seller payout account setup page: bank dropdown (28 Nigerian banks including OPay, PalmPay, Kuda), 10-digit account number input, Paystack verification, current account display.
+- Added: `app/marketplace/orders/page.tsx` + `orders-list.tsx` — Orders list page with buyer/seller/all toggle, order cards with thumbnail, status badge, amount, date.
+- Added: `app/marketplace/orders/[id]/page.tsx` + `order-detail.tsx` — Order detail with status timeline, amounts breakdown (total/payout/fee), action buttons (ship/confirm/cancel/dispute/admin), inline dispute form, dispute display, admin release/refund controls.
+- Added: `app/marketplace/[id]/BuyNowButton.tsx` — "Buy Now — ₦X" button with escrow explanation, handles Paystack redirect. Shows fallback message if seller has no bank account.
+- Changed: `app/marketplace/[id]/page.tsx` — Added BuyNowButton for sell-type listings with price (checks seller bank account via admin client). Buy Now section appears above Contact Seller.
+- Changed: `app/marketplace/page.tsx` — Added "My Orders" link in marketplace header next to "Post listing".
+- Changed: `app/api/webhooks/paystack/route.ts` — Extended to handle marketplace payments. Routes `charge.success` by `metadata.type === 'marketplace_order'` to new handler that updates order status pending_payment→paid and notifies seller. Migrated from inline `createAdminClient()` to `getSupabaseAdmin()`. Added notifications + Slack alerts.
+- Changed: `app/admin/admin-client.tsx` — Added lazy-loaded `OrdersTab`, `'orders'` tab type, orders tab button after Support, orders permission mapped to marketplace.
+- Added: `app/admin/tabs/OrdersTab.tsx` — Admin orders dashboard: active/disputed/commission stats, status filter, order cards with buyer/seller info + amounts + dispute details, release/refund/resolve actions, inline dispute resolution form (favour seller vs favour buyer).
+- SQL pending: Run `20260416_marketplace_escrow.sql` migration in Supabase before deployment
+- ENV pending: Add `CRON_SECRET` to Vercel env vars for auto-release cron job
 
 ### Checkpoint 17 — April 16, 2026 (Support Ticket System — Phase 4.7)
 

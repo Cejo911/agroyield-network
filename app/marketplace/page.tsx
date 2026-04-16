@@ -38,12 +38,20 @@ export default async function MarketplacePage() {
               Buy, sell and trade agricultural products, inputs and equipment.
             </p>
           </div>
-          <Link
-            href="/marketplace/new"
-            className="bg-green-600 text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors"
-          >
-            Post listing
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/marketplace/orders"
+              className="text-sm font-medium text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
+            >
+              My Orders
+            </Link>
+            <Link
+              href="/marketplace/new"
+              className="bg-green-600 text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors"
+            >
+              Post listing
+            </Link>
+          </div>
         </div>
         <MarketplaceClient listings={listingList} profileMap={profileMap} userId={user.id} />
         <FAQAccordion items={MODULE_FAQS.marketplace} title="Frequently Asked Questions" subtitle="Common questions about Marketplace" compact />

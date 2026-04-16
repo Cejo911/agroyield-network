@@ -240,7 +240,22 @@ Harden the platform, add differentiators, test with real users.
 
 > **Why:** Capture transactions on-platform. Revenue via commission. Build trust.
 > **Scope:** "Request to Buy" flow. Paystack escrow. Buyer pays → seller ships → buyer confirms → funds released. Basic dispute flow.
-> **Status:** ⬜ Not started
+> **Status:** ✅ Completed (16 Apr 2026)
+>
+> **Delivered:**
+> - 3 new DB tables: `seller_bank_accounts`, `marketplace_orders`, `marketplace_disputes` with full RLS
+> - Seller bank account setup with Paystack account verification + transfer recipient creation
+> - "Buy Now" button on listing detail page with Paystack payment initialization
+> - Paystack webhook extended to handle marketplace payments (separate from subscriptions)
+> - Full order lifecycle: pending_payment → paid → shipped → completed/disputed/refunded/cancelled
+> - Buyer confirms delivery → auto-releases funds via Paystack Transfer API
+> - 7-day auto-release cron for shipped orders not confirmed or disputed
+> - Dispute system: buyer/seller can raise, admin resolves (favour seller = release, favour buyer = refund)
+> - Admin orders/disputes tab with release, refund, and dispute resolution controls
+> - 3% platform commission on all transactions
+> - Notifications + Slack alerts at every lifecycle step
+> - User-facing pages: orders list (buyer/seller toggle), order detail, bank account setup
+> - "My Orders" link on marketplace page
 
 ### 4.2 — Business Benchmarking (Basic)
 

@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { getSupabaseAdmin } from '@/lib/supabase/admin'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import AppNav from '@/app/components/AppNav'
@@ -6,6 +7,7 @@ import ListingActions from './ListingActions'
 import CommentsSection from '@/app/components/CommentsSection'
 import MessageButton from '@/app/components/MessageButton'
 import ListingGallery from './ListingGallery'
+import BuyNowButton from './BuyNowButton'
 
 const CATEGORY_COLOURS: Record<string, string> = {
   produce:   'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
@@ -53,6 +55,18 @@ export default async function ListingPage({
 
   const isOwner  = user.id === listing.user_id
   const isClosed = listing.is_closed ?? false
+
+  // Check if seller has a payout account (for Buy Now button)
+  let sellerHasBank = false
+  if (!isOwner && listing.type === 'sell' && listing.price && !isClosed) {
+    const admin = getSupabaseAdmin()
+    const { data: bank } = await admin
+      .from('seller_bank_accounts')
+      .select('recipient_code')
+      .eq('user_id', listing.user_id)
+      .single()
+    sellerHasBank = !!bank?.recipient_code
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
@@ -122,6 +136,17 @@ export default async function ListingPage({
             <div className="mb-6">
               <h2 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Description</h2>
               <p className="text-gray-600 dark:text-gray-400 leading-relaxed whitespace-pre-wrap">{listing.description}</p>
+            </div>
+          )}
+
+          {/* Buy Now — only for sell listings with a price */}
+          {!isOwner && !isClosed && listing.type === 'sell' && listing.price && (
+            <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-800">
+              <BuyNowButton
+                listingId={listing.id}
+                price={listing.price}
+                sellerHasBank={sellerHasBank}
+              />
             </div>
           )}
 

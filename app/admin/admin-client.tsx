@@ -12,6 +12,7 @@ const AuditLogTab = lazy(() => import('./tabs/AuditLogTab'))
 const NotifyPanel = lazy(() => import('./tabs/NotifyPanel'))
 const AnalyticsTab = lazy(() => import('./tabs/AnalyticsTab'))
 const SupportTab = lazy(() => import('./tabs/SupportTab'))
+const OrdersTab = lazy(() => import('./tabs/OrdersTab'))
 
 // ── Interfaces ──
 
@@ -241,7 +242,7 @@ interface AdminClientProps {
   supportTickets: SupportTicket[]
 }
 
-type Tab = 'opportunities' | 'marketplace' | 'members' | 'grants' | 'community' | 'research' | 'comments' | 'prices' | 'mentorship' | 'reports' | 'support' | 'analytics' | 'audit_log' | 'notifications' | 'settings'
+type Tab = 'opportunities' | 'marketplace' | 'members' | 'grants' | 'community' | 'research' | 'comments' | 'prices' | 'mentorship' | 'reports' | 'support' | 'orders' | 'analytics' | 'audit_log' | 'notifications' | 'settings'
 
 // Permission keys per tab — determines which tabs a moderator can see
 const TAB_PERMISSION: Partial<Record<Tab, string>> = {
@@ -256,6 +257,7 @@ const TAB_PERMISSION: Partial<Record<Tab, string>> = {
   mentorship: 'mentorship',
   reports: 'reports',
   support: 'support',
+  orders: 'marketplace',
   notifications: 'notifications',
 }
 
@@ -647,6 +649,7 @@ export default function AdminClient({
     { id: 'mentorship',    label: 'Mentorship' },
     { id: 'reports',       label: 'Reports', badge: reportGroups.length || undefined },
     { id: 'support',       label: 'Support', badge: supportTickets.filter((t: SupportTicket) => t.status === 'open' || t.status === 'in_progress').length || undefined },
+    { id: 'orders',        label: 'Orders' },
   ]
 
   const superAdminTabs: { id: Tab; label: string }[] = [
@@ -1385,6 +1388,10 @@ export default function AdminClient({
 
       {activeTab === 'support' && (
         <SupportTab tickets={supportTickets} profilesMap={profilesMap} getDisplayName={getDisplayName} currentUserId={currentUserId} />
+      )}
+
+      {activeTab === 'orders' && (
+        <OrdersTab profilesMap={profilesMap} getDisplayName={getDisplayName} />
       )}
 
       {activeTab === 'analytics' && isSuperAdmin && (
