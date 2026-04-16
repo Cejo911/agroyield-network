@@ -80,10 +80,11 @@ export default function NewListingPage() {
       if (!res.ok) throw new Error(data.error || 'Failed to post listing')
       if (data.pending) {
         setMessage({ type: 'success', text: 'Listing submitted for review. An admin will approve it shortly.' })
+        setTimeout(() => router.push('/marketplace'), 2000)
       } else {
         setMessage({ type: 'success', text: 'Listing posted successfully! Redirecting...' })
+        setTimeout(() => router.push(`/marketplace/${data.id}`), 2000)
       }
-      setTimeout(() => router.push('/marketplace'), 2000)
     } catch (err: unknown) {
       setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Something went wrong' })
     } finally {
