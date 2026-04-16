@@ -50,6 +50,13 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // Most pages require auth — skip static prerendering for the entire app.
+  // The middleware already redirects unauthenticated users, so static HTML
+  // for these routes is never served.  This prevents build failures from
+  // client components that call createClient() or useSearchParams().
+  experimental: {
+    missingSuspenseWithCSRBailout: false,
+  },
 };
 
 export default withSentryConfig(withPWA(nextConfig), {
