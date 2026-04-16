@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation'
 import useProfileGate from '@/app/hooks/useProfileGate'
 import ProfileGateBanner from '@/app/components/ProfileGateBanner'
 import ImageUploader from '@/app/components/ImageUploader'
+import OnlineIndicator from '@/app/components/OnlineIndicator'
 import { safeHref } from '@/lib/safe-href'
 
 const POST_TYPES = [
@@ -380,7 +381,7 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
                 )}
                 {/* Header */}
                 <div className="flex items-start gap-3 mb-3">
-                  <Link href={profileHref} className="shrink-0">
+                  <Link href={profileHref} className="relative shrink-0">
                     {profile?.avatar_url ? (
                       <Image src={profile.avatar_url} alt={name} width={40} height={40} className="rounded-full object-cover" />
                     ) : (
@@ -388,6 +389,7 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
                         {initials}
                       </div>
                     )}
+                    <OnlineIndicator lastSeenAt={profile?.last_seen_at} size="sm" className="absolute bottom-0 right-0" />
                   </Link>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">

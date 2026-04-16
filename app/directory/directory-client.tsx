@@ -3,6 +3,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import FollowButton from './follow-button'
+import OnlineIndicator from '@/app/components/OnlineIndicator'
 import { useSearchLog } from '@/lib/useSearchLog'
 
 const ROLES = ['All', 'Student', 'Researcher', 'Farmer', 'Agripreneur', 'Institution']
@@ -38,6 +39,7 @@ type Profile = {
   institution_type?: string | null
   institution_display_name?: string | null
   is_institution_verified?: boolean | null
+  last_seen_at?: string | null
 }
 
 const INST_TYPE_LABELS: Record<string, string> = {
@@ -192,14 +194,17 @@ export default function DirectoryClient({ profiles, currentUserId, followingIds,
               )}
 
               <Link href={`/directory/${profile.id}`} className="block">
-                {/* Avatar */}
-                {profile.avatar_url ? (
-                  <Image src={profile.avatar_url} alt="" width={48} height={48} className="rounded-full object-cover mb-4" />
-                ) : (
-                  <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center text-green-700 dark:text-green-400 font-bold text-lg mb-4">
-                    {profile.first_name?.[0]?.toUpperCase() ?? '?'}
-                  </div>
-                )}
+                {/* Avatar with presence indicator */}
+                <div className="relative w-12 h-12 mb-4">
+                  {profile.avatar_url ? (
+                    <Image src={profile.avatar_url} alt="" width={48} height={48} className="rounded-full object-cover" />
+                  ) : (
+                    <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center text-green-700 dark:text-green-400 font-bold text-lg">
+                      {profile.first_name?.[0]?.toUpperCase() ?? '?'}
+                    </div>
+                  )}
+                  <OnlineIndicator lastSeenAt={profile.last_seen_at} size="sm" className="absolute bottom-0 right-0" />
+                </div>
 
                 <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-green-700 dark:group-hover:text-green-400 transition-colors pr-20">
                   {profile.account_type === 'institution'

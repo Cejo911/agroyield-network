@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import OnlineIndicator from '@/app/components/OnlineIndicator'
 
 interface Message {
   id: string
@@ -16,6 +17,7 @@ interface OtherUser {
   id: string
   name: string
   avatarUrl: string | null
+  lastSeenAt: string | null
   role: string | null
   profileHref: string
 }
@@ -148,7 +150,7 @@ export default function MessageThread({ conversationId, currentUserId, otherUser
         <Link href="/messages" className="text-gray-400 hover:text-green-600 transition-colors mr-1">
           ←
         </Link>
-        <Link href={otherUser.profileHref} className="shrink-0">
+        <Link href={otherUser.profileHref} className="relative shrink-0">
           {otherUser.avatarUrl ? (
             <Image src={otherUser.avatarUrl} alt={otherUser.name} width={36} height={36} className="rounded-full object-cover" />
           ) : (
@@ -156,6 +158,7 @@ export default function MessageThread({ conversationId, currentUserId, otherUser
               {initial}
             </div>
           )}
+          <OnlineIndicator lastSeenAt={otherUser.lastSeenAt} size="sm" className="absolute bottom-0 right-0" />
         </Link>
         <div className="min-w-0">
           <Link href={otherUser.profileHref} className="font-semibold text-gray-900 dark:text-white text-sm hover:underline block truncate">

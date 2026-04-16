@@ -3,12 +3,14 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import OnlineIndicator from '@/app/components/OnlineIndicator'
 
 interface Conversation {
   id: string
   name: string
   initial: string
   avatarUrl: string | null
+  lastSeenAt: string | null
   preview: string
   time: string
   unread: number
@@ -70,14 +72,17 @@ export default function MessagesInbox({ conversations }: { conversations: Conver
               href={`/messages/${convo.id}`}
               className="flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
             >
-              {/* Avatar */}
-              {convo.avatarUrl ? (
-                <Image src={convo.avatarUrl} alt={convo.name} width={44} height={44} className="rounded-full object-cover shrink-0" />
-              ) : (
-                <div className="w-11 h-11 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-700 dark:text-green-400 font-bold text-sm shrink-0">
-                  {convo.initial}
-                </div>
-              )}
+              {/* Avatar with presence */}
+              <div className="relative shrink-0">
+                {convo.avatarUrl ? (
+                  <Image src={convo.avatarUrl} alt={convo.name} width={44} height={44} className="rounded-full object-cover" />
+                ) : (
+                  <div className="w-11 h-11 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-700 dark:text-green-400 font-bold text-sm">
+                    {convo.initial}
+                  </div>
+                )}
+                <OnlineIndicator lastSeenAt={convo.lastSeenAt} size="sm" className="absolute bottom-0 right-0" />
+              </div>
 
               {/* Content */}
               <div className="flex-1 min-w-0">

@@ -28,7 +28,7 @@ export default async function ConversationPage({ params }: { params: Promise<{ i
 
   // Fetch other user's profile and messages in parallel
   const [{ data: profile }, { data: messages }] = await Promise.all([
-    supabase.from('profiles').select('id, first_name, last_name, avatar_url, role, username').eq('id', otherId).single(),
+    supabase.from('profiles').select('id, first_name, last_name, avatar_url, role, username, last_seen_at').eq('id', otherId).single(),
     supabaseAny
       .from('messages')
       .select('id, sender_id, body, status, created_at, read_at')
@@ -60,6 +60,7 @@ export default async function ConversationPage({ params }: { params: Promise<{ i
           id: otherId,
           name,
           avatarUrl: prof?.avatar_url || null,
+          lastSeenAt: prof?.last_seen_at || null,
           role: prof?.role || null,
           profileHref,
         }}

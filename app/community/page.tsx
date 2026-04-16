@@ -42,7 +42,7 @@ export default async function CommunityPage() {
 
   const [{ data: profiles }, { data: allLikes }, { data: userLikes }, { data: commentCounts }] = await Promise.all([
     userIds.length > 0
-      ? supabase.from('profiles').select('id, first_name, last_name, role, avatar_url, username').in('id', userIds)
+      ? supabase.from('profiles').select('id, first_name, last_name, role, avatar_url, username, last_seen_at').in('id', userIds)
       : Promise.resolve({ data: [] }),
     postIds.length > 0
       ? supabaseAny.from('likes').select('post_id').eq('post_type', 'community').in('post_id', postIds)

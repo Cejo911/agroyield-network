@@ -33,6 +33,7 @@ export default function AppNav() {
   const pathname = usePathname()
   const router   = useRouter()
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const cleanupRef = useRef<(() => void) | null>(null)
 
   useEffect(() => {
     const supabase = createClient()
@@ -55,6 +56,20 @@ export default function AppNav() {
           }
         })
 
+      // Presence heartbeat — update last_seen_at every 60s
+      let lastHeartbeat = 0
+      const heartbeat = () => {
+        if (Date.now() - lastHeartbeat < 120000) return // skip if < 2 min since last
+        lastHeartbeat = Date.now()
+        supabaseAny
+          .from('profiles')
+          .update({ last_seen_at: new Date().toISOString() })
+          .eq('id', user.id)
+          .then(() => {})
+      }
+      heartbeat() // fire immediately
+      const heartbeatInterval = setInterval(heartbeat, 60000)
+
       // Fetch unread message count
       const fetchUnread = async () => {
         const [{ data: convosA }, { data: convosB }] = await Promise.all([
@@ -73,8 +88,16 @@ export default function AppNav() {
       }
       fetchUnread()
       const interval = setInterval(fetchUnread, 30000) // refresh every 30s
-      return () => clearInterval(interval)
+
+      // Cleanup both intervals
+      const cleanup = () => {
+        clearInterval(interval)
+        clearInterval(heartbeatInterval)
+      }
+      // Store cleanup for useEffect return
+      cleanupRef.current = cleanup
     })
+    return () => cleanupRef.current?.()
   }, [])
 
   // Close dropdown when clicking outside

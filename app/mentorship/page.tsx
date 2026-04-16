@@ -61,7 +61,7 @@ export default async function MentorshipPage() {
   // Fetch active mentor profiles with user info
   const { data: mentors } = await supabase
     .from('mentor_profiles')
-    .select('*, profiles!mentor_profiles_user_id_fkey(first_name, last_name, role, institution, avatar_url, is_verified)')
+    .select('*, profiles!mentor_profiles_user_id_fkey(first_name, last_name, role, institution, avatar_url, is_verified, last_seen_at)')
     .eq('is_active', true)
     .order('created_at', { ascending: false })
 

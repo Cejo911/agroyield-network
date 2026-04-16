@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import OnlineIndicator from '@/app/components/OnlineIndicator'
 import { useSearchLog } from '@/lib/useSearchLog'
 
 interface Mentor {
@@ -25,6 +26,7 @@ interface Mentor {
     institution: string | null
     avatar_url: string | null
     is_verified: boolean
+    last_seen_at?: string | null
   }
 }
 
@@ -132,13 +134,16 @@ export default function MentorBrowser({ mentors, userId }: { mentors: Mentor[]; 
                 className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 hover:border-green-300 dark:hover:border-green-700 transition-colors block"
               >
                 <div className="flex items-start gap-4">
-                  {m.profiles?.avatar_url ? (
-                    <Image src={m.profiles.avatar_url} alt={name} width={56} height={56} className="rounded-full object-cover shrink-0" />
-                  ) : (
-                    <div className="w-14 h-14 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-700 dark:text-green-400 font-bold text-lg shrink-0">
-                      {initials}
-                    </div>
-                  )}
+                  <div className="relative shrink-0">
+                    {m.profiles?.avatar_url ? (
+                      <Image src={m.profiles.avatar_url} alt={name} width={56} height={56} className="rounded-full object-cover" />
+                    ) : (
+                      <div className="w-14 h-14 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-700 dark:text-green-400 font-bold text-lg">
+                        {initials}
+                      </div>
+                    )}
+                    <OnlineIndicator lastSeenAt={m.profiles?.last_seen_at} size="sm" className="absolute bottom-0 right-0" />
+                  </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <h3 className="font-bold text-gray-900 dark:text-white truncate">{name}</h3>

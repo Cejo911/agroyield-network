@@ -6,6 +6,7 @@ import AppNav from '@/app/components/AppNav'
 import FollowButton from '../follow-button'
 import MessageButton from '@/app/components/MessageButton'
 import BackButton from '@/app/components/BackButton'
+import OnlineIndicator from '@/app/components/OnlineIndicator'
 import { safeHref } from '@/lib/safe-href'
 
 export default async function PublicProfilePage({
@@ -45,13 +46,16 @@ export default async function PublicProfilePage({
 
           {/* Header */}
           <div className="flex items-start gap-5 mb-6">
-            {profile.avatar_url ? (
-              <Image src={profile.avatar_url} alt="" width={64} height={64} className="rounded-full object-cover border-2 border-white dark:border-gray-800 shadow-sm" />
-            ) : (
-              <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center text-green-700 dark:text-green-400 font-bold text-2xl">
-                {profile.first_name?.[0]?.toUpperCase() ?? '?'}
-              </div>
-            )}
+            <div className="relative shrink-0">
+              {profile.avatar_url ? (
+                <Image src={profile.avatar_url} alt="" width={64} height={64} className="rounded-full object-cover border-2 border-white dark:border-gray-800 shadow-sm" />
+              ) : (
+                <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center text-green-700 dark:text-green-400 font-bold text-2xl">
+                  {profile.first_name?.[0]?.toUpperCase() ?? '?'}
+                </div>
+              )}
+              <OnlineIndicator lastSeenAt={profile.last_seen_at} size="lg" className="absolute bottom-0 right-0" />
+            </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-3">
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white">

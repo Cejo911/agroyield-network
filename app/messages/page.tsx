@@ -40,7 +40,7 @@ export default async function MessagesPage() {
 
   const [{ data: profiles }, { data: lastMessages }, { data: unreadMessages }] = await Promise.all([
     otherIds.length > 0
-      ? supabase.from('profiles').select('id, first_name, last_name, avatar_url, role').in('id', otherIds)
+      ? supabase.from('profiles').select('id, first_name, last_name, avatar_url, role, last_seen_at').in('id', otherIds)
       : Promise.resolve({ data: [] }),
     convoIds.length > 0
       ? supabaseAny
@@ -106,6 +106,7 @@ export default async function MessagesPage() {
       name,
       initial: (name[0] || '?').toUpperCase(),
       avatarUrl: profile?.avatar_url || null,
+      lastSeenAt: profile?.last_seen_at || null,
       preview,
       time,
       unread,
