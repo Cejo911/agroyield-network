@@ -381,6 +381,10 @@ export default function AdminClient({
     catch { return DEFAULT_COMMODITY_ITEMS }
   })
   const [newCommodityItem, setNewCommodityItem] = useState<Record<string, string>>({})
+  const [featuredPlans, setFeaturedPlans] = useState<{ days: number; price: number; label: string }[]>(() => {
+    try { return settingsMap.featured_listing_plans ? JSON.parse(settingsMap.featured_listing_plans) : [{ days: 7, price: 500, label: '7 days' }, { days: 14, price: 900, label: '14 days' }, { days: 30, price: 1500, label: '30 days' }] }
+    catch { return [{ days: 7, price: 500, label: '7 days' }, { days: 14, price: 900, label: '14 days' }, { days: 30, price: 1500, label: '30 days' }] }
+  })
   const [proMonthlyPrice, setProMonthlyPrice] = useState(settingsMap.tier_pro_monthly ?? '2000')
   const [proAnnualPrice, setProAnnualPrice] = useState(settingsMap.tier_pro_annual ?? '20000')
   const [growthMonthlyPrice, setGrowthMonthlyPrice] = useState(settingsMap.tier_growth_monthly ?? '5000')
@@ -470,6 +474,7 @@ export default function AdminClient({
           marketplace_categories: JSON.stringify(marketplaceCategories),
           commodity_categories: JSON.stringify(commodityCategories),
           commodity_items: JSON.stringify(commodityItems),
+          featured_listing_plans: JSON.stringify(featuredPlans),
           tier_pro_monthly: proMonthlyPrice,
           tier_pro_annual: proAnnualPrice,
           tier_growth_monthly: growthMonthlyPrice,
@@ -1840,6 +1845,41 @@ export default function AdminClient({
                       onChange={(e) => setGraceDays(parseInt(e.target.value, 10) || 0)}
                       className={`w-20 ${sInput}`} />
                     <span className="text-xs text-gray-500">days (0 = immediate)</span>
+                  </div>
+                </div>
+                <hr className="border-gray-100 dark:border-gray-800" />
+                <div>
+                  <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1 text-sm">Featured Listing Pricing</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Set the duration and price for each featured listing plan. Members pay via Paystack.</p>
+                  <div className="space-y-2">
+                    {featuredPlans.map((plan, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <input type="number" min={1} value={plan.days}
+                          onChange={e => {
+                            const updated = [...featuredPlans]
+                            updated[idx] = { ...plan, days: parseInt(e.target.value, 10) || 1, label: `${parseInt(e.target.value, 10) || 1} days` }
+                            setFeaturedPlans(updated)
+                          }}
+                          className={`w-20 ${sInput}`} />
+                        <span className="text-xs text-gray-500">days</span>
+                        <input type="number" min={0} value={plan.price}
+                          onChange={e => {
+                            const updated = [...featuredPlans]
+                            updated[idx] = { ...plan, price: parseInt(e.target.value, 10) || 0 }
+                            setFeaturedPlans(updated)
+                          }}
+                          className={`w-24 ${sInput}`} />
+                        <span className="text-xs text-gray-500">&#8358;</span>
+                        {featuredPlans.length > 1 && (
+                          <button onClick={() => setFeaturedPlans(featuredPlans.filter((_, i) => i !== idx))}
+                            className="text-xs text-red-500 hover:text-red-700">Remove</button>
+                        )}
+                      </div>
+                    ))}
+                    {featuredPlans.length < 4 && (
+                      <button onClick={() => setFeaturedPlans([...featuredPlans, { days: 7, price: 500, label: '7 days' }])}
+                        className="text-xs text-green-600 hover:text-green-700 font-medium">+ Add plan</button>
+                    )}
                   </div>
                 </div>
               </div>

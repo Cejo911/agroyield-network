@@ -297,7 +297,20 @@ Harden the platform, add differentiators, test with real users.
 
 > **Why:** Revenue opportunity — members pay to keep their listing promoted for a configurable duration.
 > **Scope:** Featured listing request flow. Duration picker (days/weeks/months). Paystack billing on request. Auto-expire featured status when duration lapses. Visual distinction on marketplace feed.
-> **Status:** ⬜ Not started (deferred from pre-Phase 4 review, 15 Apr 2026)
+> **Status:** ✅ Completed (16 Apr 2026)
+>
+> **Delivered:**
+> - New DB table: `featured_listing_payments` with RLS + 3 new columns on `marketplace_listings` (`is_featured`, `featured_until`, `featured_at`)
+> - Admin-configurable pricing plans (stored in settings table, editable from admin Pricing section)
+> - Default plans: 7 days = ₦500, 14 days = ₦900, 30 days = ₦1,500
+> - Paystack payment flow for featuring a listing
+> - Webhook handler activates featured status on payment success
+> - Duration stacking: paying again adds days on top of existing featured period
+> - Featured listings sort to top of marketplace feed with amber border + "FEATURED" badge
+> - Badge shows on both listing cards (with/without images) and listing detail page
+> - Owner sees "Promote this listing" / "Extend featured period" UI with plan picker
+> - Auto-expire cron (daily at 5 AM UTC) removes featured status + notifies owners
+> - Slack alerts for featured payments and expirations
 
 ---
 

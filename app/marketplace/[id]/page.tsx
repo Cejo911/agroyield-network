@@ -8,6 +8,7 @@ import CommentsSection from '@/app/components/CommentsSection'
 import MessageButton from '@/app/components/MessageButton'
 import ListingGallery from './ListingGallery'
 import BuyNowButton from './BuyNowButton'
+import FeatureListingButton from './FeatureListingButton'
 
 const CATEGORY_COLOURS: Record<string, string> = {
   produce:   'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
@@ -84,6 +85,11 @@ export default async function ListingPage({
           )}
 
           <div className="flex flex-wrap gap-2 mb-4">
+            {listing.is_featured && listing.featured_until && new Date(listing.featured_until) > new Date() && (
+              <span className="text-xs px-3 py-1 rounded-full font-bold bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
+                FEATURED
+              </span>
+            )}
             {listing.type && (
               <span className={`text-xs px-3 py-1 rounded-full font-medium capitalize ${getColour(TYPE_COLOURS, listing.type)}`}>
                 {listing.type}
@@ -165,6 +171,14 @@ export default async function ListingPage({
           )}
 
           {isOwner && <ListingActions id={id} isClosed={isClosed} />}
+
+          {isOwner && !isClosed && (
+            <FeatureListingButton
+              listingId={listing.id}
+              isFeatured={listing.is_featured ?? false}
+              featuredUntil={listing.featured_until ?? null}
+            />
+          )}
 
           <CommentsSection postId={id} postType="listing" />
         </div>

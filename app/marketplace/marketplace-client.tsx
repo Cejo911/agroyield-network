@@ -52,6 +52,8 @@ type Listing = {
   condition: string | null
   image_urls: string[] | null
   is_closed: boolean
+  is_featured: boolean | null
+  featured_until: string | null
   created_at: string
 }
 
@@ -198,8 +200,9 @@ export default function MarketplaceClient({
           {sorted.map(listing => {
             const isOwner  = listing.user_id === userId
             const isClosed = listing.is_closed ?? false
+            const isFeatured = listing.is_featured && listing.featured_until && new Date(listing.featured_until) > new Date()
             return (
-              <div key={listing.id} className={`bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md hover:border-green-200 dark:hover:border-green-800 transition-all group flex flex-col ${isClosed ? 'opacity-70' : ''}`}>
+              <div key={listing.id} className={`bg-white dark:bg-gray-900 rounded-2xl border shadow-sm hover:shadow-md transition-all group flex flex-col ${isFeatured ? 'border-amber-300 dark:border-amber-600 ring-1 ring-amber-200 dark:ring-amber-800' : 'border-gray-100 dark:border-gray-800 hover:border-green-200 dark:hover:border-green-800'} ${isClosed ? 'opacity-70' : ''}`}>
                 <Link href={`/marketplace/${listing.id}`} className="block flex-1">
                   {listing.image_urls?.[0] && (
                     <div className="relative w-full aspect-[4/3] bg-gray-100 dark:bg-gray-800 rounded-t-2xl overflow-hidden">
@@ -209,10 +212,18 @@ export default function MarketplaceClient({
                           +{listing.image_urls.length - 1}
                         </span>
                       )}
+                      {isFeatured && (
+                        <span className="absolute top-2 left-2 bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow">
+                          FEATURED
+                        </span>
+                      )}
                     </div>
                   )}
                   <div className="p-5">
                   <div className="flex flex-wrap gap-2 mb-3">
+                    {isFeatured && !listing.image_urls?.[0] && (
+                      <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">FEATURED</span>
+                    )}
                     {listing.type && <span className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${getTypeColour(listing.type)}`}>{listing.type}</span>}
                     {listing.category && <span className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${getCategoryColour(listing.category)}`}>{listing.category}</span>}
                     {listing.condition && <span className="text-xs px-2 py-0.5 rounded-full font-medium capitalize bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">{listing.condition}</span>}

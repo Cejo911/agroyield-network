@@ -31,6 +31,12 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ received: true })
       }
 
+      // ── Featured listing payment ──────────────────────────────────
+      if (metadata.type === 'featured_listing') {
+        await handleFeaturedListingPayment(admin, event.data)
+        return NextResponse.json({ received: true })
+      }
+
       // ── Subscription payment (existing logic) ─────────────────────
       const { user_id, tier, billing, plan } = metadata
 
@@ -127,6 +133,89 @@ async function handleMarketplacePayment(admin: any, data: Record<string, any>) {
       'Order': order.id,
       'Listing': listingTitle,
       'Amount': `₦${Number(order.amount).toLocaleString()}`,
+      'Reference': reference,
+    },
+  }).catch(() => {})
+}
+
+/**
+ * Handle a successful featured listing payment.
+ * Marks payment as paid, sets is_featured + featured_until on the listing.
+ * Stacks duration if already featured.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function handleFeaturedListingPayment(admin: any, data: Record<string, any>) {
+  const reference = data.reference as string
+  const metadata = data.metadata
+
+  // Find the payment record
+  const { data: payment, error } = await admin
+    .from('featured_listing_payments')
+    .select('id, listing_id, user_id, days, status')
+    .eq('paystack_reference', reference)
+    .single()
+
+  if (error || !payment) {
+    console.error('Featured webhook: payment not found for reference', reference)
+    return
+  }
+
+  if (payment.status === 'paid') {
+    console.log('Featured webhook: payment already processed', payment.id)
+    return
+  }
+
+  // Mark payment as paid
+  await admin.from('featured_listing_payments').update({
+    status: 'paid',
+    paid_at: new Date().toISOString(),
+  }).eq('id', payment.id)
+
+  // Get current listing to check if already featured (stack duration)
+  const { data: listing } = await admin
+    .from('marketplace_listings')
+    .select('is_featured, featured_until, title')
+    .eq('id', payment.listing_id)
+    .single()
+
+  // Calculate new featured_until: stack on existing if still active
+  let startFrom = new Date()
+  if (listing?.is_featured && listing.featured_until) {
+    const existingExpiry = new Date(listing.featured_until)
+    if (existingExpiry > startFrom) {
+      startFrom = existingExpiry // stack on top of existing time
+    }
+  }
+  const featuredUntil = new Date(startFrom)
+  featuredUntil.setDate(featuredUntil.getDate() + payment.days)
+
+  // Update listing
+  await admin.from('marketplace_listings').update({
+    is_featured: true,
+    featured_until: featuredUntil.toISOString(),
+    featured_at: listing?.is_featured ? undefined : new Date().toISOString(),
+  }).eq('id', payment.listing_id)
+
+  const listingTitle = listing?.title ?? metadata?.listing_title ?? 'a listing'
+
+  // Notify user
+  createNotification(admin, {
+    userId: payment.user_id,
+    type: 'system',
+    title: 'Listing featured!',
+    body: `"${listingTitle}" is now featured until ${featuredUntil.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}`,
+    link: `/marketplace/${payment.listing_id}`,
+    entityId: payment.listing_id,
+  })
+
+  slackAlert({
+    title: 'Listing Featured',
+    level: 'info',
+    fields: {
+      'Listing': listingTitle,
+      'Duration': `${payment.days} days`,
+      'Featured until': featuredUntil.toISOString(),
+      'Stacked': listing?.is_featured ? 'Yes' : 'No',
       'Reference': reference,
     },
   }).catch(() => {})

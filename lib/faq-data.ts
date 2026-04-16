@@ -153,6 +153,14 @@ export const MODULE_FAQS: Record<ModuleKey, FAQItem[]> = {
       q: 'How do I contact a seller?',
       a: 'Each listing shows a "Contact Seller" section with a direct messaging button. You can also use the phone/WhatsApp links on their profile if available. For listings with a price, you can use "Buy Now" to purchase directly through escrow.',
     },
+    {
+      q: 'How do I feature my listing?',
+      a: 'Go to your listing detail page and click "Promote this listing." Choose a duration (7, 14, or 30 days) and pay via Paystack. Featured listings appear at the top of the marketplace with a highlighted border and "FEATURED" badge — giving your listing maximum visibility.',
+    },
+    {
+      q: 'Can I extend my featured listing?',
+      a: 'Yes. If your listing is already featured, click "Extend featured period" and purchase more days. The additional time is stacked on top of your existing featured period — you won\'t lose any days.',
+    },
   ],
 
   prices: [

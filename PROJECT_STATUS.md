@@ -1,6 +1,6 @@
 # AgroYield Network — Project Status
 
-> **Last updated:** 16 April 2026 (Checkpoint 18)
+> **Last updated:** 16 April 2026 (Checkpoint 19)
 > **Maintained by:** Okoli (okolichijiokei@gmail.com)
 > **Launch Target:** 5 July 2026 (~11 weeks remaining)
 > **Purpose:** Permanent reference for any developer or Claude session to get up to speed instantly.
@@ -347,6 +347,19 @@ Note: `/insights`, `/connections` are pre-registered for future modules.
 ---
 
 ## Changelog
+
+### Checkpoint 19 — April 16, 2026 (Featured Listing Billing — Phase 4.8)
+
+- Added: `supabase/migrations/20260416_featured_listings.sql` — new `featured_listing_payments` table (tracks Paystack payments for featuring) with RLS. 3 new columns on `marketplace_listings`: `is_featured` (boolean), `featured_until` (timestamptz), `featured_at` (timestamptz). Index on `is_featured, featured_until` for sorting + cron expiry.
+- Added: `app/api/marketplace/feature/route.ts` — GET returns admin-configurable plans from settings (with defaults: 7d/₦500, 14d/₦900, 30d/₦1,500). POST initiates Paystack payment for a listing the user owns, validates listing is active/open, creates payment record in pending state.
+- Changed: `app/api/webhooks/paystack/route.ts` — Added `metadata.type === 'featured_listing'` handler. On payment success: marks payment as paid, sets `is_featured = true` + `featured_until` on listing with duration stacking (if already featured, new days added to existing expiry). Notifies user + Slack alert.
+- Added: `app/api/cron/expire-featured/route.ts` — Daily cron (5 AM UTC) finds `is_featured = true` listings past `featured_until`, sets `is_featured = false`, notifies owners. Uses `CRON_SECRET` auth. Added to `app/vercel.json`.
+- Changed: `app/marketplace/page.tsx` — Query now selects `is_featured, featured_until` and sorts by `is_featured DESC, created_at DESC` (featured listings always appear first).
+- Changed: `app/marketplace/marketplace-client.tsx` — Added `is_featured` and `featured_until` to Listing type. Featured listings get amber border + ring highlight. "FEATURED" badge: overlay on image (if images), or inline pill badge (if no images).
+- Added: `app/marketplace/[id]/FeatureListingButton.tsx` — Owner-only component: fetches plans from API, shows duration picker (7/14/30 day buttons with prices), initiates Paystack payment. If listing already featured, shows current expiry + "Extend featured period" option.
+- Changed: `app/marketplace/[id]/page.tsx` — Added FeatureListingButton for owners (below ListingActions). Added FEATURED badge to detail page badges row when listing is actively featured.
+- Changed: `app/admin/admin-client.tsx` — Added `featuredPlans` state with JSON parse from `featured_listing_plans` setting (defaults to 3 tiers). Added "Featured Listing Pricing" UI in Pricing & Subscriptions section: editable days + price per plan, add/remove plans (max 4). Saved as `featured_listing_plans` JSON in settings.
+- SQL pending: Run `20260416_featured_listings.sql` migration in Supabase before deployment
 
 ### Checkpoint 18 — April 16, 2026 (Marketplace Escrow — Phase 4.1)
 
