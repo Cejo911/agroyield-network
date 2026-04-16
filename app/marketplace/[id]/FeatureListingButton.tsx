@@ -83,7 +83,7 @@ export default function FeatureListingButton({ listingId, isFeatured, featuredUn
             {stillFeatured ? 'Add more days' : 'Feature your listing'}
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-            Featured listings appear at the top of search results with a highlighted badge.
+            Featured listings appear at the top of their category with a highlighted badge — buyers browsing your category see your listing first.
             {stillFeatured && ' Additional days will be added to your existing featured period.'}
           </p>
 

@@ -155,7 +155,7 @@ export const MODULE_FAQS: Record<ModuleKey, FAQItem[]> = {
     },
     {
       q: 'How do I feature my listing?',
-      a: 'Go to your listing detail page and click "Promote this listing." Choose a duration (7, 14, or 30 days) and pay via Paystack. Featured listings appear at the top of the marketplace with a highlighted border and "FEATURED" badge — giving your listing maximum visibility.',
+      a: 'Go to your listing detail page and click "Promote this listing." Choose a duration (7, 14, or 30 days) and pay via Paystack. Featured listings appear at the top of their category with a highlighted border and "FEATURED" badge — so buyers browsing your category see your listing first.',
     },
     {
       q: 'Can I extend my featured listing?',

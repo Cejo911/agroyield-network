@@ -306,7 +306,7 @@ Harden the platform, add differentiators, test with real users.
 > - Paystack payment flow for featuring a listing
 > - Webhook handler activates featured status on payment success
 > - Duration stacking: paying again adds days on top of existing featured period
-> - Featured listings sort to top of marketplace feed with amber border + "FEATURED" badge
+> - Category-level targeting: featured listings sort to top within their own category (not sitewide)
 > - Badge shows on both listing cards (with/without images) and listing detail page
 > - Owner sees "Promote this listing" / "Extend featured period" UI with plan picker
 > - Auto-expire cron (daily at 5 AM UTC) removes featured status + notifies owners

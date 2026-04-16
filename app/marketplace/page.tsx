@@ -15,7 +15,6 @@ export default async function MarketplacePage() {
     .from('marketplace_listings')
     .select('id, user_id, title, category, type, price, price_negotiable, description, state, condition, image_urls, is_closed, is_featured, featured_until, created_at')
     .eq('is_active', true)
-    .order('is_featured', { ascending: false })
     .order('created_at', { ascending: false })
 
   const listingList = (listings ?? []) as any[]

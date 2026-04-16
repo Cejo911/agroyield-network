@@ -111,8 +111,27 @@ export default function MarketplaceClient({
     return matchesSearch && matchesCategory && matchesCondition && matchesType && matchesState && matchesMin && matchesMax
   })
 
-  // Sort filtered results
+  // Sort filtered results — featured listings float to top within their category
+  const now = Date.now()
+  const isFeaturedActive = (l: Listing) =>
+    l.is_featured && l.featured_until && new Date(l.featured_until).getTime() > now
+
   const sorted = [...filtered].sort((a, b) => {
+    // Category-level featuring: when a category filter is active, featured
+    // listings in that category sort to the top. When "All" is selected,
+    // featured listings still rise to the top within their category group.
+    const aFeat = isFeaturedActive(a)
+    const bFeat = isFeaturedActive(b)
+
+    // If filtering by a specific category, featured in that category tops everything
+    if (categoryFilter !== 'All') {
+      if (aFeat !== bFeat) return aFeat ? -1 : 1
+    } else {
+      // "All" view: featured tops within same category
+      if (a.category === b.category && aFeat !== bFeat) return aFeat ? -1 : 1
+    }
+
+    // Then apply user-chosen sort
     if (sortBy === 'oldest') return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
     if (sortBy === 'price_low') return (a.price ?? 0) - (b.price ?? 0)
     if (sortBy === 'price_high') return (b.price ?? 0) - (a.price ?? 0)
