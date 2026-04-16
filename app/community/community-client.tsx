@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import useProfileGate from '@/app/hooks/useProfileGate'
 import ProfileGateBanner from '@/app/components/ProfileGateBanner'
 import ImageUploader from '@/app/components/ImageUploader'
+import { safeHref } from '@/lib/safe-href'
 
 const POST_TYPES = [
   { value: 'all',        label: 'All',         icon: '' },
@@ -455,9 +456,9 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
                   </div>
                 )}
 
-                {/* Link */}
-                {post.link_url && (
-                  <a href={post.link_url} target="_blank" rel="noopener noreferrer"
+                {/* Link — href validated via safeHref to block javascript: and other unsafe protocols */}
+                {safeHref(post.link_url) && (
+                  <a href={safeHref(post.link_url)} target="_blank" rel="noopener noreferrer"
                     className="inline-block text-sm text-green-600 hover:underline mb-3 break-all">
                     🔗 {post.link_url.replace(/^https?:\/\//, '').slice(0, 60)}...
                   </a>

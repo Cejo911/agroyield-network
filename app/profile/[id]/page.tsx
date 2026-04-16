@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import AppNav from '@/app/components/AppNav'
+import { safeHref } from '@/lib/safe-href'
 
 export default async function PublicProfilePage({
   params,
@@ -107,11 +108,11 @@ export default async function PublicProfilePage({
             )}
           </div>
 
-          {(profile.linkedin || profile.twitter || profile.website) && (
+          {(safeHref(profile.linkedin) || safeHref(profile.twitter) || safeHref(profile.website)) && (
             <div className="mt-6 pt-6 border-t border-gray-100 flex flex-wrap gap-3">
-              {profile.linkedin && (
+              {safeHref(profile.linkedin) && (
                 <Link
-                  href={profile.linkedin}
+                  href={safeHref(profile.linkedin)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm bg-blue-50 text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-100 transition-colors"
@@ -119,9 +120,9 @@ export default async function PublicProfilePage({
                   LinkedIn
                 </Link>
               )}
-              {profile.twitter && (
+              {safeHref(profile.twitter) && (
                 <Link
-                  href={profile.twitter}
+                  href={safeHref(profile.twitter)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
@@ -129,9 +130,9 @@ export default async function PublicProfilePage({
                   Twitter / X
                 </Link>
               )}
-              {profile.website && (
+              {safeHref(profile.website) && (
                 <Link
-                  href={profile.website}
+                  href={safeHref(profile.website)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm bg-green-50 text-green-700 px-4 py-2 rounded-lg hover:bg-green-100 transition-colors"

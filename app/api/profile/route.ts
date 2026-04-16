@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { sanitiseText, sanitiseUrl } from '@/lib/sanitise'
 
 function generateSlug(firstName: string, lastName: string): string {
   return `${firstName}-${lastName}`
@@ -48,23 +49,23 @@ export async function POST(req: Request) {
 
     const profileData = {
       id: user.id,
-      first_name:    body.first_name    || null,
-      last_name:     body.last_name     || null,
-      role:          body.role          || null,
-      bio:           body.bio           || null,
-      location:      body.location      || null,
-      institution:   body.institution   || null,
-      institution_2: body.institution_2 || null,
-      institution_3: body.institution_3 || null,
-      interests:     body.interests?.length ? body.interests : null,
-      linkedin:      body.linkedin      || null,
-      twitter:       body.twitter       || null,
-      facebook:      body.facebook      || null,
-      tiktok:        body.tiktok        || null,
-      website:       body.website       || null,
+      first_name:    sanitiseText(body.first_name),
+      last_name:     sanitiseText(body.last_name),
+      role:          sanitiseText(body.role),
+      bio:           sanitiseText(body.bio),
+      location:      sanitiseText(body.location),
+      institution:   sanitiseText(body.institution),
+      institution_2: sanitiseText(body.institution_2),
+      institution_3: sanitiseText(body.institution_3),
+      interests:     body.interests?.length ? body.interests.map((i: string) => sanitiseText(i)).filter(Boolean) : null,
+      linkedin:      sanitiseUrl(body.linkedin),
+      twitter:       sanitiseUrl(body.twitter),
+      facebook:      sanitiseUrl(body.facebook),
+      tiktok:        sanitiseUrl(body.tiktok),
+      website:       sanitiseUrl(body.website),
       avatar_url:    body.avatar_url    || null,
-      phone:         body.phone         || null,
-      whatsapp:      body.whatsapp      || null,
+      phone:         sanitiseText(body.phone),
+      whatsapp:      sanitiseText(body.whatsapp),
       gender:        body.gender        || null,
       date_of_birth: body.date_of_birth || null,
       notify_on_login: typeof body.notify_on_login === 'boolean' ? body.notify_on_login : true,
@@ -73,11 +74,11 @@ export async function POST(req: Request) {
       // Institution fields
       account_type:             body.account_type             || 'individual',
       institution_type:         body.institution_type         || null,
-      institution_display_name: body.institution_display_name || null,
-      contact_person_name:      body.contact_person_name      || null,
-      contact_person_role:      body.contact_person_role      || null,
-      institution_website:      body.institution_website      || null,
-      institution_cac:          body.institution_cac          || null,
+      institution_display_name: sanitiseText(body.institution_display_name),
+      contact_person_name:      sanitiseText(body.contact_person_name),
+      contact_person_role:      sanitiseText(body.contact_person_role),
+      institution_website:      sanitiseUrl(body.institution_website),
+      institution_cac:          sanitiseText(body.institution_cac),
     }
 
     const { error } = await supabaseAny

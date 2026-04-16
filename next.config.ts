@@ -50,6 +50,59 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+
+  // ── Security Headers ──────────────────────────────────────────────
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          // Content Security Policy
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              // Scripts: self + inline (Next.js requires it) + Sentry + PostHog + Vercel analytics
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.sentry.io https://*.posthog.com https://*.i.posthog.com https://va.vercel-scripts.com",
+              // Styles: self + inline (Tailwind/next-themes)
+              "style-src 'self' 'unsafe-inline'",
+              // Images: self + Supabase storage + data URIs (avatars/base64)
+              "img-src 'self' data: blob: https://*.supabase.co",
+              // Fonts: self
+              "font-src 'self'",
+              // API connections: self + Supabase + Sentry + PostHog + Vercel + Paystack + Resend
+              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.sentry.io https://*.posthog.com https://*.i.posthog.com https://va.vercel-scripts.com https://vitals.vercel-insights.com https://api.paystack.co https://api.resend.com",
+              // Frames: Paystack checkout popup
+              "frame-src 'self' https://*.paystack.co https://js.paystack.co",
+              // Object/base: none for security
+              "object-src 'none'",
+              "base-uri 'self'",
+              // Form submissions only to self
+              "form-action 'self'",
+              // Upgrade insecure requests
+              "upgrade-insecure-requests",
+            ].join('; '),
+          },
+          // Prevent clickjacking
+          { key: 'X-Frame-Options', value: 'DENY' },
+          // Prevent MIME-type sniffing
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          // Referrer — send origin only to cross-origin, full URL to same-origin
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          // Permissions Policy — disable unused browser features
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
+          },
+          // Strict Transport Security — force HTTPS
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=63072000; includeSubDomains; preload',
+          },
+        ],
+      },
+    ]
+  },
 };
 
 export default withSentryConfig(withPWA(nextConfig), {

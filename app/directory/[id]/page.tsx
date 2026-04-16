@@ -5,6 +5,7 @@ import AppNav from '@/app/components/AppNav'
 import FollowButton from '../follow-button'
 import MessageButton from '@/app/components/MessageButton'
 import BackButton from '@/app/components/BackButton'
+import { safeHref } from '@/lib/safe-href'
 
 export default async function PublicProfilePage({
   params,
@@ -161,35 +162,35 @@ export default async function PublicProfilePage({
             )}
           </div>
 
-          {/* Social links */}
-          {(profile.linkedin || profile.twitter || profile.facebook || profile.tiktok || profile.website) && (
+          {/* Social links — URLs validated via safeHref to block javascript: and other dangerous protocols */}
+          {(safeHref(profile.linkedin) || safeHref(profile.twitter) || safeHref(profile.facebook) || safeHref(profile.tiktok) || safeHref(profile.website)) && (
             <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-800 flex flex-wrap gap-3">
-              {profile.linkedin && (
-                <Link href={profile.linkedin} target="_blank" rel="noopener noreferrer"
+              {safeHref(profile.linkedin) && (
+                <Link href={safeHref(profile.linkedin)} target="_blank" rel="noopener noreferrer"
                   className="text-sm bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 px-4 py-2 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors">
                   LinkedIn
                 </Link>
               )}
-              {profile.twitter && (
-                <Link href={profile.twitter} target="_blank" rel="noopener noreferrer"
+              {safeHref(profile.twitter) && (
+                <Link href={safeHref(profile.twitter)} target="_blank" rel="noopener noreferrer"
                   className="text-sm bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
                   Twitter / X
                 </Link>
               )}
-              {profile.facebook && (
-                <Link href={profile.facebook} target="_blank" rel="noopener noreferrer"
+              {safeHref(profile.facebook) && (
+                <Link href={safeHref(profile.facebook)} target="_blank" rel="noopener noreferrer"
                   className="text-sm bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 px-4 py-2 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors">
                   Facebook
                 </Link>
               )}
-              {profile.tiktok && (
-                <Link href={profile.tiktok} target="_blank" rel="noopener noreferrer"
+              {safeHref(profile.tiktok) && (
+                <Link href={safeHref(profile.tiktok)} target="_blank" rel="noopener noreferrer"
                   className="text-sm bg-gray-900 dark:bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-800 dark:hover:bg-gray-600 transition-colors">
                   TikTok
                 </Link>
               )}
-              {profile.website && (
-                <Link href={profile.website} target="_blank" rel="noopener noreferrer"
+              {safeHref(profile.website) && (
+                <Link href={safeHref(profile.website)} target="_blank" rel="noopener noreferrer"
                   className="text-sm bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 px-4 py-2 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/40 transition-colors">
                   Website
                 </Link>

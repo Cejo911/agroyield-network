@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { notifyFollowers } from '@/lib/notify-followers'
+import { sanitiseText } from '@/lib/sanitise'
 
 export async function GET() {
   return NextResponse.json({ status: 'ok' })
@@ -60,14 +61,14 @@ export async function POST(request: NextRequest) {
       .from('marketplace_listings')
       .insert({
         user_id:           user.id,
-        title:             body.title,
+        title:             sanitiseText(body.title),
         category:          body.category,
         type:              body.type,
         price:             body.price            ?? null,
         price_negotiable:  body.price_negotiable ?? false,
-        description:       body.description      || null,
-        state:             body.state            || null,
-        contact:           body.contact          || null,
+        description:       sanitiseText(body.description),
+        state:             sanitiseText(body.state),
+        contact:           sanitiseText(body.contact),
         image_urls:        body.image_urls?.length ? body.image_urls : null,
         condition:         body.condition || null,
         is_active:         !isPending,

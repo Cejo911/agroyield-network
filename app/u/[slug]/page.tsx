@@ -8,6 +8,7 @@ import MessageButton from '@/app/components/MessageButton'
 import BackButton from '@/app/components/BackButton'
 import VerifiedBadge from '@/app/components/VerifiedBadge'
 import EliteBadge from '@/app/components/EliteBadge'
+import { safeHref } from '@/lib/safe-href'
 import { getEffectiveTier } from '@/lib/tiers'
 
 export async function generateMetadata(
@@ -216,18 +217,18 @@ export default async function PublicProfilePage(
             </div>
           )}
 
-          {(linkedin || twitter || website) && (
+          {(safeHref(linkedin) || safeHref(twitter) || safeHref(website)) && (
             <div className="mt-5 pt-5 border-t border-gray-100 flex flex-wrap gap-4">
-              {linkedin && (
-                <a href={linkedin} target="_blank" rel="noopener noreferrer"
+              {safeHref(linkedin) && (
+                <a href={safeHref(linkedin)} target="_blank" rel="noopener noreferrer"
                   className="text-sm text-blue-600 hover:underline">🔗 LinkedIn</a>
               )}
-              {twitter && (
-                <a href={twitter} target="_blank" rel="noopener noreferrer"
+              {safeHref(twitter) && (
+                <a href={safeHref(twitter)} target="_blank" rel="noopener noreferrer"
                   className="text-sm text-blue-400 hover:underline">🐦 Twitter / X</a>
               )}
-              {website && (
-                <a href={website} target="_blank" rel="noopener noreferrer"
+              {safeHref(website) && (
+                <a href={safeHref(website)} target="_blank" rel="noopener noreferrer"
                   className="text-sm text-green-600 hover:underline">🌐 Website</a>
               )}
             </div>

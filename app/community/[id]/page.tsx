@@ -5,6 +5,7 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import AppNav from '@/app/components/AppNav'
 import CommentsSection from '@/app/components/CommentsSection'
+import { safeHref } from '@/lib/safe-href'
 
 // ── SEO: generate metadata for public indexing ──
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -181,9 +182,9 @@ export default async function CommunityPostPage({ params }: { params: Promise<{ 
             </div>
           )}
 
-          {/* Link preview */}
-          {post.link_url && (
-            <a href={post.link_url} target="_blank" rel="noopener noreferrer"
+          {/* Link preview — href validated to block javascript: and other unsafe protocols */}
+          {safeHref(post.link_url) && (
+            <a href={safeHref(post.link_url)} target="_blank" rel="noopener noreferrer"
               className="inline-block text-sm text-green-600 hover:underline mb-4 break-all">
               {post.link_url}
             </a>

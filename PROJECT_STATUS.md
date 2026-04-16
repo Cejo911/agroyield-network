@@ -1,6 +1,6 @@
 # AgroYield Network — Project Status
 
-> **Last updated:** 15 April 2026 (Checkpoint 13)
+> **Last updated:** 16 April 2026 (Checkpoint 15)
 > **Maintained by:** Okoli (okolichijiokei@gmail.com)
 > **Launch Target:** 5 July 2026 (~11 weeks remaining)
 > **Purpose:** Permanent reference for any developer or Claude session to get up to speed instantly.
@@ -289,7 +289,7 @@
 8. **Frequent `as any` casts** — Throughout codebase for Supabase queries. Fix by generating types with `supabase gen types typescript`.
 9. **No `.env.example`** — New developers have no reference for required environment variables.
 10. **No automated tests** — No test files or framework configured.
-11. **No monitoring** — No Sentry, no structured logging, no uptime monitoring.
+11. ~~**No monitoring**~~ — ✅ Fixed. Sentry (errors + replay), Vercel Analytics + Speed Insights, PostHog (user analytics), Slack webhook alerts on 5 API routes.
 12. **No input sanitisation** — User input in opportunities, marketplace, research rendered without sanitisation.
 13. **No CSP headers** — Missing Content Security Policy in `next.config.ts`.
 
@@ -347,6 +347,36 @@ Note: `/insights`, `/connections` are pre-registered for future modules.
 ---
 
 ## Changelog
+
+### Checkpoint 15 — April 16, 2026 (Security Hardening — Phase 4.5)
+
+- Added: `next.config.ts` `async headers()` returning Content-Security-Policy + HSTS (2-year preload) + X-Frame-Options `DENY` + X-Content-Type-Options `nosniff` + Referrer-Policy `strict-origin-when-cross-origin` + Permissions-Policy (camera/microphone/geolocation/interest-cohort disabled). CSP allows Supabase REST/websocket, Sentry, PostHog (US + EU), Vercel Analytics + Speed Insights, Paystack (API + frames), Resend API; `'unsafe-inline'` + `'unsafe-eval'` retained for Next.js runtime / Tailwind / theme-flash script.
+- Added: `lib/sanitise.ts` — server utility with `stripHtml`, `sanitiseText`, `escapeHtml`, `safeHref`, `sanitiseUrl` helpers for API boundary defence
+- Added: `lib/safe-href.ts` — client-safe URL protocol guard blocking `javascript:` / `data:` / `vbscript:` XSS on rendered `<a href>` elements
+- Changed: 9 API routes now sanitise free-text input at insert — `opportunities`, `marketplace`, `research`, `messages/send`, `profile`, `prices`, `contact`, `waitlist` (plus URL fields via `sanitiseUrl`)
+- Fixed: HTML injection in `/api/contact` and `/api/waitlist` email templates — user-supplied `name`, `email`, `subject`, `message` now HTML-entity-escaped (`escapeHtml`) before interpolation into both confirmation and internal notification emails; email regex validation on both routes
+- Changed: Profile/directory/public-profile/community pages now pass all user-supplied URLs through `safeHref()` before rendering — `app/profile/[id]/page.tsx`, `app/directory/[id]/page.tsx`, `app/u/[slug]/page.tsx`, `app/community/[id]/page.tsx`, `app/community/community-client.tsx`
+- Audited: Service-role (`SUPABASE_SERVICE_ROLE_KEY`) usage confined to server-only paths — API routes, server components, cron jobs, `lib/` utilities. Never imported into client components. `lib/supabase/admin.ts` lazy-loads the admin client server-side only.
+- Decision: DOMPurify not required — React auto-escapes all text in JSX, and no route renders user-supplied HTML via `dangerouslySetInnerHTML`. Defence focused on CSP, input sanitisation, URL protocol validation, and email HTML escape instead.
+
+### Checkpoint 14 — April 16, 2026 (Monitoring & Error Tracking — Phase 4.3)
+
+- Added: Sentry Next.js SDK v10.48 — error tracking, session replay (10% normal / 100% errors), performance tracing (20% sample rate). Tunnel route at `/monitoring` to bypass ad-blockers.
+- Added: `instrumentation.ts`, `instrumentation-client.ts`, `sentry.server.config.ts`, `sentry.edge.config.ts`, `app/global-error.tsx` — Sentry instrumentation files
+- Added: Vercel Analytics (`@vercel/analytics/react`) + Speed Insights (`@vercel/speed-insights/next`) — zero-config React components in root layout
+- Added: PostHog user analytics — `app/components/PostHogProvider.tsx` with SPA-aware `$pageview` capture, `person_profiles: 'identified_only'`, EU cloud (`eu.i.posthog.com`)
+- Added: `lib/slack.ts` — centralised Slack webhook alert utility with color-coded levels (info/warning/error), Block Kit attachments, graceful no-op when `SLACK_WEBHOOK_URL` not set
+- Added: Slack alert on new user signup — `app/auth/callback/route.ts` (fires for first-time users only)
+- Added: Slack alert on successful payment — `app/api/payment/verify/route.ts` (includes tier, billing, amount, reference)
+- Added: Slack alert on free trial activation — `app/api/payment/initiate/route.ts` (includes tier, trial days, expiry date)
+- Added: Slack alert on content reports — `app/api/report/route.ts` (escalates to warning level when auto-hidden)
+- Added: Slack alert on subscription expiry — `app/api/cron/expire-subscriptions/route.ts` (fires when profiles revoked)
+- Changed: Sentry DSN moved from hardcoded string to `NEXT_PUBLIC_SENTRY_DSN` env var across all 3 config files
+- Changed: `next.config.ts` wrapped with `withSentryConfig()` — source map uploads, tunnel route, automatic Vercel Cron monitors
+- Changed: Root layout (`app/layout.tsx`) now wraps children in `PostHogProvider`, renders `<Analytics />` and `<SpeedInsights />`
+- Fixed: Build prerender failure on `/mentorship/sessions` and `/business/accept-invite` — `useSearchParams()` without Suspense boundary. Fixed by wrapping `PostHogPageView` in Suspense and adding wrapper component pattern on accept-invite page.
+- Fixed: Duplicate `postLabel` variable in `app/api/report/route.ts` — removed duplicate in email block, reuses Slack alert declaration
+- Env vars added: `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_AUTH_TOKEN`, `NEXT_PUBLIC_POSTHOG_KEY`, `NEXT_PUBLIC_POSTHOG_HOST`, `SLACK_WEBHOOK_URL`
 
 ### Checkpoint 13 — April 15, 2026 (Sort dropdowns + admin commodity settings + UX enhancements)
 

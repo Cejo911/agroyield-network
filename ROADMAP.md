@@ -251,8 +251,8 @@ Harden the platform, add differentiators, test with real users.
 ### 4.3 — Monitoring & Error Tracking
 
 > **Why:** You need to know when things break before users complain.
-> **Scope:** Sentry (free tier) for error tracking. Vercel Analytics. Slack webhook for critical events (signup, payment, overdue).
-> **Status:** ⬜ Not started
+> **Scope:** Sentry (free tier) for error tracking + session replay + performance tracing. Vercel Analytics + Speed Insights for web vitals. PostHog for user-level funnels and retention (1M events/mo free). Slack webhook alerts for critical events (signup, payment, free trial, content reports, subscription expiry).
+> **Status:** ✅ Completed (16 Apr 2026) — Sentry SDK v10.48 (20% trace rate, 10% session replay, 100% error replay), Vercel Analytics (free), PostHog EU cloud, Slack alerts on 5 API routes (auth callback, payment verify, payment initiate, content report, subscription expiry cron). All fire-and-forget.
 
 ### 4.4 — Performance Audit
 
@@ -264,7 +264,7 @@ Harden the platform, add differentiators, test with real users.
 
 > **Why:** Before launch, not after.
 > **Scope:** CSP headers in next.config.ts. DOMPurify for HTML rendering. Input sanitisation on all API routes. Audit service role usage.
-> **Status:** ⬜ Not started
+> **Status:** ✅ Completed (16 Apr 2026) — CSP + 5 security headers (HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy) in `next.config.ts`. Central sanitisation utility (`lib/sanitise.ts`) applied across 9 API routes (opportunities, marketplace, research, messages, profile, prices, contact, waitlist). Client-side URL guard (`lib/safe-href.ts`) wired into community, profile, directory, and public profile pages to block `javascript:` / `data:` / `vbscript:` XSS. HTML-escape helper applied to contact + waitlist email templates. Service-role usage audited — confined to server-only paths (API routes, server components, cron). DOMPurify not required: no user-supplied HTML is rendered (React auto-escapes).
 
 ### 4.6 — Beta Testing with Real SMEs
 

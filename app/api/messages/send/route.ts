@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
+import { stripHtml } from '@/lib/sanitise'
 
 // POST: Send a message to an existing conversation
 export async function POST(request: Request) {
@@ -30,13 +31,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Not a participant' }, { status: 403 })
   }
 
+  // Sanitise message body — strip any HTML tags
+  const cleanBody = stripHtml(body).trim()
+  if (!cleanBody) {
+    return NextResponse.json({ error: 'Message body cannot be empty' }, { status: 400 })
+  }
+
   // Insert message
   const { data: message, error: msgErr } = await admin
     .from('messages')
     .insert({
       conversation_id: conversationId,
       sender_id: user.id,
-      body: body.trim(),
+      body: cleanBody,
       status: 'sent',
     })
     .select('id, sender_id, body, status, created_at')
@@ -51,7 +58,7 @@ export async function POST(request: Request) {
     .from('conversations')
     .update({
       last_message_at: new Date().toISOString(),
-      last_message_preview: body.trim().slice(0, 100),
+      last_message_preview: cleanBody.slice(0, 100),
     })
     .eq('id', conversationId)
 

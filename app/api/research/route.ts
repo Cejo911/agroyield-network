@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getSetting } from '@/lib/settings'
 import { notifyFollowers } from '@/lib/notify-followers'
+import { sanitiseText } from '@/lib/sanitise'
 
 export async function GET() {
   return NextResponse.json({ status: 'ok' })
@@ -49,14 +50,14 @@ export async function POST(request: NextRequest) {
         .from('research_posts')
         .insert({
           user_id:   user.id,
-          title:     body.title,
+          title:     sanitiseText(body.title),
           type:      body.type,
-          content:   body.content,
-          tags:            body.tags?.length ? body.tags : null,
+          content:   sanitiseText(body.content),
+          tags:            body.tags?.length ? body.tags.map((t: string) => sanitiseText(t)).filter(Boolean) : null,
           is_locked:       body.is_locked ?? false,
           cover_image_url: body.cover_image_url || null,
           attachment_url:  body.attachment_url  || null,
-          attachment_name: body.attachment_name || null,
+          attachment_name: sanitiseText(body.attachment_name),
           is_active: true,
       })
       .select('id')

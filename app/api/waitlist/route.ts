@@ -3,6 +3,7 @@ import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { SENDERS, INBOXES } from '@/lib/email/senders'
 import { getResend } from '@/lib/email/client'
 import { getSupabaseAnon } from '@/lib/supabase/admin'
+import { escapeHtml } from '@/lib/sanitise'
 
 
 export async function POST(request: Request) {
@@ -15,6 +16,14 @@ export async function POST(request: Request) {
   if (!email) {
     return NextResponse.json({ error: 'Email required' }, { status: 400 })
   }
+
+  // Validate email format — blocks HTML injection via email field
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return NextResponse.json({ error: 'Invalid email address' }, { status: 400 })
+  }
+
+  // HTML-escaped version for email templates
+  const safeEmail = escapeHtml(email)
 
   const { error: dbError } = await getSupabaseAnon()
     .from('waitlist_signups')
@@ -83,7 +92,7 @@ export async function POST(request: Request) {
       await getResend().emails.send({
         from: SENDERS.noreply,
         to: INBOXES.hello,
-        subject: `🌱 New waitlist signup — ${email}`,
+        subject: `🌱 New waitlist signup — ${email.replace(/[\r\n]/g, '')}`,
         html: `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
@@ -103,7 +112,7 @@ export async function POST(request: Request) {
               <tr>
                 <td style="padding:24px 28px;">
                   <p style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#22c55e;margin:0 0 14px;">Signup Details</p>
-                  <p style="font-size:14px;color:#6ee7b7;margin:0 0 8px;"><strong style="color:#f0fdf4;">Email:</strong> <a href="mailto:${email}" style="color:#22c55e;text-decoration:none;">${email}</a></p>
+                  <p style="font-size:14px;color:#6ee7b7;margin:0 0 8px;"><strong style="color:#f0fdf4;">Email:</strong> <a href="mailto:${safeEmail}" style="color:#22c55e;text-decoration:none;">${safeEmail}</a></p>
                   <p style="font-size:14px;color:#6ee7b7;margin:0 0 8px;"><strong style="color:#f0fdf4;">Source:</strong> waitlist_page</p>
                   <p style="font-size:14px;color:#6ee7b7;margin:0;"><strong style="color:#f0fdf4;">Time:</strong> ${new Date().toLocaleString('en-GB', { timeZone: 'Africa/Lagos', dateStyle: 'full', timeStyle: 'short' })}</p>
                 </td>

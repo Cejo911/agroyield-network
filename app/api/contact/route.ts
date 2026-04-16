@@ -3,6 +3,7 @@ import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { SENDERS, INBOXES } from '@/lib/email/senders'
 import { getResend } from '@/lib/email/client'
 import { getSupabaseAnon } from '@/lib/supabase/admin'
+import { escapeHtml, sanitiseText } from '@/lib/sanitise'
 
 export async function POST(request: Request) {
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown'
@@ -15,9 +16,26 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
   }
 
+  // Sanitise DB storage (strip HTML tags)
+  const cleanName = sanitiseText(name) ?? ''
+  const cleanSubject = sanitiseText(subject)
+  const cleanMessage = sanitiseText(message) ?? ''
+
+  // Basic email format check
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return NextResponse.json({ error: 'Invalid email address' }, { status: 400 })
+  }
+
+  // HTML-escaped versions for email templates (prevents HTML injection)
+  const safeName = escapeHtml(cleanName)
+  const safeEmail = escapeHtml(email)
+  const safeSubject = escapeHtml(cleanSubject || 'General Enquiry')
+  const safeMessage = escapeHtml(cleanMessage).replace(/\n/g, '<br>')
+  const safeFirstName = escapeHtml(cleanName.split(' ')[0] || 'there')
+
   const { error: dbError } = await getSupabaseAnon()
     .from('contact_messages')
-    .insert([{ name, email, subject, message }])
+    .insert([{ name: cleanName, email, subject: cleanSubject, message: cleanMessage }])
 
   if (dbError) {
     return NextResponse.json({ error: 'Database error' }, { status: 500 })
@@ -44,13 +62,13 @@ export async function POST(request: Request) {
         <tr>
           <td style="padding:40px 48px;">
             <p style="font-size:28px;margin:0 0 16px;font-weight:900;color:#f0fdf4;letter-spacing:-1px;">Message received ✅</p>
-            <p style="font-size:16px;color:#bbf7d0;line-height:1.75;margin:0 0 28px;">Hi ${name.split(' ')[0]}, thanks for reaching out. We've received your message and will get back to you within <strong style="color:#f0fdf4;">1–2 business days</strong>.</p>
+            <p style="font-size:16px;color:#bbf7d0;line-height:1.75;margin:0 0 28px;">Hi ${safeFirstName}, thanks for reaching out. We've received your message and will get back to you within <strong style="color:#f0fdf4;">1–2 business days</strong>.</p>
             <table width="100%" cellpadding="0" cellspacing="0" style="background:#0f2318;border:1px solid #1c3825;border-radius:12px;margin:0 0 32px;">
               <tr>
                 <td style="padding:24px 28px;">
                   <p style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#22c55e;margin:0 0 14px;">Your message summary</p>
-                  <p style="font-size:13px;color:#6ee7b7;margin:0 0 4px;"><strong style="color:#f0fdf4;">Subject:</strong> ${subject || 'General Enquiry'}</p>
-                  <p style="font-size:13px;color:#bbf7d0;line-height:1.7;margin:8px 0 0;">${message.replace(/\n/g, '<br>')}</p>
+                  <p style="font-size:13px;color:#6ee7b7;margin:0 0 4px;"><strong style="color:#f0fdf4;">Subject:</strong> ${safeSubject}</p>
+                  <p style="font-size:13px;color:#bbf7d0;line-height:1.7;margin:8px 0 0;">${safeMessage}</p>
                 </td>
               </tr>
             </table>
@@ -75,7 +93,7 @@ export async function POST(request: Request) {
     await getResend().emails.send({
       from: SENDERS.noreply,
       to: INBOXES.hello,
-      subject: `New contact message from ${name} — ${subject || 'General Enquiry'}`,
+      subject: `New contact message from ${cleanName} — ${cleanSubject || 'General Enquiry'}`,
       html: `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
@@ -93,15 +111,15 @@ export async function POST(request: Request) {
             <table width="100%" cellpadding="0" cellspacing="0" style="background:#0f2318;border:1px solid #1c3825;border-radius:12px;margin:0 0 28px;">
               <tr>
                 <td style="padding:24px 28px;">
-                  <p style="font-size:13px;color:#6ee7b7;margin:0 0 8px;"><strong style="color:#f0fdf4;">Name:</strong> ${name}</p>
-                  <p style="font-size:13px;color:#6ee7b7;margin:0 0 8px;"><strong style="color:#f0fdf4;">Email:</strong> <a href="mailto:${email}" style="color:#22c55e;text-decoration:none;">${email}</a></p>
-                  <p style="font-size:13px;color:#6ee7b7;margin:0 0 8px;"><strong style="color:#f0fdf4;">Subject:</strong> ${subject || 'General Enquiry'}</p>
+                  <p style="font-size:13px;color:#6ee7b7;margin:0 0 8px;"><strong style="color:#f0fdf4;">Name:</strong> ${safeName}</p>
+                  <p style="font-size:13px;color:#6ee7b7;margin:0 0 8px;"><strong style="color:#f0fdf4;">Email:</strong> <a href="mailto:${safeEmail}" style="color:#22c55e;text-decoration:none;">${safeEmail}</a></p>
+                  <p style="font-size:13px;color:#6ee7b7;margin:0 0 8px;"><strong style="color:#f0fdf4;">Subject:</strong> ${safeSubject}</p>
                   <p style="font-size:13px;color:#6ee7b7;margin:8px 0 0;"><strong style="color:#f0fdf4;">Message:</strong></p>
-                  <p style="font-size:14px;color:#bbf7d0;line-height:1.75;margin:8px 0 0;">${message.replace(/\n/g, '<br>')}</p>
+                  <p style="font-size:14px;color:#bbf7d0;line-height:1.75;margin:8px 0 0;">${safeMessage}</p>
                 </td>
               </tr>
             </table>
-            <a href="mailto:${email}" style="display:inline-block;padding:14px 28px;font-size:14px;font-weight:700;color:#030a05;background:linear-gradient(135deg,#22c55e,#16a34a);border-radius:10px;text-decoration:none;">Reply to ${name.split(' ')[0]} →</a>
+            <a href="mailto:${safeEmail}" style="display:inline-block;padding:14px 28px;font-size:14px;font-weight:700;color:#030a05;background:linear-gradient(135deg,#22c55e,#16a34a);border-radius:10px;text-decoration:none;">Reply to ${safeFirstName} →</a>
           </td>
         </tr>
         <tr>

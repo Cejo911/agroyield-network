@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { createNotification } from '@/lib/notifications'
 import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
+import { sanitiseText } from '@/lib/sanitise'
 
 export async function GET() {
   return NextResponse.json({ status: 'ok' })
@@ -40,14 +41,14 @@ export async function POST(request: NextRequest) {
       .from('price_reports')
       .insert({
         user_id: user.id,
-        commodity: body.commodity,
+        commodity: sanitiseText(body.commodity),
         category: body.category || null,
         price,
         price_per_unit: price,
         unit: body.unit,
-        market_name: body.market_name || null,
-        state: body.state || null,
-        notes: body.notes || null,
+        market_name: sanitiseText(body.market_name),
+        state: sanitiseText(body.state),
+        notes: sanitiseText(body.notes),
       })
       .select('id')
       .single()

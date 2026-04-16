@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { notifyFollowers } from '@/lib/notify-followers'
+import { sanitiseText, sanitiseUrl } from '@/lib/sanitise'
 
 export async function GET() {
   return NextResponse.json({ status: 'ok' })
@@ -60,14 +61,14 @@ export async function POST(request: NextRequest) {
       .from('opportunities')
       .insert({
         user_id:           user.id,
-        title:             body.title,
+        title:             sanitiseText(body.title),
         type:              body.type,
-        organisation:      body.organisation  || null,
-        location:          body.location      || null,
-        description:       body.description   || null,
-        requirements:      body.requirements  || null,
+        organisation:      sanitiseText(body.organisation),
+        location:          sanitiseText(body.location),
+        description:       sanitiseText(body.description),
+        requirements:      sanitiseText(body.requirements),
         deadline:          body.deadline      || null,
-        url:               body.url           || null,
+        url:               sanitiseUrl(body.url),
         thumbnail_url:     body.thumbnail_url || null,
         is_active:         !isPending,
         is_pending_review: isPending,
