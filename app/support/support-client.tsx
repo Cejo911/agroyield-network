@@ -100,7 +100,7 @@ export default function SupportClient({ userEmail }: { userEmail: string }) {
       })
       if (!res.ok) {
         const data = await res.json()
-        throw new Error(data.message || 'Failed to send code')
+        throw new Error(data.error || 'Failed to send code')
       }
       setOtpSent(true)
     } catch (err) {
@@ -125,7 +125,7 @@ export default function SupportClient({ userEmail }: { userEmail: string }) {
       })
       if (!res.ok) {
         const data = await res.json()
-        throw new Error(data.message || 'Invalid code')
+        throw new Error(data.error || 'Invalid code')
       }
       setVerified(true)
       fetchTickets()
@@ -164,11 +164,15 @@ export default function SupportClient({ userEmail }: { userEmail: string }) {
       const res = await fetch('/api/support/tickets', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+          category: form.category.toLowerCase(),
+          priority: form.priority.toLowerCase(),
+        }),
       })
       if (!res.ok) {
         const data = await res.json()
-        throw new Error(data.message || 'Failed to create ticket')
+        throw new Error(data.error || 'Failed to create ticket')
       }
       const data = await res.json()
       setTickets([data.ticket, ...tickets])
