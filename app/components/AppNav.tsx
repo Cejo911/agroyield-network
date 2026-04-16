@@ -19,8 +19,6 @@ const NAV_LINKS = [
   { href: '/research',      label: 'Research' },
   { href: '/mentorship',    label: 'Mentorship' },
   { href: '/business',      label: 'Business' },
-  { href: '/support',       label: 'Support' },
-  { href: '/faq',           label: 'FAQ' },
 ]
 
 export default function AppNav() {
@@ -257,6 +255,31 @@ export default function AppNav() {
                 )}
 
                 <div className="border-t border-gray-100 dark:border-gray-800 mt-1 pt-1">
+                  <Link
+                    href="/support"
+                    onClick={() => setUserOpen(false)}
+                    className={`flex items-center gap-2 px-4 py-2 text-sm transition-colors ${
+                      isActive('/support')
+                        ? 'text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/30'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+                    }`}
+                  >
+                    <span>🎫</span> Support
+                  </Link>
+                  <Link
+                    href="/faq"
+                    onClick={() => setUserOpen(false)}
+                    className={`flex items-center gap-2 px-4 py-2 text-sm transition-colors ${
+                      isActive('/faq')
+                        ? 'text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/30'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+                    }`}
+                  >
+                    <span>❓</span> FAQ
+                  </Link>
+                </div>
+
+                <div className="border-t border-gray-100 dark:border-gray-800 mt-1 pt-1">
                   <button
                     onClick={handleSignOut}
                     className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
@@ -383,6 +406,29 @@ export default function AppNav() {
               <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Dark mode</span>
               <ThemeToggle />
             </div>
+
+            <Link
+              href="/support"
+              onClick={() => setMenuOpen(false)}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                isActive('/support')
+                  ? 'bg-green-50 dark:bg-green-900/40 text-green-700 dark:text-green-400'
+                  : 'text-gray-600 dark:text-gray-300 hover:text-green-700 dark:hover:text-green-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+              }`}
+            >
+              <span>🎫</span> Support
+            </Link>
+            <Link
+              href="/faq"
+              onClick={() => setMenuOpen(false)}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                isActive('/faq')
+                  ? 'bg-green-50 dark:bg-green-900/40 text-green-700 dark:text-green-400'
+                  : 'text-gray-600 dark:text-gray-300 hover:text-green-700 dark:hover:text-green-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+              }`}
+            >
+              <span>❓</span> FAQ
+            </Link>
 
             <button
               onClick={handleSignOut}
