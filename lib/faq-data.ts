@@ -111,19 +111,47 @@ export const MODULE_FAQS: Record<ModuleKey, FAQItem[]> = {
   marketplace: [
     {
       q: 'How do I list a product for sale?',
-      a: 'Go to Marketplace and click "Post Listing." Add a title, description, price, images, and your state. Listings are visible to all members immediately.',
+      a: 'Go to Marketplace and click "Post Listing." Add a title, description, price, images, and your state. Before buyers can purchase your listings, you\'ll need to set up your payout account under Marketplace → My Orders → Payout Settings.',
     },
     {
-      q: 'Does AgroYield handle payments?',
-      a: 'Marketplace transactions happen directly between buyer and seller. We recommend using Paystack payment links for secure payments. AgroYield does not take a commission on marketplace sales.',
+      q: 'How does buying work on AgroYield?',
+      a: 'Click "Buy Now" on any sell listing. You\'ll be redirected to Paystack to pay securely. Your payment is held in escrow — the seller only receives the funds after you confirm delivery. This protects both parties.',
+    },
+    {
+      q: 'What is escrow and how does it protect me?',
+      a: 'Escrow means your payment is held safely by AgroYield until the transaction is complete. As a buyer, you pay upfront but the seller doesn\'t receive the money until you confirm you\'ve received the item. As a seller, you\'re guaranteed payment once the buyer confirms or after 7 days automatically.',
+    },
+    {
+      q: 'Does AgroYield charge a fee?',
+      a: 'AgroYield charges a 3% platform fee on each completed transaction. This is deducted from the seller\'s payout. For example, on a ₦10,000 sale, the seller receives ₦9,700 and AgroYield keeps ₦300.',
+    },
+    {
+      q: 'How do I set up my payout account?',
+      a: 'Go to Marketplace → My Orders → Payout Settings (or visit /marketplace/bank-account directly). Select your bank, enter your 10-digit account number, and we\'ll verify the account name through Paystack. You must set this up before buyers can purchase your listings.',
+    },
+    {
+      q: 'When do I get paid as a seller?',
+      a: 'After you mark an order as shipped, the buyer has 7 days to confirm delivery. Once they confirm, funds are released to your bank account via Paystack Transfer. If the buyer doesn\'t confirm or raise a dispute within 7 days, funds are automatically released to you.',
+    },
+    {
+      q: 'What happens if there\'s a problem with my order?',
+      a: 'Either the buyer or seller can raise a dispute on any paid or shipped order. An AgroYield admin will review the dispute and resolve it — either releasing funds to the seller or refunding the buyer. You can raise a dispute from the order detail page.',
+    },
+    {
+      q: 'Can I cancel an order?',
+      a: 'Yes, both buyers and sellers can cancel an order before it has been shipped. If the buyer has already paid, a refund is automatically initiated through Paystack. Once an order is marked as shipped, it cannot be cancelled — you\'ll need to raise a dispute instead.',
+    },
+    {
+      q: 'Where can I see my orders?',
+      a: 'Go to Marketplace and click "My Orders" at the top, or visit /marketplace/orders. You can filter by All Orders, My Purchases, or My Sales to see the relevant transactions.',
     },
     {
       q: 'Can I advertise services, not just products?',
-      a: 'Absolutely. You can list consulting services, equipment rental, transport, processing, and any agriculture-related service.',
+      a: 'Absolutely. You can list consulting services, equipment rental, transport, processing, and any agriculture-related service. Note that the Buy Now escrow flow is only available for "sell" type listings with a set price.',
     },
     {
       q: 'How do I contact a seller?',
-      a: 'Each listing shows the seller\'s profile. Use the built-in messaging system to contact them directly, or use the phone/WhatsApp links on their profile if available.',
+      a: 'Each listing shows a "Contact Seller" section with a direct messaging button. You can also use the phone/WhatsApp links on their profile if available. For listings with a price, you can use "Buy Now" to purchase directly through escrow.',
     },
   ],
 
