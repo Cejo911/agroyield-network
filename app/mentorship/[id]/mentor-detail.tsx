@@ -71,7 +71,7 @@ export default function MentorDetail({ mentor, reviews, avgRating, sessionCount,
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 mb-6">
         <div className="flex items-start gap-5">
           {mentor.profiles?.avatar_url ? (
-            <Image src={mentor.profiles.avatar_url} alt={name} width={80} height={80} className="rounded-full object-cover shrink-0" />
+            <Image src={mentor.profiles.avatar_url} alt={name} width={80} height={80} className="w-20 h-20 rounded-full object-cover shrink-0" />
           ) : (
             <div className="w-20 h-20 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-700 dark:text-green-400 font-bold text-2xl shrink-0">
               {initials}
@@ -270,7 +270,7 @@ export default function MentorDetail({ mentor, reviews, avgRating, sessionCount,
                 <div key={r.id} className="border-b border-gray-100 dark:border-gray-800 pb-4 last:border-0 last:pb-0">
                   <div className="flex items-center gap-3">
                     {r.profiles?.avatar_url ? (
-                      <Image src={r.profiles.avatar_url} alt="" width={32} height={32} className="rounded-full object-cover" />
+                      <Image src={r.profiles.avatar_url} alt="" width={32} height={32} className="w-8 h-8 rounded-full object-cover" />
                     ) : (
                       <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-xs font-bold text-gray-500">
                         {rName[0]}

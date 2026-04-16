@@ -383,7 +383,7 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
                 <div className="flex items-start gap-3 mb-3">
                   <Link href={profileHref} className="relative shrink-0">
                     {profile?.avatar_url ? (
-                      <Image src={profile.avatar_url} alt={name} width={40} height={40} className="rounded-full object-cover" />
+                      <Image src={profile.avatar_url} alt={name} width={40} height={40} className="w-10 h-10 rounded-full object-cover" />
                     ) : (
                       <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-700 dark:text-green-400 font-bold text-sm">
                         {initials}
@@ -428,7 +428,7 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
                     <Link href={`/community/${parent.id}`} className="block rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/40 p-3 mb-3 hover:border-green-300 dark:hover:border-green-700 transition-colors">
                       <div className="flex items-center gap-2 mb-2">
                         {parentProfile?.avatar_url ? (
-                          <Image src={parentProfile.avatar_url} alt={parentName} width={28} height={28} className="rounded-full object-cover" />
+                          <Image src={parentProfile.avatar_url} alt={parentName} width={28} height={28} className="w-7 h-7 rounded-full object-cover" />
                         ) : (
                           <div className="w-7 h-7 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-700 dark:text-green-400 font-bold text-[11px]">
                             {parentInitials}

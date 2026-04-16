@@ -438,7 +438,7 @@ export default function RequestsPage() {
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-3 min-w-0">
                       {otherProfile?.avatar_url ? (
-                        <Image src={otherProfile.avatar_url} alt="" width={40} height={40} className="rounded-full object-cover shrink-0" />
+                        <Image src={otherProfile.avatar_url} alt="" width={40} height={40} className="w-10 h-10 rounded-full object-cover shrink-0" />
                       ) : (
                         <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-sm font-bold text-gray-500 shrink-0">
                           {otherName[0]}

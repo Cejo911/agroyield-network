@@ -143,7 +143,7 @@ export default async function CommunityPostPage({ params }: { params: Promise<{ 
           <div className="flex items-start gap-3 mb-4">
             <Link href={profileHref} className="shrink-0">
               {prof?.avatar_url ? (
-                <Image src={prof.avatar_url} alt={name} width={48} height={48} className="rounded-full object-cover" />
+                <Image src={prof.avatar_url} alt={name} width={48} height={48} className="w-12 h-12 rounded-full object-cover" />
               ) : (
                 <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-700 dark:text-green-400 font-bold text-sm">
                   {initials}

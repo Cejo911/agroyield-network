@@ -171,7 +171,7 @@ export default function ResearchClient({
                       return (
                         <Link href={href} className="flex items-center gap-1.5 group" onClick={e => e.stopPropagation()}>
                           {profile.avatar_url ? (
-                            <Image src={profile.avatar_url} alt="" width={20} height={20} className="rounded-full object-cover shrink-0" />
+                            <Image src={profile.avatar_url} alt="" width={20} height={20} className="w-5 h-5 rounded-full object-cover shrink-0" />
                           ) : (
                             <span className="w-5 h-5 rounded-full bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 text-[10px] font-bold flex items-center justify-center shrink-0">
                               {(profile.first_name?.[0] || '?').toUpperCase()}

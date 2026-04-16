@@ -136,7 +136,7 @@ export default function MentorBrowser({ mentors, userId }: { mentors: Mentor[]; 
                 <div className="flex items-start gap-4">
                   <div className="relative shrink-0">
                     {m.profiles?.avatar_url ? (
-                      <Image src={m.profiles.avatar_url} alt={name} width={56} height={56} className="rounded-full object-cover" />
+                      <Image src={m.profiles.avatar_url} alt={name} width={56} height={56} className="w-14 h-14 rounded-full object-cover" />
                     ) : (
                       <div className="w-14 h-14 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-700 dark:text-green-400 font-bold text-lg">
                         {initials}

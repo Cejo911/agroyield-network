@@ -152,7 +152,7 @@ export default function MessageThread({ conversationId, currentUserId, otherUser
         </Link>
         <Link href={otherUser.profileHref} className="relative shrink-0">
           {otherUser.avatarUrl ? (
-            <Image src={otherUser.avatarUrl} alt={otherUser.name} width={36} height={36} className="rounded-full object-cover" />
+            <Image src={otherUser.avatarUrl} alt={otherUser.name} width={36} height={36} className="w-9 h-9 rounded-full object-cover" />
           ) : (
             <div className="w-9 h-9 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-700 dark:text-green-400 font-bold text-sm">
               {initial}

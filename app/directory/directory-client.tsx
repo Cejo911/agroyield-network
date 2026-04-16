@@ -197,7 +197,7 @@ export default function DirectoryClient({ profiles, currentUserId, followingIds,
                 {/* Avatar with presence indicator */}
                 <div className="relative w-12 h-12 mb-4">
                   {profile.avatar_url ? (
-                    <Image src={profile.avatar_url} alt="" width={48} height={48} className="rounded-full object-cover" />
+                    <Image src={profile.avatar_url} alt="" width={48} height={48} className="w-12 h-12 rounded-full object-cover" />
                   ) : (
                     <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center text-green-700 dark:text-green-400 font-bold text-lg">
                       {profile.first_name?.[0]?.toUpperCase() ?? '?'}
