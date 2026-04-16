@@ -4,7 +4,6 @@ import {
   AreaChart, Area, BarChart, Bar, LineChart, Line,
   XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell, Legend,
 } from 'recharts'
-import jsPDF from 'jspdf'
 
 // ── Types ──
 interface AnalyticsProps {
@@ -501,9 +500,10 @@ export default function AnalyticsTab(props: AnalyticsProps) {
   const tooltipStyle = { contentStyle: { background: '#111827', border: '1px solid #374151', borderRadius: 8, fontSize: 12 }, labelStyle: { color: '#9ca3af' }, itemStyle: { color: '#d1d5db' } }
 
   // ── PDF Export (data-driven, no canvas) ──
-  const exportPDF = () => {
+  const exportPDF = async () => {
     setExportingPdf(true)
     try {
+      const { jsPDF } = await import('jspdf')
       const pdf = new jsPDF('p', 'mm', 'a4')
       const pw = 210
       const ph = 297

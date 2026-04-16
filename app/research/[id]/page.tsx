@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
+import Image from 'next/image'
 import AppNav from '@/app/components/AppNav'
 import ResearchActions from './ResearchActions'
 import CommentsSection from '@/app/components/CommentsSection'
@@ -81,8 +82,7 @@ export default async function ResearchPostPage({
           {/* Cover Image */}
           {post.cover_image_url && (
             <div className="relative w-full aspect-[16/9] rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 mb-6">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={post.cover_image_url} alt={post.title} className="w-full h-full object-contain" />
+              <Image src={post.cover_image_url} alt={post.title} fill className="object-contain" sizes="(max-width: 768px) 100vw, 672px" />
             </div>
           )}
 

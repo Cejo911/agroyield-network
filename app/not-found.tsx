@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 
 export default function NotFound() {
   return (
@@ -12,7 +13,7 @@ export default function NotFound() {
       {/* NAV */}
       <nav className="agy-nav" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(34,197,94,0.08)' }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
-          <img src="/logo-horizontal-white.png" alt="AgroYield Network" style={{ height: 58, width: 'auto' }} />
+          <Image src="/logo-horizontal-white.png" alt="AgroYield Network" width={110} height={58} className="h-[58px] w-auto" />
         </Link>
       </nav>
 

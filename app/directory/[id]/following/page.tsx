@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import AppNav from '@/app/components/AppNav'
 
 export default async function FollowingPage({ params }: { params: Promise<{ id: string }> }) {
@@ -52,7 +53,7 @@ export default async function FollowingPage({ params }: { params: Promise<{ id: 
                 <Link key={p.id} href={href}
                   className="flex items-center gap-4 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 hover:border-green-300 dark:hover:border-green-700 transition-colors">
                   {p.avatar_url ? (
-                    <img src={p.avatar_url} alt={name} className="w-10 h-10 rounded-full object-cover" />
+                    <Image src={p.avatar_url} alt={name} width={40} height={40} className="rounded-full object-cover" />
                   ) : (
                     <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-700 dark:text-green-400 font-bold text-sm">
                       {name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()}

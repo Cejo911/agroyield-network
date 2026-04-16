@@ -1,7 +1,6 @@
 'use client'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import ExcelJS from 'exceljs'
 import { getBusinessAccess } from '@/lib/business-access'
 import { getActiveBusinessId } from '@/lib/business-cookie'
 
@@ -36,6 +35,7 @@ export default function ReportExport({ period }: { period: string }) {
     const data = await fetchData()
     if (!data) { setLoading(null); return }
 
+    const ExcelJS = (await import('exceljs')).default
     const { invoices, expenses, customers, business } = data
     const customerMap = Object.fromEntries(customers.map((c: any) => [c.id, c.name]))
     const wb = new ExcelJS.Workbook()

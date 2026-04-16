@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import useProfileGate from '@/app/hooks/useProfileGate'
@@ -381,7 +382,7 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
                 <div className="flex items-start gap-3 mb-3">
                   <Link href={profileHref} className="shrink-0">
                     {profile?.avatar_url ? (
-                      <img src={profile.avatar_url} alt={name} className="w-10 h-10 rounded-full object-cover" />
+                      <Image src={profile.avatar_url} alt={name} width={40} height={40} className="rounded-full object-cover" />
                     ) : (
                       <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-700 dark:text-green-400 font-bold text-sm">
                         {initials}
@@ -425,7 +426,7 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
                     <Link href={`/community/${parent.id}`} className="block rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/40 p-3 mb-3 hover:border-green-300 dark:hover:border-green-700 transition-colors">
                       <div className="flex items-center gap-2 mb-2">
                         {parentProfile?.avatar_url ? (
-                          <img src={parentProfile.avatar_url} alt={parentName} className="w-7 h-7 rounded-full object-cover" />
+                          <Image src={parentProfile.avatar_url} alt={parentName} width={28} height={28} className="rounded-full object-cover" />
                         ) : (
                           <div className="w-7 h-7 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-700 dark:text-green-400 font-bold text-[11px]">
                             {parentInitials}
@@ -452,7 +453,7 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
                 {/* Post image */}
                 {post.image_url && (
                   <div className="mb-3 rounded-lg overflow-hidden border border-gray-100 dark:border-gray-800">
-                    <img src={post.image_url} alt="Post image" className="w-full max-h-96 object-cover" />
+                    <Image src={post.image_url} alt="Post image" width={800} height={400} sizes="(max-width: 768px) 100vw, 672px" className="w-full max-h-96 object-cover" />
                   </div>
                 )}
 

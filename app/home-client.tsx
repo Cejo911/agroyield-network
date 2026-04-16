@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import ThemeToggle from '@/app/components/ThemeToggle'
 
 function Countdown() {
@@ -237,7 +238,7 @@ export default function Home() {
       {/* NAV */}
       <nav className="agy-nav" style={{ position: 'sticky', top: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--nav-bg)', backdropFilter: 'blur(16px)', borderBottom: '1px solid var(--nav-border)' }}>
         <a href="#top" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-  <img src="/logo-horizontal-colored.png" alt="AgroYield Network" style={{ height: 58, width: 'auto' }} />
+  <Image src="/logo-horizontal-colored.png" alt="AgroYield Network" width={110} height={58} className="h-[58px] w-auto" />
 </a>
         <div className="agy-nav-links">
           <a href="/about"   className="agy-nav-about"   style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', textDecoration: 'none' }}>About</a>

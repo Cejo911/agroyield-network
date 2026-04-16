@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useSearchLog } from '@/lib/useSearchLog'
@@ -144,8 +145,7 @@ export default function ResearchClient({
                 <Link href={`/research/${post.id}`} className="block group">
                   {post.cover_image_url && (
                     <div className="relative w-full aspect-[16/9] bg-gray-100 dark:bg-gray-800 rounded-t-2xl overflow-hidden">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={post.cover_image_url} alt={post.title} className="w-full h-full object-cover" />
+                      <Image src={post.cover_image_url} alt={post.title} fill className="object-cover" sizes="(max-width: 768px) 100vw, 672px" />
                     </div>
                   )}
                   <div className="p-6">
@@ -171,7 +171,7 @@ export default function ResearchClient({
                       return (
                         <Link href={href} className="flex items-center gap-1.5 group" onClick={e => e.stopPropagation()}>
                           {profile.avatar_url ? (
-                            <img src={profile.avatar_url} alt="" className="w-5 h-5 rounded-full object-cover shrink-0" />
+                            <Image src={profile.avatar_url} alt="" width={20} height={20} className="rounded-full object-cover shrink-0" />
                           ) : (
                             <span className="w-5 h-5 rounded-full bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 text-[10px] font-bold flex items-center justify-center shrink-0">
                               {(profile.first_name?.[0] || '?').toUpperCase()}

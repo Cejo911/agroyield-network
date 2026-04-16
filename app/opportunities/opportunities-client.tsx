@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import LikeButton from '@/app/components/LikeButton'
@@ -156,10 +157,12 @@ export default function OpportunitiesClient({
             <Link href={`/opportunities/${opportunity.id}`} className="block p-5 group">
               <div className="flex items-start gap-4 mb-2">
                 {opportunity.thumbnail_url && (
-                  <img
+                  <Image
                     src={opportunity.thumbnail_url}
                     alt=""
-                    className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg object-cover shrink-0 border border-gray-100 dark:border-gray-800"
+                    width={80}
+                    height={80}
+                    className="rounded-lg object-cover shrink-0 border border-gray-100 dark:border-gray-800"
                   />
                 )}
                 <div className="flex-1 min-w-0">

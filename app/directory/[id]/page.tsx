@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import AppNav from '@/app/components/AppNav'
 import FollowButton from '../follow-button'
 import MessageButton from '@/app/components/MessageButton'
@@ -45,7 +46,7 @@ export default async function PublicProfilePage({
           {/* Header */}
           <div className="flex items-start gap-5 mb-6">
             {profile.avatar_url ? (
-              <img src={profile.avatar_url} alt="" className="w-16 h-16 rounded-full object-cover border-2 border-white dark:border-gray-800 shadow-sm" />
+              <Image src={profile.avatar_url} alt="" width={64} height={64} className="rounded-full object-cover border-2 border-white dark:border-gray-800 shadow-sm" />
             ) : (
               <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center text-green-700 dark:text-green-400 font-bold text-2xl">
                 {profile.first_name?.[0]?.toUpperCase() ?? '?'}

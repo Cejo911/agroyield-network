@@ -1,3 +1,5 @@
+import Image from 'next/image'
+
 export default function TermsOfService() {
   return (
     <main style={{ fontFamily: "'Inter', system-ui, sans-serif", background: 'var(--bg-page)', color: 'var(--text-primary)', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -29,8 +31,8 @@ export default function TermsOfService() {
       {/* NAV */}
       <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 40px', borderBottom: '1px solid var(--nav-border)' }}>
         <a href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-          <img src="/logo-horizontal-colored.png" alt="AgroYield Network" className="auth-logo-colored" style={{ height: 58, width: 'auto' }} />
-          <img src="/logo-horizontal-white.png"   alt="AgroYield Network" className="auth-logo-white"   style={{ height: 58, width: 'auto' }} />
+          <Image src="/logo-horizontal-colored.png" alt="AgroYield Network" className="auth-logo-colored" width={110} height={58} />
+          <Image src="/logo-horizontal-white.png"   alt="AgroYield Network" className="auth-logo-white"   width={110} height={58} />
         </a>
         <a href="/" style={{ fontSize: 13, color: 'var(--text-secondary)', textDecoration: 'none' }}>← Back to home</a>
       </nav>

@@ -1,15 +1,16 @@
 'use client'
-import { useState } from 'react'
-import ExcelJS from 'exceljs'
+import { useState, Suspense, lazy } from 'react'
 import { SearchBar, FilterPills } from './tabs/AdminSearchBar'
-import CommunityTab from './tabs/CommunityTab'
-import ResearchTab from './tabs/ResearchTab'
-import CommentsTab from './tabs/CommentsTab'
-import PricesTab from './tabs/PricesTab'
-import MentorshipTab from './tabs/MentorshipTab'
-import AuditLogTab from './tabs/AuditLogTab'
-import NotifyPanel from './tabs/NotifyPanel'
-import AnalyticsTab from './tabs/AnalyticsTab'
+
+// ── Lazy-load admin tabs — only the active tab's code is fetched ──
+const CommunityTab = lazy(() => import('./tabs/CommunityTab'))
+const ResearchTab = lazy(() => import('./tabs/ResearchTab'))
+const CommentsTab = lazy(() => import('./tabs/CommentsTab'))
+const PricesTab = lazy(() => import('./tabs/PricesTab'))
+const MentorshipTab = lazy(() => import('./tabs/MentorshipTab'))
+const AuditLogTab = lazy(() => import('./tabs/AuditLogTab'))
+const NotifyPanel = lazy(() => import('./tabs/NotifyPanel'))
+const AnalyticsTab = lazy(() => import('./tabs/AnalyticsTab'))
 
 // ── Interfaces ──
 
@@ -398,6 +399,7 @@ export default function AdminClient({
   const exportToExcel = async (sheetName: string, columns: { header: string; key: string; width: number }[], rows: Record<string, unknown>[]) => {
     setExporting(true)
     try {
+      const ExcelJS = (await import('exceljs')).default
       const wb = new ExcelJS.Workbook()
       const ws = wb.addWorksheet(sheetName)
       ws.columns = columns.map(c => ({ header: c.header, key: c.key, width: c.width }))
@@ -1296,27 +1298,24 @@ export default function AdminClient({
         </div>
       )}
 
-      {/* ── Community Posts (delegated) ── */}
+      {/* ── Lazy-loaded tabs — wrapped in Suspense for code-split loading ── */}
+      <Suspense fallback={<div className="py-8 text-center text-sm text-gray-400 dark:text-gray-500">Loading…</div>}>
       {activeTab === 'community' && (
         <CommunityTab posts={communityPosts} getDisplayName={getDisplayName} fmt={fmt} />
       )}
 
-      {/* ── Research Posts (delegated) ── */}
       {activeTab === 'research' && (
         <ResearchTab posts={researchPosts} getDisplayName={getDisplayName} fmt={fmt} />
       )}
 
-      {/* ── Comments (delegated) ── */}
       {activeTab === 'comments' && (
         <CommentsTab comments={comments} getDisplayName={getDisplayName} fmt={fmt} />
       )}
 
-      {/* ── Price Reports (delegated) ── */}
       {activeTab === 'prices' && (
         <PricesTab reports={priceReports} getDisplayName={getDisplayName} fmt={fmt} />
       )}
 
-      {/* ── Mentorship (delegated) ── */}
       {activeTab === 'mentorship' && (
         <MentorshipTab mentors={mentorProfiles} requests={mentorshipRequests} getDisplayName={getDisplayName} fmt={fmt} />
       )}
@@ -1363,7 +1362,6 @@ export default function AdminClient({
         </div>
       )}
 
-      {/* ── Analytics (super admin only) ── */}
       {activeTab === 'analytics' && isSuperAdmin && (
         <AnalyticsTab
           members={members}
@@ -1384,15 +1382,14 @@ export default function AdminClient({
         />
       )}
 
-      {/* ── Audit Log (super admin only, delegated) ── */}
       {activeTab === 'audit_log' && isSuperAdmin && (
         <AuditLogTab entries={auditLog} getDisplayName={getDisplayName} fmt={fmt} />
       )}
 
-      {/* ── Notifications (super admin only, delegated) ── */}
       {activeTab === 'notifications' && isSuperAdmin && (
         <NotifyPanel />
       )}
+      </Suspense>
 
       {/* ── Settings ── */}
       {activeTab === 'settings' && isSuperAdmin && (() => {

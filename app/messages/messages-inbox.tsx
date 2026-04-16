@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 
 interface Conversation {
   id: string
@@ -71,7 +72,7 @@ export default function MessagesInbox({ conversations }: { conversations: Conver
             >
               {/* Avatar */}
               {convo.avatarUrl ? (
-                <img src={convo.avatarUrl} alt={convo.name} className="w-11 h-11 rounded-full object-cover shrink-0" />
+                <Image src={convo.avatarUrl} alt={convo.name} width={44} height={44} className="rounded-full object-cover shrink-0" />
               ) : (
                 <div className="w-11 h-11 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-700 dark:text-green-400 font-bold text-sm shrink-0">
                   {convo.initial}

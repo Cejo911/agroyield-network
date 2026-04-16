@@ -49,6 +49,13 @@ const nextConfig: NextConfig = {
         pathname: '/storage/v1/object/public/**',
       },
     ],
+    // Serve optimised images: prefer AVIF (smallest), fall back to WebP
+    formats: ['image/avif', 'image/webp'],
+    // Responsive breakpoints for user-uploaded images (avatars, posts, listings)
+    deviceSizes: [640, 750, 828, 1080, 1200],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256],
+    // Reduce default quality slightly — saves bandwidth on 3G connections
+    minimumCacheTTL: 60 * 60 * 24 * 30, // 30 days
   },
 
   // ── Security Headers ──────────────────────────────────────────────

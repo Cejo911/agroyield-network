@@ -1,5 +1,6 @@
 'use client'
 import { Suspense, useEffect, useRef, useState } from 'react'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getBusinessAccess } from '@/lib/business-access'
@@ -221,7 +222,7 @@ function BusinessSetup() {
           <h2 className="font-semibold text-gray-800 dark:text-white">Business Logo</h2>
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
             {form.logo_url ? (
-              <img src={form.logo_url} alt="Logo" className="w-20 h-20 object-contain rounded-lg border border-gray-100" />
+              <Image src={form.logo_url} alt="Logo" width={80} height={80} className="object-contain rounded-lg border border-gray-100" />
             ) : (
               <div className="w-20 h-20 rounded-lg border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-300 text-3xl">
                 🏪

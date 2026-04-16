@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { useSearchLog } from '@/lib/useSearchLog'
 
@@ -132,7 +133,7 @@ export default function MentorBrowser({ mentors, userId }: { mentors: Mentor[]; 
               >
                 <div className="flex items-start gap-4">
                   {m.profiles?.avatar_url ? (
-                    <img src={m.profiles.avatar_url} alt={name} className="w-14 h-14 rounded-full object-cover shrink-0" />
+                    <Image src={m.profiles.avatar_url} alt={name} width={56} height={56} className="rounded-full object-cover shrink-0" />
                   ) : (
                     <div className="w-14 h-14 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-700 dark:text-green-400 font-bold text-lg shrink-0">
                       {initials}

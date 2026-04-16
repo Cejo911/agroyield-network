@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import type { Metadata } from 'next'
 import AppNav from '@/app/components/AppNav'
 import CommentsSection from '@/app/components/CommentsSection'
@@ -142,7 +143,7 @@ export default async function CommunityPostPage({ params }: { params: Promise<{ 
           <div className="flex items-start gap-3 mb-4">
             <Link href={profileHref} className="shrink-0">
               {prof?.avatar_url ? (
-                <img src={prof.avatar_url} alt={name} className="w-12 h-12 rounded-full object-cover" />
+                <Image src={prof.avatar_url} alt={name} width={48} height={48} className="rounded-full object-cover" />
               ) : (
                 <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-700 dark:text-green-400 font-bold text-sm">
                   {initials}
@@ -178,7 +179,7 @@ export default async function CommunityPostPage({ params }: { params: Promise<{ 
           {/* Image */}
           {post.image_url && (
             <div className="mb-4 rounded-lg overflow-hidden">
-              <img src={post.image_url} alt="Post image" className="w-full max-h-[500px] object-cover" />
+              <Image src={post.image_url} alt="Post image" width={800} height={400} sizes="(max-width: 768px) 100vw, 672px" className="w-full max-h-[500px] object-cover" />
             </div>
           )}
 

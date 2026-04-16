@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { useSearchLog } from '@/lib/useSearchLog'
 
@@ -192,10 +193,12 @@ export default function GrantsClient({ grants, applicationMap }: Props) {
               >
                 <div className="flex items-start gap-4">
                   {grant.thumbnail_url && (
-                    <img
+                    <Image
                       src={grant.thumbnail_url}
                       alt=""
-                      className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg object-cover shrink-0 border border-gray-100 dark:border-gray-800"
+                      width={80}
+                      height={80}
+                      className="rounded-lg object-cover shrink-0 border border-gray-100 dark:border-gray-800"
                     />
                   )}
                   <div className="min-w-0 flex-1">

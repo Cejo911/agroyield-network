@@ -258,7 +258,7 @@ Harden the platform, add differentiators, test with real users.
 
 > **Why:** Your users are on mobile phones with 3G connections. Speed is a feature.
 > **Scope:** Lighthouse audit. Bundle analysis. Image optimization. Lazy loading. Server component optimization.
-> **Status:** ⬜ Not started
+> **Status:** ✅ Completed (16 Apr 2026) — Migrated 34 user-facing files from raw `<img>` to Next.js `<Image>` (automatic WebP/AVIF, lazy loading, responsive sizing). Dynamic-imported ExcelJS (~2MB) and jsPDF (~600KB) in 3 admin/business components. Lazy-loaded 8 admin tabs via `React.lazy()` + Suspense. Added AVIF/WebP format preference, responsive breakpoints, and 30-day cache TTL in `next.config.ts`. Print pages intentionally left with raw `<img>` to avoid layout interference.
 
 ### 4.5 — Security Hardening
 

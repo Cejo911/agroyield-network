@@ -1,6 +1,6 @@
 # AgroYield Network — Project Status
 
-> **Last updated:** 16 April 2026 (Checkpoint 15)
+> **Last updated:** 16 April 2026 (Checkpoint 16)
 > **Maintained by:** Okoli (okolichijiokei@gmail.com)
 > **Launch Target:** 5 July 2026 (~11 weeks remaining)
 > **Purpose:** Permanent reference for any developer or Claude session to get up to speed instantly.
@@ -347,6 +347,16 @@ Note: `/insights`, `/connections` are pre-registered for future modules.
 ---
 
 ## Changelog
+
+### Checkpoint 16 — April 16, 2026 (Performance Audit — Phase 4.4)
+
+- Changed: Migrated 34 user-facing files from raw `<img>` to Next.js `<Image>` component — enables automatic WebP/AVIF conversion, lazy loading, responsive sizing, and blur placeholders. Categories: logo images (11 files), avatar images in community/directory/messages (8 files), listing/post images in marketplace/research/grants/opportunities/mentorship/prices (9 files), business logos (2 files), community feed avatars + post images (2 files), public profile page (1 file), admin business preview (1 file)
+- Changed: `app/admin/tabs/AnalyticsTab.tsx` — jsPDF import converted from top-level to dynamic `await import('jspdf')` inside export handler (~600KB deferred until click)
+- Changed: `app/business/reports/ReportExport.tsx` — ExcelJS import converted from top-level to dynamic `await import('exceljs')` inside export handler (~2MB deferred until click)
+- Changed: `app/admin/admin-client.tsx` — ExcelJS import converted to dynamic; 8 admin tab components (`CommunityTab`, `ResearchTab`, `CommentsTab`, `PricesTab`, `MentorshipTab`, `AuditLogTab`, `NotifyPanel`, `AnalyticsTab`) converted from static imports to `React.lazy()` with `<Suspense>` boundary — only the active tab's JS is loaded
+- Changed: `next.config.ts` images config — added `formats: ['image/avif', 'image/webp']` (prefer AVIF, smallest format), `deviceSizes` and `imageSizes` breakpoints for responsive optimization, `minimumCacheTTL: 2592000` (30-day cache for optimized images)
+- Decision: Print pages (`app/business/reports/print/page.tsx`, `app/invoice-print/[id]/page.tsx`) intentionally left with raw `<img>` — Next.js Image lazy loading and optimization can interfere with print/PDF layouts
+- Decision: Email template `<img>` tags in API routes left unchanged — `next/image` only works in React components, not HTML email strings
 
 ### Checkpoint 15 — April 16, 2026 (Security Hardening — Phase 4.5)
 
