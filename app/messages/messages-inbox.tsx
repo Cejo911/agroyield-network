@@ -72,22 +72,20 @@ export default function MessagesInbox({ conversations }: { conversations: Conver
               href={`/messages/${convo.id}`}
               className="flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
             >
-              {/* Avatar with presence */}
-              <div className="relative shrink-0">
-                {convo.avatarUrl ? (
-                  <Image src={convo.avatarUrl} alt={convo.name} width={44} height={44} className="w-11 h-11 rounded-full object-cover" />
-                ) : (
-                  <div className="w-11 h-11 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-700 dark:text-green-400 font-bold text-sm">
-                    {convo.initial}
-                  </div>
-                )}
-                <OnlineIndicator lastSeenAt={convo.lastSeenAt} size="sm" className="absolute bottom-0 right-0" />
-              </div>
+              {/* Avatar */}
+              {convo.avatarUrl ? (
+                <Image src={convo.avatarUrl} alt={convo.name} width={44} height={44} className="w-11 h-11 rounded-full object-cover shrink-0" />
+              ) : (
+                <div className="w-11 h-11 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-700 dark:text-green-400 font-bold text-sm shrink-0">
+                  {convo.initial}
+                </div>
+              )}
 
               {/* Content */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">
-                  <span className={`text-sm truncate ${convo.unread > 0 ? 'font-bold text-gray-900 dark:text-white' : 'font-semibold text-gray-800 dark:text-gray-200'}`}>
+                  <span className={`text-sm truncate flex items-center gap-1.5 ${convo.unread > 0 ? 'font-bold text-gray-900 dark:text-white' : 'font-semibold text-gray-800 dark:text-gray-200'}`}>
+                    <OnlineIndicator lastSeenAt={convo.lastSeenAt} size="sm" />
                     {convo.name}
                   </span>
                   <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0">{convo.time}</span>

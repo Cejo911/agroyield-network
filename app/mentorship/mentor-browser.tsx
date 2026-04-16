@@ -134,7 +134,7 @@ export default function MentorBrowser({ mentors, userId }: { mentors: Mentor[]; 
                 className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 hover:border-green-300 dark:hover:border-green-700 transition-colors block"
               >
                 <div className="flex items-start gap-4">
-                  <div className="relative shrink-0">
+                  <div className="shrink-0">
                     {m.profiles?.avatar_url ? (
                       <Image src={m.profiles.avatar_url} alt={name} width={56} height={56} className="w-14 h-14 rounded-full object-cover" />
                     ) : (
@@ -142,11 +142,13 @@ export default function MentorBrowser({ mentors, userId }: { mentors: Mentor[]; 
                         {initials}
                       </div>
                     )}
-                    <OnlineIndicator lastSeenAt={m.profiles?.last_seen_at} size="sm" className="absolute bottom-0 right-0" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-bold text-gray-900 dark:text-white truncate">{name}</h3>
+                      <h3 className="font-bold text-gray-900 dark:text-white truncate flex items-center gap-1.5">
+                        <OnlineIndicator lastSeenAt={m.profiles?.last_seen_at} size="sm" />
+                        {name}
+                      </h3>
                       {m.profiles?.is_verified && <span className="text-green-500 text-sm" title="Verified">✓</span>}
                       {m.user_id === userId && (
                         <span className="text-[10px] bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-1.5 py-0.5 rounded-full font-semibold">You</span>

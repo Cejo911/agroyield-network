@@ -150,7 +150,7 @@ export default function MessageThread({ conversationId, currentUserId, otherUser
         <Link href="/messages" className="text-gray-400 hover:text-green-600 transition-colors mr-1">
           ←
         </Link>
-        <Link href={otherUser.profileHref} className="relative shrink-0">
+        <Link href={otherUser.profileHref} className="shrink-0">
           {otherUser.avatarUrl ? (
             <Image src={otherUser.avatarUrl} alt={otherUser.name} width={36} height={36} className="w-9 h-9 rounded-full object-cover" />
           ) : (
@@ -158,10 +158,10 @@ export default function MessageThread({ conversationId, currentUserId, otherUser
               {initial}
             </div>
           )}
-          <OnlineIndicator lastSeenAt={otherUser.lastSeenAt} size="sm" className="absolute bottom-0 right-0" />
         </Link>
         <div className="min-w-0">
-          <Link href={otherUser.profileHref} className="font-semibold text-gray-900 dark:text-white text-sm hover:underline block truncate">
+          <Link href={otherUser.profileHref} className="font-semibold text-gray-900 dark:text-white text-sm hover:underline truncate flex items-center gap-1.5">
+            <OnlineIndicator lastSeenAt={otherUser.lastSeenAt} size="sm" />
             {otherUser.name}
           </Link>
           {otherUser.role && (

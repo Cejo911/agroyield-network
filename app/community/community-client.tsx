@@ -381,7 +381,7 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
                 )}
                 {/* Header */}
                 <div className="flex items-start gap-3 mb-3">
-                  <Link href={profileHref} className="relative shrink-0">
+                  <Link href={profileHref} className="shrink-0">
                     {profile?.avatar_url ? (
                       <Image src={profile.avatar_url} alt={name} width={40} height={40} className="w-10 h-10 rounded-full object-cover" />
                     ) : (
@@ -389,11 +389,11 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
                         {initials}
                       </div>
                     )}
-                    <OnlineIndicator lastSeenAt={profile?.last_seen_at} size="sm" className="absolute bottom-0 right-0" />
                   </Link>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <Link href={profileHref} className="font-semibold text-gray-900 dark:text-white text-sm hover:underline">
+                      <Link href={profileHref} className="font-semibold text-gray-900 dark:text-white text-sm hover:underline flex items-center gap-1.5">
+                        <OnlineIndicator lastSeenAt={profile?.last_seen_at} size="sm" />
                         {name}
                       </Link>
                       {profile?.role && (
