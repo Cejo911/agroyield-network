@@ -139,7 +139,7 @@ export const MODULE_FAQS: Record<ModuleKey, FAQItem[]> = {
     },
     {
       q: 'Can I cancel an order?',
-      a: 'Yes, both buyers and sellers can cancel an order before it has been shipped. If the buyer has already paid, a refund is automatically initiated through Paystack. Once an order is marked as shipped, it cannot be cancelled — you\'ll need to raise a dispute instead.',
+      a: 'Yes, both buyers and sellers can cancel an order before it has been shipped. If the buyer has already paid, a refund request is sent to Paystack — refunds typically take 5–10 business days to reflect in your account. Once an order is marked as shipped, it cannot be cancelled — you\'ll need to raise a dispute instead.',
     },
     {
       q: 'Where can I see my orders?',
