@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase/admin'
+import { slackAlert } from '@/lib/slack'
 
 export async function GET(request: Request) {
   // Verify this is called by Vercel Cron
@@ -53,6 +54,19 @@ export async function GET(request: Request) {
     if (updateError) throw updateError
 
     console.log(`[expire-subscriptions] Revoked ${ids.length} profiles — reset to free tier`)
+
+    // Fire-and-forget: Slack alert for subscription expirations
+    if (ids.length > 0) {
+      slackAlert({
+        title: 'Subscriptions Expired',
+        level: 'warning',
+        fields: {
+          'Profiles Revoked': ids.length,
+          'Grace Period': `${graceDays} days`,
+          'Action': 'Reset to free tier',
+        },
+      }).catch(() => {})
+    }
 
     return NextResponse.json({ success: true, revoked: ids.length })
   } catch (err: unknown) {

@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { SENDERS } from '@/lib/email/senders'
 import { getResend } from '@/lib/email/client'
+import { slackAlert } from '@/lib/slack'
 
 const REASONS = ['Spam', 'Misleading', 'Inappropriate', 'Duplicate', 'Other']
 
@@ -95,6 +96,24 @@ export async function POST(request: NextRequest) {
       await adminAny.from(table).update({ is_active: false }).eq('id', postId)
     }
 
+    // Fire-and-forget: Slack alert for content report
+    const postLabel =
+      postType === 'opportunity'  ? 'Opportunity'
+    : postType === 'price_report' ? 'Price Report'
+    : postType === 'research'     ? 'Research Post'
+    :                               'Marketplace Listing'
+    slackAlert({
+      title: autoHidden ? 'Content Auto-Hidden' : 'New Content Report',
+      level: autoHidden ? 'warning' : 'info',
+      fields: {
+        'Content Type': postLabel,
+        'Reason': reason,
+        'Total Reports': `${totalReports} / ${threshold} threshold`,
+        'Status': autoHidden ? '⚠️ Auto-hidden' : 'Visible',
+        'Post ID': postId,
+      },
+    }).catch(() => {})
+
     // Send admin notification email (fire-and-forget, never blocks the response)
     try {
       const { data: emailSetting } = await adminAny.from('settings')
@@ -107,11 +126,6 @@ export async function POST(request: NextRequest) {
         : []
 
       if (notificationEmails.length > 0) {
-        const postLabel =
-          postType === 'opportunity'  ? 'Opportunity'
-        : postType === 'price_report' ? 'Price report'
-        : postType === 'research'     ? 'Research post'
-        :                               'Marketplace listing'
         const postPath =
           postType === 'opportunity'  ? `opportunities/${postId}`
         : postType === 'price_report' ? `prices`

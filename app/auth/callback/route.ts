@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { recordLoginAndNotify } from '@/lib/auth/login-notification'
 import { SENDERS } from '@/lib/email/senders'
 import { getResend } from '@/lib/email/client'
+import { slackAlert } from '@/lib/slack'
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
@@ -60,6 +61,17 @@ export async function GET(request: Request) {
         }
 
         if (profile && !profile.first_name) {
+          // Fire-and-forget: Slack alert for new signup
+          slackAlert({
+            title: 'New User Signup',
+            level: 'info',
+            fields: {
+              'Email': user.email ?? 'unknown',
+              'Account Type': profile?.account_type ?? 'individual',
+              'Provider': user.app_metadata?.provider ?? 'email',
+            },
+          }).catch(() => {})
+
           try {
             await getResend().emails.send({
               from: SENDERS.noreply,

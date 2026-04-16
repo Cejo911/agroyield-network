@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
+import { slackAlert } from '@/lib/slack'
 
 function getAdminClient() {
   return createAdminClient(
@@ -67,6 +68,22 @@ export async function GET(request: NextRequest) {
       .eq('id', userId)
 
     if (updateError) throw updateError
+
+    // Fire-and-forget: Slack alert for successful payment
+    const amountNGN = paystackData.data?.amount
+      ? `₦${(paystackData.data.amount / 100).toLocaleString()}`
+      : 'unknown'
+    slackAlert({
+      title: 'Payment Successful',
+      level: 'info',
+      fields: {
+        'User': metadata?.email ?? userId,
+        'Tier': tier.charAt(0).toUpperCase() + tier.slice(1),
+        'Billing': billing,
+        'Amount': amountNGN,
+        'Reference': reference ?? 'N/A',
+      },
+    }).catch(() => {})
 
     return NextResponse.json({ success: true, tier, billing })
   } catch (err: unknown) {

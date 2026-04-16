@@ -4,6 +4,7 @@ import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { DEFAULT_PRICING, DEFAULT_FREE_TRIAL_DAYS } from '@/lib/tiers'
 import type { TierName } from '@/lib/tiers'
+import { slackAlert } from '@/lib/slack'
 
 export async function POST(request: NextRequest) {
   try {
@@ -70,6 +71,18 @@ export async function POST(request: NextRequest) {
           is_verified: true,
         })
         .eq('id', user.id)
+
+      // Fire-and-forget: Slack alert for free trial activation
+      slackAlert({
+        title: 'Free Trial Activated',
+        level: 'info',
+        fields: {
+          'User': email,
+          'Tier': tier.charAt(0).toUpperCase() + tier.slice(1),
+          'Trial Days': trialDays,
+          'Expires': expiresAt.toLocaleDateString('en-NG', { timeZone: 'Africa/Lagos' }),
+        },
+      }).catch(() => {})
 
       return NextResponse.json({
         trial: true,
