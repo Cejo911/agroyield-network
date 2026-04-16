@@ -276,7 +276,7 @@ Harden the platform, add differentiators, test with real users.
 
 > **Why:** Users need a structured way to request support. Token authentication before rendering support prevents impersonation and adds security.
 > **Scope:** Support ticket creation (open/closed states). Token verification via email or SMS (member's choice). Admin support dashboard with ticket queue. Audit trail per ticket.
-> **Status:** ⬜ Not started (deferred from pre-Phase 4 review, 15 Apr 2026)
+> **Status:** ✅ Completed (16 Apr 2026) — Full support ticket system: 4 DB tables (tickets, messages, events, tokens) with RLS. Email OTP verification (6-digit, 15-min expiry) before accessing support. Ticket CRUD with categories (general/account/billing/technical/content/other), priorities (low/medium/high/urgent), SLA deadlines (72h/48h/24h/4h). Admin SupportTab with claim/resolve/close/escalate actions, status + priority filters, SLA breach indicators. Conversation threads with user/admin messages + audit trail. Email notifications on ticket creation, admin reply, and resolution. Slack alerts on new tickets (severity by priority). Support link in AppNav. SMS verification deferred — structured for plug-in when SMS provider added.
 
 ### 4.8 — Featured Marketplace Listing Billing
 

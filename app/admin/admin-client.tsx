@@ -11,6 +11,7 @@ const MentorshipTab = lazy(() => import('./tabs/MentorshipTab'))
 const AuditLogTab = lazy(() => import('./tabs/AuditLogTab'))
 const NotifyPanel = lazy(() => import('./tabs/NotifyPanel'))
 const AnalyticsTab = lazy(() => import('./tabs/AnalyticsTab'))
+const SupportTab = lazy(() => import('./tabs/SupportTab'))
 
 // ── Interfaces ──
 
@@ -199,6 +200,21 @@ interface SearchLog {
   created_at: string
 }
 
+interface SupportTicket {
+  id: string
+  user_id: string
+  subject: string
+  description: string
+  category: string
+  priority: string
+  status: string
+  assigned_to: string | null
+  sla_deadline: string | null
+  created_at: string
+  updated_at: string
+  resolved_at: string | null
+}
+
 interface AdminClientProps {
   opportunities: Opportunity[]
   listings: Listing[]
@@ -222,9 +238,10 @@ interface AdminClientProps {
   invoices: Invoice[]
   businessExpenses: BusinessExpense[]
   searchLogs: SearchLog[]
+  supportTickets: SupportTicket[]
 }
 
-type Tab = 'opportunities' | 'marketplace' | 'members' | 'grants' | 'community' | 'research' | 'comments' | 'prices' | 'mentorship' | 'reports' | 'analytics' | 'audit_log' | 'notifications' | 'settings'
+type Tab = 'opportunities' | 'marketplace' | 'members' | 'grants' | 'community' | 'research' | 'comments' | 'prices' | 'mentorship' | 'reports' | 'support' | 'analytics' | 'audit_log' | 'notifications' | 'settings'
 
 // Permission keys per tab — determines which tabs a moderator can see
 const TAB_PERMISSION: Partial<Record<Tab, string>> = {
@@ -238,6 +255,7 @@ const TAB_PERMISSION: Partial<Record<Tab, string>> = {
   prices: 'prices',
   mentorship: 'mentorship',
   reports: 'reports',
+  support: 'support',
   notifications: 'notifications',
 }
 
@@ -253,6 +271,7 @@ const PERMISSION_LABELS: { key: string; label: string }[] = [
   { key: 'comments', label: 'Comments' },
   { key: 'members', label: 'Members' },
   { key: 'reports', label: 'Reports' },
+  { key: 'support', label: 'Support Tickets' },
   { key: 'notifications', label: 'Notifications' },
 ]
 
@@ -282,6 +301,7 @@ export default function AdminClient({
   invoices,
   businessExpenses,
   searchLogs,
+  supportTickets,
 }: AdminClientProps) {
   const isSuperAdmin = currentAdminRole === 'super'
 
@@ -626,6 +646,7 @@ export default function AdminClient({
     { id: 'prices',        label: 'Prices' },
     { id: 'mentorship',    label: 'Mentorship' },
     { id: 'reports',       label: 'Reports', badge: reportGroups.length || undefined },
+    { id: 'support',       label: 'Support', badge: supportTickets.filter((t: SupportTicket) => t.status === 'open' || t.status === 'in_progress').length || undefined },
   ]
 
   const superAdminTabs: { id: Tab; label: string }[] = [
@@ -1360,6 +1381,10 @@ export default function AdminClient({
           ))}
           </div>
         </div>
+      )}
+
+      {activeTab === 'support' && (
+        <SupportTab tickets={supportTickets} profilesMap={profilesMap} getDisplayName={getDisplayName} currentUserId={currentUserId} />
       )}
 
       {activeTab === 'analytics' && isSuperAdmin && (

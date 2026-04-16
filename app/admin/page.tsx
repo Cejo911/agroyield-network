@@ -61,6 +61,7 @@ export default async function AdminPage() {
     { data: invoices },
     { data: businessExpenses },
     { data: searchLogs },
+    { data: supportTickets },
   ] = await Promise.all([
     supabaseAny.from('opportunities').select('*').order('created_at', { ascending: false }),
     supabaseAny.from('marketplace_listings').select('*').order('created_at', { ascending: false }),
@@ -80,6 +81,7 @@ export default async function AdminPage() {
     adminAny.from('invoices').select('id, business_id, status, total, issue_date, created_at').order('created_at', { ascending: false }).limit(1000),
     adminAny.from('business_expenses').select('id, business_id, amount, category, date, created_at').order('created_at', { ascending: false }).limit(1000),
     adminAny.from('search_logs').select('id, user_id, query, module, results_count, created_at').order('created_at', { ascending: false }).limit(5000),
+    adminAny.from('support_tickets').select('id, user_id, subject, description, category, priority, status, assigned_to, sla_deadline, created_at, updated_at, resolved_at').order('created_at', { ascending: false }).limit(500),
   ])
 
   const profilesMap: Record<string, { first_name: string | null; last_name: string | null; email: string | null; username: string | null }> = {}
@@ -211,6 +213,7 @@ export default async function AdminPage() {
           invoices={invoices ?? []}
           businessExpenses={businessExpenses ?? []}
           searchLogs={searchLogs ?? []}
+          supportTickets={supportTickets ?? []}
         />
       </div>
     </div>

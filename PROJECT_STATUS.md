@@ -1,6 +1,6 @@
 # AgroYield Network — Project Status
 
-> **Last updated:** 16 April 2026 (Checkpoint 16)
+> **Last updated:** 16 April 2026 (Checkpoint 17)
 > **Maintained by:** Okoli (okolichijiokei@gmail.com)
 > **Launch Target:** 5 July 2026 (~11 weeks remaining)
 > **Purpose:** Permanent reference for any developer or Claude session to get up to speed instantly.
@@ -347,6 +347,22 @@ Note: `/insights`, `/connections` are pre-registered for future modules.
 ---
 
 ## Changelog
+
+### Checkpoint 17 — April 16, 2026 (Support Ticket System — Phase 4.7)
+
+- Added: `supabase/migrations/20260416_support_tickets.sql` — 4 tables: `support_tickets` (with category/priority/status constraints, SLA deadlines, assignment), `support_ticket_messages` (conversation threads), `support_ticket_events` (audit trail), `support_tokens` (email OTP). Full RLS: users see own tickets/messages/events/tokens only. Indexes on user_id, status, assigned_to, sla_deadline, ticket_id.
+- Added: `lib/support/sla.ts` — SLA constants (low: 72h, medium: 48h, high: 24h, urgent: 4h), `getSlaDeadline()` and `isSlaBreached()` helpers
+- Added: `app/api/support/verify/route.ts` — POST sends 6-digit OTP via email (15-min expiry, branded HTML template), PUT verifies OTP against `support_tokens` table
+- Added: `app/api/support/tickets/route.ts` — GET lists user's tickets with assigned admin names, POST creates ticket (requires OTP verification within 30 min) with SLA deadline, admin notifications, Slack alert, confirmation email
+- Added: `app/api/support/tickets/[id]/route.ts` — GET returns ticket + messages + events + profiles map, PATCH (admin-only) updates status/priority/assignment/category with audit events, `logAdminAction()`, and email notification to user on resolution
+- Added: `app/api/support/tickets/[id]/messages/route.ts` — GET/POST for conversation thread. Admin replies auto-transition open→in_progress. Email + Slack notifications on new messages. Audit events for each reply.
+- Added: `app/support/page.tsx` + `app/support/support-client.tsx` — User-facing support centre: OTP verification gate (masked email, 6-digit code input), ticket list with status/priority/SLA badges, create ticket form (subject, category, priority, description)
+- Added: `app/support/[id]/page.tsx` + `app/support/[id]/ticket-detail.tsx` — Ticket conversation: chronological message + event thread, user messages (green, right) vs admin messages (gray, left), system events inline, reply form, SLA breach indicator, back navigation
+- Added: `app/admin/tabs/SupportTab.tsx` — Admin ticket queue: open/in-progress/SLA-breached stat cards, search + status + priority filters, ticket cards with claim/resolve/close/escalate actions
+- Changed: `app/admin/page.tsx` — Added `support_tickets` fetch to parallel Promise.all, passed as prop to AdminClient
+- Changed: `app/admin/admin-client.tsx` — Added `SupportTicket` interface, `supportTickets` prop, `'support'` tab type, lazy-loaded `SupportTab`, support tab in permission system with badge showing active ticket count
+- Changed: `app/components/AppNav.tsx` — Added `{ href: '/support', label: 'Support' }` to NAV_LINKS between Business and FAQ
+- SQL pending: Run `20260416_support_tickets.sql` migration in Supabase before deployment
 
 ### Checkpoint 16 — April 16, 2026 (Performance Audit — Phase 4.4)
 
