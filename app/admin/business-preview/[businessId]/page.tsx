@@ -3,6 +3,7 @@ import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import AppNav from '@/app/components/AppNav'
+import SlugManager from './SlugManager'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -26,8 +27,9 @@ export default async function BusinessPreviewPage({ params }: { params: Promise<
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
   const { data: adminProfile } = await (supabase as any)
-    .from('profiles').select('is_admin').eq('id', user.id).single()
+    .from('profiles').select('is_admin, admin_role').eq('id', user.id).single()
   if (!adminProfile?.is_admin) redirect('/dashboard')
+  const isSuperAdmin = adminProfile?.admin_role === 'super'
 
   // Service-role client to bypass RLS — admin has already been verified above
   const admin = createAdminClient(
@@ -87,6 +89,15 @@ export default async function BusinessPreviewPage({ params }: { params: Promise<
     .order('name')
     .limit(30)
 
+  // Fetch historical slug aliases (for SlugManager history display)
+  const { data: aliasRows } = await adminAny
+    .from('business_slug_aliases')
+    .select('old_slug, created_at')
+    .eq('business_id', businessId)
+    .order('created_at', { ascending: false })
+    .limit(20)
+  const aliases = (aliasRows ?? []) as { old_slug: string; created_at: string }[]
+
   // Compute summary stats
   const invoiceList = (invoices ?? []) as any[]
   const expenseList = (expenses ?? []) as any[]
@@ -135,6 +146,16 @@ export default async function BusinessPreviewPage({ params }: { params: Promise<
             👁 Read-Only Preview
           </div>
         </div>
+
+        {/* Public URL / slug management — super admin only */}
+        {isSuperAdmin && (
+          <SlugManager
+            businessId={businessId}
+            initialSlug={(business as any).slug ?? ''}
+            initialIsPublic={(business as any).is_public ?? true}
+            aliases={aliases}
+          />
+        )}
 
         {/* Summary cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
