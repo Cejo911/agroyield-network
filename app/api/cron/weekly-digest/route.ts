@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { runCron, weeklyKey } from '@/lib/cron'
 import { SENDERS } from '@/lib/email/senders'
 import { getSupabaseAdmin } from '@/lib/supabase/admin'
 
@@ -241,108 +241,117 @@ function buildDigestHtml(params: {
 }
 
 export async function GET(request: Request) {
-  const authHeader = request.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  return runCron(request, {
+    jobName: 'weekly_digest',
+    idempotencyKey: weeklyKey(),
+    handler: async () => {
+      if (!process.env.RESEND_API_KEY) {
+        throw new Error('RESEND_API_KEY not configured')
+      }
 
-  const RESEND_API_KEY = process.env.RESEND_API_KEY
-  if (!RESEND_API_KEY) {
-    return NextResponse.json({ error: 'RESEND_API_KEY not configured' }, { status: 500 })
-  }
+      const supabaseAdmin = getSupabaseAdmin()
 
-  const supabaseAdmin = getSupabaseAdmin()
+      // Kill switch — admin can pause the digest from the dashboard
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: digestSetting } = await (supabaseAdmin as any)
+        .from('settings').select('value').eq('key', 'digest_enabled').maybeSingle()
+      if (digestSetting?.value === 'false') {
+        return {
+          processedCount: 0,
+          metadata: { skipped_reason: 'Weekly digest is disabled in admin settings' },
+        }
+      }
 
-  // Check if digest is enabled (default: enabled)
-  const { data: digestSetting } = await (supabaseAdmin as any)
-    .from('settings').select('value').eq('key', 'digest_enabled').maybeSingle()
-  if (digestSetting?.value === 'false') {
-    return NextResponse.json({ skipped: true, reason: 'Weekly digest is disabled in admin settings' })
-  }
+      const since = new Date()
+      since.setDate(since.getDate() - 7)
+      const sinceISO = since.toISOString()
 
-  const since = new Date()
-  since.setDate(since.getDate() - 7)
-  const sinceISO = since.toISOString()
+      const weekOf = new Date().toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      })
 
-  const weekOf = new Date().toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
+      // Fetch platform content and user list in parallel
+      const [oppsResult, newMembersResult, totalResult, authResult] = await Promise.all([
+        supabaseAdmin
+          .from('opportunities')
+          .select('id, title, organization, deadline, category')
+          .gte('created_at', sinceISO)
+          .order('created_at', { ascending: false })
+          .limit(8),
+        supabaseAdmin
+          .from('profiles')
+          .select('id, first_name, last_name, role, institution')
+          .gte('created_at', sinceISO)
+          .not('role', 'is', null)
+          .order('created_at', { ascending: false })
+          .limit(8),
+        supabaseAdmin
+          .from('profiles')
+          .select('*', { count: 'exact', head: true })
+          .not('role', 'is', null),
+        supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
+      ])
+
+      const newOpportunities = (oppsResult.data ?? []) as Opportunity[]
+      const newMembers = (newMembersResult.data ?? []) as NewMember[]
+      const totalMembers = totalResult.count ?? 0
+
+      if (authResult.error) {
+        throw new Error('Failed to fetch users')
+      }
+
+      // Build a name lookup map from profiles
+      const { data: profileNames } = await supabaseAdmin
+        .from('profiles')
+        .select('id, first_name')
+        .not('first_name', 'is', null)
+
+      const nameMap = new Map<string, string>(
+        (profileNames ?? []).map((p: { id: string; first_name: string | null }) => [
+          p.id,
+          p.first_name as string,
+        ])
+      )
+
+      let sent = 0
+      let failed = 0
+      let skipped = 0
+
+      for (const user of authResult.data.users) {
+        if (!user.email) {
+          skipped++
+          continue
+        }
+
+        const firstName = nameMap.get(user.id)
+        if (!firstName) {
+          skipped++
+          continue
+        }
+
+        const membersExcludingSelf = newMembers.filter(m => m.id !== user.id)
+
+        const ok = await sendEmail(
+          user.email,
+          `\uD83C\uDF31 Your AgroYield Weekly Digest \u2013 ${weekOf}`,
+          buildDigestHtml({ firstName, newOpportunities, newMembers: membersExcludingSelf, weekOf, totalMembers })
+        )
+
+        if (ok) sent++
+        else failed++
+
+        // Respect Resend rate limits (100 emails/sec on free plan)
+        await new Promise(resolve => setTimeout(resolve, 100))
+      }
+
+      return {
+        processedCount: authResult.data.users.length,
+        successCount: sent,
+        failureCount: failed,
+        metadata: { skipped, weekOf },
+      }
+    },
   })
-
-  // Fetch platform content and user list in parallel
-  const [oppsResult, newMembersResult, totalResult, authResult] = await Promise.all([
-    supabaseAdmin
-      .from('opportunities')
-      .select('id, title, organization, deadline, category')
-      .gte('created_at', sinceISO)
-      .order('created_at', { ascending: false })
-      .limit(8),
-    supabaseAdmin
-      .from('profiles')
-      .select('id, first_name, last_name, role, institution')
-      .gte('created_at', sinceISO)
-      .not('role', 'is', null)
-      .order('created_at', { ascending: false })
-      .limit(8),
-    supabaseAdmin
-      .from('profiles')
-      .select('*', { count: 'exact', head: true })
-      .not('role', 'is', null),
-    supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
-  ])
-
-  const newOpportunities = (oppsResult.data ?? []) as Opportunity[]
-  const newMembers = (newMembersResult.data ?? []) as NewMember[]
-  const totalMembers = totalResult.count ?? 0
-
-  if (authResult.error) {
-    return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 })
-  }
-
-  // Build a name lookup map from profiles
-  const { data: profileNames } = await supabaseAdmin
-    .from('profiles')
-    .select('id, first_name')
-    .not('first_name', 'is', null)
-
-  const nameMap = new Map<string, string>(
-    (profileNames ?? []).map((p: { id: string; first_name: string | null }) => [
-      p.id,
-      p.first_name as string,
-    ])
-  )
-
-  let sent = 0
-  let failed = 0
-  let skipped = 0
-
-  for (const user of authResult.data.users) {
-    if (!user.email) {
-      skipped++
-      continue
-    }
-
-    const firstName = nameMap.get(user.id)
-    if (!firstName) {
-      skipped++
-      continue
-    }
-
-    const membersExcludingSelf = newMembers.filter(m => m.id !== user.id)
-
-    const ok = await sendEmail(
-      user.email,
-      `\uD83C\uDF31 Your AgroYield Weekly Digest \u2013 ${weekOf}`,
-      buildDigestHtml({ firstName, newOpportunities, newMembers: membersExcludingSelf, weekOf, totalMembers })
-    )
-
-    if (ok) sent++
-    else failed++
-
-    // Respect Resend rate limits (100 emails/sec on free plan)
-    await new Promise(resolve => setTimeout(resolve, 100))
-  }
-
-  return NextResponse.json({ success: true, sent, failed, skipped, weekOf })
 }

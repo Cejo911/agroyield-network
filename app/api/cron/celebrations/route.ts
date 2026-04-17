@@ -7,110 +7,118 @@
  * Anniversary: matches month+day of created_at against today (skips first day).
  */
 
-import { NextResponse } from 'next/server'
+import { runCron, dailyKey } from '@/lib/cron'
 import { SENDERS } from '@/lib/email/senders'
 import { getResend } from '@/lib/email/client'
 import { getSupabaseAdmin } from '@/lib/supabase/admin'
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://agroyield.africa'
 
-export async function GET(req: Request) {
-  const authHeader = req.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+export async function GET(request: Request) {
+  return runCron(request, {
+    jobName: 'celebrations',
+    idempotencyKey: dailyKey(),
+    handler: async () => {
+      const admin = getSupabaseAdmin()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const adminAny = admin as any
 
-  const admin = getSupabaseAdmin()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const adminAny = admin as any
+      // Kill switch — admin can pause celebrations from the dashboard
+      const { data: celebrationsSetting } = await adminAny
+        .from('settings').select('value').eq('key', 'celebrations_enabled').maybeSingle()
+      if (celebrationsSetting?.value === 'false') {
+        return {
+          processedCount: 0,
+          metadata: { skipped_reason: 'Celebrations disabled in admin settings' },
+        }
+      }
 
-  // Kill switch — admin can pause celebrations from the dashboard
-  const { data: celebrationsSetting } = await adminAny
-    .from('settings').select('value').eq('key', 'celebrations_enabled').maybeSingle()
-  if (celebrationsSetting?.value === 'false') {
-    return NextResponse.json({ skipped: true, reason: 'Celebrations disabled in admin settings' })
-  }
+      const now = new Date()
+      const month = now.getMonth() + 1 // 1-12
+      const day = now.getDate()
 
-  const now = new Date()
-  const month = now.getMonth() + 1 // 1-12
-  const day = now.getDate()
+      let birthdaySent = 0
+      let anniversarySent = 0
+      let failed = 0
 
-  let birthdaySent = 0
-  let anniversarySent = 0
-  let failed = 0
+      // ── Birthday emails ──
+      // Query profiles where date_of_birth month+day matches today
+      // date_of_birth is stored as text (ISO date string e.g. "1995-06-15")
+      const { data: birthdayProfiles } = await adminAny
+        .from('profiles')
+        .select('id, first_name, last_name, email, date_of_birth')
+        .not('date_of_birth', 'is', null)
+        .not('email', 'is', null)
 
-  // ── Birthday emails ──
-  // Query profiles where date_of_birth month+day matches today
-  // date_of_birth is stored as text (ISO date string e.g. "1995-06-15")
-  const { data: birthdayProfiles } = await adminAny
-    .from('profiles')
-    .select('id, first_name, last_name, email, date_of_birth')
-    .not('date_of_birth', 'is', null)
-    .not('email', 'is', null)
-
-  const birthdayMatches = (birthdayProfiles ?? []).filter((p: { date_of_birth: string }) => {
-    if (!p.date_of_birth) return false
-    const dob = new Date(p.date_of_birth)
-    return dob.getMonth() + 1 === month && dob.getDate() === day
-  })
-
-  for (const profile of birthdayMatches) {
-    try {
-      await getResend().emails.send({
-        from: SENDERS.hello,
-        to: profile.email,
-        subject: `🎂 Happy Birthday, ${profile.first_name ?? 'friend'}! — From the AgroYield Family`,
-        html: buildBirthdayHtml(profile.first_name ?? 'there'),
+      const birthdayMatches = (birthdayProfiles ?? []).filter((p: { date_of_birth: string }) => {
+        if (!p.date_of_birth) return false
+        const dob = new Date(p.date_of_birth)
+        return dob.getMonth() + 1 === month && dob.getDate() === day
       })
-      birthdaySent++
-    } catch (err) {
-      console.error(`Birthday email failed for ${profile.email}:`, err)
-      failed++
-    }
-    // Rate limit
-    await new Promise(r => setTimeout(r, 100))
-  }
 
-  // ── Anniversary emails ──
-  // Query profiles where created_at month+day matches today AND created at least 1 year ago
-  const { data: allProfiles } = await adminAny
-    .from('profiles')
-    .select('id, first_name, last_name, email, created_at')
-    .not('email', 'is', null)
+      for (const profile of birthdayMatches) {
+        try {
+          await getResend().emails.send({
+            from: SENDERS.hello,
+            to: profile.email,
+            subject: `🎂 Happy Birthday, ${profile.first_name ?? 'friend'}! — From the AgroYield Family`,
+            html: buildBirthdayHtml(profile.first_name ?? 'there'),
+          })
+          birthdaySent++
+        } catch (err) {
+          console.error(`Birthday email failed for ${profile.email}:`, err)
+          failed++
+        }
+        // Rate limit
+        await new Promise(r => setTimeout(r, 100))
+      }
 
-  const anniversaryMatches = (allProfiles ?? []).filter((p: { created_at: string }) => {
-    if (!p.created_at) return false
-    const joined = new Date(p.created_at)
-    // Must be at least 1 year old to get anniversary email
-    const yearsOnPlatform = now.getFullYear() - joined.getFullYear()
-    if (yearsOnPlatform < 1) return false
-    return joined.getMonth() + 1 === month && joined.getDate() === day
-  })
+      // ── Anniversary emails ──
+      // Query profiles where created_at month+day matches today AND created at least 1 year ago
+      const { data: allProfiles } = await adminAny
+        .from('profiles')
+        .select('id, first_name, last_name, email, created_at')
+        .not('email', 'is', null)
 
-  for (const profile of anniversaryMatches) {
-    const joinedDate = new Date(profile.created_at)
-    const years = now.getFullYear() - joinedDate.getFullYear()
-    try {
-      await getResend().emails.send({
-        from: SENDERS.hello,
-        to: profile.email,
-        subject: `🎉 Happy ${years}-Year Anniversary on AgroYield, ${profile.first_name ?? 'friend'}!`,
-        html: buildAnniversaryHtml(profile.first_name ?? 'there', years),
+      const anniversaryMatches = (allProfiles ?? []).filter((p: { created_at: string }) => {
+        if (!p.created_at) return false
+        const joined = new Date(p.created_at)
+        // Must be at least 1 year old to get anniversary email
+        const yearsOnPlatform = now.getFullYear() - joined.getFullYear()
+        if (yearsOnPlatform < 1) return false
+        return joined.getMonth() + 1 === month && joined.getDate() === day
       })
-      anniversarySent++
-    } catch (err) {
-      console.error(`Anniversary email failed for ${profile.email}:`, err)
-      failed++
-    }
-    await new Promise(r => setTimeout(r, 100))
-  }
 
-  return NextResponse.json({
-    birthdaySent,
-    anniversarySent,
-    failed,
-    birthdayMatches: birthdayMatches.length,
-    anniversaryMatches: anniversaryMatches.length,
+      for (const profile of anniversaryMatches) {
+        const joinedDate = new Date(profile.created_at)
+        const years = now.getFullYear() - joinedDate.getFullYear()
+        try {
+          await getResend().emails.send({
+            from: SENDERS.hello,
+            to: profile.email,
+            subject: `🎉 Happy ${years}-Year Anniversary on AgroYield, ${profile.first_name ?? 'friend'}!`,
+            html: buildAnniversaryHtml(profile.first_name ?? 'there', years),
+          })
+          anniversarySent++
+        } catch (err) {
+          console.error(`Anniversary email failed for ${profile.email}:`, err)
+          failed++
+        }
+        await new Promise(r => setTimeout(r, 100))
+      }
+
+      return {
+        processedCount: birthdayMatches.length + anniversaryMatches.length,
+        successCount: birthdaySent + anniversarySent,
+        failureCount: failed,
+        metadata: {
+          birthdaySent,
+          anniversarySent,
+          birthdayMatches: birthdayMatches.length,
+          anniversaryMatches: anniversaryMatches.length,
+        },
+      }
+    },
   })
 }
 

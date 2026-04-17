@@ -1,68 +1,73 @@
-import { NextResponse } from 'next/server'
+import { runCron, dailyKey } from '@/lib/cron'
 import { SENDERS } from '@/lib/email/senders'
 import { getResend } from '@/lib/email/client'
 import { getSupabaseAdmin } from '@/lib/supabase/admin'
 
-export async function GET(req: Request) {
-  const authHeader = req.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+export async function GET(request: Request) {
+  return runCron(request, {
+    jobName: 'expiry_reminder',
+    idempotencyKey: dailyKey(),
+    handler: async () => {
+      const admin = getSupabaseAdmin()
 
-  // Kill switch — admin can pause expiry reminders
-  const admin = getSupabaseAdmin()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: expiryReminderSetting } = await (admin as any)
-    .from('settings').select('value').eq('key', 'expiry_reminder_enabled').maybeSingle()
-  if (expiryReminderSetting?.value === 'false') {
-    return NextResponse.json({ skipped: true, reason: 'Expiry reminder disabled in admin settings' })
-  }
+      // Kill switch — admin can pause expiry reminders
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: expiryReminderSetting } = await (admin as any)
+        .from('settings').select('value').eq('key', 'expiry_reminder_enabled').maybeSingle()
+      if (expiryReminderSetting?.value === 'false') {
+        return {
+          processedCount: 0,
+          metadata: { skipped_reason: 'Expiry reminder disabled in admin settings' },
+        }
+      }
 
-  // Window: expires between 3 and 4 days from now — ensures exactly one email per member
-  const now = new Date()
-  const in3Days = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000)
-  const in4Days = new Date(now.getTime() + 4 * 24 * 60 * 60 * 1000)
+      // Window: expires between 3 and 4 days from now — ensures exactly one email per member
+      const now = new Date()
+      const in3Days = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000)
+      const in4Days = new Date(now.getTime() + 4 * 24 * 60 * 60 * 1000)
 
-  const { data: expiring, error } = await admin
-    .from('profiles')
-    .select('id, first_name, email, subscription_expires_at, subscription_plan, subscription_tier')
-    .neq('subscription_tier', 'free')
-    .gte('subscription_expires_at', in3Days.toISOString())
-    .lte('subscription_expires_at', in4Days.toISOString())
+      const { data: expiring, error } = await admin
+        .from('profiles')
+        .select('id, first_name, email, subscription_expires_at, subscription_plan, subscription_tier')
+        .neq('subscription_tier', 'free')
+        .gte('subscription_expires_at', in3Days.toISOString())
+        .lte('subscription_expires_at', in4Days.toISOString())
 
-  if (error) {
-    console.error('Expiry reminder query error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
+      if (error) {
+        throw new Error(`Expiry reminder query error: ${error.message}`)
+      }
 
-  if (!expiring || expiring.length === 0) {
-    return NextResponse.json({ sent: 0, message: 'No expiring subscriptions today' })
-  }
+      if (!expiring || expiring.length === 0) {
+        return {
+          processedCount: 0,
+          metadata: { message: 'No expiring subscriptions today' },
+        }
+      }
 
-  let sent = 0
-  let failed = 0
+      let sent = 0
+      let failed = 0
 
-  for (const profile of expiring) {
-    if (!profile.email) continue
+      for (const profile of expiring) {
+        if (!profile.email) continue
 
-    const expiryDate = new Date(profile.subscription_expires_at)
-    const formattedDate = expiryDate.toLocaleDateString('en-GB', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    })
-    const tierLabel = profile.subscription_tier
-      ? profile.subscription_tier.charAt(0).toUpperCase() + profile.subscription_tier.slice(1)
-      : (profile.subscription_plan
-        ? profile.subscription_plan.charAt(0).toUpperCase() + profile.subscription_plan.slice(1)
-        : null)
+        const expiryDate = new Date(profile.subscription_expires_at)
+        const formattedDate = expiryDate.toLocaleDateString('en-GB', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        })
+        const tierLabel = profile.subscription_tier
+          ? profile.subscription_tier.charAt(0).toUpperCase() + profile.subscription_tier.slice(1)
+          : (profile.subscription_plan
+            ? profile.subscription_plan.charAt(0).toUpperCase() + profile.subscription_plan.slice(1)
+            : null)
 
-    try {
-      await getResend().emails.send({
-        from: SENDERS.noreply,
-        to: profile.email,
-        subject: `Your AgroYield ${tierLabel || ''} subscription expires in 3 days`,
-        html: `
+        try {
+          await getResend().emails.send({
+            from: SENDERS.noreply,
+            to: profile.email,
+            subject: `Your AgroYield ${tierLabel || ''} subscription expires in 3 days`,
+            html: `
 <!DOCTYPE html>
 <html>
 <head>
@@ -146,13 +151,19 @@ export async function GET(req: Request) {
   </table>
 </body>
 </html>`,
-      })
-      sent++
-    } catch (emailErr) {
-      console.error(`Failed to send reminder to ${profile.email}:`, emailErr)
-      failed++
-    }
-  }
+          })
+          sent++
+        } catch (emailErr) {
+          console.error(`Failed to send reminder to ${profile.email}:`, emailErr)
+          failed++
+        }
+      }
 
-  return NextResponse.json({ sent, failed, total: expiring.length })
+      return {
+        processedCount: expiring.length,
+        successCount: sent,
+        failureCount: failed,
+      }
+    },
+  })
 }
