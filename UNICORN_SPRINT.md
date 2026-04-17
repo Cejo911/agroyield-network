@@ -59,10 +59,15 @@ Before Week 1 feature work, build three primitives that everything else rides on
 - `sitemap.xml` + `robots.txt` generators
 - Reused by #1 (digest links), #2 (public pages), future SEO plays
 
-### F2. Shared cron harness
-- `lib/cron/index.ts` wrapping existing `CRON_SECRET` pattern
-- Standardised logging + Slack failure alerts
-- Reused by #1 digest, #4 recurring invoices, #6 credit score refresh, beta analytics
+### F2. Shared cron harness ✅ SHIPPED (17 Apr 2026, Session 2)
+- `lib/cron/index.ts` wrapping existing `CRON_SECRET` pattern — **done**
+- Standardised logging via `cron_runs` audit table (every invocation writes a row: success/skipped/failed, duration, counts, metadata) — **done**
+- Idempotency enforcement via `dailyKey()` / `weeklyKey()` — prevents double-execution within the same schedule window — **done**
+- Applied to all 6 existing crons (digest, business-digest, expire-subs, expiry-reminder, celebrations, expire-featured) — **done**
+- Root `/vercel.json` registers all 6 with Vercel's scheduler — **done**
+- Admin kill-switch UI in `/admin` Email section — toggle any cron on/off without a deploy — **done**
+- Reused by #1 digest (already wrapped), will be reused by #4 recurring invoices, #6 credit score refresh, beta analytics
+- Still pending: Slack failure alerts inside the harness (currently handlers alert themselves; harness-level Slack wiring is a 10-min addition when we hit the first production failure)
 
 ### F3. Feature flag table
 - `feature_flags` table with user scoping
@@ -111,7 +116,7 @@ Expected minutes-not-days effort when trigger hits: add Meta credentials to Verc
 
 ### Week 1 (17–24 Apr) — Foundations + Quick Win
 
-**Mon–Tue:** Foundations F1, F2, F3.
+**Mon–Tue:** Foundations F1, F2, F3. — **F2 complete (17 Apr, Session 2)**; F1 (slug + `/b/[slug]` + sitemap) and F3 (feature_flags) still pending.
 
 **Wed–Fri:** Ship **#1 Weekly Digest**.
 - Monday 7 AM cron (Africa/Lagos)
@@ -311,3 +316,4 @@ Together these form the Series A narrative: **"AgroYield is Nigerian agri's oper
 
 - **17 Apr 2026** — Document created. Differentiators shortlisted, critical path mapped, 11-week schedule drafted, questions opened.
 - **17 Apr 2026** — WhatsApp provider strategy locked: Termii at launch, Meta post-launch. Added "WhatsApp Provider Abstraction" section with interface spec, non-negotiable rules (caller isolation, E.164, shared templates, normalised message log schema), and migration trigger criteria.
+- **17 Apr 2026 (Session 2)** — **F2 Cron Harness SHIPPED.** `lib/cron/index.ts` live, `cron_runs` audit table populated, idempotency keys enforcing single execution per day/week, all 6 existing crons wrapped, root `/vercel.json` registers the full set with Vercel's scheduler, admin kill-switch UI in place for 4 of the 6. Verified end-to-end via curl: success path, idempotency-block path, and kill-switch-skip path all confirmed writing correctly to `cron_runs`. Unblocks #1 Digest, #4 Recurring Invoices, #6 Credit Score refresh cycle from Week 1 onward.

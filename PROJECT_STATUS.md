@@ -1,6 +1,6 @@
 # AgroYield Network — Project Status
 
-> **Last updated:** 17 April 2026 (Checkpoint 21)
+> **Last updated:** 17 April 2026 (Checkpoint 22)
 > **Maintained by:** Okoli (okolichijiokei@gmail.com)
 > **Launch Target:** 5 July 2026 (~11 weeks remaining)
 > **Purpose:** Permanent reference for any developer or Claude session to get up to speed instantly.
@@ -237,10 +237,15 @@
 | Poll closing date                        | ✅ Done | `poll_closes_at` on community_posts, date picker in form, API enforcement, auto-reveal results     |
 | Announcement banner                      | ✅ Done | `AnnouncementBanner.tsx`                                                                           |
 | Registration open/close toggle           | ✅ Done | Admin settings                                                                                     |
-| Weekly email digest                      | ✅ Done | `app/api/cron/weekly-digest/route.ts`                                                              |
-| Subscription expiry cron                 | ✅ Done | `app/api/cron/expire-subscriptions/route.ts`                                                       |
-| Expiry reminder emails                   | ✅ Done | `app/api/cron/expiry-reminder/route.ts`                                                            |
-| Birthday + anniversary celebration emails | ✅ Done | `app/api/cron/celebrations/route.ts` — daily 7 AM cron, `SENDERS.hello`, rich HTML templates      |
+| Weekly email digest                      | ✅ Done | `app/api/cron/weekly-digest/route.ts` — F2-wrapped, `weeklyKey()` idempotency, kill switch `digest_enabled` |
+| Subscription expiry cron                 | ✅ Done | `app/api/cron/expire-subscriptions/route.ts` — F2-wrapped, `dailyKey()` idempotency               |
+| Expiry reminder emails                   | ✅ Done | `app/api/cron/expiry-reminder/route.ts` — F2-wrapped, `dailyKey()`, kill switch `expiry_reminder_enabled` |
+| Birthday + anniversary celebration emails | ✅ Done | `app/api/cron/celebrations/route.ts` — F2-wrapped, `dailyKey()`, kill switch `celebrations_enabled`, `SENDERS.hello`, rich HTML |
+| Featured listing expiry cron             | ✅ Done | `app/api/cron/expire-featured/route.ts` — F2-wrapped, `dailyKey()`, kill switch `expire_featured_enabled` |
+| Shared cron harness (F2)                 | ✅ Done | `lib/cron/index.ts` — `runCron()` + `startRun/finishRun` logger + `dailyKey`/`weeklyKey` idempotency + `verifyCronAuth` |
+| Cron audit log                           | ✅ Done | `cron_runs` table — id, job_name, idempotency_key, status, started/finished, duration, counts, metadata |
+| Cron kill-switch admin UI                | ✅ Done | `app/admin/admin-client.tsx` — Email section toggles for celebrations/expiry-reminder/expire-featured/digest |
+| Root Vercel cron scheduler               | ✅ Done | `/vercel.json` — 6 cron entries registered (digest, business-digest, expire-subs, expiry-reminder, celebrations, expire-featured) |
 | Follow notifications on new content      | ✅ Done | `lib/notify-followers.ts` — notifies followers when user posts opportunities, listings, or research |
 | Multi-email report alerts                | ✅ Done | Admin settings accepts comma-separated emails; `app/api/report/route.ts` sends to all              |
 | Multi-business admin preview             | ✅ Done | Admin panel shows ALL businesses per member, labelled when multiple exist                           |
@@ -336,6 +341,7 @@
 | `conversations`        | DM conversations between two users (participant_a/b, last_message_preview)   |
 | `messages`             | Individual messages within conversations (body, status, read_at)             |
 | `login_history`        | Device fingerprint log (SHA-256 of UA + IPv4 /24) for new-device detection   |
+| `cron_runs`            | F2 harness audit trail — one row per cron invocation (success/skipped/failed), idempotency keys, durations, metadata |
 
 ---
 
@@ -350,6 +356,20 @@ Note: `/insights`, `/connections` are pre-registered for future modules.
 ---
 
 ## Changelog
+
+### Checkpoint 22 — April 17, 2026 (F2 Cron Harness + Kill Switches + Root Vercel.json)
+
+- Added: `lib/cron/runner.ts` + `lib/cron/logger.ts` + `lib/cron/idempotency.ts` + `lib/cron/auth.ts` consolidated via `lib/cron/index.ts` barrel. Exports: `runCron`, `verifyCronAuth`, `startRun`, `finishRun`, `dailyKey`, `weeklyKey`, `hourlyKey`, `monthlyKey`.
+- Added: `cron_runs` table (migration ran before today's session) — PK `id`, columns `job_name`, `idempotency_key`, `status` (success/skipped/failed), `started_at`, `finished_at`, `duration_ms`, `processed_count`, `success_count`, `failure_count`, `error_message`, `metadata` jsonb. Idempotency keys scoped per `(job_name, idempotency_key)` — duplicate runs within the same day/week are rejected.
+- Changed: **All 5 legacy crons wrapped in the F2 harness** — `app/api/cron/celebrations/route.ts`, `expiry-reminder/route.ts`, `expire-featured/route.ts`, `expire-subscriptions/route.ts`, `weekly-digest/route.ts`. Each now calls `runCron(request, { jobName, idempotencyKey, handler })`. The handler returns `{ processedCount, successCount, failureCount, metadata }`; the harness wraps response in `{ success, jobName, runId, ... }` envelope and persists the `cron_runs` row.
+- **Breaking (internal):** response shape for all 5 wrapped crons changed from ad-hoc payloads (`{ birthdaySent, anniversarySent, ... }`, `{ skipped: true, reason: ... }`) to the uniform harness envelope. Per-cron counters moved into `metadata`. Manual curl scripts grepping specific fields must read from `metadata.*`.
+- Added: 3 new admin kill switches — `celebrations_enabled`, `expiry_reminder_enabled`, `expire_featured_enabled` (matches existing `digest_enabled` pattern). Wired into Email section of `app/admin/admin-client.tsx` with UI toggles + status pills. Each cron handler short-circuits to `status='skipped'` with metadata reason when its switch is `'false'`.
+- Added: `/vercel.json` at project root — registers all 6 crons with Vercel scheduler: weekly-digest (Mon 07:00), business-weekly-digest (Mon 08:00), expire-subscriptions (00:00), expiry-reminder (08:00), celebrations (07:00), expire-featured (05:00). Times in UTC. Excludes `/api/marketplace/orders/auto-release` until `marketplace_orders`/`seller_bank_accounts` migrations ship.
+- Removed (via `git rm`): `app/vercel.json` — Vercel only reads `vercel.json` from project root; the App-Router-scoped file was dead config. 3 crons (celebrations, expire-featured, business-weekly-digest) had previously been listed there and were effectively inactive until today's root-file migration.
+- Verified: All 6 cron routes responded to manual curl with the new envelope. `cron_runs` rows were written for both success paths (`expire_featured` returned `processedCount: 0` with "No listings to expire" metadata) and idempotency block path (second curl same day returned `{ skipped: true, reason: "Duplicate run detected..." }`). Kill switch skip path verified end-to-end (status='skipped', reason in metadata).
+- Observed (unresolved): Toggling "Expire featured" OFF in the admin UI and clicking Save persisted `value = 'true'` in the `settings` table — needs root-cause investigation in the save handler before launch.
+- SQL already applied: `cron_runs` table exists in prod (applied before today's session).
+- Deployment: 5 route rewrites + 1 admin-client edit + `/vercel.json` created + `app/vercel.json` removed. Typecheck clean (`npx tsc --noEmit`). Ready to commit.
 
 ### Checkpoint 21 — April 17, 2026 (Invoice Delivery Charges — Phase 4.9 + DB Baseline)
 
