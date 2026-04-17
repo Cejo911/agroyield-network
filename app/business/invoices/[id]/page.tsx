@@ -150,9 +150,14 @@ export default async function InvoiceViewPage({ params }: { params: Promise<{ id
             <div className="flex justify-between text-gray-600 dark:text-gray-400">
               <span>Subtotal</span><span>{fmt(inv.subtotal ?? 0)}</span>
             </div>
+            {Number(inv.delivery_charge ?? 0) > 0 && (
+              <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                <span>Delivery</span><span>{fmt(inv.delivery_charge ?? 0)}</span>
+              </div>
+            )}
             {inv.apply_vat && (
               <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                <span>VAT (7.5%)</span><span>{fmt(inv.vat_amount ?? 0)}</span>
+                <span>VAT ({inv.vat_rate ?? 7.5}%)</span><span>{fmt(inv.vat_amount ?? 0)}</span>
               </div>
             )}
             <div className="flex justify-between font-bold text-gray-900 dark:text-white text-base pt-2 border-t-2 border-gray-200 dark:border-gray-700">

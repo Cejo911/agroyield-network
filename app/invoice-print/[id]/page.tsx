@@ -58,8 +58,10 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
   }))
 
   const subtotal = computedItems.reduce((sum: number, item: any) => sum + item._total, 0)
+  const delivery = Number(invoice.delivery_charge || 0)
   const vat = Number(invoice.vat_amount || 0)
-  const total = Number(invoice.total_amount) || subtotal + vat
+  // Prefer persisted total (total or total_amount); fall back to local calc
+  const total = Number(invoice.total) || Number(invoice.total_amount) || (subtotal + delivery + vat)
 
   const watermarkLabel =
     invoice.status === 'draft' ? 'DRAFT' :
@@ -308,6 +310,12 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
                     <span style={{ color: '#6b7280' }}>Subtotal</span>
                     <span style={{ fontWeight: 500 }}>{formatCurrency(subtotal)}</span>
                   </div>
+                  {delivery > 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                      <span style={{ color: '#6b7280' }}>Delivery</span>
+                      <span style={{ fontWeight: 500 }}>{formatCurrency(delivery)}</span>
+                    </div>
+                  )}
                   {vat > 0 && (
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                       <span style={{ color: '#6b7280' }}>VAT</span>

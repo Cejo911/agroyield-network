@@ -54,6 +54,7 @@ export default function NewInvoicePage() {
   const [notes, setNotes] = useState('')
   const [vatPercent, setVatPercent] = useState('7.5')
   const [vatEnabled, setVatEnabled] = useState(true)
+  const [deliveryCharge, setDeliveryCharge] = useState('')
   const [items, setItems] = useState<LineItem[]>([
     { product_id: '', description: '', quantity: '1', unit_price: '' }
   ])
@@ -171,9 +172,12 @@ export default function NewInvoicePage() {
   const stockWarnings = getStockWarnings()
 
   const subtotal = items.reduce((sum, item) => sum + lineTotal(item), 0)
+  const delivery = parseFloat(deliveryCharge) || 0
+  // VAT applies to goods + delivery (Nigerian FIRS treatment — freight is taxable)
+  const preVatTotal = subtotal + delivery
   const effectiveVat = vatEnabled ? (parseFloat(vatPercent) || 0) : 0
-  const vatAmount = subtotal * (effectiveVat / 100)
-  const totalAmount = subtotal + vatAmount
+  const vatAmount = preVatTotal * (effectiveVat / 100)
+  const totalAmount = preVatTotal + vatAmount
 
   function formatCurrency(n: number) {
     return new Intl.NumberFormat('en-NG', {
@@ -225,6 +229,7 @@ export default function NewInvoicePage() {
           vat_rate: effectiveVat,
           vat_amount: vatAmount,
           subtotal: subtotal,
+          delivery_charge: delivery,
           total: totalAmount,
         })
         .select()
@@ -598,9 +603,27 @@ export default function NewInvoicePage() {
                 <span className="text-gray-600 dark:text-gray-400">Subtotal</span>
                 <span className="font-semibold text-gray-900 dark:text-white">{formatCurrency(subtotal)}</span>
               </div>
+
+              {/* Delivery charge input — added to subtotal before VAT */}
+              <div className="flex justify-between items-center text-sm gap-3">
+                <label htmlFor="delivery" className="text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                  Delivery / Logistics (₦)
+                </label>
+                <input
+                  id="delivery"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={deliveryCharge}
+                  onChange={e => setDeliveryCharge(e.target.value)}
+                  className="w-32 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-1.5 text-sm text-right text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-800"
+                />
+              </div>
+
               {vatEnabled && effectiveVat > 0 && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">VAT ({effectiveVat}%)</span>
+                  <span className="text-gray-600 dark:text-gray-400">VAT ({effectiveVat}% of ₦{preVatTotal.toLocaleString('en-NG', { maximumFractionDigits: 2 })})</span>
                   <span className="font-semibold text-gray-900 dark:text-white">{formatCurrency(vatAmount)}</span>
                 </div>
               )}
