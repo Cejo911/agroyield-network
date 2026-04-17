@@ -62,6 +62,7 @@ export default async function AdminPage() {
     { data: businessExpenses },
     { data: searchLogs },
     { data: supportTickets },
+    { data: featureFlags },
   ] = await Promise.all([
     supabaseAny.from('opportunities').select('*').order('created_at', { ascending: false }),
     supabaseAny.from('marketplace_listings').select('*').order('created_at', { ascending: false }),
@@ -82,6 +83,7 @@ export default async function AdminPage() {
     adminAny.from('business_expenses').select('id, business_id, amount, category, date, created_at').order('created_at', { ascending: false }).limit(1000),
     adminAny.from('search_logs').select('id, user_id, query, module, results_count, created_at').order('created_at', { ascending: false }).limit(5000),
     adminAny.from('support_tickets').select('id, user_id, subject, description, category, priority, status, assigned_to, sla_deadline, created_at, updated_at, resolved_at').order('created_at', { ascending: false }).limit(500),
+    adminAny.from('feature_flags').select('key, description, is_enabled, enabled_for_users, enabled_for_businesses, rollout_percentage, updated_at').order('key', { ascending: true }),
   ])
 
   const profilesMap: Record<string, { first_name: string | null; last_name: string | null; email: string | null; username: string | null }> = {}
@@ -214,6 +216,7 @@ export default async function AdminPage() {
           businessExpenses={businessExpenses ?? []}
           searchLogs={searchLogs ?? []}
           supportTickets={supportTickets ?? []}
+          featureFlags={featureFlags ?? []}
         />
       </div>
     </div>

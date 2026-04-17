@@ -13,6 +13,7 @@ const NotifyPanel = lazy(() => import('./tabs/NotifyPanel'))
 const AnalyticsTab = lazy(() => import('./tabs/AnalyticsTab'))
 const SupportTab = lazy(() => import('./tabs/SupportTab'))
 const OrdersTab = lazy(() => import('./tabs/OrdersTab'))
+const FeatureFlagsTab = lazy(() => import('./tabs/FeatureFlagsTab'))
 
 // ── Interfaces ──
 
@@ -240,9 +241,20 @@ interface AdminClientProps {
   businessExpenses: BusinessExpense[]
   searchLogs: SearchLog[]
   supportTickets: SupportTicket[]
+  featureFlags: FeatureFlag[]
 }
 
-type Tab = 'opportunities' | 'marketplace' | 'members' | 'grants' | 'community' | 'research' | 'comments' | 'prices' | 'mentorship' | 'reports' | 'support' | 'orders' | 'analytics' | 'audit_log' | 'notifications' | 'settings'
+interface FeatureFlag {
+  key: string
+  description: string | null
+  is_enabled: boolean
+  enabled_for_users: string[]
+  enabled_for_businesses: string[]
+  rollout_percentage: number
+  updated_at: string
+}
+
+type Tab = 'opportunities' | 'marketplace' | 'members' | 'grants' | 'community' | 'research' | 'comments' | 'prices' | 'mentorship' | 'reports' | 'support' | 'orders' | 'analytics' | 'audit_log' | 'notifications' | 'settings' | 'feature_flags'
 
 // Permission keys per tab — determines which tabs a moderator can see
 const TAB_PERMISSION: Partial<Record<Tab, string>> = {
@@ -304,6 +316,7 @@ export default function AdminClient({
   businessExpenses,
   searchLogs,
   supportTickets,
+  featureFlags,
 }: AdminClientProps) {
   const isSuperAdmin = currentAdminRole === 'super'
 
@@ -311,7 +324,7 @@ export default function AdminClient({
   const canAccess = (tab: Tab): boolean => {
     if (isSuperAdmin) return true
     // Settings and audit_log are super-admin only
-    if (tab === 'settings' || tab === 'audit_log') return false
+    if (tab === 'settings' || tab === 'audit_log' || tab === 'feature_flags') return false
     const permKey = TAB_PERMISSION[tab]
     if (!permKey) return false
     return currentAdminPermissions?.[permKey] === true
@@ -668,6 +681,7 @@ export default function AdminClient({
     { id: 'analytics', label: 'Analytics' },
     { id: 'audit_log', label: 'Audit Log' },
     { id: 'notifications', label: 'Notify' },
+    { id: 'feature_flags', label: 'Feature Flags' },
     { id: 'settings', label: 'Settings' },
   ]
 
@@ -1432,6 +1446,10 @@ export default function AdminClient({
 
       {activeTab === 'notifications' && isSuperAdmin && (
         <NotifyPanel />
+      )}
+
+      {activeTab === 'feature_flags' && isSuperAdmin && (
+        <FeatureFlagsTab initialFlags={featureFlags} />
       )}
       </Suspense>
 

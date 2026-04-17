@@ -312,6 +312,29 @@ Harden the platform, add differentiators, test with real users.
 > - Invoice detail + print pages render Delivery line when > 0; VAT label now reflects actual stored rate
 > - Backward compatible — existing invoices default to 0 delivery
 
+### 4.10 — F1 Public Business URLs + Showcase Migration
+
+> **Why:** `/b/[slug]` was the shell route from F1 planning; it now has to earn its keep as a real landing page — enough surface for digest links to land on, Open Graph previews to render against, and business owners to feel comfortable sharing. Also: the unique slug + alias infrastructure is the primitive #1 Weekly Digest and #2 Public Business Pages both depend on.
+> **Scope:**
+> - 8 showcase columns on `businesses`: `tagline`, `about`, `cover_image_url`, `website`, `instagram`, `facebook`, `opening_hours`, `founded_year` (with CHECK range on founded_year: 1800 → current year + 1). Idempotent migration.
+> - `business_slug_aliases` table already in place: `resolveSlug()` tries live slug → alias (`301` permanent redirect) → `notFound()`.
+> - Admin client (`getAdminClient()`) used to read the 24-column business SELECT, bypassing RLS on the public page (all public fields only — no private financial data).
+> - `/business/setup/complete` page with `PublicPageCard` component: owners edit tagline/about/cover image/website/socials/hours/founded year in-place, uploads go to `business-logos` bucket.
+> - `/b/[slug]` anon nav logo harmonised with AppNav: 3-image responsive pattern (mobile 44×44 icon, desktop 200×50 horizontal light, desktop 200×50 white for dark mode).
+> **Status:** ✅ Completed (17 Apr 2026, Session 3)
+>
+> **Delivered:**
+> - Migration `20260418_business_showcase.sql` applied to production
+> - `/b/[slug]` renders full landing page: cover image, logo, tagline, name, verified badge, about, products, contact, socials, opening hours, founded year
+> - `PublicPageCard` + `/business/setup/complete` live for owners
+> - Anon nav logo parity with AppNav across all breakpoints + themes
+> - Slug alias system verified end-to-end (live slug + alias redirect paths both working)
+>
+> **Production incident (resolved same day):**
+> - `/b/ag-rentworks` 404'd for ~several hours post-deploy. Root cause: `20260418_business_showcase.sql` was merged to the repo but never run against prod Supabase. The 24-column SELECT in `resolveSlug()` errored with `column "tagline" does not exist`, and because the handler destructures `{ data }` without reading `{ error }`, the failure silently returned `kind: 'none'` → `notFound()`.
+> - Fix: pasted the migration into Supabase SQL editor (the repo's `.sql` files are source-of-truth, not CI-executed). Confirmed resolved via `curl` title check.
+> - Hardening lesson saved as auto-memory `project_migrations_manual.md`: **after every deploy that adds a `supabase/migrations/*.sql` file, paste it into Supabase SQL editor before declaring the feature shipped.**
+
 ### 4.8 — Featured Marketplace Listing Billing
 
 > **Why:** Revenue opportunity — members pay to keep their listing promoted for a configurable duration.
@@ -462,3 +485,20 @@ The audit table we just started populating is rich enough to power an admin "Cro
 
 **29. Idempotency Keys Expose a Re-Run Pattern Question**
 The dailyKey/weeklyKey scheme we used means once a cron runs today, it physically cannot run again until tomorrow — even if an admin *wants* to re-run it (e.g. to re-send a digest after a bug fix, or re-try after a known outage). Today we had to `delete from cron_runs` manually to re-test. For production, we should add an admin "Re-run this job" button that (a) deletes today's row for that job, (b) POSTs to the cron route with a force flag, (c) audit-logs the manual re-run. **Action:** Build after launch, during the Week 8 integration pass. Low priority but saves Okoli from SQL when things break.
+
+### 17 April 2026 (Session 3 — F1 Public Business URLs)
+
+**30. Migrations Don't Ship — Only Code Does**
+The `/b/ag-rentworks` 404 incident exposed a gap we've been living with since day one: Vercel deploys don't run Supabase migrations. Every `supabase/migrations/*.sql` file we commit is source-of-truth documentation, but nothing executes it against prod — the DB changes only when Okoli manually pastes the SQL into the Supabase SQL editor. Today that gap became a production outage: the F1 showcase migration had been merged to the repo, code shipped expecting the 8 new columns, but prod DB didn't have them. `resolveSlug()` destructures `{ data }` without checking `{ error }`, so the Supabase error was swallowed and the route returned `notFound()` silently. **Action (immediate):** After every merge that adds a migration, paste it into SQL editor before declaring the feature shipped. Treat code-deploy and schema-deploy as two steps. **Action (post-launch):** Add `supabase db push` as a GitHub Actions step gated on `supabase/migrations/**` path filter, or a Vercel pre-build hook. Kills this class of bug for good.
+
+**31. Silent Error Swallowing Is a Reliability Smell**
+`resolveSlug()` is not alone — the `const { data } = await supabase.from(...)` pattern (without pulling `error`) is probably littered across the codebase. Each instance is a silent 404, empty list, or "feature doesn't work" with no trace in logs. Sentry doesn't see it because it's not thrown. The only way to find out is via user report. **Action:** After launch, add an ESLint rule or grep audit that flags any `const { data }` destructure missing `error`, at minimum on server components and API routes. Second-best is a centralised `supabaseQuery()` wrapper that throws on `.error` — but that's a bigger refactor and has cost/benefit implications for `maybeSingle()` flows.
+
+**32. The `/business/setup/complete` Split Makes the Product Feel Deeper**
+F1 introduced a deliberate UX split: `/business/setup` for the essentials (legal name, logo, bank), `/business/setup/complete` for the showcase fields that aren't required for invoicing but make the public page sing (tagline, about, cover image, socials, hours, founded year). This two-step pattern — required first, enriching second — is how QuickBooks, Shopify, and Linear onboard. It lowers time-to-first-value (get to invoicing faster) while still pulling users deeper once they've converted. **Action:** Apply the same split pattern to profile completion post-launch: required identity fields in `/profile/setup`, enriching fields (bio, interests, socials, professional photos) in `/profile/setup/complete` with a similar progress indicator. Reuses the `PublicPageCard` mental model.
+
+**33. Anon Nav Consistency Is a Trust Signal**
+The `/b/[slug]` anon nav was originally built with a single `<Image>` tag at a different size than AppNav. A visitor landing on a public business page from search or WhatsApp would see a slightly-wrong logo — nothing they could articulate, but enough to feel like they'd stumbled onto a sub-site rather than AgroYield itself. Matching to AppNav's 3-image responsive pattern (mobile 44×44 icon, desktop 200×50 horizontal, dark-mode white variant) closes that gap. **Action:** Audit all non-AppNav logo instances before launch — 404 page, maintenance page, support token email templates, Paystack receipt landing pages. Anywhere a logo renders, it should follow the same 3-image pattern. Rough count from today's scan: 4–5 more places to audit.
+
+**34. Production 404s Are Diagnostically Expensive**
+Today's debug took ~45 minutes across multiple hypotheses (env vars, service role key, project ref, build cache) before arriving at the actual root cause (missing migration). The reason: the error surfaced as a generic `notFound()` render, with no log breadcrumb anywhere — Sentry didn't see it because nothing threw, Vercel runtime logs only show what actually ran, and the DB layer had no visibility into what was asking and failing. **Action:** Post-launch, add a `console.error('resolveSlug query failed', { slug, error })` in `resolveSlug()` (and every similar swallowing pattern). In production these flow to Vercel's function logs — next incident gets 45 minutes shorter. This is a pure observability upgrade, no product impact.

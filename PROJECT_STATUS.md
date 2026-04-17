@@ -1,6 +1,6 @@
 # AgroYield Network — Project Status
 
-> **Last updated:** 17 April 2026 (Checkpoint 22)
+> **Last updated:** 17 April 2026 (Checkpoint 23)
 > **Maintained by:** Okoli (okolichijiokei@gmail.com)
 > **Launch Target:** 5 July 2026 (~11 weeks remaining)
 > **Purpose:** Permanent reference for any developer or Claude session to get up to speed instantly.
@@ -276,7 +276,10 @@
 | Research daily post rate limit           | ✅ Done | Server-side check in `app/api/research/route.ts` against `research_daily_limit` setting            |
 | Mentorship subscription gate             | ✅ Done | Both `/mentorship` (server) and `/mentorship/become-mentor` (client) check `subscription_tier` — free users see upgrade prompt linking to `/pricing` |
 | Weekly digest admin toggle               | ✅ Done | Cron early-exits when `digest_enabled` is `false` in settings                                      |
-| Consistent logo sizing                   | ✅ Done | AppNav 200×50 (desktop), 44×44 (mobile). Signup matched to login/reset (nav 58px, card 120px)      |
+| Consistent logo sizing                   | ✅ Done | AppNav 200×50 (desktop), 44×44 (mobile). Signup matched to login/reset (nav 58px, card 120px). `/b/[slug]` anon nav now matches AppNav (3-image responsive pattern + dark-mode variant) |
+| Public business pages (`/b/[slug]`)      | ✅ Done | `app/b/[slug]/page.tsx` — server route, `resolveSlug()` live → alias → 404, admin client for public fields, 8 showcase columns rendered (tagline, about, cover image, socials, opening hours, founded year) |
+| Business slug aliases                    | ✅ Done | `business_slug_aliases` table — `old_slug` → `business_id` redirect map, 301 permanent redirect path in `resolveSlug()` |
+| Business showcase edit UI                | ✅ Done | `/business/setup/complete` + `PublicPageCard` — in-place edit for tagline, about, cover image, website, socials, hours, founded year. Cover image uploads to `business-logos` bucket |
 
 ---
 
@@ -342,6 +345,7 @@
 | `messages`             | Individual messages within conversations (body, status, read_at)             |
 | `login_history`        | Device fingerprint log (SHA-256 of UA + IPv4 /24) for new-device detection   |
 | `cron_runs`            | F2 harness audit trail — one row per cron invocation (success/skipped/failed), idempotency keys, durations, metadata |
+| `business_slug_aliases` | Historical slug → `business_id` map for `/b/[slug]` 301 redirects when a business renames                    |
 
 ---
 
@@ -356,6 +360,17 @@ Note: `/insights`, `/connections` are pre-registered for future modules.
 ---
 
 ## Changelog
+
+### Checkpoint 23 — April 17, 2026 (F1 Public Business URLs + Showcase Migration — Phase 4.10)
+
+- Added: `supabase/migrations/20260418_business_showcase.sql` — idempotent `ADD COLUMN IF NOT EXISTS` for 8 showcase columns on `businesses`: `tagline`, `about`, `cover_image_url`, `website`, `instagram`, `facebook`, `opening_hours`, `founded_year`. CHECK constraint on `founded_year` (1800 → current year + 1). Column comments added for each.
+- Added: `/b/[slug]` server route — `resolveSlug()` tries live `businesses.slug` first, then `business_slug_aliases.old_slug` (301 redirect to canonical), then `notFound()`. Uses `getAdminClient()` (service-role) to bypass RLS on public fields only.
+- Added: `/business/setup/complete` page with `PublicPageCard` component — owners edit showcase fields in-place: tagline, about (long-form), cover image upload (to `business-logos` bucket), website, Instagram, Facebook, opening hours, founded year.
+- Changed: `/b/[slug]` anon nav logo harmonised with AppNav — replaced single 110×58 `<Image>` with 3-image responsive pattern: `block sm:hidden` mobile icon (44×44 `/logo-icon-colored.png`), `hidden sm:block dark:hidden` desktop light horizontal (200×50 `/logo-horizontal-colored.png`), `hidden dark:sm:block` desktop dark horizontal (200×50 `/logo-horizontal-white.png`). Matches AppNav sizing lockup + dark-mode variant.
+- Production incident (resolved same day): `/b/ag-rentworks` and other business slugs returned 404 for several hours post-deploy. Root cause: the `20260418_business_showcase.sql` migration was in the repo but had never been run against prod Supabase. The 24-column SELECT in `resolveSlug()` errored with `column "tagline" does not exist`. Because the handler destructures `{ data }` without reading `{ error }`, the failure silently returned `kind: 'none'` → `notFound()`. Resolved by pasting the migration into Supabase SQL editor. Lesson persisted to auto-memory as `project_migrations_manual.md`.
+- Verified: `curl -I https://agroyield.africa/b/ag-rentworks` returns HTTP/2 200 with `<title>AG Rentworks — AgroYield Network | AgroYield Network</title>` (was "Business not found" pre-migration).
+- Pending for Week 2 under Unicorn #2: `sitemap.xml` + `robots.txt` auto-generation from active businesses, Open Graph / LocalBusiness structured data on `/b/[slug]`, verified badge rendering, products list + reviews, logged-out "Follow" CTA.
+- Deployment: Migration applied in Supabase SQL editor (manual). No Vercel re-deploy needed since the code expecting the columns was already live.
 
 ### Checkpoint 22 — April 17, 2026 (F2 Cron Harness + Kill Switches + Root Vercel.json)
 

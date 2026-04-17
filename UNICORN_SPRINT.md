@@ -53,11 +53,15 @@ Lead time: 1 day.
 
 Before Week 1 feature work, build three primitives that everything else rides on. **Total: 1.5 days, saves ~5 days across the sprint.**
 
-### F1. Slug + public-URL infrastructure
-- `slug` column on `businesses` (unique, auto-generated from name)
-- `/b/[slug]` route shell
-- `sitemap.xml` + `robots.txt` generators
+### F1. Slug + public-URL infrastructure ✅ SHIPPED (17 Apr 2026, Session 3)
+- `slug` column on `businesses` (unique, auto-generated from name) — **done**
+- `business_slug_aliases` table for historical-slug redirects — **done**
+- `/b/[slug]` route — server-rendered via `resolveSlug()` (live → alias → 404) — **done**
+- 8 showcase columns live (tagline, about, cover_image_url, website, instagram, facebook, opening_hours, founded_year) via `20260418_business_showcase.sql` — **done**
+- `/business/setup/complete` page with `PublicPageCard` for editing showcase fields — **done**
+- Anon nav logo on `/b/[slug]` matched to AppNav (mobile 44×44 icon, desktop 200×50 horizontal, dark-mode variant) — **done**
 - Reused by #1 (digest links), #2 (public pages), future SEO plays
+- Still pending: `sitemap.xml` + `robots.txt` auto-generation from active businesses (Week 2 scope under #2 Public Business Pages)
 
 ### F2. Shared cron harness ✅ SHIPPED (17 Apr 2026, Session 2)
 - `lib/cron/index.ts` wrapping existing `CRON_SECRET` pattern — **done**
@@ -116,7 +120,7 @@ Expected minutes-not-days effort when trigger hits: add Meta credentials to Verc
 
 ### Week 1 (17–24 Apr) — Foundations + Quick Win
 
-**Mon–Tue:** Foundations F1, F2, F3. — **F2 complete (17 Apr, Session 2)**; F1 (slug + `/b/[slug]` + sitemap) and F3 (feature_flags) still pending.
+**Mon–Tue:** Foundations F1, F2, F3. — **F1 complete (17 Apr, Session 3)** (minus sitemap/robots, deferred to Week 2 under #2); **F2 complete (17 Apr, Session 2)**; F3 (feature_flags) still pending.
 
 **Wed–Fri:** Ship **#1 Weekly Digest**.
 - Monday 7 AM cron (Africa/Lagos)
@@ -304,11 +308,17 @@ Together these form the Series A narrative: **"AgroYield is Nigerian agri's oper
 
 ---
 
-## Open Questions (answer when you have a moment)
+## Open Questions (answered 17 Apr 2026, Session 3)
 
-1. **Solo build or any dev help?** Plan assumes solo. Even 1 day/week of help unlocks significant parallelisation.
-2. **Lender outreach (Week 10):** should I draft the Carbon/FairMoney/Renmoney/LAPO letters, or do you want to write those personally?
-3. **AI Assistant branding:** "Ada" (Nigerian female agritech assistant, ties to girl-child priority) or neutral ("AgroYield Assistant")? Shapes tone, copy, marketing angle.
+1. **Solo build.** Confirmed. Plan's solo-capacity assumptions hold — no parallelisation baked in.
+2. **Lender outreach (Week 10):** Claude drafts, Okoli reviews. Target list expanded to **6 institutions**: Carbon, FairMoney, Renmoney, LAPO, OPay, Moniepoint. (OPay + Moniepoint added — huge Nigerian digital-banking reach; agri-loan fit strong for both given their SME-lending thesis.)
+3. **AI Assistant branding:** **Neutral** — "AgroYield Assistant". Reasoning: Nigerian/Pan-African cultural diversity; a female Igbo name like "Ada" risks over-indexing on one culture when users span Hausa, Yoruba, Fulani, Tiv, Ibibio, and across borders to Ghana/Kenya/Tanzania (per waitlist expansion signal).
+
+## External Dependencies — Current State (17 Apr 2026, Session 3)
+
+- **Termii:** Account active. SMS sender ID `Fastbeep` issued for test window. WhatsApp template approval still in progress on Termii's end. Path forward: SMS test endpoint this week to validate credentials end-to-end; switch to WhatsApp template API once Termii confirms approval.
+- **Anthropic:** Account registered, $50 loaded. Awaiting API-key hardening guidance (given: dedicated workspace, $40/month cap, Production-only env var, server-side scope, 90-day rotation, weekly spend check).
+- **Facebook Business Verification:** Still pending — blocks Meta WhatsApp swap + Facebook OAuth; Termii carries WhatsApp for launch.
 
 ---
 
@@ -317,3 +327,4 @@ Together these form the Series A narrative: **"AgroYield is Nigerian agri's oper
 - **17 Apr 2026** — Document created. Differentiators shortlisted, critical path mapped, 11-week schedule drafted, questions opened.
 - **17 Apr 2026** — WhatsApp provider strategy locked: Termii at launch, Meta post-launch. Added "WhatsApp Provider Abstraction" section with interface spec, non-negotiable rules (caller isolation, E.164, shared templates, normalised message log schema), and migration trigger criteria.
 - **17 Apr 2026 (Session 2)** — **F2 Cron Harness SHIPPED.** `lib/cron/index.ts` live, `cron_runs` audit table populated, idempotency keys enforcing single execution per day/week, all 6 existing crons wrapped, root `/vercel.json` registers the full set with Vercel's scheduler, admin kill-switch UI in place for 4 of the 6. Verified end-to-end via curl: success path, idempotency-block path, and kill-switch-skip path all confirmed writing correctly to `cron_runs`. Unblocks #1 Digest, #4 Recurring Invoices, #6 Credit Score refresh cycle from Week 1 onward.
+- **17 Apr 2026 (Session 3)** — **F1 Slug + Public-URL Infrastructure SHIPPED.** `/b/[slug]` route now serves as a proper landing page for businesses. 8 showcase columns added to `businesses` (tagline, about, cover_image_url, website, instagram, facebook, opening_hours, founded_year) via `20260418_business_showcase.sql`. `resolveSlug()` tries live slug first, then `business_slug_aliases.old_slug` for historical redirects, returning 404 only when neither matches. `/business/setup/complete` + `PublicPageCard` lets owners edit showcase fields. Anon nav on `/b/[slug]` matched to AppNav (mobile 44×44 icon, desktop 200×50 horizontal, dark-mode variant). **Production 404 root cause solved:** the F1 migration never ran against prod — Vercel deploys don't auto-apply Supabase migrations. `resolveSlug()` was silently swallowing `column "tagline" does not exist` errors and returning `kind: 'none'`. Lesson saved to auto-memory as `project_migrations_manual.md`. Sitemap/robots still pending (Week 2 scope under #2 Public Business Pages). Unblocks #1 Digest link copy ("view your business page"), #2 public-page work (Open Graph, reviews, Follow CTA, structured data).
