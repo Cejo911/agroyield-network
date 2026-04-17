@@ -8,6 +8,7 @@ import BenchmarkCard from './BenchmarkCard'
 import FAQAccordion from '@/app/components/FAQAccordion'
 import { MODULE_FAQS } from '@/lib/faq-data'
 import { getBusinessAccess } from '@/lib/business-access'
+import PublicPageCard from './PublicPageCard'
 
 function fmt(n: number) {
   return new Intl.NumberFormat('en-NG', {
@@ -55,7 +56,7 @@ export default async function BusinessDashboard({
   // Business profile
   const business = access ? await supabase
     .from('businesses')
-    .select('id, name, logo_url, address, phone')
+    .select('id, name, logo_url, address, phone, slug, is_public')
     .eq('id', access.businessId)
     .single().then(r => r.data) : null
 
@@ -203,7 +204,14 @@ export default async function BusinessDashboard({
         </div>
         <PeriodToggle current={period} />
       </div>
-
+      {/* Public page URL — only shown once slug exists */}
+      {business?.slug && (
+        <PublicPageCard
+          slug={business.slug}
+          isPublic={!!business.is_public}
+          siteOrigin={process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') || 'https://agroyield.africa'}
+        />
+      )}
       {/* Onboarding checklist — hidden once all 4 steps complete */}
       {!allDone && (
         <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">

@@ -7,6 +7,11 @@ type FormState = {
   cac_number: string; vat_tin: string
   bank_name: string; account_name: string; account_number: string
   invoice_prefix: string; logo_url: string
+  sector: string; state: string; business_size: string
+  // Showcase fields — drive the public /b/{slug} marketing page
+  tagline: string; about: string; cover_image_url: string
+  website: string; instagram: string; facebook: string
+  opening_hours: string; founded_year: string
 }
 
 type Step = {
@@ -28,6 +33,24 @@ const STEPS: Step[] = [
     label: 'Business Details',
     tip: 'Name, address and phone are required. Add WhatsApp so customers can reach you instantly.',
     check: (f) => !!f.name && !!f.address && !!f.phone,
+  },
+  {
+    id: 'classification',
+    label: 'Sector & Classification',
+    tip: 'Selecting sector, state, and size powers peer benchmarking and helps customers find you.',
+    check: (f) => !!f.sector && !!f.state && !!f.business_size,
+  },
+  {
+    id: 'showcase',
+    label: 'Business Showcase',
+    tip: 'A tagline and About story turn your public page (/b/your-slug) into a real marketing tool. Add a cover image for impact.',
+    check: (f) => !!f.tagline && !!f.about,
+  },
+  {
+    id: 'socials',
+    label: 'Website & Socials',
+    tip: 'Add at least one online presence — website, Instagram, or Facebook — so customers can verify and follow you.',
+    check: (f) => !!f.website || !!f.instagram || !!f.facebook,
   },
   {
     id: 'registration',
