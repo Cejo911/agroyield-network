@@ -300,6 +300,18 @@ Harden the platform, add differentiators, test with real users.
 > **Scope:** Support ticket creation (open/closed states). Token verification via email or SMS (member's choice). Admin support dashboard with ticket queue. Audit trail per ticket.
 > **Status:** ✅ Completed (16 Apr 2026) — Full support ticket system: 4 DB tables (tickets, messages, events, tokens) with RLS. Email OTP verification (6-digit, 15-min expiry) before accessing support. Ticket CRUD with categories (general/account/billing/technical/content/other), priorities (low/medium/high/urgent), SLA deadlines (72h/48h/24h/4h). Admin SupportTab with claim/resolve/close/escalate actions, status + priority filters, SLA breach indicators. Conversation threads with user/admin messages + audit trail. Email notifications on ticket creation, admin reply, and resolution. Slack alerts on new tickets (severity by priority). Support link in AppNav. SMS verification deferred — structured for plug-in when SMS provider added.
 
+### 4.9 — Invoice Delivery Charges
+
+> **Why:** Nigerian SMEs routinely bill freight/logistics alongside goods. Without a dedicated line, users were stuffing delivery into line items (distorts product pricing analytics) or into notes (not taxable, not summable).
+> **Scope:** `delivery_charge` column on `invoices` (NOT NULL DEFAULT 0, CHECK ≥ 0). Delivery input in new invoice Summary section. VAT calculated on `subtotal + delivery` (matches FIRS treatment of freight as taxable). Delivery row rendered on both invoice detail view and print/PDF.
+> **Status:** ✅ Completed (17 Apr 2026)
+>
+> **Delivered:**
+> - Migration `20260417_invoice_delivery_charge.sql` with idempotent `ADD COLUMN IF NOT EXISTS` + non-negative CHECK
+> - New invoice page: delivery state + input in Summary, VAT now computed on `preVat = subtotal + delivery`
+> - Invoice detail + print pages render Delivery line when > 0; VAT label now reflects actual stored rate
+> - Backward compatible — existing invoices default to 0 delivery
+
 ### 4.8 — Featured Marketplace Listing Billing
 
 > **Why:** Revenue opportunity — members pay to keep their listing promoted for a configurable duration.
@@ -422,3 +434,17 @@ All 6 sort dropdowns we added today sort in-memory on the client. This is fine n
 
 **21. Business Setup Guide as Onboarding Template**
 The floating `BusinessSetupGuide` we built today is a reusable pattern. The same approach (form state → derived completion checks → floating progress widget) could be applied to: profile completion, first invoice creation, first marketplace listing, first price report. Each of these "first action" flows benefits from contextual tips and visible progress. **Action:** After launch, extract the guide into a generic `SetupGuide` component that accepts steps config. Apply to profile form first (it already has a completeness tracker but no floating UX).
+
+### 17 April 2026
+
+**22. Database Version Control Baseline**
+Until today, roughly half the schema (all tables created via Supabase dashboard during rapid prototyping) was not in the migrations folder — only the changes made via SQL files during structured sessions. Today we generated a 1,500-line baseline snapshot of all 81 public tables from `information_schema.columns` and committed it as `00000000000000_baseline.sql`. It uses `CREATE TABLE IF NOT EXISTS` so it's idempotent — running it against the existing DB is a no-op. This restores the "infrastructure as code" discipline and means a fresh environment can now be bootstrapped from the repo. **Action:** Post-launch, set up a pre-merge check that fails if a schema change is made without a corresponding migration file. `supabase db diff` against the committed schema will flag drift.
+
+**23. Invoice Totals Logic Should Live on the DB**
+The delivery charge amendment made me realise: invoice totals are currently computed in 3 places — the new invoice page (calculates and inserts), the detail view (reads stored `total`), and the print page (falls back to local math). Every time we add a new cost bucket (discount, service fee, shipping insurance), we touch all three. A generated column on `invoices` — `total_amount GENERATED ALWAYS AS (subtotal + delivery_charge + vat_amount) STORED` — would eliminate drift risk and make the print page's fallback unnecessary. **Action:** Post-launch, migrate to a generated column once we're confident the formula is stable (watch for discount/credit-note scope changes first).
+
+**24. VAT-Inclusive vs VAT-Exclusive Pricing**
+Right now all invoices treat line items as pre-VAT and add VAT on top. Some Nigerian B2C businesses quote VAT-inclusive prices (the number on the shelf includes VAT). We don't support this, and if a user in that mode enters their selling price as the line item unit price, they'd be over-charging their customer. A per-business setting (`vat_pricing_mode: 'exclusive' | 'inclusive'`) with clear form labelling would close this gap. **Action:** Monitor support tickets for VAT confusion. Add the setting if it surfaces more than twice.
+
+**25. Delivery Charge Opens the Door to a Logistics Module**
+We now capture delivery on every invoice. Aggregate this across all businesses and suddenly we have logistics demand data — "₦2.3M in delivery fees moved through AgroYield invoices in April, 60% in Lagos, 20% Ogun, 15% Oyo." This could seed either (a) a marketplace for vetted logistics partners that businesses can one-click-hire, or (b) an AgroYield Logistics offering that plugs into a last-mile partner like Kwik or GIG Logistics for commission. Don't build now, but tag it as a strategic observation. **Action:** Post-launch, build a "Delivery Analytics" admin view showing aggregated delivery volume/value/geography. Use it to decide whether to pursue the logistics angle or monetise via partnerships.

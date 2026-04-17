@@ -1,6 +1,6 @@
 # AgroYield Network — Project Status
 
-> **Last updated:** 16 April 2026 (Checkpoint 19)
+> **Last updated:** 17 April 2026 (Checkpoint 21)
 > **Maintained by:** Okoli (okolichijiokei@gmail.com)
 > **Launch Target:** 5 July 2026 (~11 weeks remaining)
 > **Purpose:** Permanent reference for any developer or Claude session to get up to speed instantly.
@@ -122,6 +122,9 @@
 | Invoice print layout                                                 | ✅ Done | `app/invoice-print/[id]/`                                                        |
 | Record payment against invoice                                       | ✅ Done | `RecordPaymentButton.tsx`                                                        |
 | VAT/tax toggle with customisable percentage                          | ✅ Done | Default 7.5% (Nigeria)                                                           |
+| Invoice delivery / logistics charge (VAT applied on subtotal + delivery) | ✅ Done | `app/business/invoices/new/page.tsx`, `[id]/page.tsx`, print page                |
+| Peer benchmarking on Business dashboard (profit margin, expense ratio, collection rate, revenue) | ✅ Done | `app/business/BenchmarkCard.tsx`, `app/api/business/benchmarks/route.ts` — medians, graceful degradation |
+| Sector / state / business size classification                        | ✅ Done | `app/business/setup/page.tsx` — 10 agri sectors, 36 states + FCT, 4 size brackets |
 | Auto-increment invoice numbering                                     | ✅ Done |                                                                                  |
 | Stock deduction on invoice send                                      | ✅ Done | Creates stock_movements records                                                  |
 | Stock restoration on invoice cancel/delete                           | ✅ Done | Reverse stock_movements                                                          |
@@ -347,6 +350,25 @@ Note: `/insights`, `/connections` are pre-registered for future modules.
 ---
 
 ## Changelog
+
+### Checkpoint 21 — April 17, 2026 (Invoice Delivery Charges — Phase 4.9 + DB Baseline)
+
+- Added: `supabase/migrations/20260417_invoice_delivery_charge.sql` — `delivery_charge numeric NOT NULL DEFAULT 0` on `invoices` with `invoices_delivery_charge_nonneg` CHECK constraint. Idempotent (`ADD COLUMN IF NOT EXISTS`).
+- Changed: `app/business/invoices/new/page.tsx` — New `deliveryCharge` state. Summary section now has a delivery / logistics input between Subtotal and VAT. Calculation updated: `preVatTotal = subtotal + delivery`, `vatAmount = preVatTotal × vatRate`, `totalAmount = preVatTotal + vatAmount`. VAT label shows `VAT (7.5% of ₦X)` to expose the base. Insert now persists `delivery_charge`.
+- Changed: `app/business/invoices/[id]/page.tsx` — Delivery row shown between Subtotal and VAT when `> 0`. VAT label now reflects actual stored `vat_rate` instead of hardcoded 7.5%.
+- Changed: `app/invoice-print/[id]/page.tsx` — Delivery row added to printable totals block (between Subtotal and VAT). Total fallback math updated to `subtotal + delivery + vat`. Prefers persisted `invoice.total` over `total_amount`.
+- Rationale: Matches Nigerian FIRS treatment where freight is taxable alongside goods. Prevents users from stuffing delivery into line items (which distorted product-level analytics) or into notes (not taxable, not summable).
+- Added: `supabase/migrations/00000000000000_baseline.sql` — 1,500-line snapshot of all 81 public tables generated from `information_schema.columns` CSV export. Uses `CREATE TABLE IF NOT EXISTS`, so safe to commit — running it against the existing DB is a no-op. Restores database-as-code discipline after a period of rapid dashboard-driven prototyping.
+- SQL pending: Run `20260417_invoice_delivery_charge.sql` in Supabase before deployment.
+
+### Checkpoint 20 — April 17, 2026 (Business Benchmarking — Phase 4.2)
+
+- Added: `supabase/migrations/20260417_business_benchmarking.sql` — 3 new columns on `businesses`: `sector` (10 agri sectors), `state` (36 states + FCT), `business_size` (4 brackets: micro, small, medium, large). CHECK constraints enforce valid values. Partial indexes (`WHERE sector IS NOT NULL`, etc.) for peer-group lookups.
+- Changed: `app/business/setup/page.tsx` — New "Sector & Classification" section with 3 dropdowns (Sector, State, Business Size) between Business Details and Registration & Tax sections. Constants `SECTORS`, `NIGERIAN_STATES`, `BUSINESS_SIZES` exported. `load()` hydrates the new fields.
+- Added: `app/api/business/benchmarks/route.ts` — GET endpoint computing per-business KPIs (profit margin, expense ratio, collection rate, revenue) against peer medians. Peer group = same sector, narrowed to same state when ≥3 state peers. Medians (not averages) for outlier resilience. Skips zero-activity peers. Returns graceful-degradation states: `no_sector`, `too_few_peers`, `too_few_active_peers`, `ok`.
+- Added: `app/business/BenchmarkCard.tsx` — Client component with 3 display states: profile completion nudge, "not enough peers" message, or full comparison with directional arrows (↑/↓), color-coded good/bad, and actionable insights like "Your margin is X% below peers — review pricing or cut costs".
+- Changed: `app/business/page.tsx` — Placed `<BenchmarkCard businessId={bizId} period={period} />` between Health Score and stat cards.
+- SQL pending: Run `20260417_business_benchmarking.sql` in Supabase before deployment.
 
 ### Checkpoint 19 — April 16, 2026 (Featured Listing Billing — Phase 4.8)
 
