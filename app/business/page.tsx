@@ -4,6 +4,7 @@ import { cookies } from 'next/headers'
 import Link from 'next/link'
 import Image from 'next/image'
 import PeriodToggle from './PeriodToggle'
+import BenchmarkCard from './BenchmarkCard'
 import FAQAccordion from '@/app/components/FAQAccordion'
 import { MODULE_FAQS } from '@/lib/faq-data'
 import { getBusinessAccess } from '@/lib/business-access'
@@ -337,6 +338,9 @@ export default async function BusinessDashboard({
           )}
         </div>
       )}
+
+      {/* Peer Benchmarks */}
+      <BenchmarkCard businessId={bizId} period={period} />
 
       {/* Colour-coded stat cards */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">

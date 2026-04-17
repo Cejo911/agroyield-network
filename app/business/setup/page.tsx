@@ -53,6 +53,34 @@ const NIGERIAN_BANKS = [
   'Zenith Bank',
 ]
 
+const SECTORS = [
+  'Crop Farming',
+  'Livestock & Poultry',
+  'Fisheries & Aquaculture',
+  'Agro-Processing',
+  'Input Supply',
+  'Equipment & Machinery',
+  'Transport & Logistics',
+  'Trading & Export',
+  'Consulting & Advisory',
+  'Other',
+]
+
+const NIGERIAN_STATES = [
+  'Abia','Adamawa','Akwa Ibom','Anambra','Bauchi','Bayelsa','Benue','Borno',
+  'Cross River','Delta','Ebonyi','Edo','Ekiti','Enugu','FCT','Gombe',
+  'Imo','Jigawa','Kaduna','Kano','Katsina','Kebbi','Kogi','Kwara',
+  'Lagos','Nasarawa','Niger','Ogun','Ondo','Osun','Oyo','Plateau',
+  'Rivers','Sokoto','Taraba','Yobe','Zamfara',
+]
+
+const BUSINESS_SIZES = [
+  'Micro (1-9 staff)',
+  'Small (10-49 staff)',
+  'Medium (50-199 staff)',
+  'Large (200+ staff)',
+]
+
 function BusinessSetup() {
   const supabase = createClient()
   const router = useRouter()
@@ -70,6 +98,7 @@ function BusinessSetup() {
     cac_number: '', vat_tin: '',
     bank_name: '', account_name: '', account_number: '',
     invoice_prefix: 'INV', logo_url: '',
+    sector: '', state: '', business_size: '',
   })
 
   useEffect(() => {
@@ -101,6 +130,9 @@ function BusinessSetup() {
             account_number: data.account_number ?? '',
             invoice_prefix: data.invoice_prefix ?? 'INV',
             logo_url: data.logo_url ?? '',
+            sector: data.sector ?? '',
+            state: data.state ?? '',
+            business_size: data.business_size ?? '',
           })
           // If existing bank name isn't in the standard list, show custom input
           if (bankName && !NIGERIAN_BANKS.includes(bankName)) {
@@ -267,6 +299,45 @@ function BusinessSetup() {
           {field('Alternative Phone', 'alt_phone', 'tel', '+234...')}
           {field('WhatsApp Number', 'whatsapp', 'tel', '+234...')}
           {field('Email', 'email', 'email', 'info@yourbusiness.com')}
+        </div>
+
+        {/* Sector & Classification — powers peer benchmarking */}
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm p-5 space-y-4">
+          <h2 className="font-semibold text-gray-800 dark:text-white">Sector & Classification</h2>
+          <p className="text-xs text-gray-400">Used for anonymous peer benchmarking — see how your business compares to others in your sector and region.</p>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sector</label>
+            <select
+              value={form.sector}
+              onChange={e => setForm(f => ({ ...f, sector: e.target.value }))}
+              className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-green-500"
+            >
+              <option value="">Select sector…</option>
+              {SECTORS.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">State</label>
+            <select
+              value={form.state}
+              onChange={e => setForm(f => ({ ...f, state: e.target.value }))}
+              className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-green-500"
+            >
+              <option value="">Select state…</option>
+              {NIGERIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Business Size</label>
+            <select
+              value={form.business_size}
+              onChange={e => setForm(f => ({ ...f, business_size: e.target.value }))}
+              className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-green-500"
+            >
+              <option value="">Select size…</option>
+              {BUSINESS_SIZES.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
         </div>
 
         {/* Registration & Tax (optional — shown on invoices when provided) */}

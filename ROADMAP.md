@@ -261,7 +261,14 @@ Harden the platform, add differentiators, test with real users.
 
 > **Why:** "Your profit margin is 18%. Average for poultry businesses in Lagos is 23%." Creates a moat — more businesses = better benchmarks.
 > **Scope:** Aggregate anonymous metrics by sector/region/size. Peer comparison on dashboard. Actionable recommendations.
-> **Status:** ⬜ Not started
+> **Status:** ✅ Completed (17 Apr 2026)
+>
+> **Delivered:**
+> - 3 new columns on `businesses`: `sector`, `state`, `business_size` with CHECK constraints (10 agri sectors, 36 states + FCT, 4 size brackets) + partial indexes
+> - "Sector & Classification" section on business setup page with dropdown selectors
+> - `/api/business/benchmarks` API: computes per-business KPIs (profit margin, expense ratio, collection rate, revenue) and peer medians. Peer group = same sector, narrowed to same state when ≥3 peers. Uses medians over averages for outlier resilience. Skips zero-activity businesses.
+> - `BenchmarkCard` client component on Business Suite dashboard with 3 states: profile completion nudge, "not enough peers" message, or full comparison with directional arrows + actionable insights
+> - Graceful degradation: works with zero peers (shows nudge), 1 peer (shows waiting message), 2+ peers (shows full comparison)
 
 ### 4.3 — Monitoring & Error Tracking
 
