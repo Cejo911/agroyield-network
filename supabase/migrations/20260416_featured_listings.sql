@@ -33,11 +33,13 @@ CREATE INDEX IF NOT EXISTS idx_flp_reference ON featured_listing_payments (payst
 ALTER TABLE featured_listing_payments ENABLE ROW LEVEL SECURITY;
 
 -- Users can see their own payments
+DROP POLICY IF EXISTS "Users can view own featured payments" ON featured_listing_payments;
 CREATE POLICY "Users can view own featured payments"
   ON featured_listing_payments FOR SELECT
   USING (auth.uid() = user_id);
 
 -- Only service role inserts/updates (via API)
+DROP POLICY IF EXISTS "Service role manages featured payments" ON featured_listing_payments;
 CREATE POLICY "Service role manages featured payments"
   ON featured_listing_payments FOR ALL
   USING (auth.role() = 'service_role');
