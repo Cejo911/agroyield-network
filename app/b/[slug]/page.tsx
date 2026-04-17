@@ -198,13 +198,29 @@ export default async function PublicBusinessPage(
       {/* Nav: AppNav for logged-in members, marketing nav for anonymous visitors */}
       {user ? <AppNav /> : (
         <nav className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 no-underline">
+          <Link href="/" className="flex items-center shrink-0 no-underline">
+            {/* Icon only on mobile */}
+            <Image
+              src="/logo-icon-colored.png"
+              alt="AgroYield Network"
+              width={44}
+              height={44}
+              className="block sm:hidden"
+            />
+            {/* Horizontal logo on desktop */}
             <Image
               src="/logo-horizontal-colored.png"
               alt="AgroYield Network"
-              className="auth-logo-colored"
-              width={110}
-              height={58}
+              width={200}
+              height={50}
+              className="hidden sm:block dark:hidden"
+            />
+            <Image
+              src="/logo-horizontal-white.png"
+              alt="AgroYield Network"
+              width={200}
+              height={50}
+              className="hidden dark:sm:block"
             />
           </Link>
           <div className="flex items-center gap-3">
