@@ -17,7 +17,7 @@ This is the execution document. Week-by-week, each feature has scope, dependenci
 | - | ---------------------------- | -------------------- | -------------------------------------------------------- |
 | 1 | Weekly Digest Email          | Retention            | All tiers                                                |
 | 2 | Public Business Pages + SEO  | Organic acquisition  | All tiers                                                |
-| 3 | WhatsApp Invoice Delivery    | Conversion (payment) | Free: ₦50/msg · Pro+: unlimited                          |
+| 3 | WhatsApp Invoice Delivery    | Conversion (payment) | Free: ₦50/msg · Pro+: unlimited · Termii now, Meta post-launch |
 | 4 | Recurring Invoices           | Retention + revenue  | Pro+ only                                                |
 | 5 | Expense OCR (receipt photos) | Stickiness           | Free: 20/mo · Pro: 100/mo · Growth: unlimited            |
 | 6 | Agri Credit Score (AgroScore)| Moat (data)          | All tiers see score; partner integration post-launch     |
@@ -31,9 +31,11 @@ This is the execution document. Week-by-week, each feature has scope, dependenci
 Three external dependencies block downstream features. Start these **before any code**:
 
 ### D1. Termii account + API key
-Blocks: #3 WhatsApp Delivery.
+Blocks: #3 WhatsApp Delivery (Termii is the launch provider; Meta swap is post-launch).
 Action: Sign up at `termii.com` with AgroYield business email. Request WhatsApp channel enablement.
 Lead time: 0–5 days.
+
+> **Provider strategy:** Ship #3 on Termii now to avoid Meta verification gating the launch. Build behind a provider abstraction so swapping to Meta WhatsApp Business API post-launch is a one-file change. See "WhatsApp Provider Abstraction" section below.
 
 ### D2. Anthropic API key (AgroYield workspace)
 Blocks: #5 OCR, #7 AI Assistant.
@@ -69,6 +71,42 @@ Before Week 1 feature work, build three primitives that everything else rides on
 
 ---
 
+## WhatsApp Provider Abstraction
+
+Strategic decision (17 Apr 2026): Ship #3 on Termii for the launch. Swap to Meta WhatsApp Business API post-launch once Facebook Business Verification clears and we hit volume where the ~65% per-message cost saving matters.
+
+### Directory structure
+```
+lib/messaging/whatsapp/
+  ├── provider.ts          // TypeScript interface
+  ├── termii-provider.ts   // ships Week 2 (launch provider)
+  ├── meta-provider.ts     // scaffolded Week 2, activated post-launch
+  ├── templates.ts         // shared message copy (invoice, reminder, digest)
+  └── index.ts             // provider factory, env-var-driven
+```
+
+### Provider interface (normalised)
+- `sendTemplate({ to: E164String, templateId, variables })` — returns `{ providerMessageId, status }`
+- `sendMedia({ to: E164String, mediaUrl, caption })` — for invoice PDFs
+- `getStatus(providerMessageId)` — unified status enum: `queued | sent | delivered | read | failed`
+
+### Non-negotiable rules (to keep switch painless)
+1. **Callers import only from `lib/messaging/whatsapp`** — never `import termii` or `import meta` directly anywhere else
+2. **E.164 phone format everywhere** (`+234XXXXXXXXXX`). Normalise at input-validation layer, not at send time
+3. **Template copy lives in `templates.ts`** — Termii and Meta approve templates separately, but copy must match so swap is invisible to users
+4. **`messages_log` table uses a normalised schema**: `provider`, `provider_message_id`, `normalised_status`, `raw_payload (jsonb)`. Provider-specific webhook fields go into `raw_payload` only — never leak into typed columns
+5. **Env var selects provider:** `WHATSAPP_PROVIDER=termii` (launch) → `WHATSAPP_PROVIDER=meta` (post-Meta verification). Provider factory in `index.ts` dispatches
+
+### Migration trigger (post-launch)
+Switch to Meta when ALL three are true:
+- Facebook Business Verification complete
+- AgroYield sending >3,000 WhatsApp messages/month (cost savings become material)
+- Meta template approval rate stable (avoid launch-week template rejections blocking invoicing)
+
+Expected minutes-not-days effort when trigger hits: add Meta credentials to Vercel env, flip `WHATSAPP_PROVIDER`, redeploy, monitor webhook logs for 24 hours.
+
+---
+
 ## Week-by-Week Ship Schedule
 
 ### Week 1 (17–24 Apr) — Foundations + Quick Win
@@ -94,10 +132,13 @@ Before Week 1 feature work, build three primitives that everything else rides on
 - Sitemap auto-generated from active businesses
 - Robots.txt tuned
 
-**Thu–Sun:** Ship **#3 WhatsApp Delivery** (Termii).
+**Thu–Sun:** Ship **#3 WhatsApp Delivery** (Termii, behind provider abstraction).
+- Build `lib/messaging/whatsapp/` with `provider.ts` interface + `termii-provider.ts` implementation
+- All callers import from `lib/messaging/whatsapp` only — never talk to Termii directly
 - "Send via WhatsApp" button on invoice detail page → template message with PDF link
 - Daily payment reminder cron for overdue invoices (opt-in per customer)
 - Tier gating: Free ₦50/msg (deducted from wallet balance), Pro+ unlimited
+- Meta provider (`meta-provider.ts`) scaffolded but inactive; env var `WHATSAPP_PROVIDER=termii`
 
 ### Week 3 (1–8 May) — Recurring Revenue + OCR Build
 
@@ -269,3 +310,4 @@ Together these form the Series A narrative: **"AgroYield is Nigerian agri's oper
 ## Changelog
 
 - **17 Apr 2026** — Document created. Differentiators shortlisted, critical path mapped, 11-week schedule drafted, questions opened.
+- **17 Apr 2026** — WhatsApp provider strategy locked: Termii at launch, Meta post-launch. Added "WhatsApp Provider Abstraction" section with interface spec, non-negotiable rules (caller isolation, E.164, shared templates, normalised message log schema), and migration trigger criteria.
