@@ -403,6 +403,10 @@ export default function AdminClient({
   const [communityDailyLimit, setCommunityDailyLimit] = useState(settingsMap.community_daily_limit ?? '10')
   const [researchDailyLimit, setResearchDailyLimit] = useState(settingsMap.research_daily_limit ?? '5')
   const [mentorshipRequiresVerification, setMentorshipRequiresVerification] = useState(settingsMap.mentorship_requires_verification === 'true')
+  // Cron kill switches (default ON except expiry reminders — no paid users yet)
+  const [celebrationsEnabled, setCelebrationsEnabled] = useState(settingsMap.celebrations_enabled !== 'false')
+  const [expiryReminderEnabled, setExpiryReminderEnabled] = useState(settingsMap.expiry_reminder_enabled === 'true')
+  const [expireFeaturedEnabled, setExpireFeaturedEnabled] = useState(settingsMap.expire_featured_enabled !== 'false')
   const [savingSettings, setSavingSettings] = useState(false)
   const [settingsSaved, setSettingsSaved] = useState(false)
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
@@ -492,6 +496,9 @@ export default function AdminClient({
           community_daily_limit: communityDailyLimit,
           research_daily_limit: researchDailyLimit,
           mentorship_requires_verification: String(mentorshipRequiresVerification),
+          celebrations_enabled: String(celebrationsEnabled),
+          expiry_reminder_enabled: String(expiryReminderEnabled),
+          expire_featured_enabled: String(expireFeaturedEnabled),
         }),
       })
       setSettingsSaved(true)
@@ -1468,9 +1475,12 @@ export default function AdminClient({
           {badge(mentorshipEnabled ? 'Active' : 'Disabled', mentorshipEnabled ? 'green' : 'gray')}
           {mentorshipRequiresVerification && badge('Verified only', 'yellow')}
         </>)
-        // Email section badges
+        // Email & cron section badges
         const emailBadges = (<>
           {badge(digestEnabled ? 'Digest on' : 'Digest paused', digestEnabled ? 'green' : 'gray')}
+          {badge(celebrationsEnabled ? 'Celebrations on' : 'Celebrations off', celebrationsEnabled ? 'green' : 'gray')}
+          {badge(expiryReminderEnabled ? 'Reminders on' : 'Reminders off', expiryReminderEnabled ? 'green' : 'gray')}
+          {badge(expireFeaturedEnabled ? 'Expire-featured on' : 'Expire-featured off', expireFeaturedEnabled ? 'green' : 'gray')}
         </>)
         // Pricing section badges
         const pricingBadges = (<>
@@ -1785,6 +1795,42 @@ export default function AdminClient({
                       <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${digestEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
                     </button>
                     <span className="text-sm text-gray-700 dark:text-gray-300">{digestEnabled ? 'Digest active — emails sent weekly' : 'Digest paused — no emails'}</span>
+                  </div>
+                </div>
+                <hr className="border-gray-100 dark:border-gray-800" />
+                <div>
+                  <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1 text-sm">Birthday &amp; Anniversary Emails</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Daily celebration emails to members. Disable during quiet-launch periods.</p>
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => setCelebrationsEnabled(!celebrationsEnabled)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${celebrationsEnabled ? 'bg-green-600' : 'bg-gray-300 dark:bg-gray-600'}`}>
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${celebrationsEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                    </button>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">{celebrationsEnabled ? 'Celebrations active — birthday & anniversary emails send daily' : 'Celebrations paused'}</span>
+                  </div>
+                </div>
+                <hr className="border-gray-100 dark:border-gray-800" />
+                <div>
+                  <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1 text-sm">Subscription Expiry Reminders</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Email sent 3 days before a paid plan expires. Turn on once real subscriptions are live.</p>
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => setExpiryReminderEnabled(!expiryReminderEnabled)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${expiryReminderEnabled ? 'bg-green-600' : 'bg-gray-300 dark:bg-gray-600'}`}>
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${expiryReminderEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                    </button>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">{expiryReminderEnabled ? 'Reminders active — 3-day warnings send daily' : 'Reminders paused'}</span>
+                  </div>
+                </div>
+                <hr className="border-gray-100 dark:border-gray-800" />
+                <div>
+                  <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1 text-sm">Featured Listing Expirations</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Daily sweep that removes the featured badge once a listing&apos;s paid period ends. Keep ON in production.</p>
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => setExpireFeaturedEnabled(!expireFeaturedEnabled)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${expireFeaturedEnabled ? 'bg-green-600' : 'bg-gray-300 dark:bg-gray-600'}`}>
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${expireFeaturedEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                    </button>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">{expireFeaturedEnabled ? 'Active — expired features are auto-removed' : 'Paused — featured status will persist past expiry'}</span>
                   </div>
                 </div>
               </div>

@@ -24,6 +24,13 @@ export async function GET(req: Request) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const adminAny = admin as any
 
+  // Kill switch — admin can pause celebrations from the dashboard
+  const { data: celebrationsSetting } = await adminAny
+    .from('settings').select('value').eq('key', 'celebrations_enabled').maybeSingle()
+  if (celebrationsSetting?.value === 'false') {
+    return NextResponse.json({ skipped: true, reason: 'Celebrations disabled in admin settings' })
+  }
+
   const now = new Date()
   const month = now.getMonth() + 1 // 1-12
   const day = now.getDate()

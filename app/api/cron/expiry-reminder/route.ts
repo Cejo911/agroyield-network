@@ -9,12 +9,21 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  // Kill switch — admin can pause expiry reminders
+  const admin = getSupabaseAdmin()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: expiryReminderSetting } = await (admin as any)
+    .from('settings').select('value').eq('key', 'expiry_reminder_enabled').maybeSingle()
+  if (expiryReminderSetting?.value === 'false') {
+    return NextResponse.json({ skipped: true, reason: 'Expiry reminder disabled in admin settings' })
+  }
+
   // Window: expires between 3 and 4 days from now — ensures exactly one email per member
   const now = new Date()
   const in3Days = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000)
   const in4Days = new Date(now.getTime() + 4 * 24 * 60 * 60 * 1000)
 
-  const { data: expiring, error } = await getSupabaseAdmin()
+  const { data: expiring, error } = await admin
     .from('profiles')
     .select('id, first_name, email, subscription_expires_at, subscription_plan, subscription_tier')
     .neq('subscription_tier', 'free')

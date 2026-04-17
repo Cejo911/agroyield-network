@@ -18,6 +18,14 @@ export async function GET(request: NextRequest) {
 
   const admin = getSupabaseAdmin()
 
+  // Kill switch — admin can pause feature expirations
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: expireFeaturedSetting } = await (admin as any)
+    .from('settings').select('value').eq('key', 'expire_featured_enabled').maybeSingle()
+  if (expireFeaturedSetting?.value === 'false') {
+    return NextResponse.json({ skipped: true, reason: 'Expire-featured disabled in admin settings' })
+  }
+
   // Find featured listings past their expiry
   const { data: expired, error } = await admin
     .from('marketplace_listings')
