@@ -434,6 +434,34 @@ export default function AdminClient({
   const [expiryReminderEnabled, setExpiryReminderEnabled] = useState(settingsMap.expiry_reminder_enabled === 'true')
   const [expireFeaturedEnabled, setExpireFeaturedEnabled] = useState(settingsMap.expire_featured_enabled !== 'false')
   const [recurringInvoicesEnabled, setRecurringInvoicesEnabled] = useState(settingsMap.recurring_invoices_enabled !== 'false')
+
+  // ── Admin-controllable usage limits (settings.usage_limits) ──────────────
+  // Replaces the hardcoded USAGE_LIMITS constant in lib/usage-tracking.ts.
+  // Shape mirrors that constant exactly. Admin edits go via saveSettings,
+  // gated behind a confirmation modal (Option B) so a stray keystroke can't
+  // mid-month-lock paying users out of features.
+  const DEFAULT_USAGE_LIMITS: { expense_ocr: { free: number; pro: number; growth: number | null }; ai_assistant: { free: number; pro: number; growth: number | null } } = {
+    expense_ocr:  { free: 20, pro: 100, growth: null },
+    ai_assistant: { free: 5,  pro: 50,  growth: null },
+  }
+  const initialUsageLimits = (() => {
+    try { return settingsMap.usage_limits ? JSON.parse(settingsMap.usage_limits) : DEFAULT_USAGE_LIMITS }
+    catch { return DEFAULT_USAGE_LIMITS }
+  })() as typeof DEFAULT_USAGE_LIMITS
+  const [usageLimits, setUsageLimits] = useState<typeof DEFAULT_USAGE_LIMITS>(initialUsageLimits)
+  const [initialUsageLimitsJson] = useState<string>(JSON.stringify(initialUsageLimits))
+  const [usageLimitsConfirmOpen, setUsageLimitsConfirmOpen] = useState(false)
+
+  // ── Admin-controllable expense categories (settings.expense_categories) ──
+  // Replaces the hardcoded list duplicated in /api/expense-ocr/route.ts and
+  // app/business/expenses/page.tsx. Single source of truth at last.
+  const DEFAULT_EXPENSE_CATEGORIES = ['Input Costs','Transport & Logistics','Labour & Wages','Market Fees & Commissions','Equipment & Maintenance','Rent & Storage','Utilities','Marketing & Advertising','Professional Services','Other']
+  const [expenseCategories, setExpenseCategories] = useState<string[]>(() => {
+    try { return settingsMap.expense_categories ? JSON.parse(settingsMap.expense_categories) : DEFAULT_EXPENSE_CATEGORIES }
+    catch { return DEFAULT_EXPENSE_CATEGORIES }
+  })
+  const [newExpenseCategory, setNewExpenseCategory] = useState('')
+
   const [savingSettings, setSavingSettings] = useState(false)
   const [settingsSaved, setSettingsSaved] = useState(false)
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
@@ -491,7 +519,7 @@ export default function AdminClient({
   const saveSettings = async () => {
     setSavingSettings(true)
     try {
-      await fetch('/api/admin/settings', {
+      const res = await fetch('/api/admin/settings', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -527,8 +555,18 @@ export default function AdminClient({
           expiry_reminder_enabled: String(expiryReminderEnabled),
           expire_featured_enabled: String(expireFeaturedEnabled),
           recurring_invoices_enabled: String(recurringInvoicesEnabled),
+          // Admin-controllable quota + vocab (seeded 19 Apr 2026). Validator
+          // in /api/admin/settings rejects malformed shapes with 400.
+          usage_limits: JSON.stringify(usageLimits),
+          expense_categories: JSON.stringify(expenseCategories),
         }),
       })
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}))
+        console.error('[admin] saveSettings failed:', payload)
+        alert(`Could not save settings: ${payload.error ?? res.statusText}`)
+        return
+      }
       setSettingsSaved(true)
       setTimeout(() => setSettingsSaved(false), 3000)
     } catch (err) {
@@ -536,6 +574,24 @@ export default function AdminClient({
     } finally {
       setSavingSettings(false)
     }
+  }
+
+  /**
+   * Option B preflight: if the admin has touched `usageLimits` since
+   * mount, show a confirmation modal with the diff before hitting the save
+   * endpoint. Locks the user into an explicit "yes, I mean to change the
+   * quota mid-month" acknowledgement — cheap insurance against a stray
+   * number in a Naira price field bleeding into a quota field.
+   *
+   * All other settings save straight through without the modal.
+   */
+  const handleSaveClick = () => {
+    const currentJson = JSON.stringify(usageLimits)
+    if (currentJson !== initialUsageLimitsJson) {
+      setUsageLimitsConfirmOpen(true)
+      return
+    }
+    saveSettings()
   }
 
   const toggleOpportunity = async (id: string, is_active: boolean) => {
@@ -628,6 +684,15 @@ export default function AdminClient({
     if (t && !marketplaceCategories.includes(t)) { setMarketplaceCategories(prev => [...prev, t]); setNewMarketplaceCategory('') }
   }
   const removeMarketplaceCategory = (cat: string) => setMarketplaceCategories(prev => prev.filter(c => c !== cat))
+  const addExpenseCategory = () => {
+    const t = newExpenseCategory.trim()
+    if (!t) return
+    if (t.length > 32) return
+    if (expenseCategories.some(c => c.toLowerCase() === t.toLowerCase())) return
+    setExpenseCategories(prev => [...prev, t])
+    setNewExpenseCategory('')
+  }
+  const removeExpenseCategory = (cat: string) => setExpenseCategories(prev => prev.filter(c => c !== cat))
   const addCommodityCategory = () => {
     const t = newCommodityCategory.trim()
     if (t && !commodityCategories.includes(t)) { setCommodityCategories(prev => [...prev, t]); setNewCommodityCategory('') }
@@ -1909,6 +1974,25 @@ export default function AdminClient({
                       <button onClick={addCommodityCategory} className="bg-green-600 text-white px-3 py-1.5 rounded text-sm hover:bg-green-700">Add</button>
                     </div>
                   </div>
+                  {/* Expense Categories (Receipt OCR + Business Expenses page) */}
+                  <div className="mb-4">
+                    <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Expense Categories (Receipt OCR + Expenses Page)</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">Used in the &ldquo;Scan Receipt&rdquo; Vision prompt and the expenses picker. Order matters — first item is the default. 1–32 chars per entry, max 30 entries.</p>
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {expenseCategories.map((cat) => (
+                        <span key={cat} className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs px-2 py-0.5 rounded-full">
+                          {cat}
+                          <button onClick={() => removeExpenseCategory(cat)} className="text-gray-400 hover:text-red-500 ml-0.5 leading-none text-base">&times;</button>
+                        </span>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <input type="text" maxLength={32} value={newExpenseCategory} onChange={(e) => setNewExpenseCategory(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && addExpenseCategory()}
+                        placeholder="Add category..." className={`flex-1 ${sInput}`} />
+                      <button onClick={addExpenseCategory} className="bg-green-600 text-white px-3 py-1.5 rounded text-sm hover:bg-green-700">Add</button>
+                    </div>
+                  </div>
                   {/* Commodity Items per Category */}
                   <div>
                     <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Commodities per Category (Price Tracker)</p>
@@ -2103,6 +2187,71 @@ export default function AdminClient({
                   </div>
                 </div>
                 <hr className="border-gray-100 dark:border-gray-800" />
+                {/* Usage Limits — monthly quota grid (settings.usage_limits) */}
+                <div>
+                  <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1 text-sm">Usage Limits (Monthly)</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Per-tier monthly quotas for tier-gated features. Tick <em>Unlimited</em> to remove the cap. Changes require confirmation before save — they affect active users mid-month.</p>
+                  <div className="space-y-3">
+                    {(['expense_ocr', 'ai_assistant'] as const).map(feature => {
+                      const label = feature === 'expense_ocr' ? 'Receipt Scans (OCR)' : 'AI Assistant'
+                      return (
+                        <div key={feature} className="border border-gray-100 dark:border-gray-800 rounded-lg p-3">
+                          <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{label}</p>
+                          <div className="grid grid-cols-3 gap-3">
+                            {(['free', 'pro', 'growth'] as const).map(tier => {
+                              const tierLabel = tier === 'free' ? 'Starter' : tier === 'pro' ? 'Pro' : 'Growth'
+                              const value = usageLimits[feature][tier]
+                              const isUnlimited = value === null
+                              return (
+                                <div key={tier}>
+                                  <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">{tierLabel}</label>
+                                  <input
+                                    type="number"
+                                    min={0}
+                                    max={1000000}
+                                    step={1}
+                                    value={isUnlimited ? '' : value}
+                                    disabled={isUnlimited}
+                                    onChange={(e) => {
+                                      const n = parseInt(e.target.value, 10)
+                                      setUsageLimits(prev => ({
+                                        ...prev,
+                                        [feature]: {
+                                          ...prev[feature],
+                                          [tier]: Number.isFinite(n) && n >= 0 ? n : 0,
+                                        },
+                                      }))
+                                    }}
+                                    className={`w-full ${sInput} ${isUnlimited ? 'opacity-50' : ''}`}
+                                    placeholder={isUnlimited ? '∞' : '0'}
+                                  />
+                                  <label className="flex items-center gap-1.5 mt-1 text-xs text-gray-600 dark:text-gray-400">
+                                    <input
+                                      type="checkbox"
+                                      checked={isUnlimited}
+                                      onChange={(e) => {
+                                        setUsageLimits(prev => ({
+                                          ...prev,
+                                          [feature]: {
+                                            ...prev[feature],
+                                            [tier]: e.target.checked ? null : (feature === 'expense_ocr' ? (tier === 'free' ? 20 : 100) : (tier === 'free' ? 5 : 50)),
+                                          },
+                                        }))
+                                      }}
+                                      className="rounded border-gray-300 dark:border-gray-700 text-green-600 focus:ring-green-500"
+                                    />
+                                    Unlimited
+                                  </label>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+                <hr className="border-gray-100 dark:border-gray-800" />
                 <div>
                   <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1 text-sm">Subscription Grace Period</h3>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Days after expiry before tier is downgraded to Free.</p>
@@ -2174,12 +2323,75 @@ export default function AdminClient({
 
           {/* Save */}
           <div className="flex items-center gap-3 pt-2 pb-8">
-            <button onClick={saveSettings} disabled={savingSettings}
+            <button onClick={handleSaveClick} disabled={savingSettings}
               className="bg-green-600 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50 transition-colors">
               {savingSettings ? 'Saving...' : 'Save Settings'}
             </button>
             {settingsSaved && <span className="text-sm text-green-600 dark:text-green-400 font-medium">Settings saved!</span>}
           </div>
+
+          {/* ─── Option B confirmation modal — usage-limit changes ─── */}
+          {usageLimitsConfirmOpen && (() => {
+            const initial = JSON.parse(initialUsageLimitsJson) as typeof usageLimits
+            const features = ['expense_ocr', 'ai_assistant'] as const
+            const tiers = ['free', 'pro', 'growth'] as const
+            const fmt = (v: number | null) => v === null ? 'Unlimited' : String(v)
+            const featureLabel = (f: typeof features[number]) => f === 'expense_ocr' ? 'Receipt Scans (OCR)' : 'AI Assistant'
+            const tierLabel = (t: typeof tiers[number]) => t === 'free' ? 'Starter' : t === 'pro' ? 'Pro' : 'Growth'
+            const diffs: { feature: string; tier: string; from: string; to: string }[] = []
+            for (const f of features) for (const t of tiers) {
+              const before = initial[f]?.[t] ?? null
+              const after = usageLimits[f][t]
+              if (before !== after) diffs.push({ feature: featureLabel(f), tier: tierLabel(t), from: fmt(before), to: fmt(after) })
+            }
+            return (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setUsageLimitsConfirmOpen(false)}>
+                <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-md w-full p-6" onClick={e => e.stopPropagation()}>
+                  <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">Confirm usage-limit changes</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                    These changes take effect immediately for all businesses on the affected tiers — including this calendar month&rsquo;s in-progress quotas. Anyone already over the new limit will be blocked from the feature until next month.
+                  </p>
+                  <div className="border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden mb-4">
+                    <table className="w-full text-xs">
+                      <thead className="bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
+                        <tr>
+                          <th className="text-left px-3 py-2 font-medium">Feature</th>
+                          <th className="text-left px-3 py-2 font-medium">Tier</th>
+                          <th className="text-left px-3 py-2 font-medium">From</th>
+                          <th className="text-left px-3 py-2 font-medium">To</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                        {diffs.map((d, i) => (
+                          <tr key={i} className="text-gray-700 dark:text-gray-300">
+                            <td className="px-3 py-2">{d.feature}</td>
+                            <td className="px-3 py-2">{d.tier}</td>
+                            <td className="px-3 py-2 text-gray-500 line-through">{d.from}</td>
+                            <td className="px-3 py-2 font-medium">{d.to}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="flex gap-2 justify-end">
+                    <button
+                      onClick={() => setUsageLimitsConfirmOpen(false)}
+                      className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => { setUsageLimitsConfirmOpen(false); saveSettings() }}
+                      disabled={savingSettings}
+                      className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-green-600 hover:bg-green-700 disabled:opacity-50"
+                    >
+                      Apply changes
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )
+          })()}
         </div>
       )})()}
     </div>

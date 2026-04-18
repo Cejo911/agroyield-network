@@ -3,12 +3,23 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { PRICING_FEATURES } from '@/lib/tiers'
 
+interface UsageRow {
+  label: string
+  free: string
+  pro: string
+  growth: string
+}
+
 interface Props {
   proMonthly: number
   proAnnual: number
   growthMonthly: number
   growthAnnual: number
   freeTrialDays: number
+  /** Per-tier per-feature monthly quotas pulled from settings.usage_limits.
+   *  Rendered as additional rows in the feature comparison so marketing
+   *  copy auto-tracks any admin retune. Optional for backwards compat. */
+  usageRows?: UsageRow[]
 }
 
 function Check() {
@@ -27,7 +38,7 @@ function Cross() {
   )
 }
 
-export default function PricingClient({ proMonthly, proAnnual, growthMonthly, growthAnnual, freeTrialDays }: Props) {
+export default function PricingClient({ proMonthly, proAnnual, growthMonthly, growthAnnual, freeTrialDays, usageRows = [] }: Props) {
   const router = useRouter()
   const [billing, setBilling] = useState<'monthly' | 'annual'>('monthly')
   const [loadingTier, setLoadingTier] = useState<string | null>(null)
@@ -225,6 +236,19 @@ export default function PricingClient({ proMonthly, proAnnual, growthMonthly, gr
                     {isIncluded ? <Check /> : <Cross />}
                     <span className={isIncluded ? 'text-gray-700 dark:text-gray-300' : 'text-gray-400 dark:text-gray-500'}>
                       {typeof val === 'string' ? `${f.label}: ${val}` : f.label}
+                    </span>
+                  </li>
+                )
+              })}
+              {/* Admin-configured usage quotas (settings.usage_limits) —
+                  marketing copy auto-tracks the real enforcement. */}
+              {usageRows.map(row => {
+                const val = row[t.tier as 'free' | 'pro' | 'growth']
+                return (
+                  <li key={row.label} className="flex items-start gap-2.5 text-sm">
+                    <Check />
+                    <span className="text-gray-700 dark:text-gray-300">
+                      {`${row.label}: ${val}`}
                     </span>
                   </li>
                 )

@@ -4,7 +4,8 @@ import { getSupabaseAdmin } from '@/lib/supabase/admin'
 import { isFeatureEnabled } from '@/lib/feature-flags'
 import { getEffectiveTier } from '@/lib/tiers'
 import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
-import { checkQuota, incrementUsage, getMonthlyUsage, USAGE_LIMITS } from '@/lib/usage-tracking'
+import { checkQuota, incrementUsage, getMonthlyUsage, getUsageLimits } from '@/lib/usage-tracking'
+import { getExpenseCategories, SAFE_DEFAULT_EXPENSE_CATEGORIES } from '@/lib/expense-categories'
 
 /**
  * Expense OCR API (Unicorn #5).
@@ -38,21 +39,11 @@ const ALLOWED_MIME = new Set(['image/jpeg', 'image/png', 'image/webp'])
 const MAX_BYTES = 5 * 1024 * 1024 // 5 MB
 const DEFAULT_MODEL = 'claude-haiku-4-5-20251001'
 
-// The Nigerian agri expense category vocabulary. Vision is asked to
-// pick one of these so downstream charts/filters don't fragment.
-// Mirrors CATEGORIES in app/business/expenses/page.tsx — keep in sync.
-const EXPENSE_CATEGORIES = [
-  'Input Costs',
-  'Transport & Logistics',
-  'Labour & Wages',
-  'Market Fees & Commissions',
-  'Equipment & Maintenance',
-  'Rent & Storage',
-  'Utilities',
-  'Marketing & Advertising',
-  'Professional Services',
-  'Other',
-] as const
+// The Nigerian agri expense category vocabulary is admin-controllable and
+// lives in `settings.expense_categories` (see lib/expense-categories.ts).
+// Vision is asked to pick one of whatever the admin has configured so the
+// picker, filter chart, and OCR all stay in lockstep. SAFE_DEFAULT_EXPENSE_CATEGORIES
+// is imported as the fallback when the settings row is missing/malformed.
 
 interface VisionExtraction {
   vendor: string | null
@@ -89,6 +80,7 @@ function extFromMime(mime: string): string {
 async function callVision(
   imageBase64: string,
   mimeType: string,
+  categories: readonly string[],
 ): Promise<{ extraction: VisionExtraction; raw: unknown; model: string } | { error: string }> {
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
@@ -103,7 +95,7 @@ async function callVision(
     '  "amount": number | null,            // TOTAL amount in Naira (NOT subtotal). Strip ₦ and commas.',
     '  "receipt_date": string | null,      // ISO YYYY-MM-DD. Null if unreadable.',
     '  "vat_amount": number | null,        // VAT line amount if printed separately, else null',
-    '  "suggested_category": string | null,// One of: ' + EXPENSE_CATEGORIES.join(', '),
+    '  "suggested_category": string | null,// One of: ' + categories.join(', '),
     '  "confidence": number | null,        // Your confidence 0.0..1.0 that vendor+amount are correct',
     '  "notes": string | null              // Brief note if something is ambiguous (e.g. "total partially obscured")',
     '}',
@@ -177,7 +169,7 @@ async function callVision(
       vat_amount: typeof obj.vat_amount === 'number' && Number.isFinite(obj.vat_amount) && obj.vat_amount >= 0 ? obj.vat_amount : null,
       suggested_category:
         typeof obj.suggested_category === 'string' &&
-        (EXPENSE_CATEGORIES as readonly string[]).includes(obj.suggested_category)
+        categories.includes(obj.suggested_category)
           ? obj.suggested_category
           : null,
       confidence:
@@ -221,7 +213,8 @@ export async function GET(request: NextRequest) {
   const tier = getEffectiveTier((profile as Record<string, unknown> | null) ?? {})
 
   const used = await getMonthlyUsage(businessId, 'expense_ocr')
-  const limit = USAGE_LIMITS.expense_ocr[tier] ?? null
+  const limits = await getUsageLimits()
+  const limit = limits.expense_ocr[tier] ?? null
 
   const { data: receipts } = await admin
     .from('expense_receipts')
@@ -357,8 +350,14 @@ export async function POST(request: NextRequest) {
 
     // Call Vision with the image bytes we already have in memory.
     // Convert to base64 in Node (Buffer is available in the Next runtime).
+    // Pull the admin-controlled category vocabulary so the prompt + validator
+    // stay in lockstep with what the picker shows. getExpenseCategories()
+    // never throws — falls back to SAFE_DEFAULT_EXPENSE_CATEGORIES on error.
     const base64 = Buffer.from(bytes).toString('base64')
-    const visionResult = await callVision(base64, file.type)
+    const categories = await getExpenseCategories().catch(
+      () => [...SAFE_DEFAULT_EXPENSE_CATEGORIES],
+    )
+    const visionResult = await callVision(base64, file.type, categories)
 
     if ('error' in visionResult) {
       // Store a failed row so the user sees it in the list with a retry hint.

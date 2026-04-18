@@ -3,6 +3,72 @@ import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { logAdminAction } from '@/lib/admin/audit-log'
 
+/**
+ * Per-key validators for settings values that have a strict shape.
+ *
+ * Rationale (scratchpad #18 — "Dynamic Settings Are a Schema Debt Trap"):
+ * the settings table is `(key text, value text)` so Postgres can't enforce
+ * shape on the JSON blobs we store here. If we save a malformed value the
+ * reader falls back to SAFE_DEFAULTS silently — the admin thinks the edit
+ * worked, but enforcement is actually unchanged. Validating at write time
+ * is the cheapest way to close that loop.
+ *
+ * A validator returns a string with the reason if the value is invalid,
+ * or null if the value is OK. Unknown keys skip validation.
+ */
+function validateValue(key: string, rawValue: string): string | null {
+  if (key === 'usage_limits') {
+    let parsed: unknown
+    try { parsed = JSON.parse(rawValue) } catch { return 'usage_limits must be valid JSON' }
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return 'usage_limits must be an object keyed by feature'
+    }
+    const features = ['expense_ocr', 'ai_assistant'] as const
+    const tiers = ['free', 'pro', 'growth'] as const
+    const src = parsed as Record<string, unknown>
+    for (const feature of features) {
+      const inner = src[feature]
+      if (!inner || typeof inner !== 'object' || Array.isArray(inner)) {
+        return `usage_limits.${feature} must be an object with free/pro/growth keys`
+      }
+      const innerObj = inner as Record<string, unknown>
+      for (const tier of tiers) {
+        const v = innerObj[tier]
+        if (v === null) continue
+        if (typeof v !== 'number' || !Number.isFinite(v) || v < 0 || v > 1_000_000) {
+          return `usage_limits.${feature}.${tier} must be null (unlimited) or a non-negative integer`
+        }
+        if (!Number.isInteger(v)) {
+          return `usage_limits.${feature}.${tier} must be an integer`
+        }
+      }
+    }
+    return null
+  }
+
+  if (key === 'expense_categories') {
+    let parsed: unknown
+    try { parsed = JSON.parse(rawValue) } catch { return 'expense_categories must be valid JSON' }
+    if (!Array.isArray(parsed)) return 'expense_categories must be a JSON array'
+    if (parsed.length === 0) return 'expense_categories must contain at least one category'
+    if (parsed.length > 30) return 'expense_categories must contain at most 30 entries'
+    const seen = new Set<string>()
+    for (const entry of parsed) {
+      if (typeof entry !== 'string') return 'expense_categories entries must be strings'
+      const trimmed = entry.trim()
+      if (trimmed.length < 1 || trimmed.length > 32) {
+        return `expense_categories entries must be 1–32 characters (got "${entry}")`
+      }
+      const lower = trimmed.toLowerCase()
+      if (seen.has(lower)) return `expense_categories has a duplicate entry: "${entry}"`
+      seen.add(lower)
+    }
+    return null
+  }
+
+  return null
+}
+
 export async function PATCH(request: NextRequest) {
   try {
     const supabase = await createClient()
@@ -20,6 +86,20 @@ export async function PATCH(request: NextRequest) {
     }
 
     const updates = await request.json() as Record<string, string>
+
+    // Shape-validate before any write so admin sees a clear 400 rather than
+    // a partial save + silent fallback-to-defaults at read time.
+    const validationErrors: string[] = []
+    for (const [key, value] of Object.entries(updates)) {
+      const err = validateValue(key, value)
+      if (err) validationErrors.push(err)
+    }
+    if (validationErrors.length > 0) {
+      return NextResponse.json(
+        { error: validationErrors.join('; ') },
+        { status: 400 },
+      )
+    }
 
     const adminClient = createAdminClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,

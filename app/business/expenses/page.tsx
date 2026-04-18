@@ -6,7 +6,12 @@ import { getBusinessAccess } from '@/lib/business-access'
 import { getActiveBusinessId } from '@/lib/business-cookie'
 import ReceiptScanButton from './ReceiptScanButton'
 
-const CATEGORIES = [
+// Fallback list used on first paint (before the admin-configured list has
+// been fetched from /api/content-types) and when the fetch fails. Keep in
+// sync with SAFE_DEFAULT_EXPENSE_CATEGORIES in lib/expense-categories.ts
+// and the INSERT in 20260419_admin_controllable_settings.sql. The dynamic
+// list is loaded on mount via useEffect below.
+const FALLBACK_CATEGORIES = [
   'Input Costs',
   'Transport & Logistics',
   'Labour & Wages',
@@ -41,7 +46,7 @@ const SPREAD_PRESETS = [
   { label: 'Custom', months: -1 },
 ]
 
-const empty = { date: new Date().toISOString().split('T')[0], category: CATEGORIES[0], description: '', amount: '', payment_method: 'Cash', notes: '', spreadMonths: 0, customMonths: '' }
+const empty = { date: new Date().toISOString().split('T')[0], category: FALLBACK_CATEGORIES[0], description: '', amount: '', payment_method: 'Cash', notes: '', spreadMonths: 0, customMonths: '' }
 
 export default function ExpensesPage() {
   const supabase = createClient()
@@ -56,6 +61,25 @@ export default function ExpensesPage() {
   const [sortBy,    setSortBy]    = useState<'date' | 'amount'>('date')
   const [sortDir,   setSortDir]   = useState<'asc' | 'desc'>('desc')
   const [deleting,  setDeleting]  = useState<string | null>(null)
+  // Categories are admin-controlled — fetched from /api/content-types on mount.
+  // Until the fetch resolves, render with FALLBACK_CATEGORIES so the filter
+  // pills + picker show something sensible on first paint. This component
+  // is `'use client'` so we can't import lib/expense-categories.ts (server
+  // only — pulls in the supabase admin client).
+  const [categories, setCategories] = useState<string[]>(FALLBACK_CATEGORIES)
+
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/content-types')
+      .then(r => r.ok ? r.json() : null)
+      .then((j) => {
+        if (cancelled || !j) return
+        const list = Array.isArray(j.expenseCategories) ? j.expenseCategories : null
+        if (list && list.length > 0) setCategories(list)
+      })
+      .catch(() => { /* keep fallback */ })
+    return () => { cancelled = true }
+  }, [])
 
   function toggleSort(col: 'date' | 'amount') {
     if (sortBy === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
@@ -160,7 +184,7 @@ export default function ExpensesPage() {
   const thisMonth  = new Date().toISOString().slice(0, 7)
   const totalMonth = expenses.filter(e => e.date.slice(0, 7) === thisMonth).reduce((s, e) => s + Number(e.amount), 0)
 
-  const byCategory = CATEGORIES.map(cat => ({
+  const byCategory = categories.map(cat => ({
     cat,
     total: expenses.filter(e => e.category === cat).reduce((s, e) => s + Number(e.amount), 0),
   })).filter(c => c.total > 0).sort((a, b) => b.total - a.total)
@@ -232,7 +256,7 @@ export default function ExpensesPage() {
               </div>
             </div>
             <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-800 flex gap-1.5 overflow-x-auto pb-3 sm:pb-3 sm:flex-wrap">
-              {['All', ...CATEGORIES].map(cat => (
+              {['All', ...categories].map(cat => (
                 <button
                   key={cat}
                   onClick={() => setFilterCat(cat)}
@@ -411,7 +435,7 @@ export default function ExpensesPage() {
                   <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Category</label>
                   <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}
                     className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-green-500">
-                    {CATEGORIES.map(c => <option key={c}>{c}</option>)}
+                    {categories.map(c => <option key={c}>{c}</option>)}
                   </select>
                 </div>
                 <div>
