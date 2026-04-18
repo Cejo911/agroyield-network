@@ -20,7 +20,7 @@ This is the execution document. Week-by-week, each feature has scope, dependenci
 | 3 | WhatsApp Invoice Delivery    | Conversion (payment) | Free: ₦50/msg · Pro+: unlimited · Termii now, Meta post-launch |
 | 4 | Recurring Invoices           | Retention + revenue  | Pro+ only                                                |
 | 5 | Expense OCR (receipt photos) | Stickiness           | Free: 20/mo · Pro: 100/mo · Growth: unlimited            |
-| 6 | Agri Credit Score (AgroScore)| Moat (data)          | All tiers see score; partner integration post-launch     |
+| 6 | Agri Credit Score (AgroScore)| Moat (data)          | All tiers see score; partner integration post-launch. **BD collateral ready (18 Apr 2026):** one-page spec sheet + 6 cold letters drafted for Carbon, FairMoney, Renmoney, LAPO, OPay, Moniepoint — both in `/Documents/AgroYield Docs/`. |
 | 7 | AI Assistant (scoped chat)   | Daily-use stickiness | Free: 5/day · Pro: 50/day · Growth: unlimited            |
 | 8 | Cooperatives (group feature) | Nigerian agri moat   | Free co-op creation; Growth required for admin role      |
 
@@ -73,9 +73,9 @@ Before Week 1 feature work, build three primitives that everything else rides on
 - Reused by #1 digest (already wrapped), will be reused by #4 recurring invoices, #6 credit score refresh, beta analytics
 - Still pending: Slack failure alerts inside the harness (currently handlers alert themselves; harness-level Slack wiring is a 10-min addition when we hit the first production failure)
 
-### F3. Feature flag table
-- `feature_flags` table with user scoping
-- Read via server component
+### F3. Feature flag table ✅ SHIPPED (17 Apr 2026)
+- `supabase/migrations/20260417_feature_flags.sql` — `feature_flags` table with RLS (authenticated-read), `updated_at` trigger, seeded with the 8 unicorn keys (`weekly_digest`, `public_business_pages`, `whatsapp_delivery`, `recurring_invoices`, `expense_ocr`, `agri_credit_score`, `ai_assistant`, `cooperatives`) — **done**
+- `lib/feature-flags.ts` (118 lines) — typed `FeatureFlagKey`, `isFeatureEnabled({ userId, businessId })` with global-on / explicit user-allowlist / explicit business-allowlist / deterministic percentage-rollout (hash-to-bucket) logic, 60s in-memory cache, fail-closed on errors — **done**
 - Enables dark-ship to beta cohort first, flip to all users on launch day
 
 ---
@@ -120,26 +120,32 @@ Expected minutes-not-days effort when trigger hits: add Meta credentials to Verc
 
 ### Week 1 (17–24 Apr) — Foundations + Quick Win
 
-**Mon–Tue:** Foundations F1, F2, F3. — **F1 complete (17 Apr, Session 3)** (minus sitemap/robots, deferred to Week 2 under #2); **F2 complete (17 Apr, Session 2)**; F3 (feature_flags) still pending.
+**Mon–Tue:** Foundations F1, F2, F3. — **F1 complete (17 Apr, Session 3)** (sitemap/robots also shipped, see #2 below); **F2 complete (17 Apr, Session 2)**; **F3 complete (17 Apr 2026)** — `feature_flags` table + `lib/feature-flags.ts` reader with all 8 unicorn keys seeded.
 
-**Wed–Fri:** Ship **#1 Weekly Digest**.
-- Monday 7 AM cron (Africa/Lagos)
-- Personalised per user: top 3 price swings in their state, new opportunities/grants matching interests, unread messages count, one business insight ("your collection rate dropped 12% last month")
-- Reuses Resend + existing email templates
+**Wed–Fri:** Ship **#1 Weekly Digest**. ✅ SHIPPED
+- `app/api/cron/weekly-digest/route.ts` (879 lines) — Monday 07:00 Africa/Lagos via `runCron` harness (F2), idempotent per ISO week via `weeklyKey()` — **done**
+- Personalised per user across 4 modules: top 3 price swings (week-over-week) in their state, matched opportunities + grants (any-tag intersection with `profile.interests`), unread messages count, one business insight (revenue swing or collection-rate delta) — **done**
+- Graceful fallbacks when interests / location are empty
+- Reuses Resend email stack (`SENDERS.digest` from address)
+- Double-gated: `CRON_SECRET` (via harness) + `settings.digest_enabled` admin kill switch
 - Tier-agnostic
 
 **Fri–Sun:** Start **#2 Public Business Pages**.
-- `/b/[slug]` route, server-rendered
-- Open Graph tags, structured data (LocalBusiness schema)
+- `/b/[slug]` route, server-rendered ✅ (see Week 2 block for full status)
+- Open Graph tags ✅ done via `generateMetadata()`; LocalBusiness JSON-LD structured data ⚠️ still pending
 
 ### Week 2 (24 Apr–1 May) — Public Surface + WhatsApp
 
-**Mon–Wed:** Finish **#2 Public Business Pages**.
-- Verified badge rendering
-- Products list + reviews
-- "Follow" CTA for logged-out visitors
-- Sitemap auto-generated from active businesses
-- Robots.txt tuned
+**Mon–Wed:** Finish **#2 Public Business Pages**. ⏳ PARTIAL (18 Apr 2026 verification pass)
+- ✅ `/b/[slug]` renders cover, logo, tagline, name, address, CAC, founded year, phone/WhatsApp/email chips, sector tag, about, Instagram/Facebook/website (safeHref-guarded), opening hours, payment details, alias→301 redirect
+- ✅ Products list — queries `business_products` (active only, ordered by name, limit 50)
+- ✅ Open Graph metadata — title, description (tagline → about → synthesized fallback), URL, type, cover/logo image, canonical URL
+- ✅ Sitemap (`app/sitemap.ts`) — 8 static marketing routes + up to 5,000 public businesses (`is_public=true`, ordered by `updated_at`, graceful DB-error fallback)
+- ✅ Robots.txt (`app/robots.ts`) — allows `/`, `/b/`, `/u/`; blocks all authenticated/admin/auth surfaces; points to `/sitemap.xml`
+- ⚠️ **Verified badge rendering — NOT shipped.** `businesses` table has no `is_verified` column (only `profiles` does). Needs schema + admin toggle + render chip next to business name. (~1 hr)
+- ⚠️ **Reviews — NOT shipped.** No `business_reviews` table exists; `product_reviews` is product-scoped. Needs schema + RLS + write flow + read UI. (~3 hr — heaviest of the four)
+- ✅ **"Follow" CTA for logged-out visitors — SHIPPED (18 Apr 2026, Session 2).** Anonymous footer rewritten as a follow-specific wedge: primary button "Follow {b.name}" → `/signup?intent=follow_business&biz={slug}`, secondary "Already a member? Sign in" → `/login?next=/b/{slug}`. Intent param threads through signup so a future session can auto-follow the owner post-signup (backend wiring is a separate ~30-min task, not blocking launch).
+- ✅ **LocalBusiness JSON-LD structured data — SHIPPED (18 Apr 2026, Session 2).** Server-built `<script type="application/ld+json">` on `/b/[slug]` with LocalBusiness schema: name, url, slogan, description, logo, image, telephone, email, PostalAddress (addressCountry `NG`), foundingDate, openingHours, knowsAbout, sameAs (website/Instagram/Facebook filtered). `<` → `\u003c` escaping prevents `</script>` breakout. First use of `dangerouslySetInnerHTML` in codebase — narrowly scoped to this server-built object literal.
 
 **Thu–Sun:** Ship **#3 WhatsApp Delivery** (Termii, behind provider abstraction).
 - Build `lib/messaging/whatsapp/` with `provider.ts` interface + `termii-provider.ts` implementation
@@ -180,6 +186,7 @@ Expected minutes-not-days effort when trigger hits: add Meta credentials to Verc
 - "AgroScore: 720 / Good" badge on business dashboard
 - Breakdown modal shows contributing factors + improvement suggestions
 - "Partner integrations coming soon" teaser — sets up post-launch lender BD story
+- **BD collateral already drafted (18 Apr 2026):** one-page `AgroScore-Spec-Sheet-v1.docx` + `AgroYield-Lender-Outreach-Letters-v2.docx` (Carbon, FairMoney, Renmoney, LAPO, OPay, Moniepoint) live in `/Documents/AgroYield Docs/`. Week 10 outreach should attach the spec sheet as a PDF; pre-send work is (a) named-addressee research per institution, (b) standing up `founder@agroyield.africa` alias.
 
 **Wed–Sun:** Build **#7 AI Assistant**.
 - Scoped per-user chat at `/assistant`
@@ -240,7 +247,7 @@ Expected minutes-not-days effort when trigger hits: add Meta credentials to Verc
   - TechCabal, Techpoint Africa, Disrupt Africa
   - Rest of World (Africa vertical)
   - Business Day Nigeria, Punch, Guardian Nigeria
-- Partner outreach draft: letters to Carbon, FairMoney, Renmoney, LAPO introducing Credit Score + proposing post-launch integration
+- Partner outreach: 6 letters + AgroScore spec sheet already drafted (18 Apr 2026) for Carbon, FairMoney, Renmoney, LAPO, **OPay, Moniepoint**. Week 10 tasks = addressee research, founder@agroyield.africa alias, send.
 
 ### Week 11 (26 Jun–5 Jul) — Launch
 
@@ -327,4 +334,7 @@ Together these form the Series A narrative: **"AgroYield is Nigerian agri's oper
 - **17 Apr 2026** — Document created. Differentiators shortlisted, critical path mapped, 11-week schedule drafted, questions opened.
 - **17 Apr 2026** — WhatsApp provider strategy locked: Termii at launch, Meta post-launch. Added "WhatsApp Provider Abstraction" section with interface spec, non-negotiable rules (caller isolation, E.164, shared templates, normalised message log schema), and migration trigger criteria.
 - **17 Apr 2026 (Session 2)** — **F2 Cron Harness SHIPPED.** `lib/cron/index.ts` live, `cron_runs` audit table populated, idempotency keys enforcing single execution per day/week, all 6 existing crons wrapped, root `/vercel.json` registers the full set with Vercel's scheduler, admin kill-switch UI in place for 4 of the 6. Verified end-to-end via curl: success path, idempotency-block path, and kill-switch-skip path all confirmed writing correctly to `cron_runs`. Unblocks #1 Digest, #4 Recurring Invoices, #6 Credit Score refresh cycle from Week 1 onward.
-- **17 Apr 2026 (Session 3)** — **F1 Slug + Public-URL Infrastructure SHIPPED.** `/b/[slug]` route now serves as a proper landing page for businesses. 8 showcase columns added to `businesses` (tagline, about, cover_image_url, website, instagram, facebook, opening_hours, founded_year) via `20260418_business_showcase.sql`. `resolveSlug()` tries live slug first, then `business_slug_aliases.old_slug` for historical redirects, returning 404 only when neither matches. `/business/setup/complete` + `PublicPageCard` lets owners edit showcase fields. Anon nav on `/b/[slug]` matched to AppNav (mobile 44×44 icon, desktop 200×50 horizontal, dark-mode variant). **Production 404 root cause solved:** the F1 migration never ran against prod — Vercel deploys don't auto-apply Supabase migrations. `resolveSlug()` was silently swallowing `column "tagline" does not exist` errors and returning `kind: 'none'`. Lesson saved to auto-memory as `project_migrations_manual.md`. Sitemap/robots still pending (Week 2 scope under #2 Public Business Pages). Unblocks #1 Digest link copy ("view your business page"), #2 public-page work (Open Graph, reviews, Follow CTA, structured data).
+- **17 Apr 2026 (Session 3)** — **F1 Slug + Public-URL Infrastructure SHIPPED.** `/b/[slug]` route now serves as a proper landing page for businesses. 8 showcase columns added to `businesses` (tagline, about, cover_image_url, website, instagram, facebook, opening_hours, founded_year) via `20260418_business_showcase.sql`. `resolveSlug()` tries live slug first, then `business_slug_aliases.old_slug` for historical redirects, returning 404 only when neither matches. `/business/setup/complete` + `PublicPageCard` lets owners edit showcase fields. Anon nav on `/b/[slug]` matched to AppNav (mobile 44×44 icon, desktop 200×50 horizontal, dark-mode variant). **Production 404 root cause solved:** the F1 migration never ran against prod — Vercel deploys don't auto-apply Supabase migrations. `resolveSlug()` was silently swallowing `column "tagline" does not exist` errors and returning `kind: 'none'`. Lesson saved to auto-memory as `project_migrations_manual.md`. Sitemap + robots have since shipped (`app/sitemap.ts` + `app/robots.ts`, verified 18 Apr 2026). Unblocks #1 Digest link copy ("view your business page"), #2 public-page work (Open Graph, reviews, Follow CTA, structured data).
+- **18 Apr 2026 (Session 2 — #2 Gap Closure Round 1)** — **JSON-LD + Follow CTA shipped on `/b/[slug]`.** LocalBusiness structured data now emits as a server-built `<script type="application/ld+json">` with conditional name/url/slogan/description/logo/image/telephone/email/address/foundingDate/openingHours/knowsAbout/sameAs fields; `<` → `\u003c` escape prevents `</script>` breakout. Anonymous footer rewritten as a follow-specific wedge — primary button "Follow {b.name}" → `/signup?intent=follow_business&biz={slug}`, secondary "Already a member? Sign in" → `/login?next=/b/{slug}`. Intent param is forward-compatible; post-signup auto-follow wiring is a separate ~30-min task. `npx tsc --noEmit` clean. **Two of four #2 gaps now closed.** Remaining: verified badge (~1 hr, needs `is_verified` column on `businesses`), business reviews (~3 hr, needs `business_reviews` table + RLS + write/read UI).
+- **18 Apr 2026 (Session 2 — Verification Pass)** — **F3 Feature Flag Table and #1 Weekly Digest confirmed SHIPPED; #2 Public Business Pages mapped partial.** Re-audit revealed three doc-drift items: (a) line 123 "F3 (feature_flags) still pending" was stale — `supabase/migrations/20260417_feature_flags.sql` + `lib/feature-flags.ts` have been in the repo since 17 Apr. (b) Week 1 Wed–Fri #1 Weekly Digest block carried no shipped marker despite `app/api/cron/weekly-digest/route.ts` being live (879 lines, Unicorn #1 per its own docstring, idempotent per ISO week, gated by `weekly_digest` flag + `settings.digest_enabled`). (c) F1 delivery note in ROADMAP.md Phase 4.10 claimed `/b/[slug]` renders a "verified badge" — actually not rendered, and `businesses` has no `is_verified` column. Week 2 #2 gap list now accurately captures four remaining items: **verified badge**, **business reviews**, **Follow CTA for logged-out visitors**, **LocalBusiness JSON-LD structured data**. Estimated total to close: ~5 hrs. No code changes this session — pure reconciliation between docs and code state. Phase 4.5 Security Hardening also re-verified end-to-end: all 10 files present with correct sanitisation/escaping/CSP; `npx tsc --noEmit` clean.
+- **18 Apr 2026** — **Feature #6 BD collateral drafted.** Two docs shipped to `/Documents/AgroYield Docs/`: (1) `AgroScore-Spec-Sheet-v1.docx` — one-page lender-facing technical spec covering the 5 input signals (invoice volume & cadence, collection rate, tenure, expense discipline, sector volatility), sub-sector calibration, output schema, and 3 integration patterns (A risk-signal API, B pre-qualified referral, C cohort underwriting pilot); (2) `AgroYield-Lender-Outreach-Letters-v2.docx` — 6 letters, one per page, for Carbon, FairMoney, Renmoney, LAPO, OPay, Moniepoint. Pre-launch language corrected (anonymised→synthetic, 6mo→9-12mo agri cycle for Renmoney early-warning window, softened Moniepoint POS-scale claim). Founder signature corrected Chijiokei→Chijioke across all collateral and persisted to auto-memory to prevent recurrence. No code or schema changes — pure BD artefacts. Week 10 outreach is gated on named-addressee research per lender and `founder@agroyield.africa` email alias.

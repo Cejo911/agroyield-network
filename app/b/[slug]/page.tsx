@@ -193,8 +193,49 @@ export default async function PublicBusinessPage(
     : null
   const websiteUrl = safeHref(b.website)
 
+  // ── LocalBusiness structured data (JSON-LD) ────────────────────────────
+  // Enables Google rich-snippet rendering. All source fields are already
+  // sanitised at the API boundary (lib/sanitise.ts, Phase 4.5).
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const jsonLd: Record<string, any> = {
+    '@context': 'https://schema.org',
+    '@type': 'LocalBusiness',
+    name: b.name,
+    url: `${SITE_ORIGIN}/b/${b.slug}`,
+  }
+  if (b.tagline) jsonLd.slogan = b.tagline
+  if (b.about) jsonLd.description = b.about.slice(0, 500)
+  if (b.logo_url) jsonLd.logo = b.logo_url
+  const primaryImage = b.cover_image_url || b.logo_url
+  if (primaryImage) jsonLd.image = primaryImage
+  if (b.phone) jsonLd.telephone = b.phone
+  if (b.email) jsonLd.email = b.email
+  if (b.address || b.state) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const addr: Record<string, any> = { '@type': 'PostalAddress', addressCountry: 'NG' }
+    if (b.address) addr.streetAddress = b.address
+    if (b.state) addr.addressRegion = b.state
+    jsonLd.address = addr
+  }
+  if (b.founded_year) jsonLd.foundingDate = String(b.founded_year)
+  if (b.opening_hours) jsonLd.openingHours = b.opening_hours
+  if (b.sector) jsonLd.knowsAbout = b.sector
+  const sameAs = [websiteUrl, instagramUrl, facebookUrl].filter((u): u is string => Boolean(u))
+  if (sameAs.length > 0) jsonLd.sameAs = sameAs
+
+  // Escape `<` → `\u003c` to prevent any `</script>` breakout inside the
+  // inline script tag. Valid JSON either way (JSON accepts \u003c).
+  const jsonLdScript = JSON.stringify(jsonLd).replace(/</g, '\\u003c')
+
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* LocalBusiness structured data — SEO rich snippet */}
+      <script
+        type="application/ld+json"
+        // First use of dangerouslySetInnerHTML in the codebase; narrowly scoped
+        // to a server-built object literal with `<` pre-escaped.
+        dangerouslySetInnerHTML={{ __html: jsonLdScript }}
+      />
       {/* Nav: AppNav for logged-in members, marketing nav for anonymous visitors */}
       {user ? <AppNav /> : (
         <nav className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
@@ -421,27 +462,30 @@ export default async function PublicBusinessPage(
           </section>
         )}
 
-        {/* Footer CTA — hide for logged-in members (already inside the app) */}
+        {/* Follow CTA — hidden for logged-in members (already inside the app) */}
+        {/* `?intent=follow_business&biz={slug}` threads the follow intent through signup
+             so a future session can read it and auto-follow the owner post-signup.
+             `?next=/b/{slug}` on /login bounces returning members back to this page. */}
         {!user && (
           <div className="bg-green-50 border border-green-200 rounded-2xl p-6 text-center">
             <p className="text-green-800 font-semibold mb-1">
-              Connect with {b.name} on AgroYield Network
+              Follow {b.name} on AgroYield Network
             </p>
             <p className="text-green-700 text-sm mb-4">
-              Join Nigeria&apos;s agricultural professional network to follow, message, and collaborate.
+              Get updates from {b.name}, message them directly, and discover other Nigerian agri businesses.
             </p>
-            <div className="flex justify-center gap-3">
+            <div className="flex justify-center gap-3 flex-wrap">
               <Link
-                href="/signup"
+                href={`/signup?intent=follow_business&biz=${encodeURIComponent(b.slug)}`}
                 className="bg-green-600 text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors"
               >
-                Create free account
+                Follow {b.name}
               </Link>
               <Link
-                href="/login"
+                href={`/login?next=${encodeURIComponent(`/b/${b.slug}`)}`}
                 className="border border-green-300 text-green-700 px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-100 transition-colors"
               >
-                Sign in
+                Already a member? Sign in
               </Link>
             </div>
           </div>
