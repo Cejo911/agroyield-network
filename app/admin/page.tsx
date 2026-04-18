@@ -8,7 +8,7 @@ import AdminClient from './admin-client'
 
 type ReportGroup = {
   postId:    string
-  postType:  'opportunity' | 'listing'
+  postType:  'opportunity' | 'listing' | 'business_review'
   postTitle: string
   isActive:  boolean
   count:     number
@@ -63,6 +63,7 @@ export default async function AdminPage() {
     { data: searchLogs },
     { data: supportTickets },
     { data: featureFlags },
+    { data: businessReviews },
   ] = await Promise.all([
     supabaseAny.from('opportunities').select('*').order('created_at', { ascending: false }),
     supabaseAny.from('marketplace_listings').select('*').order('created_at', { ascending: false }),
@@ -78,12 +79,15 @@ export default async function AdminPage() {
     adminAny.from('reports').select('*').order('created_at', { ascending: false }),
     adminAny.from('admin_audit_log').select('id, admin_id, action, target_type, target_id, details, created_at').order('created_at', { ascending: false }).limit(100),
     adminAny.from('waitlist_signups').select('*').order('created_at', { ascending: false }),
-    adminAny.from('businesses').select('id, user_id, name, created_at').order('created_at', { ascending: false }),
+    adminAny.from('businesses').select('id, user_id, name, slug, is_public, is_verified, verified_at, created_at').order('created_at', { ascending: false }),
     adminAny.from('invoices').select('id, business_id, status, total, issue_date, created_at').order('created_at', { ascending: false }).limit(1000),
     adminAny.from('business_expenses').select('id, business_id, amount, category, date, created_at').order('created_at', { ascending: false }).limit(1000),
     adminAny.from('search_logs').select('id, user_id, query, module, results_count, created_at').order('created_at', { ascending: false }).limit(5000),
     adminAny.from('support_tickets').select('id, user_id, subject, description, category, priority, status, assigned_to, sla_deadline, created_at, updated_at, resolved_at').order('created_at', { ascending: false }).limit(500),
     adminAny.from('feature_flags').select('key, description, is_enabled, enabled_for_users, enabled_for_businesses, rollout_percentage, updated_at').order('key', { ascending: true }),
+    // For report grouping: need headline so we can show a meaningful title in
+    // the Reports tab when a business_review is reported.
+    adminAny.from('business_reviews').select('id, business_id, rating, headline, body, published, created_at').order('created_at', { ascending: false }).limit(1000),
   ])
 
   const profilesMap: Record<string, { first_name: string | null; last_name: string | null; email: string | null; username: string | null }> = {}
@@ -112,7 +116,7 @@ export default async function AdminPage() {
   for (const r of (reports ?? [])) {
     const raw = r as Record<string, unknown>
     const postId   = raw.post_id   as string
-    const postType = raw.post_type as 'opportunity' | 'listing'
+    const postType = raw.post_type as 'opportunity' | 'listing' | 'business_review'
     const reason   = raw.reason    as string
     const key      = `${postType}:${postId}`
 
@@ -127,6 +131,21 @@ export default async function AdminPage() {
         if (match) {
           postTitle = typeof match.title === 'string' ? match.title : 'Untitled'
           isActive  = match.is_active as boolean
+        }
+      } else if (postType === 'business_review') {
+        // Reviews use `published` (not `is_active`) for moderation; we
+        // normalise to isActive so the Reports tab can show one status column.
+        const match = (businessReviews ?? []).find(
+          (br: unknown) => (br as Record<string, unknown>).id === postId
+        ) as Record<string, unknown> | undefined
+        if (match) {
+          const headline = typeof match.headline === 'string' ? match.headline : ''
+          const body     = typeof match.body     === 'string' ? match.body     : ''
+          const rating   = typeof match.rating   === 'number' ? match.rating   : 0
+          postTitle = headline || body.slice(0, 60) || `Review (${rating}★)`
+          isActive  = match.published as boolean
+        } else {
+          postTitle = 'Business review'
         }
       } else {
         const match = (listings ?? []).find(

@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
 
     const { postId, postType, reason } = await request.json() as {
       postId:   string
-      postType: 'opportunity' | 'listing' | 'research' | 'price_report'
+      postType: 'opportunity' | 'listing' | 'research' | 'price_report' | 'business_review'
       reason:   string
     }
 
@@ -85,23 +85,30 @@ export async function POST(request: NextRequest) {
 
     const totalReports = count ?? 0
 
-    // Auto-hide if threshold reached
+    // Auto-hide if threshold reached.
+    // Most post types use `is_active: false`; business_reviews uses `published: false`
+    // because the table mirrors the product_reviews schema (moderation column).
     const autoHidden = totalReports >= threshold
     if (autoHidden) {
-      const table =
-        postType === 'opportunity'  ? 'opportunities'
-      : postType === 'price_report' ? 'price_reports'
-      : postType === 'research'     ? 'research_posts'
-      :                               'marketplace_listings'
-      await adminAny.from(table).update({ is_active: false }).eq('id', postId)
+      if (postType === 'business_review') {
+        await adminAny.from('business_reviews').update({ published: false }).eq('id', postId)
+      } else {
+        const table =
+          postType === 'opportunity'  ? 'opportunities'
+        : postType === 'price_report' ? 'price_reports'
+        : postType === 'research'     ? 'research_posts'
+        :                               'marketplace_listings'
+        await adminAny.from(table).update({ is_active: false }).eq('id', postId)
+      }
     }
 
     // Fire-and-forget: Slack alert for content report
     const postLabel =
-      postType === 'opportunity'  ? 'Opportunity'
-    : postType === 'price_report' ? 'Price Report'
-    : postType === 'research'     ? 'Research Post'
-    :                               'Marketplace Listing'
+      postType === 'opportunity'     ? 'Opportunity'
+    : postType === 'price_report'    ? 'Price Report'
+    : postType === 'research'        ? 'Research Post'
+    : postType === 'business_review' ? 'Business Review'
+    :                                  'Marketplace Listing'
     slackAlert({
       title: autoHidden ? 'Content Auto-Hidden' : 'New Content Report',
       level: autoHidden ? 'warning' : 'info',
@@ -127,10 +134,11 @@ export async function POST(request: NextRequest) {
 
       if (notificationEmails.length > 0) {
         const postPath =
-          postType === 'opportunity'  ? `opportunities/${postId}`
-        : postType === 'price_report' ? `prices`
-        : postType === 'research'     ? `research/${postId}`
-        :                               `marketplace/${postId}`
+          postType === 'opportunity'     ? `opportunities/${postId}`
+        : postType === 'price_report'    ? `prices`
+        : postType === 'research'        ? `research/${postId}`
+        : postType === 'business_review' ? `admin`
+        :                                  `marketplace/${postId}`
         const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://agroyield.africa'
 
         await getResend().emails.send({

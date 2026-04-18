@@ -53,14 +53,26 @@ export async function DELETE(req: Request) {
 
   if (deleteError) return NextResponse.json({ error: deleteError.message }, { status: 500 })
 
-  // Restore post visibility
-  const table = postType === 'opportunity' ? 'opportunities' : 'marketplace_listings'
-  const { error: restoreError } = await adminAny
-    .from(table)
-    .update({ is_active: true })
-    .eq('id', postId)
-
-  if (restoreError) return NextResponse.json({ error: restoreError.message }, { status: 500 })
+  // Restore post visibility. business_reviews uses `published` instead of
+  // `is_active` because the table mirrors product_reviews.
+  if (postType === 'business_review') {
+    const { error: restoreError } = await adminAny
+      .from('business_reviews')
+      .update({ published: true })
+      .eq('id', postId)
+    if (restoreError) return NextResponse.json({ error: restoreError.message }, { status: 500 })
+  } else {
+    const table =
+      postType === 'opportunity'  ? 'opportunities'
+    : postType === 'research'     ? 'research_posts'
+    : postType === 'price_report' ? 'price_reports'
+    :                               'marketplace_listings'
+    const { error: restoreError } = await adminAny
+      .from(table)
+      .update({ is_active: true })
+      .eq('id', postId)
+    if (restoreError) return NextResponse.json({ error: restoreError.message }, { status: 500 })
+  }
 
   await logAdminAction({ adminId: user.id, action: 'reports.dismiss', targetType: postType, targetId: postId })
 

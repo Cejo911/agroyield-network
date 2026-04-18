@@ -6,6 +6,8 @@ import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import AppNav from '@/app/components/AppNav'
 import { safeHref } from '@/lib/safe-href'
+import ReportButton from '@/app/components/ReportButton'
+import WriteReviewButton from './WriteReviewButton'
 
 /**
  * Public business page: /b/{slug}
@@ -22,6 +24,7 @@ const SITE_ORIGIN =
 
 type BusinessRow = {
   id: string
+  user_id: string
   name: string
   slug: string
   is_public: boolean
@@ -46,6 +49,25 @@ type BusinessRow = {
   facebook: string | null
   opening_hours: string | null
   founded_year: number | null
+  // Verified badge (migration 20260418_business_verified.sql)
+  is_verified: boolean
+  verified_at: string | null
+}
+
+type ReviewRow = {
+  id: string
+  reviewer_id: string
+  rating: number
+  headline: string | null
+  body: string | null
+  seller_reply: string | null
+  replied_at: string | null
+  created_at: string
+  reviewer: {
+    id: string
+    full_name: string | null
+    avatar_url: string | null
+  } | null
 }
 
 type ProductRow = {
@@ -57,9 +79,10 @@ type ProductRow = {
 }
 
 const BUSINESS_SELECT =
-  'id, name, slug, is_public, address, phone, alt_phone, whatsapp, email, ' +
+  'id, user_id, name, slug, is_public, address, phone, alt_phone, whatsapp, email, ' +
   'cac_number, bank_name, account_name, account_number, sector, state, logo_url, ' +
-  'tagline, about, cover_image_url, website, instagram, facebook, opening_hours, founded_year'
+  'tagline, about, cover_image_url, website, instagram, facebook, opening_hours, founded_year, ' +
+  'is_verified, verified_at'
 
 function getAdminClient() {
   return createAdminClient(
@@ -166,6 +189,41 @@ export default async function PublicBusinessPage(
     .order('name')
     .limit(50)
   const products = (productsRaw ?? []) as ProductRow[]
+
+  // Published business reviews + reviewer profile. RLS is bypassed by the
+  // admin client, so we explicitly filter on `published = true` here. The
+  // owner seeing their own unpublished rows is handled at the admin dashboard,
+  // not on the public page.
+  const { data: reviewsRaw } = await adminAny
+    .from('business_reviews')
+    .select(
+      'id, reviewer_id, rating, headline, body, seller_reply, replied_at, created_at, ' +
+      'reviewer:profiles!business_reviews_reviewer_id_fkey(id, full_name, avatar_url)'
+    )
+    .eq('business_id', b.id)
+    .eq('published', true)
+    .order('created_at', { ascending: false })
+    .limit(50)
+  const reviews = (reviewsRaw ?? []) as ReviewRow[]
+
+  const reviewCount = reviews.length
+  const avgRating = reviewCount > 0
+    ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviewCount
+    : 0
+
+  // Does the logged-in viewer already have a review on this business? If so,
+  // hide the "Write a review" button — the POST API would 409 anyway.
+  const viewerIsOwner = !!user && user.id === b.user_id
+  const viewerAlreadyReviewed = !!user && reviews.some((r) => r.reviewer_id === user.id)
+  const canWriteReview = !!user && !viewerIsOwner && !viewerAlreadyReviewed
+
+  const reviewDateFmt = (iso: string) => {
+    try {
+      return new Date(iso).toLocaleDateString('en-NG', {
+        year: 'numeric', month: 'short', day: 'numeric',
+      })
+    } catch { return '' }
+  }
 
   const fmt = (n: number | null) =>
     n == null ? '—' : `₦${Number(n).toLocaleString('en-NG', { minimumFractionDigits: 2 })}`
@@ -314,7 +372,20 @@ export default async function PublicBusinessPage(
 
             {/* Info */}
             <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold text-gray-900">{b.name}</h1>
+              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2 flex-wrap">
+                <span>{b.name}</span>
+                {b.is_verified && (
+                  <span
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-green-700 bg-green-50 border border-green-200 px-2 py-0.5 rounded-full"
+                    title="Admin-verified business on AgroYield Network"
+                  >
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    Verified
+                  </span>
+                )}
+              </h1>
               {b.tagline && (
                 <p className="text-sm text-green-700 font-medium mt-1 italic">{b.tagline}</p>
               )}
@@ -461,6 +532,113 @@ export default async function PublicBusinessPage(
             </div>
           </section>
         )}
+
+        {/* Reviews */}
+        <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
+          <div className="flex items-start justify-between gap-4 mb-4">
+            <div>
+              <h2 className="font-semibold text-gray-800">Reviews</h2>
+              {reviewCount > 0 ? (
+                <p className="text-xs text-gray-500 mt-0.5">
+                  <span className="text-amber-500" aria-hidden="true">
+                    {'★'.repeat(Math.round(avgRating))}{'☆'.repeat(5 - Math.round(avgRating))}
+                  </span>
+                  <span className="ml-2">
+                    {avgRating.toFixed(1)} · {reviewCount} review{reviewCount === 1 ? '' : 's'}
+                  </span>
+                </p>
+              ) : (
+                <p className="text-xs text-gray-500 mt-0.5">No reviews yet.</p>
+              )}
+            </div>
+            {canWriteReview && (
+              <WriteReviewButton businessId={b.id} businessName={b.name} />
+            )}
+            {viewerIsOwner && (
+              <span className="text-xs text-gray-400 italic">
+                You can&rsquo;t review your own business.
+              </span>
+            )}
+            {viewerAlreadyReviewed && (
+              <span className="text-xs text-gray-400 italic">
+                You&rsquo;ve already reviewed this business.
+              </span>
+            )}
+            {!user && reviewCount === 0 && (
+              <Link
+                href={`/login?next=${encodeURIComponent(`/b/${b.slug}`)}`}
+                className="text-xs text-green-700 font-medium hover:underline"
+              >
+                Sign in to review
+              </Link>
+            )}
+          </div>
+
+          {reviews.length > 0 && (
+            <div className="divide-y divide-gray-100">
+              {reviews.map((r) => {
+                const reviewerName = r.reviewer?.full_name?.trim() || 'AgroYield member'
+                const reviewerInitials = reviewerName
+                  .split(/\s+/).slice(0, 2)
+                  .map((w) => w.charAt(0).toUpperCase()).join('') || '?'
+                return (
+                  <article key={r.id} className="py-4 first:pt-0 last:pb-0">
+                    <div className="flex items-start gap-3">
+                      {r.reviewer?.avatar_url ? (
+                        <div
+                          style={{ backgroundImage: `url(${r.reviewer.avatar_url})` }}
+                          className="w-9 h-9 rounded-full bg-cover bg-center shrink-0 border border-gray-200"
+                          role="img"
+                          aria-label={reviewerName}
+                        />
+                      ) : (
+                        <div className="w-9 h-9 rounded-full bg-green-100 text-green-700 flex items-center justify-center text-xs font-semibold shrink-0">
+                          {reviewerInitials}
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-sm font-semibold text-gray-900">{reviewerName}</p>
+                          <span className="text-amber-500 text-xs" aria-label={`${r.rating} out of 5 stars`}>
+                            {'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}
+                          </span>
+                          <span className="text-xs text-gray-400">{reviewDateFmt(r.created_at)}</span>
+                        </div>
+                        {r.headline && (
+                          <p className="text-sm font-medium text-gray-900 mt-1">{r.headline}</p>
+                        )}
+                        {r.body && (
+                          <p className="text-sm text-gray-700 leading-relaxed mt-1 whitespace-pre-wrap">{r.body}</p>
+                        )}
+
+                        {r.seller_reply && (
+                          <div className="mt-3 ml-2 pl-3 border-l-2 border-green-200 bg-green-50/40 rounded-r-md py-2 pr-3">
+                            <p className="text-xs font-semibold text-green-800">
+                              Reply from {b.name}
+                              {r.replied_at && (
+                                <span className="ml-2 text-gray-400 font-normal">
+                                  · {reviewDateFmt(r.replied_at)}
+                                </span>
+                              )}
+                            </p>
+                            <p className="text-sm text-gray-700 mt-1 whitespace-pre-wrap">{r.seller_reply}</p>
+                          </div>
+                        )}
+
+                        {/* Report — logged-in members only, not on your own review */}
+                        {user && user.id !== r.reviewer_id && (
+                          <div className="mt-2">
+                            <ReportButton postId={r.id} postType="business_review" />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </article>
+                )
+              })}
+            </div>
+          )}
+        </section>
 
         {/* Follow CTA — hidden for logged-in members (already inside the app) */}
         {/* `?intent=follow_business&biz={slug}` threads the follow intent through signup

@@ -83,7 +83,7 @@ interface Member {
 }
 interface ReportGroup {
   postId: string
-  postType: 'opportunity' | 'listing'
+  postType: 'opportunity' | 'listing' | 'business_review'
   postTitle: string
   isActive: boolean
   count: number
@@ -176,6 +176,10 @@ interface Business {
   id: string
   user_id: string
   name: string
+  slug: string | null
+  is_public: boolean
+  is_verified: boolean
+  verified_at: string | null
   created_at: string
 }
 interface Invoice {
@@ -256,13 +260,16 @@ interface FeatureFlag {
   updated_at: string
 }
 
-type Tab = 'opportunities' | 'marketplace' | 'members' | 'grants' | 'community' | 'research' | 'comments' | 'prices' | 'mentorship' | 'reports' | 'support' | 'orders' | 'analytics' | 'audit_log' | 'notifications' | 'settings' | 'feature_flags' | 'sms_test'
+type Tab = 'opportunities' | 'marketplace' | 'members' | 'businesses' | 'grants' | 'community' | 'research' | 'comments' | 'prices' | 'mentorship' | 'reports' | 'support' | 'orders' | 'analytics' | 'audit_log' | 'notifications' | 'settings' | 'feature_flags' | 'sms_test'
 
 // Permission keys per tab — determines which tabs a moderator can see
 const TAB_PERMISSION: Partial<Record<Tab, string>> = {
   opportunities: 'opportunities',
   marketplace: 'marketplace',
   members: 'members',
+  // Businesses share the marketplace permission — verifying a seller IS a
+  // marketplace-moderation action. Super admin bypasses all permissions.
+  businesses: 'marketplace',
   grants: 'grants',
   community: 'community',
   research: 'research',
@@ -338,6 +345,7 @@ export default function AdminClient({
   const [members, setMembers] = useState<Member[]>(initialMembers)
   const [grants, setGrants] = useState<Grant[]>(initialGrants)
   const [reportGroups, setReportGroups] = useState<ReportGroup[]>(initialReportGroups)
+  const [businessesList, setBusinessesList] = useState<Business[]>(businesses)
 
   // Search / filter state
   const [oppSearch, setOppSearch] = useState('')
@@ -345,6 +353,9 @@ export default function AdminClient({
   const [memberSearch, setMemberSearch] = useState('')
   const [grantSearch, setGrantSearch] = useState('')
   const [reportSearch, setReportSearch] = useState('')
+  const [businessSearch, setBusinessSearch] = useState('')
+  const [businessVerifiedFilter, setBusinessVerifiedFilter] =
+    useState<'all' | 'verified' | 'unverified'>('all')
   const [oppStatusFilter, setOppStatusFilter] = useState<'all' | 'active' | 'pending' | 'hidden'>('all')
   const [listingStatusFilter, setListingStatusFilter] = useState<'all' | 'active' | 'pending' | 'hidden'>('all')
   const [membersView, setMembersView] = useState<'registered' | 'waitlist' | 'institutions'>('registered')
@@ -553,15 +564,56 @@ export default function AdminClient({
     setMembers(prev => prev.map(m => m.id === userId ? optimistic(m) : m))
     await fetch('/api/admin/member', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId, action }) })
   }
+  const verifyBusiness = async (businessId: string, verify: boolean) => {
+    // Optimistic — flip locally; API call rolls back on error.
+    setBusinessesList(prev => prev.map(b =>
+      b.id === businessId
+        ? { ...b, is_verified: verify, verified_at: verify ? new Date().toISOString() : null }
+        : b
+    ))
+    const res = await fetch('/api/admin/business', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ businessId, action: verify ? 'verify' : 'unverify' }),
+    })
+    if (!res.ok) {
+      // Revert on failure
+      setBusinessesList(prev => prev.map(b =>
+        b.id === businessId
+          ? { ...b, is_verified: !verify, verified_at: !verify ? new Date().toISOString() : null }
+          : b
+      ))
+    }
+  }
   const dismissReports = async (postId: string, postType: string) => {
     await fetch('/api/admin/reports', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ postId, postType }) })
     setReportGroups(prev => prev.filter(rg => !(rg.postId === postId && rg.postType === postType)))
-    if (postType === 'opportunity') setOpportunities(prev => prev.map(o => o.id === postId ? { ...o, is_active: true } : o))
-    else setListings(prev => prev.map(l => l.id === postId ? { ...l, is_active: true } : l))
+    if (postType === 'opportunity') {
+      setOpportunities(prev => prev.map(o => o.id === postId ? { ...o, is_active: true } : o))
+    } else if (postType === 'listing') {
+      setListings(prev => prev.map(l => l.id === postId ? { ...l, is_active: true } : l))
+    }
+    // For business_review there's no in-page list to mutate — the review row
+    // lives on /b/{slug}, not in admin state. `published` is restored on the
+    // server by /api/admin/reports DELETE.
   }
   const removeReportedPost = async (postId: string, postType: string) => {
-    if (postType === 'opportunity') await toggleOpportunity(postId, false)
-    else await toggleListing(postId, false)
+    if (postType === 'opportunity') {
+      await toggleOpportunity(postId, false)
+    } else if (postType === 'business_review') {
+      // Hide the review via the dedicated admin route (service-role +
+      // audit log). `isActive` on the report group mirrors `published`.
+      await fetch('/api/admin/business-review', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reviewId: postId, action: 'hide' }),
+      })
+      setReportGroups(prev => prev.map(rg =>
+        (rg.postId === postId && rg.postType === postType) ? { ...rg, isActive: false } : rg
+      ))
+    } else {
+      await toggleListing(postId, false)
+    }
   }
 
   const addOpportunityType = () => {
@@ -668,6 +720,7 @@ export default function AdminClient({
     { id: 'opportunities', label: 'Opportunities' },
     { id: 'marketplace',   label: 'Marketplace' },
     { id: 'members',       label: 'Members' },
+    { id: 'businesses',    label: 'Businesses' },
     { id: 'grants',        label: 'Grants' },
     { id: 'community',     label: 'Community' },
     { id: 'research',      label: 'Research' },
@@ -1430,6 +1483,124 @@ export default function AdminClient({
 
       {activeTab === 'orders' && (
         <OrdersTab profilesMap={profilesMap} getDisplayName={getDisplayName} />
+      )}
+
+      {activeTab === 'businesses' && (
+        <div>
+          <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
+            <div className="flex-1 min-w-[240px]">
+              <SearchBar
+                value={businessSearch}
+                onChange={setBusinessSearch}
+                placeholder="Search businesses by name, slug, or owner..."
+              />
+            </div>
+            <div className="flex items-center gap-2 text-xs">
+              {(['all', 'verified', 'unverified'] as const).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setBusinessVerifiedFilter(f)}
+                  className={`px-3 py-1.5 rounded-full border transition-colors ${
+                    businessVerifiedFilter === f
+                      ? 'bg-green-600 text-white border-green-600'
+                      : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
+                  }`}
+                >
+                  {f === 'all' ? 'All' : f === 'verified' ? 'Verified' : 'Unverified'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 divide-y divide-gray-100 dark:divide-gray-800">
+            {businessesList
+              .filter((b) => {
+                const q = businessSearch.toLowerCase().trim()
+                const owner = profilesMap[b.user_id]
+                const ownerBits = owner
+                  ? `${owner.first_name ?? ''} ${owner.last_name ?? ''} ${owner.email ?? ''} ${owner.username ?? ''}`.toLowerCase()
+                  : ''
+                const matchesSearch =
+                  !q ||
+                  b.name.toLowerCase().includes(q) ||
+                  (b.slug ?? '').toLowerCase().includes(q) ||
+                  ownerBits.includes(q)
+                const matchesFilter =
+                  businessVerifiedFilter === 'all' ||
+                  (businessVerifiedFilter === 'verified' && b.is_verified) ||
+                  (businessVerifiedFilter === 'unverified' && !b.is_verified)
+                return matchesSearch && matchesFilter
+              })
+              .map((b) => {
+                const owner = profilesMap[b.user_id]
+                const ownerName = owner
+                  ? `${owner.first_name ?? ''} ${owner.last_name ?? ''}`.trim() ||
+                    owner.username ||
+                    owner.email ||
+                    'Unknown owner'
+                  : 'Unknown owner'
+                return (
+                  <div key={b.id} className="flex items-center justify-between gap-3 p-4 flex-wrap">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
+                          {b.name}
+                        </p>
+                        {b.is_verified && (
+                          <span className="text-[10px] font-semibold text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 px-1.5 py-0.5 rounded">
+                            Verified
+                          </span>
+                        )}
+                        {!b.is_public && (
+                          <span className="text-[10px] font-medium text-gray-500 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-1.5 py-0.5 rounded">
+                            Private
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        Owner: {ownerName}
+                        {b.slug && (
+                          <>
+                            {' · '}
+                            <a
+                              href={`/b/${b.slug}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-green-600 hover:underline"
+                            >
+                              /b/{b.slug}
+                            </a>
+                          </>
+                        )}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {b.is_verified ? (
+                        <button
+                          onClick={() => verifyBusiness(b.id, false)}
+                          className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                        >
+                          Unverify
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => verifyBusiness(b.id, true)}
+                          className="text-xs px-3 py-1.5 rounded-lg bg-green-600 text-white hover:bg-green-700"
+                        >
+                          Verify
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            {businessesList.length === 0 && (
+              <p className="p-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                No businesses yet.
+              </p>
+            )}
+          </div>
+        </div>
       )}
 
       {activeTab === 'analytics' && isSuperAdmin && (

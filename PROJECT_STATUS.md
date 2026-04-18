@@ -1,6 +1,6 @@
 # AgroYield Network — Project Status
 
-> **Last updated:** 18 April 2026 (Checkpoint 26)
+> **Last updated:** 18 April 2026 (Checkpoint 27)
 > **Maintained by:** Okoli (okolichijiokei@gmail.com)
 > **Launch Target:** 5 July 2026 (~11 weeks remaining)
 > **Purpose:** Permanent reference for any developer or Claude session to get up to speed instantly.
@@ -360,6 +360,26 @@ Note: `/insights`, `/connections` are pre-registered for future modules.
 ---
 
 ## Changelog
+
+### Checkpoint 27 — April 18, 2026 (#2 Public Business Pages — Verified Badge + Business Reviews → #2 9/9 SHIPPED)
+
+- Added: Two migrations close out the remaining #2 gaps.
+  - `supabase/migrations/20260418_business_verified.sql` — `businesses.is_verified boolean NOT NULL DEFAULT false` + `businesses.verified_at timestamptz`. Partial index `idx_businesses_is_verified WHERE is_verified = true` keeps the admin "Verified" filter fast even as the unverified long tail grows. No backfill — chip only appears after an admin explicitly verifies.
+  - `supabase/migrations/20260418_business_reviews.sql` — new `business_reviews` table mirroring `product_reviews` (rating 1–5, headline, body, seller_reply, replied_at, published, created_at). Unique index `(business_id, reviewer_id)` prevents brigading at the DB level. Three RLS policies: SELECT (published OR reviewer OR owner OR admin), INSERT (reviewer = auth.uid() AND NOT the business owner — self-review blocked at RLS), UPDATE (reviewer OR owner OR admin with matching WITH CHECK). No DELETE granted — retractions go through edit or support.
+- Added: `app/api/admin/business/route.ts` — PATCH with `verify` / `unverify` actions. Base `is_admin` gate (any admin, matching `verify_institution`). Updates `is_verified` + `verified_at`. Logs `business.verify` / `business.unverify` to `admin_audit_log`.
+- Added: `app/api/business-reviews/route.ts` — POST creates a review (auth required, business-owner self-review blocked, 3-per-user-per-24h rate limit keyed on user id, `sanitiseText` on headline + body, unique-violation `23505` returns 409 with a reviewer-friendly "edit existing review instead" message). PATCH supports two paths: the original reviewer editing their review (rating / headline / body) OR the business owner posting a `seller_reply` — auto-detected by matching `auth.uid()` to `reviewer_id` vs `businesses.user_id`; cross-mode writes rejected at the API layer.
+- Added: `app/api/admin/business-review/route.ts` — PATCH `hide` / `restore` for admin moderation of reviews. Super admin bypass; moderators gated on the `reports` permission. Logs `business_review.hide` / `business_review.restore`. This is distinct from the auto-hide-on-threshold flow inside `/api/report` POST, which stays put.
+- Added: `app/b/[slug]/WriteReviewButton.tsx` — client component with star picker, 150-char headline, 4000-char body, inline errors. POSTs to `/api/business-reviews`. Page-reloads after success so the new review renders.
+- Changed: `app/b/[slug]/page.tsx` — `BusinessRow` + `BUSINESS_SELECT` extended with `user_id, is_verified, verified_at`. Verified chip with checkmark icon renders next to the `<h1>` when `is_verified = true`. New Reviews section between Payment Details and the Follow CTA: average rating + count, list of published reviews (reviewer avatar/name, stars, date, optional headline/body, seller_reply thread styled as a green-border aside), `WriteReviewButton` rendered for logged-in non-owners who haven't already reviewed, gentle "sign in to review" link for anonymous visitors when the section is empty, and per-review `ReportButton` (hidden on own review) using the new `business_review` post type.
+- Changed: `app/api/report/route.ts` — `postType` union extended with `business_review`. Auto-hide branch switches on the post type: business_review uses `published: false` against `business_reviews` (matches the table's moderation column); everything else still hits `is_active: false` on opportunities / marketplace_listings / research_posts / price_reports. Slack-alert and notification-email `postLabel` + `postPath` cases added (`postPath = 'admin'` — reviews moderate from the Reports tab, they don't have a dedicated public URL).
+- Changed: `app/api/admin/reports/route.ts` — DELETE restore extended. business_review restores `published: true`; other types now correctly route research→`research_posts`, price_report→`price_reports`, listing→`marketplace_listings` (previously only opportunity and listing branches existed, which silently restored research/price reports to the listings table).
+- Changed: `app/admin/page.tsx` — `ReportGroup.postType` union extended with `business_review`. New `business_reviews` fetch (latest 1000) feeds a third grouping branch that displays the review headline, or a 60-char body preview, or `Review (N★)` fallback. `businesses` SELECT extended to include `slug, is_public, is_verified, verified_at` for the new tab.
+- Changed: `app/admin/admin-client.tsx` — `Business` interface extended with the new fields. `Tab` union + `regularTabs` + `TAB_PERMISSION` add `'businesses'` (shares the `marketplace` permission). New tab UI: search (name / slug / owner), verified/unverified/all filter pill, per-business row with name + Verified/Private chips + owner + clickable `/b/{slug}` link + Verify/Unverify button wired to `/api/admin/business`. `removeReportedPost` extended with a `business_review` branch calling `/api/admin/business-review` with `action: 'hide'`. `dismissReports` updated so the generic listings fallback no longer applies to business_review (it has no local state to mutate).
+- Changed: `app/components/ReportButton.tsx` — `postType` prop union extended with `business_review`. No logic changes.
+- Result: **#2 Public Business Pages is now 9 of 9 shipped.** Week 2 block can flip to ✅.
+- Verified: `npx tsc --noEmit` clean (EXIT=0).
+- Deploys: Migrations do NOT auto-ship (per scratchpad #30). Both `20260418_business_verified.sql` and `20260418_business_reviews.sql` must be pasted into the Supabase SQL editor before the admin Businesses tab, the public `/b/{slug}` chip, or the reviews API will work in production. Code-only changes are safe to ship first — the UI tolerates missing columns only insofar as the chip simply won't render (is_verified defaults to false after migration); the reviews fetch will 400 until the table exists, so run the migrations before promoting the branch.
+- Next: per Okoli's direction, move to Unicorn #4 Recurring Invoices. #3 SMS is skipped this week — WhatsApp template approval still pending on Termii's end.
 
 ### Checkpoint 26 — April 18, 2026 (#2 Public Business Pages — JSON-LD + Follow CTA Shipped)
 
