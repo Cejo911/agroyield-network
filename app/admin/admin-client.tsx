@@ -14,6 +14,7 @@ const AnalyticsTab = lazy(() => import('./tabs/AnalyticsTab'))
 const SupportTab = lazy(() => import('./tabs/SupportTab'))
 const OrdersTab = lazy(() => import('./tabs/OrdersTab'))
 const FeatureFlagsTab = lazy(() => import('./tabs/FeatureFlagsTab'))
+const SmsTestTab = lazy(() => import('./tabs/SmsTestTab'))
 
 // ── Interfaces ──
 
@@ -254,7 +255,7 @@ interface FeatureFlag {
   updated_at: string
 }
 
-type Tab = 'opportunities' | 'marketplace' | 'members' | 'grants' | 'community' | 'research' | 'comments' | 'prices' | 'mentorship' | 'reports' | 'support' | 'orders' | 'analytics' | 'audit_log' | 'notifications' | 'settings' | 'feature_flags'
+type Tab = 'opportunities' | 'marketplace' | 'members' | 'grants' | 'community' | 'research' | 'comments' | 'prices' | 'mentorship' | 'reports' | 'support' | 'orders' | 'analytics' | 'audit_log' | 'notifications' | 'settings' | 'feature_flags' | 'sms_test'
 
 // Permission keys per tab — determines which tabs a moderator can see
 const TAB_PERMISSION: Partial<Record<Tab, string>> = {
@@ -324,7 +325,7 @@ export default function AdminClient({
   const canAccess = (tab: Tab): boolean => {
     if (isSuperAdmin) return true
     // Settings and audit_log are super-admin only
-    if (tab === 'settings' || tab === 'audit_log' || tab === 'feature_flags') return false
+    if (tab === 'settings' || tab === 'audit_log' || tab === 'feature_flags' || tab === 'sms_test') return false
     const permKey = TAB_PERMISSION[tab]
     if (!permKey) return false
     return currentAdminPermissions?.[permKey] === true
@@ -682,6 +683,7 @@ export default function AdminClient({
     { id: 'audit_log', label: 'Audit Log' },
     { id: 'notifications', label: 'Notify' },
     { id: 'feature_flags', label: 'Feature Flags' },
+    { id: 'sms_test', label: 'SMS Test' },
     { id: 'settings', label: 'Settings' },
   ]
 
@@ -1450,6 +1452,10 @@ export default function AdminClient({
 
       {activeTab === 'feature_flags' && isSuperAdmin && (
         <FeatureFlagsTab initialFlags={featureFlags} />
+      )}
+
+      {activeTab === 'sms_test' && isSuperAdmin && (
+        <SmsTestTab />
       )}
       </Suspense>
 
