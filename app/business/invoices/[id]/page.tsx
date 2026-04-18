@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 import { notFound } from 'next/navigation'
 import InvoiceActions from './InvoiceActions'
+import RecurringCreateWarning from './RecurringCreateWarning'
 import { getBusinessAccess } from '@/lib/business-access'
 
 const DOC_LABELS: Record<string, string> = {
@@ -42,6 +43,11 @@ export default async function InvoiceViewPage({ params }: { params: Promise<{ id
 
   return (
     <div className="space-y-5 max-w-3xl">
+      {/* Deferred warning from the new-invoice flow (e.g. recurring
+          template POST failed while the invoice itself saved). Renders
+          nothing unless sessionStorage has a message. */}
+      <RecurringCreateWarning />
+
       {/* Header actions */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <a href="/business/invoices" className="text-sm text-gray-500 hover:text-gray-700">← Back to Invoices</a>

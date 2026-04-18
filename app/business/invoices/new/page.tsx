@@ -287,6 +287,15 @@ export default function NewInvoicePage() {
       // so the daily cron will regenerate this invoice on schedule.
       // We do this AFTER the first invoice is written so the user always
       // gets a first issuance today regardless of template creation outcome.
+      //
+      // IMPORTANT: a template-creation failure is non-blocking — the
+      // primary invoice has already persisted — but it must NOT be
+      // silently swallowed. Previously, if the recurring_invoices feature
+      // flag was off (or the user dropped to free, or rate limit hit),
+      // the user would tick the toggle, get a regular invoice, and have
+      // zero idea their recurring schedule never created. We now keep the
+      // error in component state so the next render shows it on the
+      // recurring page (via sessionStorage relay) AND log it to console.
       if (recurringEnabled && recurringAllowed) {
         try {
           const itemsForTemplate = items.map(item => ({
@@ -306,7 +315,7 @@ export default function NewInvoicePage() {
           else if (recurringCadence === 'monthly') nextRun.setMonth(nextRun.getMonth() + 1)
           else if (recurringCadence === 'quarterly') nextRun.setMonth(nextRun.getMonth() + 3)
 
-          await fetch('/api/recurring-invoices', {
+          const res = await fetch('/api/recurring-invoices', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -323,11 +332,28 @@ export default function NewInvoicePage() {
               startOn: nextRun.toISOString().slice(0, 10),
             }),
           })
-          // We don't block on template creation failures — the primary
-          // invoice already exists. If template POST fails (e.g. flag
-          // not enabled for this user yet), the user can still revisit
-          // /business/invoices/recurring to retry.
-        } catch { /* non-blocking */ }
+
+          if (!res.ok) {
+            // Surface the failure to the user. Stash a short message in
+            // sessionStorage so the next page (the invoice detail) can
+            // pop a banner — the form is about to navigate away so we
+            // can't render it inline here.
+            const body = await res.json().catch(() => ({}))
+            const reason = body?.error || `Recurring schedule could not be set up (${res.status}).`
+            const message = `Invoice created, but recurring schedule failed: ${reason}`
+            try {
+              sessionStorage.setItem('recurring_create_warning', message)
+            } catch { /* sessionStorage may be disabled — already logging below */ }
+            console.error('[new-invoice] recurring template POST failed', res.status, body)
+          }
+        } catch (err) {
+          // Network-level failure — surface the same way.
+          const message = `Invoice created, but recurring schedule failed: ${err instanceof Error ? err.message : 'network error'}`
+          try {
+            sessionStorage.setItem('recurring_create_warning', message)
+          } catch { /* see above */ }
+          console.error('[new-invoice] recurring template POST threw', err)
+        }
       }
 
       router.push(`/business/invoices/${invoice.id}`)
