@@ -3,29 +3,41 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import ThemeToggle from '@/app/components/ThemeToggle'
 
-function Countdown() {
-  const LAUNCH = new Date('2026-07-05T00:00:00')
-  const calc = () => {
-    const diff = LAUNCH.getTime() - Date.now()
-    if (diff <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 }
-    return {
-      days:    Math.floor(diff / (1000 * 60 * 60 * 24)),
-      hours:   Math.floor((diff / (1000 * 60 * 60)) % 24),
-      minutes: Math.floor((diff / (1000 * 60)) % 60),
-      seconds: Math.floor((diff / 1000) % 60),
-    }
+// Launch instant locked to UTC midnight — without the Z suffix, Date parses as
+// LOCAL time, so server (UTC) and browser (e.g. WAT) would resolve to different
+// instants and trigger a hydration mismatch on top of the per-second clock skew.
+const LAUNCH_MS = new Date('2026-07-05T00:00:00Z').getTime()
+
+type TimeLeft = { days: number; hours: number; minutes: number; seconds: number }
+
+function calcTimeLeft(): TimeLeft {
+  const diff = LAUNCH_MS - Date.now()
+  if (diff <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 }
+  return {
+    days:    Math.floor(diff / (1000 * 60 * 60 * 24)),
+    hours:   Math.floor((diff / (1000 * 60 * 60)) % 24),
+    minutes: Math.floor((diff / (1000 * 60)) % 60),
+    seconds: Math.floor((diff / 1000) % 60),
   }
-  const [time, setTime] = useState(calc)
+}
+
+function Countdown() {
+  // null = SSR + first client paint. Same on every render → no hydration diff.
+  // Live countdown begins on the first useEffect tick (~immediately after mount).
+  const [time, setTime] = useState<TimeLeft | null>(null)
+
   useEffect(() => {
-    const id = setInterval(() => setTime(calc()), 1000)
+    setTime(calcTimeLeft())
+    const id = setInterval(() => setTime(calcTimeLeft()), 1000)
     return () => clearInterval(id)
   }, [])
+
   const pad = (n: number) => String(n).padStart(2, '0')
   const units = [
-    { label: 'Days',    value: time.days,    raw: true },
-    { label: 'Hours',   value: time.hours,   raw: false },
-    { label: 'Minutes', value: time.minutes, raw: false },
-    { label: 'Seconds', value: time.seconds, raw: false },
+    { label: 'Days',    value: time ? String(time.days)    : '—' },
+    { label: 'Hours',   value: time ? pad(time.hours)      : '—' },
+    { label: 'Minutes', value: time ? pad(time.minutes)    : '—' },
+    { label: 'Seconds', value: time ? pad(time.seconds)    : '—' },
   ]
   return (
     <div style={{ margin: '0 auto 44px', textAlign: 'center' }}>
@@ -33,10 +45,10 @@ function Countdown() {
         Platform launches in
       </p>
       <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' as const }}>
-        {units.map(({ label, value, raw }) => (
+        {units.map(({ label, value }) => (
           <div key={label} style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 16, padding: '18px 22px', minWidth: 76, textAlign: 'center' }}>
             <div style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 900, color: 'var(--text-accent)', letterSpacing: -1, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
-              {raw ? String(value) : pad(value)}
+              {value}
             </div>
             <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--countdown-label)', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginTop: 8 }}>
               {label}
