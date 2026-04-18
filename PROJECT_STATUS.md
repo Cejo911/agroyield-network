@@ -1,6 +1,6 @@
 # AgroYield Network — Project Status
 
-> **Last updated:** 18 April 2026 (Checkpoint 28)
+> **Last updated:** 18 April 2026 (Checkpoint 29)
 > **Maintained by:** Okoli (okolichijiokei@gmail.com)
 > **Launch Target:** 5 July 2026 (~11 weeks remaining)
 > **Purpose:** Permanent reference for any developer or Claude session to get up to speed instantly.
@@ -360,6 +360,17 @@ Note: `/insights`, `/connections` are pre-registered for future modules.
 ---
 
 ## Changelog
+
+### Checkpoint 29 — April 18, 2026 (Recurring Page Empty-State Bug — FIXED)
+
+- Bug: Okoli reported that two recurring invoices had been created but `/business/invoices/recurring` was still showing the empty state "No recurring invoices yet."
+- Root cause: `20260418_recurring_invoices.sql` declared `customer_id uuid NOT NULL` without a `REFERENCES customers(id)` clause. The page query used PostgREST's `customers(name)` nested-select syntax to embed the customer name — which requires a foreign-key constraint to resolve. Without the FK, Supabase returned an error ("Could not find a relationship between 'recurring_invoices' and 'customers' in the schema cache"), the page discarded the error (only destructured `data`, not `error`), and `data` fell to null → rows.length === 0 → empty state. The existing invoices page works because someone manually added the FK on `invoices.customer_id` via the Supabase dashboard at some point — the baseline migration for `invoices` has the same gap.
+- Added: `supabase/migrations/20260418_recurring_invoices_fks.sql` — idempotent follow-up migration that adds three foreign keys: `customer_id → customers(id) ON DELETE RESTRICT` (blocks orphaning live templates — user must End the template first), `user_id → auth.users(id) ON DELETE CASCADE`, and re-asserts `business_id → businesses(id) ON DELETE CASCADE` in case of schema drift. Each FK is wrapped in a `DO $$ ... IF NOT EXISTS ... END$$` block so replays no-op safely. Ends with `NOTIFY pgrst, 'reload schema'` to refresh the PostgREST cache without a server restart.
+- Changed: `app/business/invoices/recurring/page.tsx` — rewrote the query as a two-step fetch (select recurring_invoices, then select customers via `.in()` on the collected `customer_id`s) instead of relying on the FK-dependent embed. This is defence-in-depth: even if a future migration breaks the FK, the page still renders real rows. Also now destructures `error` from the recurring_invoices query and renders a visible red error box instead of silently falling through to the empty state.
+- Added: Scratchpad entry #48 ("PostgREST Nested Selects Need FKs — And A Missing FK Silently Hides Rows") in ROADMAP.md. Two go-forward rules: every uuid column that names a parent table must have an explicit REFERENCES clause in the same migration that creates it; every server-rendered query must destructure `error` and render it visibly rather than falling through to an empty state.
+- Verified: `./node_modules/.bin/tsc --noEmit` clean (EXIT=0).
+- Deploys: ⚠️ `20260418_recurring_invoices_fks.sql` must be pasted into the Supabase SQL editor. **This is what unblocks Okoli's two existing recurring invoices from showing up.** After paste the page should render them immediately — PostgREST schema cache reload happens via the `NOTIFY pgrst` at the end of the migration.
+- Next: Unicorn #5 Expense OCR per Week 3 Thu–Sun in UNICORN_SPRINT (unchanged).
 
 ### Checkpoint 28 — April 18, 2026 (Unicorn #4 Recurring Invoices — SHIPPED)
 
