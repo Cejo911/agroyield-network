@@ -15,6 +15,8 @@
  *   { api_key, to, from, sms, type: "plain", channel }
  */
 
+import { toTermiiDigits } from '../utils/phone'
+
 export interface SmsSendResult {
   success: boolean
   messageId?: string
@@ -25,26 +27,6 @@ export interface SmsSendResult {
 
 const TERMII_BASE_URL =
   process.env.TERMII_BASE_URL || 'https://api.ng.termii.com'
-
-/**
- * Normalise a phone number into Termii's expected format.
- * Termii wants digits only, with country code, no leading +.
- *   "+2348012345678"  → "2348012345678"
- *   "08012345678"     → "2348012345678" (assumes Nigeria)
- *   "2348012345678"   → "2348012345678"
- */
-export function toTermiiPhone(raw: string): string {
-  const trimmed = raw.trim()
-  if (!trimmed) throw new Error('Phone number is empty')
-
-  // Strip spaces, dashes, parens
-  const digits = trimmed.replace(/[^\d+]/g, '')
-
-  if (digits.startsWith('+')) return digits.slice(1)
-  if (digits.startsWith('234')) return digits
-  if (digits.startsWith('0')) return `234${digits.slice(1)}`
-  return digits
-}
 
 interface TermiiSmsResponse {
   message_id?: string
@@ -85,7 +67,7 @@ export async function sendSms(params: {
       return { success: false, error: 'Message too long (max 918 chars / 6 segments)' }
     }
 
-    const phone = toTermiiPhone(params.to)
+    const phone = toTermiiDigits(params.to)
 
     const payload = {
       api_key: apiKey,

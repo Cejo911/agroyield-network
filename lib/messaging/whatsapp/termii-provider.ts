@@ -14,6 +14,7 @@ import type {
 } from './provider'
 import type { TemplateName } from './templates'
 import { validateTemplateInput, TEMPLATES } from './templates'
+import { toTermiiDigits } from '../utils/phone'
 
 const TERMII_BASE_URL =
   process.env.TERMII_BASE_URL || 'https://api.ng.termii.com'
@@ -43,7 +44,7 @@ export class TermiiProvider implements WhatsAppProvider {
     try {
       validateTemplateInput(params.templateName, params.variables)
 
-      const phone = this.toTermiiPhone(params.to)
+      const phone = toTermiiDigits(params.to)
 
       const payload = {
         api_key: this.apiKey,
@@ -109,15 +110,6 @@ export class TermiiProvider implements WhatsAppProvider {
       balance: Number(json.balance ?? 0),
       currency: json.currency ?? 'NGN',
     }
-  }
-
-  private toTermiiPhone(e164: string): string {
-    if (!e164.startsWith('+')) {
-      throw new Error(
-        `Phone must be in E.164 format starting with +, got: ${e164}`
-      )
-    }
-    return e164.slice(1)
   }
 
   private buildDataObject(

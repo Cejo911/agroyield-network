@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { logAdminAction } from '@/lib/admin/audit-log'
-import { sendSms, getSmsBalance, toTermiiPhone } from '@/lib/messaging/sms/termii-sms'
+import { sendSms, getSmsBalance } from '@/lib/messaging/sms/termii-sms'
+import { toTermiiDigits } from '@/lib/messaging/utils/phone'
 import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
 
 /**
@@ -85,7 +86,7 @@ export async function POST(request: NextRequest) {
     // Validate phone early — gives a clearer error than Termii's generic rejection
     let normalisedPhone: string
     try {
-      normalisedPhone = toTermiiPhone(body.to)
+      normalisedPhone = toTermiiDigits(body.to)
     } catch (err) {
       return NextResponse.json(
         { error: err instanceof Error ? err.message : 'Invalid phone' },
