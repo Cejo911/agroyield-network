@@ -7,9 +7,13 @@
  *   - Compute last 7 days: revenue paid, outstanding invoices, new customers
  *   - Send the approved `weekly_digest` template via Termii
  *
- * Gated by:
- *   - CRON_SECRET (auth)
- *   - `whatsapp_delivery` feature flag (global + per-business)
+ * Gated per-business by BOTH flags (AND semantics):
+ *   - `whatsapp_delivery` — platform-wide WhatsApp kill switch.
+ *     If off, no WhatsApp messages of any kind go out.
+ *   - `weekly_digest`     — specific gate for this digest cron.
+ *     Matches the flag's description "Automated weekly WhatsApp business summary".
+ *
+ * Auth: CRON_SECRET (enforced by runCron harness).
  *
  * Idempotent per ISO week — safe to re-run within the same week; the harness
  * will short-circuit with a 'skipped' response.
@@ -43,16 +47,14 @@ export async function GET(request: Request) {
     jobName: 'business_weekly_digest',
     idempotencyKey: weeklyKey(),
     handler: async () => {
-      // ── Global kill-switch ──
-      const globalEnabled = await isFeatureEnabled('whatsapp_delivery')
-      if (!globalEnabled) {
-        return {
-          processedCount: 0,
-          successCount: 0,
-          failureCount: 0,
-          metadata: { reason: 'whatsapp_delivery flag disabled globally' },
-        }
-      }
+      // Note: no global kill-switch short-circuit here. Gating happens
+      // per-business below so allowlisted users/businesses can receive
+      // even when the flags aren't globally enabled — useful for
+      // staged rollouts and per-UUID admin testing.
+      //
+      // If you need a hard emergency stop, flip `settings.digest_enabled`
+      // (shared kill switch) or ensure both feature flags are fully empty
+      // (is_enabled=false, empty allowlists, rollout_percentage=0).
 
       const admin = getSupabaseAdmin()
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -94,12 +96,25 @@ export async function GET(request: Request) {
 
       for (const biz of rows) {
         try {
-          // ── Per-business feature gate ──
-          const enabledForBiz = await isFeatureEnabled('whatsapp_delivery', {
-            userId: biz.user_id,
-            businessId: biz.id,
-          })
-          if (!enabledForBiz) {
+          // ── Per-business feature gate (AND: both flags must be enabled) ──
+          //
+          // `whatsapp_delivery`: platform-wide kill switch for WhatsApp sends
+          // `weekly_digest`: specific on/off for THIS digest (matches flag description)
+          //
+          // Running both in parallel — flag reads are cached in-memory per
+          // process so repeat hits are cheap, but Promise.all still saves a
+          // round-trip on the first call of a new worker instance.
+          const [whatsappOk, digestOk] = await Promise.all([
+            isFeatureEnabled('whatsapp_delivery', {
+              userId: biz.user_id,
+              businessId: biz.id,
+            }),
+            isFeatureEnabled('weekly_digest', {
+              userId: biz.user_id,
+              businessId: biz.id,
+            }),
+          ])
+          if (!whatsappOk || !digestOk) {
             skippedFlag++
             continue
           }
