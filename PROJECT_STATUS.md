@@ -1,6 +1,6 @@
 # AgroYield Network — Project Status
 
-> **Last updated:** 18 April 2026 (Checkpoint 29)
+> **Last updated:** 18 April 2026 (Checkpoint 30)
 > **Maintained by:** Okoli (okolichijiokei@gmail.com)
 > **Launch Target:** 5 July 2026 (~11 weeks remaining)
 > **Purpose:** Permanent reference for any developer or Claude session to get up to speed instantly.
@@ -360,6 +360,21 @@ Note: `/insights`, `/connections` are pre-registered for future modules.
 ---
 
 ## Changelog
+
+### Checkpoint 30 — April 18, 2026 (Unicorn #5 Expense OCR — SHIPPED, Week 3 Thu–Sun)
+
+- Shipped Unicorn #5 Expense OCR end-to-end in a single session, reusing the gate-stacking and defence-in-depth patterns from #4. Receipt photo → Anthropic Vision (Claude Haiku 4.5) → editable review form → commits to the existing `business_expenses` table. Per-business monthly quota (Free 20 / Pro 100 / Growth unlimited) with natural calendar-month rollover — no reset cron needed.
+- Added: `supabase/migrations/20260418_expense_ocr.sql` — two new tables plus storage bucket policies. `expense_receipts` holds the upload metadata + extracted fields + `raw_extraction jsonb` audit trail + status enum (pending/reviewed/discarded/failed) + confidence + model_used (for later eval comparisons when we A/B test vision models). FKs to businesses, auth.users, and business_expenses. `usage_tracking` is a per-business monthly counter keyed on `(business_id, feature_key, period_yyyymm)` with a UNIQUE constraint for atomic upsert. Storage policies gate the `receipts` bucket by business ownership (path: `{businessId}/{uuid}.{ext}`). Admin kill-switch `settings.expense_ocr_enabled = 'true'` mirrors recurring_invoices pattern. Full RLS on both tables. `NOTIFY pgrst, 'reload schema'`.
+- Added: `lib/usage-tracking.ts` — typed `UsageFeatureKey` + `USAGE_LIMITS` single-source-of-truth (expense_ocr: free=20, pro=100, growth=null). `getMonthlyUsage()` reads, `incrementUsage()` does atomic increment via insert-or-fallback-to-update on unique-constraint conflict, `checkQuota()` returns {allowed, used, limit, reason, upgradeToTier}. Period is calendar-month UTC — pricing copy says "20 receipts/month" so calendar matches user expectations (rolling-window quotas are confusing).
+- Added: `app/api/expense-ocr/route.ts` — POST accepts multipart/form-data (receipt + businessId), layered gates: rate-limit 5/min/IP → auth → kill-switch → feature flag `expense_ocr` → business ownership → tier quota → file validation (jpg/png/webp, ≤5MB) → upload to Storage → Vision via direct `fetch('https://api.anthropic.com/v1/messages', ...)` (no SDK dependency — matches Resend-via-fetch pattern) → insert pending `expense_receipts` row → increment usage counter ONLY on successful extraction. Scratchpad #50: quota increment AFTER expensive work, not before, so a Vision failure doesn't burn the user's quota. GET returns current usage + tier + recent receipts for the modal's counter.
+- Added: `app/api/expense-ocr/[id]/route.ts` — PATCH commits user-edited values to `business_expenses` (chosen so existing Expenses page + reports + charts light up automatically with no other page changes), links back via `expense_receipts.expense_id` + flips status='reviewed'. Idempotent on duplicate PATCH. DELETE soft-discards + removes the storage object.
+- Added: `app/business/expenses/ReceiptScanButton.tsx` — 4-stage client modal: upload (mobile `capture="environment"` opens rear camera directly) → extracting (spinner) → review (editable prefilled form, low-confidence warning if <0.75) → saving. Usage counter in the modal header; upgrade nag at 75%+ utilisation on Free tier. Every server error surfaces in a red box in the modal — no silent fire-and-forget per scratchpad #49.
+- Changed: `app/business/expenses/page.tsx` — imports + renders `ReceiptScanButton` next to "+ Add Expense". Passes the business ID + reload callback so the table refreshes after a successful commit.
+- Added: `app/api/cron/usage-reset/route.ts` + `vercel.json` entry (`10 0 1 * *` = 00:10 UTC on the 1st). Not a destructive reset — natural period_yyyymm rollover handles that. The cron logs per-feature monthly summary (total events, unique businesses) to cron_runs metadata for observability/billing reconciliation, and prunes usage_tracking rows older than 12 months for retention.
+- Added: Scratchpad #50 in ROADMAP.md (Quota Increment Belongs AFTER The Expensive Work, Not Before). Read-check-work-increment pattern for any quota-gated feature where the underlying work can fail for non-user reasons (Vision, AI Assistant, Credit Score refresh). Natural monthly rollover via unique-period-key means no reset cron is strictly needed.
+- Verified: `./node_modules/.bin/tsc --noEmit` clean (EXIT=0) on first pass.
+- Deploys: **Three manual Supabase steps before the feature works:** (1) paste `20260418_expense_ocr.sql` into SQL editor; (2) create storage bucket `receipts` in Dashboard → Storage → New bucket (public: NO, 5MB limit, MIMEs: image/jpeg,image/png,image/webp) — the bucket must exist BEFORE the storage.objects policies in the migration can apply; (3) when ready for rollout, flip `expense_ocr` ON in `/admin` → Feature Flags tab (no SQL needed — admin UI already exists per Checkpoint 29). **Env var:** `ANTHROPIC_API_KEY` must be set in Vercel Production + Preview environments before the first real upload.
+- Next: Unicorn #5 Week 4 Mon–Wed tail is already covered by the usage-reset cron + tier gating shipped here. Pivot directly to **Unicorn #6 Credit Score engine** (Week 4 Thu–Sun). BD collateral is already in `/Documents/AgroYield Docs/` (spec sheet + 6 cold letters for Carbon/FairMoney/Renmoney/LAPO/OPay/Moniepoint) — no parallel doc work needed.
 
 ### Checkpoint 29 — April 18, 2026 (Recurring Page Empty-State Bug — FIXED — Two Independent Causes)
 

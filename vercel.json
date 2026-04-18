@@ -6,6 +6,7 @@
     { "path": "/api/cron/expire-subscriptions",   "schedule": "0 0 * * *" },
     { "path": "/api/cron/expiry-reminder",        "schedule": "0 8 * * *" },
     { "path": "/api/cron/celebrations",           "schedule": "0 7 * * *" },
-    { "path": "/api/cron/expire-featured",        "schedule": "0 5 * * *" }
+    { "path": "/api/cron/expire-featured",        "schedule": "0 5 * * *" },
+    { "path": "/api/cron/usage-reset",             "schedule": "10 0 1 * *" }
   ]
 }

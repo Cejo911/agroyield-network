@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getBusinessAccess } from '@/lib/business-access'
 import { getActiveBusinessId } from '@/lib/business-cookie'
+import ReceiptScanButton from './ReceiptScanButton'
 
 const CATEGORIES = [
   'Input Costs',
@@ -182,12 +183,15 @@ export default function ExpensesPage() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Expenses</h1>
           <p className="text-sm text-gray-500 mt-0.5">Track what you spend to know what you earn</p>
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="bg-green-700 hover:bg-green-800 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
-        >
-          + Add Expense
-        </button>
+        <div className="flex items-center gap-2">
+          {business && <ReceiptScanButton businessId={business.id} onSaved={load} />}
+          <button
+            onClick={() => setShowModal(true)}
+            className="bg-green-700 hover:bg-green-800 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+          >
+            + Add Expense
+          </button>
+        </div>
       </div>
 
       {/* Summary cards */}
