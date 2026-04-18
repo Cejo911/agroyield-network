@@ -10,6 +10,7 @@
  * new row with count=1 when the first event of that month fires.
  * Nothing needs to be zeroed or deleted for the feature to work.
  *
+ * So why have this cron at all?
  *
  *   (1) Observability. Logs a single per-feature summary of the month
  *       that just ended: total events, unique businesses, cost signal
