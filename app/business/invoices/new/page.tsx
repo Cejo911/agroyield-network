@@ -64,6 +64,12 @@ export default function NewInvoicePage() {
     reason: string; upgradeToTier?: TierName; usage?: number; limit?: number | null
   } | null>(null)
 
+  // Recurring invoice state (Unicorn #4). Pro+ only — `recurringAllowed`
+  // is flipped true when we detect an effective paid tier below.
+  const [recurringEnabled, setRecurringEnabled] = useState(false)
+  const [recurringCadence, setRecurringCadence] = useState<'weekly' | 'monthly' | 'quarterly'>('monthly')
+  const [recurringAllowed, setRecurringAllowed] = useState(false)
+
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
@@ -76,6 +82,26 @@ export default function NewInvoicePage() {
         .eq('id', access.businessId)
         .single()
       setBusiness(biz)
+
+      // Pro+ gate for recurring invoices. We only need to know whether
+      // the user is on a paid tier; the server re-validates on POST.
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('subscription_tier, subscription_expires_at')
+          .eq('id', user.id)
+          .single()
+        const tier = (profile as { subscription_tier?: string | null; subscription_expires_at?: string | null } | null)
+        if (tier?.subscription_tier && tier.subscription_tier !== 'free') {
+          // Honour expiry: expired paid tier is treated as free.
+          if (tier.subscription_expires_at) {
+            const expires = new Date(tier.subscription_expires_at)
+            if (expires > new Date()) setRecurringAllowed(true)
+          } else {
+            setRecurringAllowed(true)
+          }
+        }
+      } catch { /* fail closed — recurring stays disabled */ }
 
       // Check tier limit for invoice creation
       if (biz) {
@@ -256,6 +282,53 @@ export default function NewInvoicePage() {
         .insert(lineItems)
 
       if (itemsError) throw itemsError
+
+      // Unicorn #4: if "Make this recurring" was ticked, create a template
+      // so the daily cron will regenerate this invoice on schedule.
+      // We do this AFTER the first invoice is written so the user always
+      // gets a first issuance today regardless of template creation outcome.
+      if (recurringEnabled && recurringAllowed) {
+        try {
+          const itemsForTemplate = items.map(item => ({
+            product_id: (item.product_id && item.product_id !== '__manual__') ? item.product_id : null,
+            description: item.description,
+            quantity: parseFloat(item.quantity) || 0,
+            unit_price: parseFloat(item.unit_price) || 0,
+          }))
+          const dueDays = dueDate
+            ? Math.max(1, Math.round((new Date(dueDate).getTime() - new Date(issueDate).getTime()) / 86_400_000))
+            : 14
+
+          // Next run is in one cadence period from today — the template
+          // doesn't re-issue itself the same day it's created.
+          const nextRun = new Date(issueDate)
+          if (recurringCadence === 'weekly') nextRun.setDate(nextRun.getDate() + 7)
+          else if (recurringCadence === 'monthly') nextRun.setMonth(nextRun.getMonth() + 1)
+          else if (recurringCadence === 'quarterly') nextRun.setMonth(nextRun.getMonth() + 3)
+
+          await fetch('/api/recurring-invoices', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              businessId: business!.id,
+              customerId: customerId,
+              cadence: recurringCadence,
+              documentType: documentType,
+              notes: notes || null,
+              applyVat: vatEnabled,
+              vatRate: effectiveVat,
+              deliveryCharge: delivery,
+              dueDays: dueDays,
+              lineItems: itemsForTemplate,
+              startOn: nextRun.toISOString().slice(0, 10),
+            }),
+          })
+          // We don't block on template creation failures — the primary
+          // invoice already exists. If template POST fails (e.g. flag
+          // not enabled for this user yet), the user can still revisit
+          // /business/invoices/recurring to retry.
+        } catch { /* non-blocking */ }
+      }
 
       router.push(`/business/invoices/${invoice.id}`)
     } catch (err: any) {
@@ -592,6 +665,56 @@ export default function NewInvoicePage() {
                     Apply 7.5% (Nigeria)
                   </button>
                 </div>
+              )}
+            </div>
+
+            {/* Make this recurring (Unicorn #4) — Pro+ only */}
+            <div className="mt-5 border-t border-gray-100 dark:border-gray-800 pt-4">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
+                  Make this recurring
+                </span>
+                {recurringAllowed ? (
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <div
+                      onClick={() => setRecurringEnabled(!recurringEnabled)}
+                      className={`relative w-10 h-5 rounded-full transition-colors cursor-pointer ${recurringEnabled ? 'bg-green-600' : 'bg-gray-300'}`}
+                    >
+                      <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${recurringEnabled ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                    </div>
+                    <span className="text-xs text-gray-600 dark:text-gray-400">{recurringEnabled ? 'On' : 'Off'}</span>
+                  </label>
+                ) : (
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-amber-700 bg-amber-50 dark:bg-amber-900/30 dark:text-amber-300 border border-amber-200 dark:border-amber-800 rounded-full px-2 py-0.5">
+                    Pro+
+                  </span>
+                )}
+              </div>
+
+              {recurringAllowed && recurringEnabled && (
+                <div className="space-y-2">
+                  <label className="block text-xs text-gray-600 dark:text-gray-400">Cadence</label>
+                  <select
+                    value={recurringCadence}
+                    onChange={e => setRecurringCadence(e.target.value as 'weekly' | 'monthly' | 'quarterly')}
+                    className={selectClass}
+                  >
+                    <option value="weekly">Every week</option>
+                    <option value="monthly">Every month</option>
+                    <option value="quarterly">Every quarter</option>
+                  </select>
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                    We&apos;ll create the first invoice now and regenerate on the next {recurringCadence === 'weekly' ? 'week' : recurringCadence === 'monthly' ? 'month' : 'quarter'}.
+                    Pause or end the schedule anytime from <a href="/business/invoices/recurring" className="text-green-700 hover:underline">Recurring Invoices</a>.
+                  </p>
+                </div>
+              )}
+
+              {!recurringAllowed && (
+                <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                  Auto-generate this invoice every week, month, or quarter.{' '}
+                  <a href="/pricing" className="text-green-700 hover:underline font-medium">Upgrade to Pro</a> to enable.
+                </p>
               )}
             </div>
           </div>

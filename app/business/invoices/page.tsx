@@ -30,12 +30,20 @@ export default async function InvoicesPage() {
     <div className="space-y-5">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Invoices & Documents</h1>
-        <Link
-          href="/business/invoices/new"
-          className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors whitespace-nowrap"
-        >
-          + New Document
-        </Link>
+        <div className="flex gap-2">
+          <Link
+            href="/business/invoices/recurring"
+            className="text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap"
+          >
+            🔁 Recurring
+          </Link>
+          <Link
+            href="/business/invoices/new"
+            className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors whitespace-nowrap"
+          >
+            + New Document
+          </Link>
+        </div>
       </div>
 
       {!invoices || invoices.length === 0 ? (

@@ -433,6 +433,7 @@ export default function AdminClient({
   const [celebrationsEnabled, setCelebrationsEnabled] = useState(settingsMap.celebrations_enabled !== 'false')
   const [expiryReminderEnabled, setExpiryReminderEnabled] = useState(settingsMap.expiry_reminder_enabled === 'true')
   const [expireFeaturedEnabled, setExpireFeaturedEnabled] = useState(settingsMap.expire_featured_enabled !== 'false')
+  const [recurringInvoicesEnabled, setRecurringInvoicesEnabled] = useState(settingsMap.recurring_invoices_enabled !== 'false')
   const [savingSettings, setSavingSettings] = useState(false)
   const [settingsSaved, setSettingsSaved] = useState(false)
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
@@ -525,6 +526,7 @@ export default function AdminClient({
           celebrations_enabled: String(celebrationsEnabled),
           expiry_reminder_enabled: String(expiryReminderEnabled),
           expire_featured_enabled: String(expireFeaturedEnabled),
+          recurring_invoices_enabled: String(recurringInvoicesEnabled),
         }),
       })
       setSettingsSaved(true)
@@ -1686,6 +1688,7 @@ export default function AdminClient({
           {badge(celebrationsEnabled ? 'Celebrations on' : 'Celebrations off', celebrationsEnabled ? 'green' : 'gray')}
           {badge(expiryReminderEnabled ? 'Reminders on' : 'Reminders off', expiryReminderEnabled ? 'green' : 'gray')}
           {badge(expireFeaturedEnabled ? 'Expire-featured on' : 'Expire-featured off', expireFeaturedEnabled ? 'green' : 'gray')}
+          {badge(recurringInvoicesEnabled ? 'Recurring invoices on' : 'Recurring invoices off', recurringInvoicesEnabled ? 'green' : 'gray')}
         </>)
         // Pricing section badges
         const pricingBadges = (<>
@@ -2036,6 +2039,18 @@ export default function AdminClient({
                       <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${expireFeaturedEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
                     </button>
                     <span className="text-sm text-gray-700 dark:text-gray-300">{expireFeaturedEnabled ? 'Active — expired features are auto-removed' : 'Paused — featured status will persist past expiry'}</span>
+                  </div>
+                </div>
+                <hr className="border-gray-100 dark:border-gray-800" />
+                <div>
+                  <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1 text-sm">Recurring Invoices (Unicorn #4)</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Daily cron generates scheduled invoices + emails them. Kill-switch this if email volume or a bad template needs isolation; feature flag <code>recurring_invoices</code> controls per-user rollout.</p>
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => setRecurringInvoicesEnabled(!recurringInvoicesEnabled)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${recurringInvoicesEnabled ? 'bg-green-600' : 'bg-gray-300 dark:bg-gray-600'}`}>
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${recurringInvoicesEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                    </button>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">{recurringInvoicesEnabled ? 'Active — recurring invoices will generate daily at 06:00 UTC' : 'Paused — no recurring invoices will be generated'}</span>
                   </div>
                 </div>
               </div>
