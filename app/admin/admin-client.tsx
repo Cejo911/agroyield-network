@@ -1,6 +1,7 @@
 'use client'
 import { useState, Suspense, lazy } from 'react'
 import { SearchBar, FilterPills } from './tabs/AdminSearchBar'
+import CopyUUID from './tabs/CopyUUID'
 
 // ── Lazy-load admin tabs — only the active tab's code is fetched ──
 const CommunityTab = lazy(() => import('./tabs/CommunityTab'))
@@ -1033,6 +1034,7 @@ export default function AdminClient({
           <div className="flex items-center justify-between gap-3 mb-3">
             <div className="flex-1"><SearchBar value={memberSearch} onChange={setMemberSearch} placeholder="Search members by name, email, or username..." /></div>
             <ExportButton onClick={() => exportToExcel('Members', [
+              { header: 'UUID', key: 'uuid', width: 38 },
               { header: 'Name', key: 'name', width: 28 },
               { header: 'Email', key: 'email', width: 32 },
               { header: 'Username', key: 'username', width: 20 },
@@ -1066,6 +1068,7 @@ export default function AdminClient({
               { header: 'Expires', key: 'expires', width: 16 },
               { header: 'Joined', key: 'joined', width: 16 },
             ], members.map(m => ({
+              uuid: m.id,
               name: [m.first_name, m.last_name].filter(Boolean).join(' ') || 'N/A',
               email: m.email || 'N/A',
               username: m.username || 'N/A',
@@ -1146,6 +1149,10 @@ export default function AdminClient({
                       {isSelf && <span className="text-xs text-gray-400 dark:text-gray-500 italic">You</span>}
                     </div>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{member.email || 'No email'}</p>
+                    {/* UUID — for feature flag allowlists, digest debugging, audit log lookups */}
+                    <div className="mt-1">
+                      <CopyUUID value={member.id} label="UUID" />
+                    </div>
                     {member.subscription_tier && member.subscription_tier !== 'free' && (
                       <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 capitalize">
                         Tier: {member.subscription_tier}
@@ -1170,15 +1177,18 @@ export default function AdminClient({
                     )}
                     {/* View Business links — shown for each business the member owns */}
                     {businesses.filter(b => b.user_id === member.id).map((biz, idx) => (
-                      <a
-                        key={biz.id}
-                        href={`/admin/business-preview/${biz.id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 px-3 py-1.5 rounded-md hover:bg-indigo-100 dark:hover:bg-indigo-900/40 inline-flex items-center gap-1"
-                      >
-                        👁 {businesses.filter(b2 => b2.user_id === member.id).length > 1 ? `Business ${idx + 1}: ${biz.name}` : 'View Business'}
-                      </a>
+                      <span key={biz.id} className="inline-flex items-center gap-1.5">
+                        <a
+                          href={`/admin/business-preview/${biz.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 px-3 py-1.5 rounded-md hover:bg-indigo-100 dark:hover:bg-indigo-900/40 inline-flex items-center gap-1"
+                        >
+                          👁 {businesses.filter(b2 => b2.user_id === member.id).length > 1 ? `Business ${idx + 1}: ${biz.name}` : 'View Business'}
+                        </a>
+                        {/* Business UUID — for feature flag business-allowlists */}
+                        <CopyUUID value={biz.id} label="biz" />
+                      </span>
                     ))}
                     {isSuperAdmin && (
                       <>
