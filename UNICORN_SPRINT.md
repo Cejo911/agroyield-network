@@ -61,7 +61,7 @@ Before Week 1 feature work, build three primitives that everything else rides on
 - `/business/setup/complete` page with `PublicPageCard` for editing showcase fields — **done**
 - Anon nav logo on `/b/[slug]` matched to AppNav (mobile 44×44 icon, desktop 200×50 horizontal, dark-mode variant) — **done**
 - Reused by #1 (digest links), #2 (public pages), future SEO plays
-- Still pending: `sitemap.xml` + `robots.txt` auto-generation from active businesses (Week 2 scope under #2 Public Business Pages)
+- `sitemap.xml` + `robots.txt` auto-generation from active businesses — **done** (`app/sitemap.ts` + `app/robots.ts`, verified 18 Apr 2026 per Session 3 verification pass)
 
 ### F2. Shared cron harness ✅ SHIPPED (17 Apr 2026, Session 2)
 - `lib/cron/index.ts` wrapping existing `CRON_SECRET` pattern — **done**
@@ -132,7 +132,7 @@ Expected minutes-not-days effort when trigger hits: add Meta credentials to Verc
 
 **Fri–Sun:** Start **#2 Public Business Pages**.
 - `/b/[slug]` route, server-rendered ✅ (see Week 2 block for full status)
-- Open Graph tags ✅ done via `generateMetadata()`; LocalBusiness JSON-LD structured data ⚠️ still pending
+- Open Graph tags ✅ done via `generateMetadata()`; LocalBusiness JSON-LD structured data ✅ shipped (18 Apr 2026, Session 2 — `/b/[slug]` emits a server-built `<script type="application/ld+json">` with conditional name/url/slogan/description/logo/image/telephone/email/address/foundingDate/openingHours/knowsAbout/sameAs fields)
 
 ### Week 2 (24 Apr–1 May) — Public Surface + WhatsApp
 
