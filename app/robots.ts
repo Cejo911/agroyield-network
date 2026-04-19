@@ -7,16 +7,22 @@ const SITE_ORIGIN =
  * robots.txt — served at /robots.txt.
  *
  * Policy:
- *   - Crawl the public marketing site + /b/{slug} business pages + /u/{username} member profiles
+ *   - Crawl the public marketing site + /businesses directory index +
+ *     /b/{slug} business pages + /u/{username} member profiles
  *   - Block everything behind auth (/dashboard, /admin, /api, /business, /messages, /mentorship, etc.)
  *   - Block auth endpoints and one-off email links
+ *
+ * NOTE on `/business/` vs `/businesses`: these are distinct namespaces.
+ *   /business/…    = authenticated owner/staff tooling (blocked by /business/)
+ *   /businesses    = public directory index (explicitly allowed)
+ *   /b/{slug}      = public business profile (allowed)
  */
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
       {
         userAgent: '*',
-        allow: ['/', '/b/', '/u/'],
+        allow: ['/', '/b/', '/u/', '/businesses'],
         disallow: [
           '/api/',
           '/admin/',

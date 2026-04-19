@@ -17,14 +17,18 @@ const SITE_ORIGIN =
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes: MetadataRoute.Sitemap = [
-    { url: `${SITE_ORIGIN}/`, changeFrequency: 'weekly', priority: 1.0 },
-    { url: `${SITE_ORIGIN}/about`, changeFrequency: 'monthly', priority: 0.7 },
-    { url: `${SITE_ORIGIN}/contact`, changeFrequency: 'monthly', priority: 0.6 },
-    { url: `${SITE_ORIGIN}/pricing`, changeFrequency: 'monthly', priority: 0.7 },
-    { url: `${SITE_ORIGIN}/faq`, changeFrequency: 'monthly', priority: 0.5 },
-    { url: `${SITE_ORIGIN}/privacy`, changeFrequency: 'yearly', priority: 0.3 },
-    { url: `${SITE_ORIGIN}/terms`, changeFrequency: 'yearly', priority: 0.3 },
-    { url: `${SITE_ORIGIN}/data-deletion`, changeFrequency: 'yearly', priority: 0.2 },
+    { url: `${SITE_ORIGIN}/`,              changeFrequency: 'weekly',  priority: 1.0 },
+    // Public directory index — high priority. This is the canonical
+    // destination for Google's SearchAction and the parent page in
+    // /b/{slug} breadcrumbs, so we signal strong importance.
+    { url: `${SITE_ORIGIN}/businesses`,    changeFrequency: 'daily',   priority: 0.9 },
+    { url: `${SITE_ORIGIN}/about`,         changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${SITE_ORIGIN}/contact`,       changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${SITE_ORIGIN}/pricing`,       changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${SITE_ORIGIN}/faq`,           changeFrequency: 'monthly', priority: 0.5 },
+    { url: `${SITE_ORIGIN}/privacy`,       changeFrequency: 'yearly',  priority: 0.3 },
+    { url: `${SITE_ORIGIN}/terms`,         changeFrequency: 'yearly',  priority: 0.3 },
+    { url: `${SITE_ORIGIN}/data-deletion`, changeFrequency: 'yearly',  priority: 0.2 },
   ]
 
   // Public businesses
