@@ -71,6 +71,11 @@ const nextConfig: NextConfig = {
               "default-src 'self'",
               // Scripts: self + inline (Next.js requires it) + Sentry + PostHog + Vercel analytics
               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.sentry.io https://*.posthog.com https://*.i.posthog.com https://va.vercel-scripts.com",
+              // Workers: self + blob: — PostHog session replay and Sentry offline buffer
+              // both spawn Web Workers from blob URLs. Without an explicit worker-src
+              // directive, browsers fall back to script-src, which does NOT allow blob:
+              // and blocks the worker. Session replay is silently broken without this.
+              "worker-src 'self' blob:",
               // Styles: self + inline (Tailwind/next-themes)
               "style-src 'self' 'unsafe-inline'",
               // Images: self + Supabase storage + data URIs (avatars/base64)
