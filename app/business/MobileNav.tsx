@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import ThemeToggle from '@/app/components/ThemeToggle'
 import BusinessSwitcher from './BusinessSwitcher'
+import SidebarSignOutButton from './SidebarSignOutButton'
 
 // Primary tabs pinned to the bottom bar — the 5 most-used business surfaces.
 const NAV_ITEMS = [
@@ -175,6 +176,12 @@ export default function MobileNav() {
                 <span className="text-sm text-gray-700 dark:text-gray-300">Appearance</span>
                 <ThemeToggle />
               </div>
+
+              {/* Sign-out — destructive action placed below Appearance so it's
+                  reachable in one tap from inside the Business module without
+                  forcing a round-trip to /dashboard → profile avatar. Closes
+                  the sheet via onNavigate so the backdrop doesn't linger. */}
+              <SidebarSignOutButton variant="sheet" onNavigate={closeOnClick} />
             </div>
           </div>
         </div>

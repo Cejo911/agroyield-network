@@ -5,6 +5,7 @@ import Image from 'next/image'
 import MobileNav from './MobileNav'
 import SidebarThemeToggle from './SidebarThemeToggle'
 import BusinessSwitcher from './BusinessSwitcher'
+import SidebarSignOutButton from './SidebarSignOutButton'
 
 export default async function BusinessLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -56,6 +57,14 @@ export default async function BusinessLayout({ children }: { children: React.Rea
               <Link href="/business/team" className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/20 hover:text-green-700 transition-colors">👥 Team</Link>
 
               <SidebarThemeToggle />
+
+              {/* Sign-out — placed at the bottom of the sidebar so it sits
+                  separate from navigation and reads as a destructive /
+                  exit action. Red accent matches the AppNav dropdown on
+                  the main dashboard. */}
+              <div className="border-t border-gray-100 dark:border-gray-800 mt-2 pt-2">
+                <SidebarSignOutButton variant="sidebar" />
+              </div>
             </nav>
           </aside>
           <main className="flex-1 min-w-0">{children}</main>

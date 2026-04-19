@@ -1,6 +1,6 @@
 # AgroYield Network — Project Status
 
-> **Last updated:** 19 April 2026 (Checkpoint 32)
+> **Last updated:** 19 April 2026 (Checkpoint 33)
 > **Maintained by:** Okoli (okolichijiokei@gmail.com)
 > **Launch Target:** 5 July 2026 (~11 weeks remaining)
 > **Purpose:** Permanent reference for any developer or Claude session to get up to speed instantly.
@@ -360,6 +360,46 @@ Note: `/insights`, `/connections` are pre-registered for future modules.
 ---
 
 ## Changelog
+
+### Checkpoint 33 — April 19, 2026 (Public-Footer Harmonization + Business-Module Sign-Out + Midjourney Banner Prompt + Doc Sync)
+
+- **Context.** Post-deploy housekeeping session. Three discrete pieces of work landed alongside the doc-sync pass that produced this checkpoint. (a) Okoli noticed all public-page footers were inconsistently wired to Privacy / LinkedIn / X — some had `#` placeholders, some had broken `mailto:` links where a `/contact` link should have been, and `/privacy` + `/terms` had a two-link minimal footer with no socials at all. (b) The Business module dashboard had no sign-out affordance — users had to navigate back to `/dashboard` and open the profile-avatar dropdown to log out, which is three clicks for what should be one-click on a frequently-used destructive action. (c) A Midjourney prompt for an X/Twitter banner was drafted so the social channels (now actually linked from the footer) can start looking like a real brand. This session also rolls up the earlier Round-4 / Round-5 / Round-6 hanging-issue resolutions into one changelog entry so the checkpoint history stays readable.
+- **Added: `app/components/PublicFooter.tsx`** — shared public-page footer component, single source of truth for external social links + cross-page navigation. One `LINKS` array with 7 entries (Home / About / Contact / Privacy / Terms + X / LinkedIn). Internal links render via `next/link`, external via `<a target="_blank" rel="noopener noreferrer">`. LinkedIn URL: `https://www.linkedin.com/company/agroyield-network`. X URL: `https://x.com/agroyield90351`. Tailwind styling with light/dark colour modes matching the existing `agy-footer` treatment. `© 2026 AgroYield Network. All rights reserved.` + `An Agcoms International Project` tagline retained. **Why the shared component pattern now, not later:** 7 public pages (`/`, `/about`, `/contact`, `/privacy`, `/terms`, `/businesses`, plus auth layouts on `/login`/`/signup`) had drifted to 4 different footer variants — the DRY violation was actively producing broken-link bugs. A single import is the right abstraction; future social-channel additions (Instagram, YouTube, WhatsApp channel) become a 1-line edit instead of a 7-file audit.
+- **Changed: `app/home-client.tsx`** — added `import PublicFooter from '@/app/components/PublicFooter'`, replaced inline `<footer className="agy-footer">` block with `<PublicFooter />`. This closes the `#`-placeholder X + LinkedIn links on the landing page.
+- **Changed: `app/about/page.tsx`** — same swap. Previously had `#` for X/LinkedIn AND Privacy, plus `mailto:hello@agroyield.africa` where a `/contact` link should have been. All three now route correctly.
+- **Changed: `app/contact/contact-client.tsx`** — same swap. Previously had `#` for X/LinkedIn/Privacy.
+- **Changed: `app/privacy/page.tsx`** — replaced minimal 2-link footer (only `← Terms` link) with full `<PublicFooter />`. Privacy now has full social + nav access like every other public page.
+- **Changed: `app/terms/page.tsx`** — replaced minimal 2-link footer (only `← Privacy` link) with full `<PublicFooter />`. Symmetric to the privacy change.
+- **Changed: `app/businesses/page.tsx`** — replaced the signed-out-only inline footer with `<PublicFooter />`, kept the `{!user && <PublicFooter />}` gating so logged-in visitors continue to see the AppNav-based experience rather than a duplicated nav strip.
+- **Added: `app/business/SidebarSignOutButton.tsx`** — client component with two visual variants (`'sidebar'` for desktop business layout, `'sheet'` for the mobile More bottom sheet) sharing a single `supabase.auth.signOut() → router.push('/') → router.refresh()` handler. Pending state prevents double-clicks and shows "Signing out…". Red colour accent marks it as destructive/exit — intentionally visually distinct from the green module-nav treatment. Optional `onNavigate` callback lets the mobile sheet close itself before the async signOut fires so the backdrop doesn't linger.
+- **Changed: `app/business/layout.tsx`** — imports `SidebarSignOutButton` and mounts `<SidebarSignOutButton variant="sidebar" />` at the bottom of the desktop sidebar, below `SidebarThemeToggle`, separated by a border to keep destructive actions visually clustered away from navigation.
+- **Changed: `app/business/MobileNav.tsx`** — imports `SidebarSignOutButton` and mounts `<SidebarSignOutButton variant="sheet" onNavigate={closeOnClick} />` inside the More bottom sheet, below the Appearance row. `closeOnClick` wiring ensures the sheet doesn't sit on top of the home page during sign-out redirect. The existing `Back to Dashboard` block above remains as the "return to main app" affordance — sign-out is the separate "leave the platform entirely" action.
+- **Round-4 hanging issues resolved earlier in the week (rolled up here so future sessions can see them in one place).** (#1) Added public `/businesses` CTA link to `/directory`. (#2) Harmonized AgroYield logo to 200×58 across all public + auth pages (was 3 different sizes). (#3) Removed duplicate "Back to Grants" link. (#4) Mobile nav: added More sheet with `Back to Dashboard` exit so users on `/business/*` can escape back to the hub on mobile. (#5) Added back-to-directory link on `/businesses` for authenticated users. (#6) Fixed broken logo rendering on 7 public/auth pages (missing dark-mode variant switch). (#7) Mounted `BusinessSwitcher` inside the mobile More sheet so multi-business owners can switch on small screens.
+- **Round-5 (9-file commit shipped earlier as "Update" + "New Footer setup") landed the logo harmonization + mobile BusinessSwitcher + back-to-directory triplet across `app/about/page.tsx`, `app/business/MobileNav.tsx`, `app/businesses/page.tsx`, `app/contact/contact-client.tsx`, `app/forgot-password/page.tsx`, `app/login/page.tsx`, `app/privacy/page.tsx`, `app/reset-password/page.tsx`, `app/terms/page.tsx`.** Commit commands were delivered this session so the batch sat on a single atomic commit rather than drift-into-main as scattered WIP.
+- **Round-6 is this session's PublicFooter harmonization** — 1 new component + 6 edited pages atomic-committable together. Typecheck clean post-change.
+- **Added: Midjourney banner prompt (3 variations).** Documentary/cinematic (recommended), tech illustration, community portrait. All three specify `--ar 3:1 --v 7 --style raw --q 2` plus safe-zone reminders — X banners are 1500×500 with the profile pic overlapping the bottom-left at roughly x=120 / y=340, central safe area ~1030×500, subjects kept 400px+ from the left edge so the avatar doesn't cover the focal point. Prompts avoid text rendering (Midjourney text is unreliable); tagline + logo go in Figma/Canva after generation. Stylize/chaos parameters tuned per variant (raw style + lower chaos for documentary realism, higher for tech illustration's graphic punch).
+- **Added: Scratchpad items #56–#58** (see ROADMAP.md) — (#56) shared-component extraction beats ad-hoc footer duplication once the same element drifts to 3+ variants; (#57) destructive actions inside nested-module layouts need in-module affordances, not round-trips to the parent hub; (#58) footer-link hygiene as a launch-gate check — grep for `href="#"` across public pages before any rollout gate flip.
+- **Verified.** `./node_modules/.bin/tsc --noEmit` → EXIT=0. No new lint warnings from the 7 touched files. No schema/migration changes. `PublicFooter.tsx` is a pure client-safe component (no server imports), safe for both server and client usage across the codebase.
+- **Deploys.** Pure frontend changes — no Supabase migrations, no env var changes, no settings updates, no cron changes. Safe to push directly once the atomic commit lands.
+- **Next.** (a) Consolidated pending tasks across this session, Round-4, Round-5, and Round-6 are brought forward below under "Pending Tasks" — the Week 10-ish "7-day redesign sweep" (#7 through #13), the QA day (#14), the Beta launch morning (#15), plus post-beta backlog items (priceRange/postalCode/addressLocality on business schema, slug discrepancy investigation for `preeminent-solutions` vs `preeminent-solutions-nig-ltd`). (b) Monday 20 Apr 07:00 WAT remains the Beta welcome-email send + `expense_ocr` flag flip per the Checkpoint 31 runbook.
+
+### Pending Tasks (brought forward from prior sessions)
+
+- **#7** Day 1 — Extract shared design components, refactor dashboard (pending)
+- **#8** Day 2 — Redesign /opportunities and /grants (pending)
+- **#9** Day 3 — Redesign /marketplace + listing detail (pending)
+- **#10** Day 4 — Redesign /business landing, setup, /b/[slug] (pending)
+- **#11** Day 5 — Redesign /community and /directory (pending)
+- **#12** Day 6 — Redesign /mentorship and /research (pending)
+- **#13** Day 7 — Redesign tails (/prices, /profile, /settings, /faq, landing, auth) (pending)
+- **#14** Sun 26 Apr — QA day, no code changes (pending)
+- **#15** Mon 27 Apr — Beta launch morning (pending)
+- **Post-Beta:** add `priceRange`, `postalCode`, `addressLocality` to business schema (for LocalBusiness JSON-LD completeness)
+- **Post-Beta:** investigate slug discrepancy `preeminent-solutions` vs `preeminent-solutions-nig-ltd` (two records or one with alias drift?)
+- **Post-Beta:** verify remaining 4 unverified businesses before the next trust-signal email (solbridge Nigeria ltd, Succedere General Consults, SPARKLING COIN, AG Rentworks — per Checkpoint 32's open item)
+- **Post-Beta:** Founder-Tunable Constants Audit — work through the rest of the grep hits from Checkpoint 31 in priority order (pricing labels, payment grace period copy, social links, sender addresses, countdown launch date, cron schedule windows)
+- **Post-launch:** auto-follow wiring for `/signup?intent=follow_business&biz={slug}` — URL contract is stable, backend is ~30 min of work (per Checkpoint 26)
+- **Blocked on Termii:** Unicorn #3 WhatsApp Delivery — Termii template approval still pending on their end; `lib/messaging/whatsapp/` abstraction scaffold ready
 
 ### Checkpoint 32 — April 19, 2026 (Production Deploy + Real-Device Receipt Capture Validated + Verified-Badge Pipeline Confirmed Live)
 
