@@ -204,15 +204,15 @@ export default async function BusinessesIndex({
               src="/logo-horizontal-colored.png"
               alt="AgroYield Network"
               width={200}
-              height={50}
-              className="hidden sm:block dark:hidden"
+              height={58}
+              className="hidden h-[58px] w-auto sm:block dark:hidden"
             />
             <Image
               src="/logo-horizontal-white.png"
               alt="AgroYield Network"
               width={200}
-              height={50}
-              className="hidden dark:sm:block"
+              height={58}
+              className="hidden h-[58px] w-auto dark:sm:block"
             />
           </Link>
           <div className="flex items-center gap-3">
@@ -230,6 +230,24 @@ export default async function BusinessesIndex({
             </Link>
           </div>
         </nav>
+      )}
+
+      {/* Authed-user breadcrumb — gives a clear return path back into the */}
+      {/* gated app. Anonymous viewers see only the marketing nav above.    */}
+      {user && (
+        <div className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 py-2.5 flex items-center gap-2 text-xs sm:text-sm">
+            <Link
+              href="/directory"
+              className="inline-flex items-center gap-1 text-gray-500 hover:text-green-700 dark:text-gray-400 dark:hover:text-green-400 transition-colors"
+            >
+              <span aria-hidden="true">←</span>
+              <span>Back to Directory</span>
+            </Link>
+            <span className="text-gray-300 dark:text-gray-700" aria-hidden="true">/</span>
+            <span className="text-gray-700 dark:text-gray-300 font-medium">Public Businesses</span>
+          </div>
+        </div>
       )}
 
       {/* Page header */}

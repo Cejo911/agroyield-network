@@ -67,8 +67,8 @@ export default function ForgotPassword() {
       {/* NAV */}
       <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 40px', borderBottom: '1px solid var(--nav-border)' }}>
         <a href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-          <Image src="/logo-horizontal-colored.png" alt="AgroYield Network" className="auth-logo-colored" width={110} height={58} />
-          <Image src="/logo-horizontal-white.png"   alt="AgroYield Network" className="auth-logo-white"   width={110} height={58} />
+          <Image src="/logo-horizontal-colored.png" alt="AgroYield Network" className="auth-logo-colored" width={200} height={58} style={{ height: 58, width: 'auto' }} />
+          <Image src="/logo-horizontal-white.png"   alt="AgroYield Network" className="auth-logo-white"   width={200} height={58} style={{ height: 58, width: 'auto' }} />
         </a>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <ThemeToggle />
@@ -81,8 +81,8 @@ export default function ForgotPassword() {
         <div style={{ width: '100%', maxWidth: 440 }}>
           <div style={{ textAlign: 'center', marginBottom: 40 }}>
             <div style={{ margin: '0 auto 24px', display: 'flex', justifyContent: 'center' }}>
-              <Image src="/logo-stacked-colored.png" alt="AgroYield Network" className="auth-logo-colored" width={94} height={120} />
-              <Image src="/logo-stacked-white.png"   alt="AgroYield Network" className="auth-logo-white"   width={94} height={120} />
+              <Image src="/logo-stacked-colored.png" alt="AgroYield Network" className="auth-logo-colored" width={120} height={120} style={{ height: 120, width: 'auto' }} />
+              <Image src="/logo-stacked-white.png"   alt="AgroYield Network" className="auth-logo-white"   width={120} height={120} style={{ height: 120, width: 'auto' }} />
             </div>
             <h1 style={{ fontSize: 28, fontWeight: 900, color: 'var(--text-primary)', letterSpacing: -1, marginBottom: 8 }}>Reset your password</h1>
             <p style={{ fontSize: 15, color: 'var(--text-secondary)' }}>
