@@ -7,6 +7,68 @@ import AnnouncementBanner from "./components/AnnouncementBanner"
 import ThemeProvider from "./components/ThemeProvider"
 import PostHogProvider from "./components/PostHogProvider"
 
+const SITE_ORIGIN =
+  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ?? 'https://agroyield.africa'
+
+// ── Sitewide JSON-LD ────────────────────────────────────────────────────────
+// Two schemas emitted on every page via RootLayout:
+//
+//   Organization → canonical entity for "AgroYield Network". Unlocks Google
+//                  Knowledge Panel eligibility on brand searches.
+//   WebSite      → publisher link back to the Organization + SearchAction
+//                  pointing at /businesses?q=. Unlocks the sitelinks search
+//                  box feature in SERPs once Google trusts the entity.
+//
+// Both use stable @id URIs (`/#organization`, `/#website`) so downstream
+// schemas (LocalBusiness on /b/{slug}, future ItemList on /businesses, etc.)
+// can reference them without repeating the full definition.
+//
+// NOTE on sameAs: intentionally empty. Emitting broken / placeholder social
+// URLs is worse than emitting none — Google treats them as a trust signal.
+// Once X, LinkedIn, Instagram, Facebook accounts go live, add them here.
+const organizationJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  '@id': `${SITE_ORIGIN}/#organization`,
+  name: 'AgroYield Network',
+  alternateName: 'AgroYield',
+  url: SITE_ORIGIN,
+  logo: {
+    '@type': 'ImageObject',
+    url: `${SITE_ORIGIN}/logo-icon-colored.png`,
+    width: 513,
+    height: 513,
+  },
+  description:
+    "Nigeria's first digital platform connecting agricultural students, researchers, farmers, and agripreneurs. Grants, mentorship, live commodity prices, marketplace, and research — all in one place.",
+  foundingDate: '2026',
+  areaServed: { '@type': 'Country', name: 'Nigeria' },
+}
+
+const websiteJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  '@id': `${SITE_ORIGIN}/#website`,
+  url: SITE_ORIGIN,
+  name: 'AgroYield Network',
+  publisher: { '@id': `${SITE_ORIGIN}/#organization` },
+  inLanguage: 'en-NG',
+  // SearchAction target: /businesses?q={term} — shipped in B1.
+  potentialAction: {
+    '@type': 'SearchAction',
+    target: {
+      '@type': 'EntryPoint',
+      urlTemplate: `${SITE_ORIGIN}/businesses?q={search_term_string}`,
+    },
+    'query-input': 'required name=search_term_string',
+  },
+}
+
+// Escape `<` → `\u003c` to prevent any `</script>` breakout inside the inline
+// script tag. JSON accepts \u003c either way. Same pattern as /b/[slug].
+const sitewideJsonLdScript = JSON.stringify([organizationJsonLd, websiteJsonLd])
+  .replace(/</g, '\\u003c')
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -95,6 +157,11 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var t=localStorage.getItem('theme');if(t==='dark'){document.documentElement.classList.add('dark');document.documentElement.style.backgroundColor='#030712';}else{document.documentElement.style.backgroundColor='#ffffff';}}catch(e){}})()`,
           }}
+        />
+        {/* Sitewide JSON-LD: Organization + WebSite. See top of file. */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: sitewideJsonLdScript }}
         />
         <PostHogProvider>
           <ThemeProvider>

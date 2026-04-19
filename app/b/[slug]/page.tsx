@@ -254,12 +254,20 @@ export default async function PublicBusinessPage(
   // ── LocalBusiness structured data (JSON-LD) ────────────────────────────
   // Enables Google rich-snippet rendering. All source fields are already
   // sanitised at the API boundary (lib/sanitise.ts, Phase 4.5).
+  //
+  // Stable @id (`/b/{slug}#business`) lets the entity be referenced from the
+  // sitewide Organization/WebSite graph in layout.tsx without re-declaring.
+  // parentOrganization points back to the AgroYield Network Organization —
+  // communicates to Google that this LocalBusiness operates under the AgroYield
+  // umbrella, which strengthens brand-entity trust signals across the site.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const jsonLd: Record<string, any> = {
     '@context': 'https://schema.org',
     '@type': 'LocalBusiness',
+    '@id': `${SITE_ORIGIN}/b/${b.slug}#business`,
     name: b.name,
     url: `${SITE_ORIGIN}/b/${b.slug}`,
+    parentOrganization: { '@id': `${SITE_ORIGIN}/#organization` },
   }
   if (b.tagline) jsonLd.slogan = b.tagline
   if (b.about) jsonLd.description = b.about.slice(0, 500)
@@ -281,17 +289,35 @@ export default async function PublicBusinessPage(
   const sameAs = [websiteUrl, instagramUrl, facebookUrl].filter((u): u is string => Boolean(u))
   if (sameAs.length > 0) jsonLd.sameAs = sameAs
 
+  // ── BreadcrumbList structured data (JSON-LD) ───────────────────────────
+  // 3-rung trail: AgroYield Network → Businesses → {Business Name}.
+  // Google surfaces breadcrumbs in SERPs (replaces the raw URL under the
+  // title), which improves CTR and reinforces site hierarchy. The middle
+  // rung points at the public directory index (/businesses, shipped in B1).
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'AgroYield Network', item: SITE_ORIGIN },
+      { '@type': 'ListItem', position: 2, name: 'Businesses',        item: `${SITE_ORIGIN}/businesses` },
+      { '@type': 'ListItem', position: 3, name: b.name,              item: `${SITE_ORIGIN}/b/${b.slug}` },
+    ],
+  }
+
   // Escape `<` → `\u003c` to prevent any `</script>` breakout inside the
   // inline script tag. Valid JSON either way (JSON accepts \u003c).
-  const jsonLdScript = JSON.stringify(jsonLd).replace(/</g, '\\u003c')
+  // Array form emits both schemas in a single `<script>` tag — Google parses
+  // top-level arrays the same as multiple consecutive JSON-LD blocks.
+  const jsonLdScript = JSON.stringify([jsonLd, breadcrumbJsonLd]).replace(/</g, '\\u003c')
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* LocalBusiness structured data — SEO rich snippet */}
+      {/* LocalBusiness + BreadcrumbList structured data — SEO rich snippet */}
       <script
         type="application/ld+json"
-        // First use of dangerouslySetInnerHTML in the codebase; narrowly scoped
-        // to a server-built object literal with `<` pre-escaped.
+        // Scoped to server-built object literals with `<` pre-escaped. The
+        // sitewide Organization + WebSite schemas live in app/layout.tsx and
+        // are referenced by @id via parentOrganization above.
         dangerouslySetInnerHTML={{ __html: jsonLdScript }}
       />
       {/* Nav: AppNav for logged-in members, marketing nav for anonymous visitors */}
