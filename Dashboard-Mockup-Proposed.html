@@ -1,0 +1,545 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AgroYield Dashboard — Proposed Design Mockup</title>
+<style>
+  :root {
+    --green-50:#ecfdf5;
+    --green-100:#d1fae5;
+    --green-200:#a7f3d0;
+    --green-500:#10b981;
+    --green-600:#059669;
+    --green-700:#047857;
+    --green-800:#065f46;
+    --amber-50:#fffbeb;
+    --amber-100:#fef3c7;
+    --amber-500:#f59e0b;
+    --amber-600:#d97706;
+    --clay-50:#fdf6f0;
+    --clay-100:#fae8d8;
+    --clay-500:#c2895c;
+    --slate-50:#f8fafc;
+    --slate-100:#f1f5f9;
+    --slate-200:#e2e8f0;
+    --slate-300:#cbd5e1;
+    --slate-400:#94a3b8;
+    --slate-500:#64748b;
+    --slate-600:#475569;
+    --slate-700:#334155;
+    --slate-800:#1e293b;
+    --slate-900:#0f172a;
+    --bg:#fafaf9;
+    --surface:#ffffff;
+    --text:#0f172a;
+    --text-muted:#475569;
+    --border:#e2e8f0;
+    --shadow-sm:0 1px 2px 0 rgb(0 0 0 / 0.04);
+    --shadow-md:0 4px 16px -4px rgb(0 0 0 / 0.08);
+    --shadow-lg:0 16px 48px -16px rgb(0 0 0 / 0.18);
+    --radius:16px;
+  }
+  html.dark {
+    --bg:#0a0e0d;
+    --surface:#11181a;
+    --text:#f1f5f9;
+    --text-muted:#94a3b8;
+    --border:#1f2a2e;
+    --shadow-md:0 4px 16px -4px rgb(0 0 0 / 0.4);
+    --shadow-lg:0 16px 48px -16px rgb(0 0 0 / 0.6);
+    --slate-50:#11181a;
+    --slate-100:#1a2225;
+    --slate-200:#243035;
+    --slate-700:#cbd5e1;
+    --slate-800:#f1f5f9;
+    --slate-900:#ffffff;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
+
+  /* ============ HEADER (mockup of current nav) ============ */
+  .nav{background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
+  .nav-inner{max-width:1280px;margin:0 auto;display:flex;align-items:center;gap:32px;padding:14px 32px}
+  .brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:18px}
+  .brand-mark{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--green-500),var(--green-700));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:14px}
+  .nav-links{display:flex;gap:4px;flex:1;flex-wrap:wrap}
+  .nav-link{padding:8px 12px;border-radius:8px;color:var(--text-muted);font-size:14px;font-weight:500;transition:.15s}
+  .nav-link:hover{background:var(--slate-100);color:var(--text)}
+  .nav-link.active{color:var(--green-700);background:var(--green-50);font-weight:600}
+  html.dark .nav-link.active{background:rgba(16,185,129,.12);color:var(--green-200)}
+  .nav-icons{display:flex;align-items:center;gap:8px}
+  .icon-btn{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);transition:.15s}
+  .icon-btn:hover{background:var(--slate-100);color:var(--text)}
+  .avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--amber-500),var(--green-600));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;border:2px solid var(--green-500)}
+
+  /* ============ MOCKUP CONTROLS ============ */
+  .controls{position:fixed;top:84px;right:24px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:8px;z-index:40;box-shadow:var(--shadow-md);display:flex;gap:4px}
+  .ctrl{padding:6px 12px;border-radius:8px;font-size:13px;font-weight:500;color:var(--text-muted)}
+  .ctrl.active{background:var(--green-600);color:#fff}
+
+  /* ============ HERO STRIP ============ */
+  .container{max-width:1280px;margin:0 auto;padding:24px 32px}
+  .hero{
+    position:relative;
+    border-radius:24px;
+    overflow:hidden;
+    height:260px;
+    background:
+      linear-gradient(115deg, rgba(6,95,70,.92) 0%, rgba(6,95,70,.55) 50%, rgba(6,95,70,.15) 100%),
+      url('https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=1600&q=80&auto=format&fit=crop') center/cover;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    padding:36px 44px;
+    color:#fff;
+    box-shadow:var(--shadow-lg);
+  }
+  .hero-greeting{font-size:14px;font-weight:500;color:rgba(255,255,255,.85);letter-spacing:.04em;text-transform:uppercase;margin-bottom:8px}
+  .hero-name{font-size:clamp(28px,4vw,40px);font-weight:700;letter-spacing:-.02em;line-height:1.1;margin:0 0 12px}
+  .hero-name em{font-style:italic;font-weight:400;color:var(--green-200)}
+  .hero-sub{font-size:15px;color:rgba(255,255,255,.92);max-width:560px;line-height:1.5;margin:0 0 24px}
+  .hero-actions{display:flex;gap:12px;flex-wrap:wrap}
+  .btn-primary{background:#fff;color:var(--green-700);padding:11px 22px;border-radius:999px;font-weight:600;font-size:14px;display:inline-flex;align-items:center;gap:8px;transition:.15s;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+  .btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(0,0,0,.22)}
+  .btn-ghost{background:rgba(255,255,255,.14);color:#fff;backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.25);padding:11px 22px;border-radius:999px;font-weight:500;font-size:14px;display:inline-flex;align-items:center;gap:8px;transition:.15s}
+  .btn-ghost:hover{background:rgba(255,255,255,.22)}
+
+  /* ============ QUICK STATS STRIP ============ */
+  .stats{display:flex;gap:12px;margin-top:20px;flex-wrap:wrap}
+  .stat-chip{
+    background:var(--surface);
+    border:1px solid var(--border);
+    padding:10px 16px;
+    border-radius:999px;
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    font-size:13px;
+    font-weight:500;
+    color:var(--text);
+    transition:.15s;
+    cursor:pointer;
+    box-shadow:var(--shadow-sm);
+  }
+  .stat-chip:hover{border-color:var(--green-500);transform:translateY(-1px)}
+  .stat-dot{width:8px;height:8px;border-radius:50%}
+  .stat-dot.green{background:var(--green-500);box-shadow:0 0 0 3px var(--green-100)}
+  .stat-dot.amber{background:var(--amber-500);box-shadow:0 0 0 3px var(--amber-100)}
+  .stat-dot.red{background:#ef4444;box-shadow:0 0 0 3px #fee2e2}
+  .stat-strong{font-weight:700;color:var(--green-700)}
+  html.dark .stat-strong{color:var(--green-200)}
+
+  /* ============ MODULE GRID ============ */
+  .section-head{display:flex;align-items:baseline;justify-content:space-between;margin:36px 0 16px}
+  .section-title{font-size:18px;font-weight:700;letter-spacing:-.01em}
+  .section-link{font-size:13px;color:var(--green-700);font-weight:500}
+  html.dark .section-link{color:var(--green-200)}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  @media (max-width:980px){.grid{grid-template-columns:repeat(2,1fr)}}
+  @media (max-width:640px){.grid{grid-template-columns:1fr}}
+  .grid-secondary{grid-template-columns:repeat(4,1fr);gap:12px}
+  @media (max-width:980px){.grid-secondary{grid-template-columns:repeat(2,1fr)}}
+
+  .card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:22px;
+    transition:.18s;
+    cursor:pointer;
+    position:relative;
+    overflow:hidden;
+    box-shadow:var(--shadow-sm);
+  }
+  .card:hover{transform:translateY(-3px);box-shadow:var(--shadow-md);border-color:var(--green-500)}
+  .card::before{
+    content:"";
+    position:absolute;
+    top:0;left:0;
+    width:100%;height:3px;
+    background:linear-gradient(90deg,var(--green-500),var(--green-700));
+    opacity:0;
+    transition:.18s;
+  }
+  .card:hover::before{opacity:1}
+  .card-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px}
+  .card-icon{
+    width:44px;height:44px;
+    border-radius:12px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:22px;
+    background:var(--green-50);
+    color:var(--green-700);
+    transition:.18s;
+  }
+  .card:hover .card-icon{background:var(--green-600);color:#fff}
+  html.dark .card-icon{background:rgba(16,185,129,.12);color:var(--green-200)}
+  .card-badge{
+    background:var(--amber-100);
+    color:var(--amber-600);
+    font-size:11px;
+    font-weight:700;
+    padding:4px 10px;
+    border-radius:999px;
+    letter-spacing:.02em;
+  }
+  html.dark .card-badge{background:rgba(245,158,11,.18);color:#fcd34d}
+  .card-badge.green{background:var(--green-100);color:var(--green-700)}
+  html.dark .card-badge.green{background:rgba(16,185,129,.18);color:var(--green-200)}
+  .card-title{font-size:17px;font-weight:700;margin:0 0 4px;letter-spacing:-.01em}
+  .card-desc{font-size:13.5px;color:var(--text-muted);line-height:1.5;margin:0 0 16px}
+  .card-meta{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:var(--text-muted);padding-top:14px;border-top:1px dashed var(--border)}
+  .card-meta-strong{color:var(--green-700);font-weight:600}
+  html.dark .card-meta-strong{color:var(--green-200)}
+
+  /* small cards */
+  .scard{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;display:flex;align-items:center;gap:12px;transition:.18s;cursor:pointer;box-shadow:var(--shadow-sm)}
+  .scard:hover{transform:translateY(-2px);border-color:var(--green-500);box-shadow:var(--shadow-md)}
+  .scard-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;background:var(--clay-50);color:var(--clay-500);flex-shrink:0}
+  html.dark .scard-icon{background:rgba(194,137,92,.14)}
+  .scard-body{flex:1;min-width:0}
+  .scard-title{font-size:14px;font-weight:600;margin:0 0 2px}
+  .scard-meta{font-size:12px;color:var(--text-muted)}
+
+  /* ============ EXTENSION PREVIEW ============ */
+  .ext-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:20px}
+  @media (max-width:780px){.ext-grid{grid-template-columns:1fr}}
+  .ext{
+    border-radius:18px;
+    overflow:hidden;
+    border:1px solid var(--border);
+    background:var(--surface);
+    box-shadow:var(--shadow-sm);
+  }
+  .ext-hero{
+    height:120px;
+    padding:18px;
+    color:#fff;
+    display:flex;
+    flex-direction:column;
+    justify-content:flex-end;
+    position:relative;
+  }
+  .ext-hero-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;opacity:.8;margin-bottom:4px}
+  .ext-hero-title{font-size:20px;font-weight:700;margin:0;line-height:1.2}
+  .ext.opp .ext-hero{background:linear-gradient(120deg,#0f172a,#065f46),url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1200&q=80&auto=format&fit=crop') center/cover;background-blend-mode:multiply}
+  .ext.mkt .ext-hero{background:linear-gradient(120deg,#7c2d12,#c2410c),url('https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=1200&q=80&auto=format&fit=crop') center/cover;background-blend-mode:multiply}
+  .ext.price .ext-hero{background:linear-gradient(120deg,#1e3a8a,#1e40af),url('https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=1200&q=80&auto=format&fit=crop') center/cover;background-blend-mode:multiply}
+  .ext.dir .ext-hero{background:linear-gradient(120deg,#581c87,#7e22ce),url('https://images.unsplash.com/photo-1542838132-92c53300491e?w=1200&q=80&auto=format&fit=crop') center/cover;background-blend-mode:multiply}
+  .ext-body{padding:16px 18px;display:flex;justify-content:space-between;align-items:center;font-size:13px}
+  .ext-headline{font-weight:600}
+  .ext-meta{color:var(--text-muted)}
+
+  /* ============ DESIGN NOTES ============ */
+  .notes{margin:48px 0 24px;background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:28px}
+  .notes h3{margin:0 0 12px;font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px}
+  .notes-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:20px}
+  @media (max-width:780px){.notes-grid{grid-template-columns:1fr}}
+  .note h4{margin:0 0 6px;font-size:13px;font-weight:700;color:var(--green-700)}
+  html.dark .note h4{color:var(--green-200)}
+  .note p{margin:0;font-size:13px;color:var(--text-muted);line-height:1.55}
+
+  /* construction banner mock */
+  .construction{background:#fbbf24;color:#451a03;text-align:center;padding:8px 16px;font-size:13px;font-weight:600}
+
+  .footer{text-align:center;padding:24px;font-size:12px;color:var(--text-muted)}
+</style>
+</head>
+<body>
+
+<!-- Top construction banner mock (matches their current pattern) -->
+<div class="construction">Site under construction — Beta launch 20 April 2026</div>
+
+<!-- NAV: matches the current AgroYield nav layout -->
+<nav class="nav">
+  <div class="nav-inner">
+    <div class="brand">
+      <div class="brand-mark">A</div>
+      <span>AgroYield Network</span>
+    </div>
+    <div class="nav-links">
+      <a class="nav-link active">Dashboard</a>
+      <a class="nav-link">Community</a>
+      <a class="nav-link">Opportunities</a>
+      <a class="nav-link">Grants</a>
+      <a class="nav-link">Marketplace</a>
+      <a class="nav-link">Price Tracker</a>
+      <a class="nav-link">Directory</a>
+      <a class="nav-link">Research</a>
+      <a class="nav-link">Mentorship</a>
+      <a class="nav-link">Business</a>
+    </div>
+    <div class="nav-icons">
+      <button class="icon-btn" title="Toggle theme" onclick="document.documentElement.classList.toggle('dark')">◐</button>
+      <button class="icon-btn">✉</button>
+      <button class="icon-btn">🔔</button>
+      <div class="avatar">CO</div>
+    </div>
+  </div>
+</nav>
+
+<div class="controls">
+  <button class="ctrl active" onclick="document.documentElement.classList.remove('dark')">Light</button>
+  <button class="ctrl" onclick="document.documentElement.classList.add('dark')">Dark</button>
+</div>
+
+<div class="container">
+
+  <!-- ============ HERO STRIP ============ -->
+  <section class="hero">
+    <div class="hero-greeting">Saturday morning</div>
+    <h1 class="hero-name">Good morning, <em>Chijioke.</em></h1>
+    <p class="hero-sub">6 new opportunities this week, maize is up <strong>4.2%</strong> in Lagos, and 3 members in your network are looking for what you sell.</p>
+    <div class="hero-actions">
+      <a class="btn-primary">See what's new <span style="font-size:18px;line-height:1">→</span></a>
+      <a class="btn-ghost">Complete profile (80%)</a>
+    </div>
+  </section>
+
+  <!-- Quick stats chip strip -->
+  <div class="stats">
+    <span class="stat-chip"><span class="stat-dot green"></span>Profile <span class="stat-strong">80%</span> complete</span>
+    <span class="stat-chip"><span class="stat-dot amber"></span><span class="stat-strong">₦2.1M</span> in open grants this month</span>
+    <span class="stat-chip"><span class="stat-dot green"></span>3 new mentions in Community</span>
+    <span class="stat-chip"><span class="stat-dot red"></span>1 invoice overdue</span>
+    <span class="stat-chip"><span class="stat-dot green"></span>Health Score <span class="stat-strong">82</span></span>
+  </div>
+
+  <!-- ============ PRIMARY MODULE GRID ============ -->
+  <div class="section-head">
+    <h2 class="section-title">Your modules</h2>
+    <a class="section-link">Customise dashboard →</a>
+  </div>
+
+  <div class="grid">
+    <!-- Opportunities -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon">🎯</div>
+        <span class="card-badge">12 new</span>
+      </div>
+      <h3 class="card-title">Opportunities</h3>
+      <p class="card-desc">Grants, jobs, internships, and tenders matched to your profile.</p>
+      <div class="card-meta">
+        <span>Last updated 2h ago</span>
+        <span class="card-meta-strong">3 closing this week →</span>
+      </div>
+    </div>
+
+    <!-- Marketplace -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon">🛒</div>
+        <span class="card-badge green">Trending</span>
+      </div>
+      <h3 class="card-title">Marketplace</h3>
+      <p class="card-desc">Buy and sell agricultural inputs, produce, and equipment.</p>
+      <div class="card-meta">
+        <span>247 active listings</span>
+        <span class="card-meta-strong">8 trending →</span>
+      </div>
+    </div>
+
+    <!-- Price Tracker -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon">📈</div>
+        <span class="card-badge">Live</span>
+      </div>
+      <h3 class="card-title">Price Tracker</h3>
+      <p class="card-desc">Real commodity prices reported by members across Nigeria.</p>
+      <div class="card-meta">
+        <span>Maize <strong style="color:var(--green-600)">↑ 4.2%</strong> · Rice <strong style="color:#ef4444">↓ 1.1%</strong></span>
+        <span class="card-meta-strong">Lagos →</span>
+      </div>
+    </div>
+
+    <!-- Community -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon">💬</div>
+        <span class="card-badge">3 unread</span>
+      </div>
+      <h3 class="card-title">Community</h3>
+      <p class="card-desc">Conversations with farmers, agripreneurs, and researchers.</p>
+      <div class="card-meta">
+        <span>You're mentioned in 3 threads</span>
+        <span class="card-meta-strong">Open inbox →</span>
+      </div>
+    </div>
+
+    <!-- Directory -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon">👥</div>
+        <span class="card-badge green">+47</span>
+      </div>
+      <h3 class="card-title">Directory</h3>
+      <p class="card-desc">Discover and connect with people and businesses in agriculture.</p>
+      <div class="card-meta">
+        <span>1,284 members</span>
+        <span class="card-meta-strong">47 joined this week →</span>
+      </div>
+    </div>
+
+    <!-- Business -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon">🏢</div>
+        <span class="card-badge green">82</span>
+      </div>
+      <h3 class="card-title">Business Suite</h3>
+      <p class="card-desc">Invoices, expenses, customers, products, and reports.</p>
+      <div class="card-meta">
+        <span>Health Score</span>
+        <span class="card-meta-strong">View report →</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SECONDARY MODULES ============ -->
+  <div class="section-head">
+    <h2 class="section-title">Also for you</h2>
+  </div>
+
+  <div class="grid grid-secondary">
+    <div class="scard">
+      <div class="scard-icon">🎓</div>
+      <div class="scard-body">
+        <h4 class="scard-title">Research</h4>
+        <div class="scard-meta">2 new papers this week</div>
+      </div>
+    </div>
+    <div class="scard">
+      <div class="scard-icon">🤝</div>
+      <div class="scard-body">
+        <h4 class="scard-title">Mentorship</h4>
+        <div class="scard-meta">1 pending request</div>
+      </div>
+    </div>
+    <div class="scard">
+      <div class="scard-icon">💰</div>
+      <div class="scard-body">
+        <h4 class="scard-title">Grants</h4>
+        <div class="scard-meta">₦2.1M open this month</div>
+      </div>
+    </div>
+    <div class="scard">
+      <div class="scard-icon">📚</div>
+      <div class="scard-body">
+        <h4 class="scard-title">Learn</h4>
+        <div class="scard-meta">5 short courses</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ EXTENSION PREVIEW ============ -->
+  <div class="section-head">
+    <h2 class="section-title">How the same pattern extends to other modules</h2>
+  </div>
+
+  <div class="ext-grid">
+    <div class="ext opp">
+      <div class="ext-hero">
+        <div class="ext-hero-label">Opportunities</div>
+        <h3 class="ext-hero-title">Featured: ₦5M AgriTech Grant</h3>
+      </div>
+      <div class="ext-body">
+        <span class="ext-headline">Closing in 6 days</span>
+        <span class="ext-meta">12 new this week →</span>
+      </div>
+    </div>
+
+    <div class="ext mkt">
+      <div class="ext-hero">
+        <div class="ext-hero-label">Marketplace</div>
+        <h3 class="ext-hero-title">Trending: Drip irrigation kits</h3>
+      </div>
+      <div class="ext-body">
+        <span class="ext-headline">8 sellers in Lagos</span>
+        <span class="ext-meta">247 active listings →</span>
+      </div>
+    </div>
+
+    <div class="ext price">
+      <div class="ext-hero">
+        <div class="ext-hero-label">Price Tracker</div>
+        <h3 class="ext-hero-title">Maize ↑ 4.2% — biggest mover today</h3>
+      </div>
+      <div class="ext-body">
+        <span class="ext-headline">₦185,000 / tonne (Lagos)</span>
+        <span class="ext-meta">12 commodities tracked →</span>
+      </div>
+    </div>
+
+    <div class="ext dir">
+      <div class="ext-hero">
+        <div class="ext-hero-label">Directory</div>
+        <h3 class="ext-hero-title">47 new members this week</h3>
+      </div>
+      <div class="ext-body">
+        <span class="ext-headline">Featured: 3 verified businesses</span>
+        <span class="ext-meta">1,284 total members →</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ DESIGN NOTES ============ -->
+  <div class="notes">
+    <h3>🎨 Design notes for review</h3>
+    <p style="margin:0;color:var(--text-muted);font-size:14px;line-height:1.6">
+      This mockup adopts the visual DNA of the <code>/b/{slug}</code> business page — full-bleed hero photography, soft pill chips, layered cards, the AgroYield green as a confident accent, and warm secondary accents (amber for time-sensitive, clay for soft cards). Nothing about the underlying information architecture or routes changes — same nine modules, same nav, same dark mode. Only the surface treatment.
+    </p>
+    <div class="notes-grid">
+      <div class="note">
+        <h4>1. Personalised hero strip</h4>
+        <p>Replaces the empty top-of-page with a "good morning" greeting + dynamic stat line + single primary CTA. Tells the user "we know who you are and what changed since yesterday" in one glance.</p>
+      </div>
+      <div class="note">
+        <h4>2. Soft pill stat chips</h4>
+        <p>Five quick stats in pill form below the hero. Each is a one-tap shortcut to the relevant module. Borrowed directly from the contact pills on the business page.</p>
+      </div>
+      <div class="note">
+        <h4>3. Module cards with personality</h4>
+        <p>Same nine modules, but each card now carries a coloured icon block, a "live" badge (12 new, Trending, +47), and a meta footer with one piece of context. Icon flips to filled-green on hover.</p>
+      </div>
+      <div class="note">
+        <h4>4. Hover micro-interaction</h4>
+        <p>Cards lift 3px, gain a subtle shadow, and reveal a green top-border line. Cheap to implement, dramatic perceived-quality lift, particularly for desktop users.</p>
+      </div>
+      <div class="note">
+        <h4>5. Secondary-module strip</h4>
+        <p>Smaller cards for Research / Mentorship / Grants / Learn — quieter but still warm. Uses the clay accent so they don't compete with the primary six.</p>
+      </div>
+      <div class="note">
+        <h4>6. Pattern extends cleanly</h4>
+        <p>Bottom strip shows how the same hero-card composition translates to Opportunities, Marketplace, Price Tracker, and Directory — each with its own warm gradient + relevant editorial moment. One pattern, many surfaces.</p>
+      </div>
+    </div>
+    <div style="margin-top:24px;padding:16px;background:var(--green-50);border-radius:12px;border:1px solid var(--green-200);font-size:13px">
+      <strong style="color:var(--green-700)">⚠️ Pre-Beta scope discipline:</strong> only the Dashboard hero strip + softened module cards land before Monday. Everything else (Opportunities/Marketplace/Price/Directory hero treatments) is Week 1 post-Beta. The mockup shows the full vision so we agree on direction; the build is phased.
+    </div>
+    <div style="margin-top:12px;padding:16px;background:var(--amber-50);border-radius:12px;border:1px solid var(--amber-100);font-size:13px;color:#78350f">
+      <strong>📷 IP flag:</strong> hero photography in this mockup uses Unsplash imagery. Before production, swap to either AgroYield-owned photos, properly licensed stock, or AI-generated imagery — and verify no third-party logos (John Deere, Massey Ferguson, branded chemicals) are visible in any chosen photo.
+    </div>
+  </div>
+
+  <div class="footer">
+    AgroYield Network · Dashboard mockup · Light + Dark mode · 19 April 2026 · For review only — no code shipped
+  </div>
+</div>
+
+<script>
+  // sync the controls toggle with manual icon toggle
+  document.querySelectorAll('.ctrl').forEach(b=>{
+    b.addEventListener('click',()=>{
+      document.querySelectorAll('.ctrl').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+    });
+  });
+</script>
+</body>
+</html>
