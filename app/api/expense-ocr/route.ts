@@ -4,7 +4,7 @@ import { getSupabaseAdmin } from '@/lib/supabase/admin'
 import { isFeatureEnabled } from '@/lib/feature-flags'
 import { getEffectiveTier } from '@/lib/tiers'
 import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
-import { checkQuota, incrementUsage, getMonthlyUsage, getUsageLimits } from '@/lib/usage-tracking'
+import { checkQuota, incrementUsage, getMonthlyUsage, getUsageLimits, getVisionModel } from '@/lib/usage-tracking'
 import { getExpenseCategories, SAFE_DEFAULT_EXPENSE_CATEGORIES } from '@/lib/expense-categories'
 
 /**
@@ -37,7 +37,13 @@ import { getExpenseCategories, SAFE_DEFAULT_EXPENSE_CATEGORIES } from '@/lib/exp
 
 const ALLOWED_MIME = new Set(['image/jpeg', 'image/png', 'image/webp'])
 const MAX_BYTES = 5 * 1024 * 1024 // 5 MB
-const DEFAULT_MODEL = 'claude-haiku-4-5-20251001'
+
+// The Anthropic Vision model id is now admin-controllable via
+// `settings.expense_ocr_vision_model` — read at request time via
+// getVisionModel() from lib/usage-tracking. The previous DEFAULT_MODEL
+// constant is preserved as the fallback inside that getter, so first-deploy
+// behaviour is identical to the pre-migration value
+// 'claude-haiku-4-5-20251001'.
 
 // The Nigerian agri expense category vocabulary is admin-controllable and
 // lives in `settings.expense_categories` (see lib/expense-categories.ts).
@@ -81,6 +87,7 @@ async function callVision(
   imageBase64: string,
   mimeType: string,
   categories: readonly string[],
+  model: string,
 ): Promise<{ extraction: VisionExtraction; raw: unknown; model: string } | { error: string }> {
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
@@ -116,7 +123,7 @@ async function callVision(
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: DEFAULT_MODEL,
+        model,
         max_tokens: 500,
         messages: [
           {
@@ -179,7 +186,7 @@ async function callVision(
       notes: typeof obj.notes === 'string' ? obj.notes.trim().slice(0, 500) : null,
     }
 
-    return { extraction, raw, model: DEFAULT_MODEL }
+    return { extraction, raw, model }
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Vision call failed' }
   }
@@ -357,7 +364,10 @@ export async function POST(request: NextRequest) {
     const categories = await getExpenseCategories().catch(
       () => [...SAFE_DEFAULT_EXPENSE_CATEGORIES],
     )
-    const visionResult = await callVision(base64, file.type, categories)
+    // Pull the admin-controlled vision model id alongside categories.
+    // getVisionModel() never throws — falls back to the haiku default.
+    const visionModel = await getVisionModel()
+    const visionResult = await callVision(base64, file.type, categories, visionModel)
 
     if ('error' in visionResult) {
       // Store a failed row so the user sees it in the list with a retry hint.
@@ -372,7 +382,7 @@ export async function POST(request: NextRequest) {
           mime_type: file.type,
           file_size_bytes: file.size,
           extraction_error: visionResult.error,
-          model_used: DEFAULT_MODEL,
+          model_used: visionModel,
           status: 'failed',
         })
         .select()

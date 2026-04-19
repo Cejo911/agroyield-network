@@ -66,6 +66,43 @@ function validateValue(key: string, rawValue: string): string | null {
     return null
   }
 
+  // expense_ocr_vision_model — string allowlist. Mirrors ALLOWED_VISION_MODELS
+  // in lib/usage-tracking.ts (defence-in-depth: client UI is also restricted
+  // to the same dropdown). Accepts either a JSON-quoted string ("haiku...")
+  // or a bare string (haiku...) so the admin form can submit either shape
+  // without fragility — the read path normalises both.
+  if (key === 'expense_ocr_vision_model') {
+    const allowed = new Set([
+      'claude-haiku-4-5-20251001',
+      'claude-sonnet-4-6',
+      'claude-opus-4-6',
+    ])
+    let candidate = rawValue.trim()
+    if (candidate.startsWith('"') && candidate.endsWith('"')) {
+      try { candidate = JSON.parse(candidate) as string } catch { /* keep raw */ }
+    }
+    if (typeof candidate !== 'string' || !allowed.has(candidate)) {
+      return `expense_ocr_vision_model must be one of: ${[...allowed].join(', ')}`
+    }
+    return null
+  }
+
+  // recurring_template_cap — integer in [1, 1000]. Mirrors RECURRING_CAP_MIN
+  // / RECURRING_CAP_MAX in lib/recurring-limits.ts. The lower bound (1) lets
+  // an admin tighten the cap to effectively disable recurring for a tenant
+  // without a code path; the upper bound (1000) is a hard ceiling so a typo
+  // can't remove the wallet-drain guardrail.
+  if (key === 'recurring_template_cap') {
+    const n = Number(rawValue.trim())
+    if (!Number.isFinite(n) || !Number.isInteger(n)) {
+      return 'recurring_template_cap must be an integer'
+    }
+    if (n < 1 || n > 1000) {
+      return 'recurring_template_cap must be between 1 and 1000'
+    }
+    return null
+  }
+
   return null
 }
 

@@ -176,6 +176,92 @@ export function __clearUsageLimitsCache(): void {
   cached = null
 }
 
+// ─── Vision model (admin-controllable) ──────────────────────────────────────
+//
+// Seeded by 20260419_admin_controllable_settings.sql as 'expense_ocr_vision_model'.
+// Admin can swap between haiku (default; fast + cheap) and sonnet/opus
+// (higher accuracy on handwritten receipts, higher cost per call) from the
+// admin UI without a redeploy.
+//
+// An ALLOWLIST is enforced on both sides: the admin UI dropdown is the
+// client gate, the saveSettings validator is the server gate, and this
+// getter's normaliser is the reader gate. Any non-allowlisted value in
+// settings.value is ignored and SAFE_DEFAULT_VISION_MODEL is returned.
+//
+// This matches the seed default exactly, so first-deploy behaviour is
+// identical to the pre-migration DEFAULT_MODEL constant.
+
+/** Known-good Vision-capable Claude models the admin may select. Ordered
+ *  by cost (cheapest first). Keep in sync with the seed comment in
+ *  20260419_admin_controllable_settings.sql and the validator in
+ *  app/api/admin/settings/route.ts. */
+export const ALLOWED_VISION_MODELS = [
+  'claude-haiku-4-5-20251001',
+  'claude-sonnet-4-6',
+  'claude-opus-4-6',
+] as const
+export type VisionModelId = typeof ALLOWED_VISION_MODELS[number]
+
+const SAFE_DEFAULT_VISION_MODEL: VisionModelId = 'claude-haiku-4-5-20251001'
+const VISION_MODEL_CACHE_KEY = 'expense_ocr_vision_model'
+
+let cachedVisionModel: { model: VisionModelId; fetchedAt: number } | null = null
+
+/**
+ * Returns the currently-configured Anthropic Vision model id for receipt
+ * OCR. Cached in-process for 60s (same TTL as getUsageLimits). Never
+ * throws — falls back to SAFE_DEFAULT_VISION_MODEL on any read error or
+ * non-allowlisted value in settings.
+ */
+export async function getVisionModel(): Promise<VisionModelId> {
+  if (cachedVisionModel && Date.now() - cachedVisionModel.fetchedAt < CACHE_TTL_MS) {
+    return cachedVisionModel.model
+  }
+
+  try {
+    const admin = getSupabaseAdmin()
+    const { data, error } = await admin
+      .from('settings')
+      .select('value')
+      .eq('key', VISION_MODEL_CACHE_KEY)
+      .maybeSingle()
+
+    if (error || !data) {
+      cachedVisionModel = { model: SAFE_DEFAULT_VISION_MODEL, fetchedAt: Date.now() }
+      return SAFE_DEFAULT_VISION_MODEL
+    }
+
+    const raw = (data as { value: unknown }).value
+    // settings.value is a text column; admins may seed either a raw string
+    // or a JSON-quoted string. Accept both.
+    let candidate: string | null = null
+    if (typeof raw === 'string') {
+      const trimmed = raw.trim()
+      // JSON-quoted form ("claude-…") — unquote before allowlist check
+      if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
+        try { candidate = JSON.parse(trimmed) as string } catch { candidate = trimmed }
+      } else {
+        candidate = trimmed
+      }
+    }
+
+    const model: VisionModelId = (ALLOWED_VISION_MODELS as readonly string[]).includes(candidate ?? '')
+      ? (candidate as VisionModelId)
+      : SAFE_DEFAULT_VISION_MODEL
+
+    cachedVisionModel = { model, fetchedAt: Date.now() }
+    return model
+  } catch {
+    cachedVisionModel = { model: SAFE_DEFAULT_VISION_MODEL, fetchedAt: Date.now() }
+    return SAFE_DEFAULT_VISION_MODEL
+  }
+}
+
+/** Test-only: clear the vision model cache. */
+export function __clearVisionModelCache(): void {
+  cachedVisionModel = null
+}
+
 /** Returns the current YYYY-MM period string in UTC.
  *  Matches the CHECK constraint on usage_tracking.period_yyyymm. */
 export function currentPeriodYyyymm(now: Date = new Date()): string {

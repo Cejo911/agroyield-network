@@ -5,6 +5,7 @@ import { isFeatureEnabled } from '@/lib/feature-flags'
 import { getEffectiveTier } from '@/lib/tiers'
 import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { sanitiseText } from '@/lib/sanitise'
+import { getRecurringTemplateCap } from '@/lib/recurring-limits'
 
 /**
  * Recurring Invoices API (Unicorn #4).
@@ -38,9 +39,10 @@ interface LineItemInput {
 }
 
 // Maximum active templates per business — prevents runaway wallet-drain
-// if a user scripts 500 recurring invoices. 50 is generous; we can lift
-// later if a real user hits it.
-const MAX_ACTIVE_PER_BUSINESS = 50
+// if a user scripts 500 recurring invoices. Now admin-controllable via
+// `settings.recurring_template_cap` (seeded at 50, bumpable from the admin
+// dashboard without a redeploy). Read at request time via
+// getRecurringTemplateCap() from lib/recurring-limits.
 
 function computeNextRun(from: Date, cadence: Cadence): Date {
   const d = new Date(from)
@@ -171,15 +173,18 @@ export async function POST(request: NextRequest) {
       }, { status: 403 })
     }
 
-    // Enforce per-business cap on active templates.
+    // Enforce per-business cap on active templates. Cap is admin-tunable
+    // via settings.recurring_template_cap (getter has a 60s cache + safe
+    // default of 50, matching the pre-migration constant).
+    const maxActive = await getRecurringTemplateCap()
     const { count: activeCount } = await supa
       .from('recurring_invoices')
       .select('id', { count: 'exact', head: true })
       .eq('business_id', body.businessId)
       .eq('status', 'active')
-    if (typeof activeCount === 'number' && activeCount >= MAX_ACTIVE_PER_BUSINESS) {
+    if (typeof activeCount === 'number' && activeCount >= maxActive) {
       return NextResponse.json({
-        error: `Max ${MAX_ACTIVE_PER_BUSINESS} active recurring invoices per business`,
+        error: `Max ${maxActive} active recurring invoices per business`,
       }, { status: 409 })
     }
 

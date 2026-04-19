@@ -462,6 +462,40 @@ export default function AdminClient({
   })
   const [newExpenseCategory, setNewExpenseCategory] = useState('')
 
+  // ── Admin-controllable OCR Vision model (settings.expense_ocr_vision_model) ──
+  // Allowlist dropdown. Mirrors ALLOWED_VISION_MODELS in lib/usage-tracking.ts
+  // AND the allowlist inside validateValue() in app/api/admin/settings/route.ts.
+  // Keep all three in sync if we ever add a new model. Server stores as a bare
+  // string; admin submit as-is (validator also accepts JSON-quoted form).
+  const VISION_MODEL_OPTIONS: { id: string; label: string; hint: string }[] = [
+    { id: 'claude-haiku-4-5-20251001', label: 'Haiku 4.5',  hint: 'Default — fast, ~$1/M in, ~85% on printed receipts' },
+    { id: 'claude-sonnet-4-6',         label: 'Sonnet 4.6', hint: 'Higher accuracy on handwriting — ~5× Haiku cost' },
+    { id: 'claude-opus-4-6',           label: 'Opus 4.6',   hint: 'Premium — edge-case triage only, not steady-state' },
+  ]
+  const DEFAULT_VISION_MODEL = 'claude-haiku-4-5-20251001'
+  const initialVisionModel = (() => {
+    const raw = settingsMap.expense_ocr_vision_model
+    if (!raw) return DEFAULT_VISION_MODEL
+    // Normalise JSON-quoted form in case the DB row was written that way.
+    let candidate = raw.trim()
+    if (candidate.startsWith('"') && candidate.endsWith('"')) {
+      try { candidate = JSON.parse(candidate) as string } catch { /* fall through */ }
+    }
+    return VISION_MODEL_OPTIONS.some(o => o.id === candidate) ? candidate : DEFAULT_VISION_MODEL
+  })()
+  const [visionModel, setVisionModel] = useState<string>(initialVisionModel)
+
+  // ── Admin-controllable recurring template cap (settings.recurring_template_cap) ──
+  // Per-business max count of ACTIVE templates. Replaces the hardcoded
+  // MAX_ACTIVE_PER_BUSINESS = 50 in app/api/recurring-invoices/route.ts.
+  // Validator enforces integer in [1, 1000].
+  const DEFAULT_RECURRING_CAP = 50
+  const initialRecurringCap = (() => {
+    const n = Number((settingsMap.recurring_template_cap ?? '').trim())
+    return Number.isInteger(n) && n >= 1 && n <= 1000 ? n : DEFAULT_RECURRING_CAP
+  })()
+  const [recurringCap, setRecurringCap] = useState<number>(initialRecurringCap)
+
   const [savingSettings, setSavingSettings] = useState(false)
   const [settingsSaved, setSettingsSaved] = useState(false)
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
@@ -559,6 +593,11 @@ export default function AdminClient({
           // in /api/admin/settings rejects malformed shapes with 400.
           usage_limits: JSON.stringify(usageLimits),
           expense_categories: JSON.stringify(expenseCategories),
+          // Bucket C promotions (19 Apr 2026) — vision model allowlist +
+          // recurring-template cap. Both validated server-side; a typo in
+          // either is rejected with a 400 before any settings row is touched.
+          expense_ocr_vision_model: visionModel,
+          recurring_template_cap: String(recurringCap),
         }),
       })
       if (!res.ok) {
@@ -2249,6 +2288,50 @@ export default function AdminClient({
                         </div>
                       )
                     })}
+                  </div>
+                </div>
+                <hr className="border-gray-100 dark:border-gray-800" />
+                {/* Receipt OCR Vision Model — allowlist dropdown
+                    (settings.expense_ocr_vision_model). Lets the founder
+                    swap from Haiku to Sonnet during Beta if handwritten-
+                    receipt accuracy complaints come in, without a deploy. */}
+                <div>
+                  <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1 text-sm">Receipt OCR Vision Model</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Anthropic model used to extract vendor / amount / date / category from uploaded receipts. Higher tiers cost more per scan but improve handwritten accuracy. Restricted to a known-good allowlist.</p>
+                  <select
+                    value={visionModel}
+                    onChange={(e) => setVisionModel(e.target.value)}
+                    className={`w-full max-w-md ${sInput}`}
+                  >
+                    {VISION_MODEL_OPTIONS.map(opt => (
+                      <option key={opt.id} value={opt.id}>
+                        {opt.label} — {opt.hint}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <hr className="border-gray-100 dark:border-gray-800" />
+                {/* Recurring Template Cap — per-business max of active
+                    templates (settings.recurring_template_cap). Replaces the
+                    hardcoded 50 in /api/recurring-invoices/route.ts so an
+                    enterprise trial can be lifted without a redeploy. */}
+                <div>
+                  <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1 text-sm">Recurring Template Cap</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Max number of <em>active</em> recurring invoice templates a single business may keep at once. Guardrail against runaway scripted creation. Allowed range 1–1000.</p>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min={1}
+                      max={1000}
+                      step={1}
+                      value={recurringCap}
+                      onChange={(e) => {
+                        const n = parseInt(e.target.value, 10)
+                        setRecurringCap(Number.isFinite(n) ? n : DEFAULT_RECURRING_CAP)
+                      }}
+                      className={`w-24 ${sInput}`}
+                    />
+                    <span className="text-xs text-gray-500">templates per business</span>
                   </div>
                 </div>
                 <hr className="border-gray-100 dark:border-gray-800" />
