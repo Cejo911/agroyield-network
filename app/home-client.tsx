@@ -3,6 +3,23 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import ThemeToggle from '@/app/components/ThemeToggle'
 
+/**
+ * Shape of businesses passed in from the server for the landing-page
+ * discovery strip. All image/text fields are pre-filtered NOT NULL in
+ * fetchShowcaseBusinesses() — the strip never has to render a fallback.
+ */
+export type FeaturedBusiness = {
+  id: string
+  name: string
+  slug: string
+  sector: string | null
+  state: string | null
+  logo_url: string
+  cover_image_url: string
+  tagline: string
+  is_verified: boolean
+}
+
 // Launch instant locked to UTC midnight — without the Z suffix, Date parses as
 // LOCAL time, so server (UTC) and browser (e.g. WAT) would resolve to different
 // instants and trigger a hydration mismatch on top of the per-second clock skew.
@@ -177,7 +194,11 @@ const modules = [
   },
 ]
 
-export default function Home() {
+export default function Home({
+  featuredBusinesses = [],
+}: {
+  featuredBusinesses?: FeaturedBusiness[]
+} = {}) {
   return (
     <main id="top" style={{ fontFamily: "'Inter', system-ui, sans-serif", background: 'var(--bg-page)', color: 'var(--text-primary)', minHeight: '100vh', lineHeight: 1.6 }}>
       <style>{`
@@ -298,6 +319,51 @@ export default function Home() {
 
       <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, var(--divider), transparent)', margin: '0 24px' }} />
 
+      {/* DISCOVERY STRIP — only renders when ≥3 showcase-quality businesses exist */}
+      {featuredBusinesses.length > 0 && (
+        <>
+          <section style={{ position: 'relative', zIndex: 1, maxWidth: 1100, margin: '0 auto', padding: '80px 24px 48px' }}>
+            <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: 'var(--text-accent)', marginBottom: 14 }}>
+              Already on AgroYield
+            </p>
+            <h2 style={{ fontSize: 'clamp(28px, 4vw, 44px)', fontWeight: 900, letterSpacing: -1.4, color: 'var(--text-primary)', marginBottom: 14, lineHeight: 1.1 }}>
+              Real Nigerian agribusinesses,<br />building in public.
+            </h2>
+            <p style={{ fontSize: 16, color: 'var(--text-secondary)', maxWidth: 600, lineHeight: 1.65, marginBottom: 36 }}>
+              Verified founders are already onboarding to AgroYield. Browse a few of them below — or
+              join the waitlist to add yours.
+            </p>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+              gap: 16,
+            }}>
+              {featuredBusinesses.map(b => <FeaturedCard key={b.id} b={b} />)}
+            </div>
+
+            <div style={{ textAlign: 'center', marginTop: 36 }}>
+              <a
+                href="/businesses"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 8,
+                  fontSize: 14, fontWeight: 700,
+                  color: 'var(--text-accent)',
+                  background: 'var(--badge-bg)',
+                  border: '1px solid var(--badge-border)',
+                  borderRadius: 100, padding: '11px 24px',
+                  textDecoration: 'none',
+                }}
+              >
+                Browse all agribusinesses →
+              </a>
+            </div>
+          </section>
+
+          <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, var(--divider), transparent)', margin: '0 24px' }} />
+        </>
+      )}
+
       {/* WHAT IS AGROYIELD */}
       <div className="agy-modules-section" style={{ position: 'relative', zIndex: 1, maxWidth: 1100, margin: '0 auto' }}>
         <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: 'var(--text-accent)', marginBottom: 16 }}>What is AgroYield Network?</p>
@@ -353,5 +419,122 @@ export default function Home() {
         </div>
       </footer>
     </main>
+  )
+}
+
+// ─── Featured-business card (discovery strip) ──────────────────────────────
+
+function FeaturedCard({ b }: { b: FeaturedBusiness }) {
+  return (
+    <a
+      href={`/b/${b.slug}`}
+      style={{
+        display: 'block',
+        textDecoration: 'none',
+        background: 'var(--bg-card)',
+        border: '1px solid var(--border-color)',
+        borderRadius: 18,
+        overflow: 'hidden',
+        transition: 'transform 140ms ease, box-shadow 140ms ease',
+      }}
+    >
+      {/* Cover */}
+      <div
+        style={{
+          position: 'relative',
+          height: 130,
+          backgroundImage: `url(${b.cover_image_url})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+        role="img"
+        aria-label={`${b.name} cover image`}
+      >
+        {b.is_verified && (
+          <span
+            title="Admin-verified business on AgroYield Network"
+            style={{
+              position: 'absolute', top: 10, right: 10,
+              display: 'inline-flex', alignItems: 'center', gap: 4,
+              fontSize: 10, fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase' as const,
+              color: '#15803d',
+              background: 'rgba(255,255,255,0.95)',
+              border: '1px solid #bbf7d0',
+              borderRadius: 100,
+              padding: '3px 9px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+            }}
+          >
+            ✓ Verified
+          </span>
+        )}
+      </div>
+
+      {/* Body */}
+      <div style={{ padding: '0 18px 20px', position: 'relative' }}>
+        {/* Logo — half-overlapping the cover */}
+        <div
+          style={{
+            width: 52, height: 52, marginTop: -26, marginBottom: 14,
+            backgroundColor: '#fff',
+            backgroundImage: `url(${b.logo_url})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            borderRadius: 13,
+            border: '1px solid var(--border-color)',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+          }}
+          role="img"
+          aria-label={`${b.name} logo`}
+        />
+        <h3 style={{
+          fontSize: 16, fontWeight: 800, letterSpacing: -0.3,
+          color: 'var(--text-primary)',
+          marginBottom: 6,
+          lineHeight: 1.3,
+        }}>
+          {b.name}
+        </h3>
+        <p style={{
+          fontSize: 13, fontStyle: 'italic',
+          color: 'var(--text-accent)',
+          marginBottom: 14,
+          lineHeight: 1.45,
+          // Clamp to 2 lines so variable-length taglines don't blow up card height
+          display: '-webkit-box',
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: 'vertical' as const,
+          overflow: 'hidden',
+        }}>
+          {b.tagline}
+        </p>
+        <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: 6 }}>
+          {b.sector && (
+            <span style={{
+              fontSize: 11, fontWeight: 600,
+              color: 'var(--pill-text)',
+              background: 'var(--pill-bg)',
+              border: '1px solid var(--pill-border)',
+              borderRadius: 100,
+              padding: '3px 10px',
+            }}>
+              {b.sector}
+            </span>
+          )}
+          {b.state && (
+            <span style={{
+              fontSize: 11, fontWeight: 600,
+              color: 'var(--pill-text)',
+              background: 'var(--pill-bg)',
+              border: '1px solid var(--pill-border)',
+              borderRadius: 100,
+              padding: '3px 10px',
+            }}>
+              📍 {b.state}
+            </span>
+          )}
+        </div>
+      </div>
+    </a>
   )
 }
