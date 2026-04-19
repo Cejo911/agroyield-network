@@ -179,7 +179,11 @@ function BusinessSetup() {
         const { data: { publicUrl } } = supabase.storage
           .from('business-logos')
           .getPublicUrl(path)
-        setForm(f => ({ ...f, logo_url: publicUrl }))
+        // Cache-buster: upsert writes to the same path, so the public URL is
+        // stable and browsers + Supabase CDN keep serving the old bytes.
+        // Appending ?v=<timestamp> forces a fresh fetch without changing the
+        // underlying file name.
+        setForm(f => ({ ...f, logo_url: `${publicUrl}?v=${Date.now()}` }))
       }
     } catch (err: unknown) {
       console.error('Logo upload exception:', err)
@@ -206,7 +210,9 @@ function BusinessSetup() {
         const { data: { publicUrl } } = supabase.storage
           .from('business-logos')
           .getPublicUrl(path)
-        setForm(f => ({ ...f, cover_image_url: publicUrl }))
+        // Cache-buster — same-path upsert means the public URL is stable, so
+        // browsers + CDN keep serving the old image without this query string.
+        setForm(f => ({ ...f, cover_image_url: `${publicUrl}?v=${Date.now()}` }))
       }
     } catch (err) {
       console.error('Cover upload exception:', err)
