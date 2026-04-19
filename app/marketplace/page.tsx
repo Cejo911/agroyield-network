@@ -1,9 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import AppNav from '@/app/components/AppNav'
 import MarketplaceClient from './marketplace-client'
 import FAQAccordion from '@/app/components/FAQAccordion'
+import PageShell from '@/app/components/design/PageShell'
+import PageHeader from '@/app/components/design/PageHeader'
+import { PrimaryLink } from '@/app/components/design/Button'
 import { MODULE_FAQS } from '@/lib/faq-data'
 
 export default async function MarketplacePage() {
@@ -28,34 +30,26 @@ export default async function MarketplacePage() {
   for (const p of (profiles ?? []) as any[]) profileMap[p.id] = p
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <AppNav />
-      <main className="max-w-6xl mx-auto px-4 py-10">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Marketplace</h1>
-            <p className="text-gray-500 dark:text-gray-400 mt-1">
-              Buy, sell and trade agricultural products, inputs and equipment.
-            </p>
-          </div>
+    <PageShell maxWidth="6xl">
+      <PageHeader
+        title="Marketplace"
+        description="Buy, sell and trade agricultural products, inputs and equipment."
+        actions={
           <div className="flex items-center gap-3">
+            {/* "My Orders" is intentionally a text link (no button chrome) — */}
+            {/* it's a quieter companion to the primary "Post listing" CTA.    */}
             <Link
               href="/marketplace/orders"
               className="text-sm font-medium text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
             >
               My Orders
             </Link>
-            <Link
-              href="/marketplace/new"
-              className="bg-green-600 text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors"
-            >
-              Post listing
-            </Link>
+            <PrimaryLink href="/marketplace/new">Post listing</PrimaryLink>
           </div>
-        </div>
-        <MarketplaceClient listings={listingList} profileMap={profileMap} userId={user.id} />
-        <FAQAccordion items={MODULE_FAQS.marketplace} title="Frequently Asked Questions" subtitle="Common questions about Marketplace" compact />
-      </main>
-    </div>
+        }
+      />
+      <MarketplaceClient listings={listingList} profileMap={profileMap} userId={user.id} />
+      <FAQAccordion items={MODULE_FAQS.marketplace} title="Frequently Asked Questions" subtitle="Common questions about Marketplace" compact />
+    </PageShell>
   )
 }

@@ -1,7 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import ProfileForm from './profile-form'
-import AppNav from '@/app/components/AppNav'
+import PageShell from '@/app/components/design/PageShell'
+import PageHeader from '@/app/components/design/PageHeader'
 import ShareProfileLink from './share-profile-link'
 
 export default async function ProfilePage() {
@@ -26,16 +27,17 @@ export default async function ProfilePage() {
   const whatsapp: string | null  = (rawProfile && typeof rawProfile.whatsapp === 'string')   ? rawProfile.whatsapp  : null
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <AppNav />
-      <div className="max-w-2xl mx-auto px-4 py-12">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Your Profile</h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">Help the community know who you are</p>
-        </div>
+    <PageShell maxWidth="2xl">
+      {/* Harmonization note: previously used py-12 / mb-6 — now inherits    */}
+      {/* PageShell's py-10 and PageHeader's mb-8 for consistency with the   */}
+      {/* rest of the app. Visual diff is minor (2 units of vertical rhythm). */}
+      <PageHeader
+        title="Your Profile"
+        description="Help the community know who you are"
+      />
 
-        {/* Followers / Following stats */}
-        <div className="flex items-center gap-6 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm px-6 py-4 mb-6">
+      {/* Followers / Following stats */}
+      <div className="flex items-center gap-6 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm px-6 py-4 mb-6">
           <div>
             <p className="text-2xl font-bold text-gray-900 dark:text-white">{followersCount}</p>
             <p className="text-xs text-gray-500 dark:text-gray-400">Followers</p>
@@ -92,7 +94,6 @@ export default async function ProfilePage() {
             }}
           />
         </div>
-      </div>
-    </div>
+    </PageShell>
   )
 }

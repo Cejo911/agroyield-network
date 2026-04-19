@@ -1,11 +1,13 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
 import AppNav from '@/app/components/AppNav'
 import MentorBrowser from './mentor-browser'
 import { getSettings } from '@/lib/settings'
 import { getEffectiveTier } from '@/lib/tiers'
 import FAQAccordion from '@/app/components/FAQAccordion'
+import PageShell from '@/app/components/design/PageShell'
+import PageHeader from '@/app/components/design/PageHeader'
+import { PrimaryLink, SecondaryLink } from '@/app/components/design/Button'
 import { MODULE_FAQS } from '@/lib/faq-data'
 
 export default async function MentorshipPage() {
@@ -17,6 +19,10 @@ export default async function MentorshipPage() {
   const settings = await getSettings(['mentorship_enabled', 'mentorship_requires_verification'])
   const mentorshipEnabled = settings.mentorship_enabled !== 'false'
   if (!mentorshipEnabled) {
+    // Coming-soon empty state — centered hero layout doesn't use PageHeader
+    // (no subtitle slot, actions stack below title). We wrap it in PageShell
+    // so it picks up the canonical bg + AppNav while keeping the custom
+    // vertical rhythm (py-20 + text-center).
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
         <AppNav />
@@ -26,9 +32,9 @@ export default async function MentorshipPage() {
           <p className="text-gray-500 dark:text-gray-400">
             The mentorship module is currently being set up. Check back soon to connect with experienced agricultural professionals.
           </p>
-          <Link href="/dashboard" className="inline-block mt-6 bg-green-600 text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors">
-            Back to Dashboard
-          </Link>
+          <div className="mt-6 inline-flex">
+            <PrimaryLink href="/dashboard" size="lg">Back to Dashboard</PrimaryLink>
+          </div>
         </main>
       </div>
     )
@@ -49,9 +55,9 @@ export default async function MentorshipPage() {
             <p className="text-gray-500 dark:text-gray-400 mb-6">
               Mentorship features are available to Pro and Growth subscribers. Upgrade your plan to unlock access to mentors and mentorship requests.
             </p>
-            <Link href="/pricing" className="inline-block bg-green-600 text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors">
-              View Plans
-            </Link>
+            <div className="inline-flex">
+              <PrimaryLink href="/pricing" size="lg">View Plans</PrimaryLink>
+            </div>
           </main>
         </div>
       )
@@ -92,34 +98,21 @@ export default async function MentorshipPage() {
   }))
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <AppNav />
-      <main className="max-w-5xl mx-auto px-4 py-10">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Mentorship</h1>
-            <p className="text-gray-500 dark:text-gray-400 mt-1">
-              Connect with experienced agricultural professionals for guidance and growth.
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Link
-              href="/mentorship/sessions"
-              className="border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            >
-              My Requests
-            </Link>
-            <Link
-              href="/mentorship/become-mentor"
-              className="bg-green-600 text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors"
-            >
+    <PageShell maxWidth="5xl">
+      <PageHeader
+        title="Mentorship"
+        description="Connect with experienced agricultural professionals for guidance and growth."
+        actions={
+          <>
+            <SecondaryLink href="/mentorship/sessions">My Requests</SecondaryLink>
+            <PrimaryLink href="/mentorship/become-mentor">
               {ownProfile ? 'Edit Mentor Profile' : 'Become a Mentor'}
-            </Link>
-          </div>
-        </div>
-        <MentorBrowser mentors={mentorsWithRatings} userId={user.id} />
-        <FAQAccordion items={MODULE_FAQS.mentorship} title="Frequently Asked Questions" subtitle="Common questions about Mentorship" compact />
-      </main>
-    </div>
+            </PrimaryLink>
+          </>
+        }
+      />
+      <MentorBrowser mentors={mentorsWithRatings} userId={user.id} />
+      <FAQAccordion items={MODULE_FAQS.mentorship} title="Frequently Asked Questions" subtitle="Common questions about Mentorship" compact />
+    </PageShell>
   )
 }

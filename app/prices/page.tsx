@@ -1,11 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
 import PricesClient from './prices-client'
 import PriceIntelligence from './price-intelligence'
 import FAQAccordion from '@/app/components/FAQAccordion'
 import { MODULE_FAQS } from '@/lib/faq-data'
-import AppNav from '@/app/components/AppNav'
+import PageShell from '@/app/components/design/PageShell'
+import PageHeader from '@/app/components/design/PageHeader'
+import { PrimaryLink } from '@/app/components/design/Button'
 import PricesTabs from './prices-tabs'
 import { getSettings } from '@/lib/settings'
 
@@ -53,32 +54,23 @@ export default async function PricesPage() {
     .order('created_at', { ascending: false })
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <AppNav />
-      <main className="max-w-6xl mx-auto px-4 py-10">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Price Tracker</h1>
-            <p className="text-gray-500 dark:text-gray-400 mt-1">
-              Live commodity prices reported by members across Nigeria.
-            </p>
-          </div>
-          <Link href="/prices/submit" className="bg-green-600 text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors">
-            Report a price
-          </Link>
-        </div>
-        <PricesTabs
-          reportsTab={<PricesClient reports={reports} userId={user.id} categories={categories} />}
-          intelligenceTab={
-            <PriceIntelligence
-              reports={reports as any}
-              alerts={(alerts ?? []) as any}
-              userId={user.id}
-            />
-          }
-        />
-        <FAQAccordion items={MODULE_FAQS.prices} title="Frequently Asked Questions" subtitle="Common questions about Price Tracker" compact />
-      </main>
-    </div>
+    <PageShell maxWidth="6xl">
+      <PageHeader
+        title="Price Tracker"
+        description="Live commodity prices reported by members across Nigeria."
+        actions={<PrimaryLink href="/prices/submit">Report a price</PrimaryLink>}
+      />
+      <PricesTabs
+        reportsTab={<PricesClient reports={reports} userId={user.id} categories={categories} />}
+        intelligenceTab={
+          <PriceIntelligence
+            reports={reports as any}
+            alerts={(alerts ?? []) as any}
+            userId={user.id}
+          />
+        }
+      />
+      <FAQAccordion items={MODULE_FAQS.prices} title="Frequently Asked Questions" subtitle="Common questions about Price Tracker" compact />
+    </PageShell>
   )
 }

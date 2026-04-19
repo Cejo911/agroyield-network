@@ -1,9 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
-import AppNav from '@/app/components/AppNav'
 import ResearchClient from './research-client'
 import FAQAccordion from '@/app/components/FAQAccordion'
+import PageShell from '@/app/components/design/PageShell'
+import PageHeader from '@/app/components/design/PageHeader'
+import { PrimaryLink } from '@/app/components/design/Button'
 import { MODULE_FAQS } from '@/lib/faq-data'
 
 export default async function ResearchPage() {
@@ -28,23 +29,14 @@ export default async function ResearchPage() {
   for (const p of (profiles ?? []) as any[]) profileMap[p.id] = p
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <AppNav />
-      <main className="max-w-4xl mx-auto px-4 py-10">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Research Board</h1>
-            <p className="text-gray-500 dark:text-gray-400 mt-1">
-              Share findings, ask questions, and collaborate on agricultural research.
-            </p>
-          </div>
-          <Link href="/research/new" className="bg-green-600 text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors">
-            Post research
-          </Link>
-        </div>
-        <ResearchClient posts={postList} profileMap={profileMap} userId={user.id} />
-        <FAQAccordion items={MODULE_FAQS.research} title="Frequently Asked Questions" subtitle="Common questions about the Research Hub" compact />
-      </main>
-    </div>
+    <PageShell maxWidth="4xl">
+      <PageHeader
+        title="Research Board"
+        description="Share findings, ask questions, and collaborate on agricultural research."
+        actions={<PrimaryLink href="/research/new">Post research</PrimaryLink>}
+      />
+      <ResearchClient posts={postList} profileMap={profileMap} userId={user.id} />
+      <FAQAccordion items={MODULE_FAQS.research} title="Frequently Asked Questions" subtitle="Common questions about the Research Hub" compact />
+    </PageShell>
   )
 }

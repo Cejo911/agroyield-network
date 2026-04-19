@@ -1,8 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import AppNav from '@/app/components/AppNav'
 import CommunityClient from './community-client'
 import FAQAccordion from '@/app/components/FAQAccordion'
+import PageShell from '@/app/components/design/PageShell'
+import PageHeader from '@/app/components/design/PageHeader'
 import { MODULE_FAQS } from '@/lib/faq-data'
 
 export default async function CommunityPage() {
@@ -69,26 +70,21 @@ export default async function CommunityPage() {
   for (const c of (commentCounts ?? []) as any[]) commentCountMap[c.post_id] = (commentCountMap[c.post_id] || 0) + 1
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <AppNav />
-      <main className="max-w-3xl mx-auto px-4 py-10">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Community</h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">
-            Share ideas, ask questions, celebrate wins, and connect with the agri community.
-          </p>
-        </div>
-        <CommunityClient
-          posts={postList}
-          parentMap={parentMap}
-          profileMap={profileMap}
-          likeCountMap={likeCountMap}
-          userLikedSet={Array.from(userLikedSet)}
-          commentCountMap={commentCountMap}
-          currentUserId={user.id}
-        />
-        <FAQAccordion items={MODULE_FAQS.community} title="Frequently Asked Questions" subtitle="Common questions about Community" compact />
-      </main>
-    </div>
+    <PageShell maxWidth="3xl">
+      <PageHeader
+        title="Community"
+        description="Share ideas, ask questions, celebrate wins, and connect with the agri community."
+      />
+      <CommunityClient
+        posts={postList}
+        parentMap={parentMap}
+        profileMap={profileMap}
+        likeCountMap={likeCountMap}
+        userLikedSet={Array.from(userLikedSet)}
+        commentCountMap={commentCountMap}
+        currentUserId={user.id}
+      />
+      <FAQAccordion items={MODULE_FAQS.community} title="Frequently Asked Questions" subtitle="Common questions about Community" compact />
+    </PageShell>
   )
 }

@@ -1,8 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import AppNav from '@/app/components/AppNav'
 import GrantsClient from './grants-client'
 import FAQAccordion from '@/app/components/FAQAccordion'
+import PageShell from '@/app/components/design/PageShell'
+import PageHeader from '@/app/components/design/PageHeader'
+import { PrimaryLink, SecondaryLink } from '@/app/components/design/Button'
 import { MODULE_FAQS } from '@/lib/faq-data'
 
 export default async function GrantsPage() {
@@ -39,36 +41,19 @@ export default async function GrantsPage() {
   const isAdmin = profile?.is_admin === true
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <AppNav />
-      <main className="max-w-6xl mx-auto px-4 py-10">
-        <div className="flex items-start justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Grants & Funding</h1>
-            <p className="text-gray-500 dark:text-gray-400 mt-1">
-              Discover grants, fellowships, and funding opportunities in agriculture.
-            </p>
-          </div>
-          <div className="flex gap-3">
-            <a
-              href="/grants/my-applications"
-              className="text-sm font-medium bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2.5 rounded-lg hover:border-green-400 dark:hover:border-green-600 transition-colors"
-            >
-              My Applications
-            </a>
-            {isAdmin && (
-              <a
-                href="/grants/post"
-                className="text-sm font-semibold bg-green-600 text-white px-4 py-2.5 rounded-lg hover:bg-green-700 transition-colors"
-              >
-                + Post Grant
-              </a>
-            )}
-          </div>
-        </div>
-        <GrantsClient grants={grants ?? []} applicationMap={applicationMap} />
-        <FAQAccordion items={MODULE_FAQS.grants} title="Frequently Asked Questions" subtitle="Common questions about Grants" compact />
-      </main>
-    </div>
+    <PageShell maxWidth="6xl">
+      <PageHeader
+        title="Grants & Funding"
+        description="Discover grants, fellowships, and funding opportunities in agriculture."
+        actions={
+          <>
+            <SecondaryLink href="/grants/my-applications">My Applications</SecondaryLink>
+            {isAdmin && <PrimaryLink href="/grants/post">+ Post Grant</PrimaryLink>}
+          </>
+        }
+      />
+      <GrantsClient grants={grants ?? []} applicationMap={applicationMap} />
+      <FAQAccordion items={MODULE_FAQS.grants} title="Frequently Asked Questions" subtitle="Common questions about Grants" compact />
+    </PageShell>
   )
 }

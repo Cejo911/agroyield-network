@@ -2,8 +2,9 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import DirectoryClient from './directory-client'
-import AppNav from '@/app/components/AppNav'
 import FAQAccordion from '@/app/components/FAQAccordion'
+import PageShell from '@/app/components/design/PageShell'
+import PageHeader from '@/app/components/design/PageHeader'
 import { MODULE_FAQS } from '@/lib/faq-data'
 
 export default async function DirectoryPage() {
@@ -63,46 +64,41 @@ export default async function DirectoryPage() {
   const menteeIds: string[] = Array.from(new Set(menteeIdsRaw))
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <AppNav />
-      <main className="max-w-6xl mx-auto px-4 py-10">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Member Directory</h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">
-            Connect with students, researchers, farmers and agripreneurs across Africa.
+    <PageShell maxWidth="6xl">
+      <PageHeader
+        title="Member Directory"
+        description="Connect with students, researchers, farmers and agripreneurs across Africa."
+      />
+
+      {/* Public business index cross-link — routes users from the member */}
+      {/* directory to the separate public /businesses listing.              */}
+      <Link
+        href="/businesses"
+        className="mb-6 flex items-center justify-between gap-4 rounded-xl border border-green-200 bg-green-50 px-5 py-4 transition-colors hover:border-green-300 hover:bg-green-100 dark:border-green-900/60 dark:bg-green-900/20 dark:hover:border-green-800 dark:hover:bg-green-900/30"
+      >
+        <div className="min-w-0">
+          <p className="font-semibold text-green-900 dark:text-green-300">
+            Looking for agribusinesses?
+          </p>
+          <p className="mt-0.5 text-sm text-green-800/80 dark:text-green-400/80">
+            Browse the public Business Directory — farms, co-ops, and agri-companies.
           </p>
         </div>
+        <span className="shrink-0 text-sm font-semibold text-green-700 dark:text-green-400">
+          View businesses →
+        </span>
+      </Link>
 
-        {/* Public business index cross-link — routes users from the member */}
-        {/* directory to the separate public /businesses listing.              */}
-        <Link
-          href="/businesses"
-          className="mb-6 flex items-center justify-between gap-4 rounded-xl border border-green-200 bg-green-50 px-5 py-4 transition-colors hover:border-green-300 hover:bg-green-100 dark:border-green-900/60 dark:bg-green-900/20 dark:hover:border-green-800 dark:hover:bg-green-900/30"
-        >
-          <div className="min-w-0">
-            <p className="font-semibold text-green-900 dark:text-green-300">
-              Looking for agribusinesses?
-            </p>
-            <p className="mt-0.5 text-sm text-green-800/80 dark:text-green-400/80">
-              Browse the public Business Directory — farms, co-ops, and agri-companies.
-            </p>
-          </div>
-          <span className="shrink-0 text-sm font-semibold text-green-700 dark:text-green-400">
-            View businesses →
-          </span>
-        </Link>
-
-        <DirectoryClient
-          profiles={profiles ?? []}
-          currentUserId={user.id}
-          followingIds={followingIds}
-          followerIds={followerIds}
-          followerCountMap={followerCountMap}
-          mentorIds={mentorIds}
-          menteeIds={menteeIds}
-        />
-        <FAQAccordion items={MODULE_FAQS.directory} title="Frequently Asked Questions" subtitle="Common questions about the Directory" compact />
-      </main>
-    </div>
+      <DirectoryClient
+        profiles={profiles ?? []}
+        currentUserId={user.id}
+        followingIds={followingIds}
+        followerIds={followerIds}
+        followerCountMap={followerCountMap}
+        mentorIds={mentorIds}
+        menteeIds={menteeIds}
+      />
+      <FAQAccordion items={MODULE_FAQS.directory} title="Frequently Asked Questions" subtitle="Common questions about the Directory" compact />
+    </PageShell>
   )
 }

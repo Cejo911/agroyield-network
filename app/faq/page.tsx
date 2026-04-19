@@ -1,5 +1,5 @@
-import AppNav from '@/app/components/AppNav'
 import FAQClient from './faq-client'
+import PageShell from '@/app/components/design/PageShell'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -7,13 +7,13 @@ export const metadata: Metadata = {
   description: 'Frequently asked questions about AgroYield Network modules, features, and subscriptions.',
 }
 
+// Uses maxWidth="none" because FAQClient renders its own internal width
+// container. Visual diff vs. previous markup: vertical padding moves from
+// py-12 to PageShell's standard py-10 (2-unit harmonization).
 export default function FAQPage() {
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <AppNav />
-      <main className="px-4 py-12">
-        <FAQClient />
-      </main>
-    </div>
+    <PageShell maxWidth="none">
+      <FAQClient />
+    </PageShell>
   )
 }

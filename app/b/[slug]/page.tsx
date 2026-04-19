@@ -5,6 +5,7 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import AppNav from '@/app/components/AppNav'
+import { PrimaryLink } from '@/app/components/design/Button'
 import { safeHref } from '@/lib/safe-href'
 import ReportButton from '@/app/components/ReportButton'
 import WriteReviewButton from './WriteReviewButton'
@@ -679,15 +680,20 @@ export default async function PublicBusinessPage(
               Get updates from {b.name}, message them directly, and discover other Nigerian agri businesses.
             </p>
             <div className="flex justify-center gap-3 flex-wrap">
-              <Link
+              {/* Primary "Follow" uses the lg-size design primitive — matches    */}
+              {/* /mentorship's gated CTAs and other centered hero callouts.     */}
+              <PrimaryLink
                 href={`/signup?intent=follow_business&biz=${encodeURIComponent(b.slug)}`}
-                className="bg-green-600 text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors"
+                size="lg"
               >
                 Follow {b.name}
-              </Link>
+              </PrimaryLink>
+              {/* Sign-in stays inline — green-tinted outline (border-green-300, */}
+              {/* text-green-700) doesn't yet match the gray SecondaryLink       */}
+              {/* default. Promote when a 3rd green-tinted secondary appears.    */}
               <Link
                 href={`/login?next=${encodeURIComponent(`/b/${b.slug}`)}`}
-                className="border border-green-300 text-green-700 px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-100 transition-colors"
+                className="inline-flex items-center justify-center border border-green-300 text-green-700 px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-100 transition-colors"
               >
                 Already a member? Sign in
               </Link>
