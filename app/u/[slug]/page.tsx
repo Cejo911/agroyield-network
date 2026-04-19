@@ -109,7 +109,7 @@ export default async function PublicProfilePage(
       {user ? <AppNav /> : (
         <nav className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
           <a href="/" className="flex items-center gap-2 no-underline">
-            <Image src="/logo-horizontal-colored.png" alt="AgroYield Network" width={63} height={34} className="h-[34px] w-auto" />
+            <Image src="/logo-horizontal-colored.png" alt="AgroYield Network" width={200} height={58} className="h-[58px] w-auto" />
           </a>
           <div className="flex items-center gap-3">
             <a href="/login" className="text-sm text-gray-600 hover:text-gray-900 font-medium">Log in</a>

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import DirectoryClient from './directory-client'
 import AppNav from '@/app/components/AppNav'
 import FAQAccordion from '@/app/components/FAQAccordion'
@@ -71,6 +72,26 @@ export default async function DirectoryPage() {
             Connect with students, researchers, farmers and agripreneurs across Africa.
           </p>
         </div>
+
+        {/* Public business index cross-link — routes users from the member */}
+        {/* directory to the separate public /businesses listing.              */}
+        <Link
+          href="/businesses"
+          className="mb-6 flex items-center justify-between gap-4 rounded-xl border border-green-200 bg-green-50 px-5 py-4 transition-colors hover:border-green-300 hover:bg-green-100 dark:border-green-900/60 dark:bg-green-900/20 dark:hover:border-green-800 dark:hover:bg-green-900/30"
+        >
+          <div className="min-w-0">
+            <p className="font-semibold text-green-900 dark:text-green-300">
+              Looking for agribusinesses?
+            </p>
+            <p className="mt-0.5 text-sm text-green-800/80 dark:text-green-400/80">
+              Browse the public Business Directory — farms, co-ops, and agri-companies.
+            </p>
+          </div>
+          <span className="shrink-0 text-sm font-semibold text-green-700 dark:text-green-400">
+            View businesses →
+          </span>
+        </Link>
+
         <DirectoryClient
           profiles={profiles ?? []}
           currentUserId={user.id}

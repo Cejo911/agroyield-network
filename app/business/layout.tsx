@@ -18,13 +18,14 @@ export default async function BusinessLayout({ children }: { children: React.Rea
           {/* Desktop Sidebar — hidden on mobile */}
           <aside className="w-48 shrink-0 hidden lg:block">
             <nav className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 p-3 space-y-1 sticky top-6">
-              {/* Logo */}
+              {/* Logo — matches signup page benchmark (200×58). */}
               <div className="px-3 py-2 mb-1">
                 <Image
                   src="/logo-horizontal-colored.png"
                   alt="AgroYield Network"
-                  width={170}
-                  height={50}
+                  width={200}
+                  height={58}
+                  className="h-[58px] w-auto"
                 />
               </div>
               <div className="border-t border-gray-100 dark:border-gray-800 my-1" />

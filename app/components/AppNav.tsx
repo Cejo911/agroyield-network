@@ -134,20 +134,20 @@ export default function AppNav() {
     height={44}
     className="block sm:hidden"
   />
-  {/* Horizontal logo on desktop */}
+  {/* Horizontal logo on desktop — matches signup page benchmark (200×58). */}
   <Image
     src="/logo-horizontal-colored.png"
     alt="AgroYield Network"
     width={200}
-    height={50}
-    className="hidden sm:block dark:hidden"
+    height={58}
+    className="hidden h-[58px] w-auto sm:block dark:hidden"
   />
   <Image
     src="/logo-horizontal-white.png"
     alt="AgroYield Network"
     width={200}
-    height={50}
-    className="hidden dark:sm:block"
+    height={58}
+    className="hidden h-[58px] w-auto dark:sm:block"
   />
 </Link>
 

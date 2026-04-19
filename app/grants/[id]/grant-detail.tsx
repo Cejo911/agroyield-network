@@ -141,10 +141,6 @@ export default function GrantDetail({ grant, application, userProfile, userId }:
 
   return (
     <div>
-      <Link href="/grants" className="text-sm text-green-600 hover:underline mb-6 inline-block">
-        ← Back to Grants
-      </Link>
-
       {/* Grant info card */}
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 mb-6">
         <div className="flex items-center gap-2 flex-wrap mb-3">
