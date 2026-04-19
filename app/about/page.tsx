@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import ThemeToggle from '@/app/components/ThemeToggle'
+import PublicFooter from '@/app/components/PublicFooter'
 
 export const metadata: Metadata = {
   title: 'About',
@@ -223,16 +224,8 @@ export default function About() {
         </a>
       </div>
 
-      {/* FOOTER */}
-      <footer className="agy-footer" style={{ borderTop: '1px solid var(--border-color)' }}>
-        <p style={{ fontSize: 13, color: 'var(--text-footer)' }}>© 2026 AgroYield Network. All rights reserved.</p>
-        <p style={{ fontSize: 11, color: 'var(--text-footer)', opacity: 0.6, marginTop: 4 }}>An Agcoms International Project</p>
-        <div className="agy-footer-links">
-          {['Contact', 'Privacy', 'Twitter / X', 'LinkedIn'].map(link => (
-            <a key={link} href={link === 'Contact' ? 'mailto:hello@agroyield.africa' : '#'} style={{ fontSize: 13, color: 'var(--text-footer)', textDecoration: 'none' }}>{link}</a>
-          ))}
-        </div>
-      </footer>
+      {/* FOOTER — shared across all public pages */}
+      <PublicFooter />
     </main>
   )
 }

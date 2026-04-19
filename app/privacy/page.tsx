@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import PublicFooter from '@/app/components/PublicFooter'
 
 export default function PrivacyPolicy() {
   return (
@@ -95,14 +96,8 @@ export default function PrivacyPolicy() {
         ))}
       </div>
 
-      {/* FOOTER */}
-      <footer style={{ borderTop: '1px solid var(--nav-border)', padding: '24px 40px', textAlign: 'center' }}>
-        <p style={{ fontSize: 12, color: 'var(--text-footer)', margin: 0 }}>
-          © 2026 AgroYield Network · Nigeria ·{' '}
-          <a href="/terms" style={{ color: 'var(--text-footer)', textDecoration: 'underline' }}>Terms of Service</a>
-        </p>
-        <p style={{ fontSize: 10, color: 'var(--text-footer)', opacity: 0.6, margin: '4px 0 0' }}>An Agcoms International Project</p>
-      </footer>
+      {/* FOOTER — shared across all public pages */}
+      <PublicFooter />
     </main>
   )
 }

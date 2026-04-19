@@ -4,6 +4,7 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import AppNav from '@/app/components/AppNav'
+import PublicFooter from '@/app/components/PublicFooter'
 
 /**
  * /businesses — public directory index.
@@ -383,21 +384,9 @@ export default async function BusinessesIndex({
         )}
       </main>
 
-      {/* Footer */}
-      {!user && (
-        <footer className="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 mt-10">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 flex flex-wrap items-center justify-between gap-4 text-sm text-gray-500 dark:text-gray-400">
-            <p>© 2026 AgroYield Network. All rights reserved.</p>
-            <div className="flex flex-wrap gap-5">
-              <Link href="/" className="hover:text-gray-800 dark:hover:text-gray-200">Home</Link>
-              <Link href="/about" className="hover:text-gray-800 dark:hover:text-gray-200">About</Link>
-              <Link href="/contact" className="hover:text-gray-800 dark:hover:text-gray-200">Contact</Link>
-              <Link href="/privacy" className="hover:text-gray-800 dark:hover:text-gray-200">Privacy</Link>
-              <Link href="/terms" className="hover:text-gray-800 dark:hover:text-gray-200">Terms</Link>
-            </div>
-          </div>
-        </footer>
-      )}
+      {/* Footer — shared across all public pages (signed-out only, so authed */}
+      {/* users stay in the gated app shell). */}
+      {!user && <PublicFooter />}
     </div>
   )
 }

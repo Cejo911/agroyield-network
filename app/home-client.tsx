@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import ThemeToggle from '@/app/components/ThemeToggle'
+import PublicFooter from '@/app/components/PublicFooter'
 
 /**
  * Shape of businesses passed in from the server for the landing-page
@@ -405,19 +406,8 @@ export default function Home({
         <p style={{ fontSize: 13, color: 'var(--text-footer)' }}>Free forever for founding members &nbsp;·&nbsp; No spam, ever.</p>
       </div>
 
-      {/* FOOTER */}
-      <footer className="agy-footer" style={{ borderTop: '1px solid var(--border-color)', position: 'relative', zIndex: 1 }}>
-        <p style={{ fontSize: 13, color: 'var(--text-footer)' }}>© 2026 AgroYield Network. All rights reserved.</p>
-        <p style={{ fontSize: 11, color: 'var(--text-footer)', opacity: 0.6, marginTop: 4 }}>An Agcoms International Project</p>
-        <div className="agy-footer-links">
-          {['Contact', 'Privacy', 'About', 'Twitter / X', 'LinkedIn'].map(link => (
-            <a key={link}
-              href={link === 'Contact' ? '/contact' : link === 'About' ? '/about' : link === 'Privacy' ? '/privacy' : '#'}
-              style={{ fontSize: 13, color: 'var(--text-footer)', textDecoration: 'none' }}
-            >{link}</a>
-          ))}
-        </div>
-      </footer>
+      {/* FOOTER — shared across all public pages */}
+      <PublicFooter />
     </main>
   )
 }
