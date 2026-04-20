@@ -58,12 +58,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Title and type are required' }, { status: 400 })
     }
 
+    // Normalise type to lowercase before write: the DB CHECK constraint
+    // (`opportunities_type_check`) enforces lowercase canonicals and rejects
+    // capitalised/legacy values. This defends against settings rows that may
+    // still hold Title Case and against any legacy client that posts 'Job'.
+    const normalisedType: string = typeof body.type === 'string'
+      ? body.type.trim().toLowerCase()
+      : ''
+    if (!normalisedType) {
+      return NextResponse.json({ error: 'Type is required' }, { status: 400 })
+    }
+
     const { data, error } = await supabaseAny
       .from('opportunities')
       .insert({
         user_id:           user.id,
         title:             sanitiseText(body.title),
-        type:              body.type,
+        type:              normalisedType,
         organisation:      sanitiseText(body.organisation),
         location:          sanitiseText(body.location),
         description:       sanitiseText(body.description),
@@ -102,7 +113,7 @@ export async function POST(request: NextRequest) {
         actorName:        name,
         opportunityId:    data.id,
         opportunityTitle: body.title,
-        opportunityType:  body.type ?? null,
+        opportunityType:  normalisedType,
       })
     }
 

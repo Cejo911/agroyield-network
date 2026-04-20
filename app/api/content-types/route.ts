@@ -3,7 +3,11 @@ import { getSupabaseAdmin } from '@/lib/supabase/admin'
 import { SAFE_DEFAULT_EXPENSE_CATEGORIES } from '@/lib/expense-categories'
 
 const DEFAULTS = {
-  opportunity_types:      ['Job', 'Internship', 'Partnership', 'Training', 'Conference'],
+  // IMPORTANT: `opportunities_type_check` in the DB enforces lowercase values
+  // ('job' | 'internship' | 'partnership' | 'training' | 'conference'). Keep
+  // these lowercase so the form selection survives the INSERT. The form
+  // capitalises them visually via CSS `capitalize`; do NOT re-capitalise here.
+  opportunity_types:      ['job', 'internship', 'partnership', 'training', 'conference'],
   marketplace_categories: ['Produce', 'Inputs', 'Equipment', 'Livestock', 'Oil', 'Services', 'Other'],
   // 19 Apr 2026: added so client components (e.g. app/business/expenses/page.tsx
   // which is `'use client'`) can fetch the admin-controlled list without

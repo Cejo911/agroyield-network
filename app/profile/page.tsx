@@ -56,34 +56,14 @@ export default async function ProfilePage() {
         description="Help the community know who you are"
       />
 
-      {/* Followers / Following stats */}
-      <div className="flex items-center gap-6 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm px-6 py-4 mb-6">
-          <div>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">{followersCount}</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Followers</p>
-          </div>
-          <div className="w-px h-8 bg-gray-100 dark:bg-gray-700" />
-          <div>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">{followingCount}</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Following</p>
-          </div>
-          <div className="w-px h-8 bg-gray-100 dark:bg-gray-700" />
-          <div className="ml-auto">
-            <a href="/directory" className="text-sm text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 font-medium transition-colors">Browse members &rarr;</a>
-          </div>
-        </div>
+      {/* ── Priority-based layout ──                                          */}
+      {/* Identity first (form card with avatar at its top), then work history,*/}
+      {/* then secondary widgets. Earlier layout mounted stats + experience    */}
+      {/* ABOVE the form which pushed the avatar into the middle of the page.  */}
 
-        <ProfileViewStatsPanel stats={viewStats} viewers={viewers} isPro={isPro} />
-
-        <ExperienceEditor initialRows={experience} />
-
-        {username && (
-          <div className="mb-6">
-            <ShareProfileLink username={username} />
-          </div>
-        )}
-
-        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-8">
+        {/* 1. Identity + all editable fields. ProfileForm's first child is the */}
+        {/*    avatar, so the user sees their face immediately on page load.   */}
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-8 mb-6">
           <ProfileForm
             userId={user.id}
             initialData={{
@@ -120,6 +100,38 @@ export default async function ProfilePage() {
             }}
           />
         </div>
+
+        {/* 2. Work history — close to identity because it's part of how others  */}
+        {/*    evaluate you on a public profile.                                 */}
+        <ExperienceEditor initialRows={experience} />
+
+        {/* 3. Followers / Following stats — social proof, useful but secondary. */}
+        <div className="flex items-center gap-6 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm px-6 py-4 mb-6">
+          <div>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">{followersCount}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Followers</p>
+          </div>
+          <div className="w-px h-8 bg-gray-100 dark:bg-gray-700" />
+          <div>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">{followingCount}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Following</p>
+          </div>
+          <div className="w-px h-8 bg-gray-100 dark:bg-gray-700" />
+          <div className="ml-auto">
+            <a href="/directory" className="text-sm text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 font-medium transition-colors">Browse members &rarr;</a>
+          </div>
+        </div>
+
+        {/* 4. Profile view analytics — insight, not identity. Lives below the  */}
+        {/*    fold for most users.                                             */}
+        <ProfileViewStatsPanel stats={viewStats} viewers={viewers} isPro={isPro} />
+
+        {/* 5. Share link — action users take once everything above is set.    */}
+        {username && (
+          <div className="mb-6">
+            <ShareProfileLink username={username} />
+          </div>
+        )}
     </PageShell>
   )
 }
