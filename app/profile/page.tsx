@@ -96,7 +96,13 @@ export default async function ProfilePage() {
               institution_cac:          (rawProfile?.institution_cac as string) ?? null,
               is_institution_verified:  (rawProfile?.is_institution_verified as boolean) ?? false,
               open_to_opportunities:       (rawProfile?.open_to_opportunities as boolean) ?? false,
-              open_to_opportunities_until: (rawProfile?.open_to_opportunities_until as string) ?? null,
+              // `open_to_opportunities_until` is stored as timestamptz in
+              // Postgres but the form renders it via <input type="date"> which
+              // only accepts YYYY-MM-DD. Without this slice the input silently
+              // ignores the ISO string ("2026-06-01T00:00:00+00:00") and shows
+              // blank — users whose expiry was already set would see an empty
+              // field and assume it was never saved.
+              open_to_opportunities_until: ((rawProfile?.open_to_opportunities_until as string) ?? null)?.slice(0, 10) ?? null,
             }}
           />
         </div>
