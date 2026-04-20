@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { getBusinessAccess } from '@/lib/business-access'
 import { getActiveBusinessId, setActiveBusinessId } from '@/lib/business-cookie'
 import BusinessSetupGuide from './BusinessSetupGuide'
+import BusinessLogo from '@/app/components/design/BusinessLogo'
 
 /** Wrapper with Suspense boundary — required by Next.js for useSearchParams */
 export default function BusinessSetupPage() {
@@ -307,13 +308,16 @@ function BusinessSetup() {
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm p-5 space-y-4">
           <h2 className="font-semibold text-gray-800 dark:text-white">Business Logo</h2>
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            {form.logo_url ? (
-              <Image src={form.logo_url} alt="Logo" width={80} height={80} className="object-contain rounded-lg border border-gray-100" />
-            ) : (
-              <div className="w-20 h-20 rounded-lg border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-300 text-3xl">
-                🏪
-              </div>
-            )}
+            <BusinessLogo
+              src={form.logo_url}
+              name={form.name || 'Business'}
+              size="lg"
+              fallback={
+                <div className="w-full h-full rounded-lg border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-300 text-3xl">
+                  🏪
+                </div>
+              }
+            />
             <div className="space-y-2">
               <input
                 ref={fileRef}

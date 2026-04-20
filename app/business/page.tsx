@@ -2,13 +2,13 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import Link from 'next/link'
-import Image from 'next/image'
 import PeriodToggle from './PeriodToggle'
 import BenchmarkCard from './BenchmarkCard'
 import FAQAccordion from '@/app/components/FAQAccordion'
 import { MODULE_FAQS } from '@/lib/faq-data'
 import { getBusinessAccess } from '@/lib/business-access'
 import PublicPageCard from './PublicPageCard'
+import BusinessLogo from '@/app/components/design/BusinessLogo'
 
 function fmt(n: number) {
   return new Intl.NumberFormat('en-NG', {
@@ -189,14 +189,7 @@ export default async function BusinessDashboard({
       {/* Page header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          {business.logo_url ? (
-            <Image src={business.logo_url} alt="logo" width={40} height={40}
-              className="rounded-lg object-contain border border-gray-200 dark:border-gray-700 bg-white" />
-          ) : (
-            <div className="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900/40 flex items-center justify-center text-green-700 font-bold text-lg">
-              {business.name[0]}
-            </div>
-          )}
+          <BusinessLogo src={business.logo_url} name={business.name} size="sm" />
           <div>
             <h1 className="text-xl font-bold text-gray-900 dark:text-white leading-tight">{business.name}</h1>
             <p className="text-xs text-gray-400">Business Overview</p>

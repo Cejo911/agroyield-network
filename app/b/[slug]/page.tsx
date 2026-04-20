@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import AppNav from '@/app/components/AppNav'
 import { PrimaryLink } from '@/app/components/design/Button'
+import BusinessLogo from '@/app/components/design/BusinessLogo'
 import { safeHref } from '@/lib/safe-href'
 import ReportButton from '@/app/components/ReportButton'
 import WriteReviewButton from './WriteReviewButton'
@@ -381,21 +382,16 @@ export default async function PublicBusinessPage(
           }`}
         >
           <div className="flex flex-col sm:flex-row sm:items-start gap-6">
-            {/* Logo */}
-            <div className="shrink-0">
-              {b.logo_url ? (
-                <div
-                  style={{ backgroundImage: `url(${b.logo_url})` }}
-                  className="w-24 h-24 rounded-xl bg-cover bg-center border border-gray-200 shadow-sm bg-white"
-                  role="img"
-                  aria-label={b.name}
-                />
-              ) : (
-                <div className="w-24 h-24 rounded-xl bg-green-600 flex items-center justify-center text-white text-2xl font-bold shadow-sm">
-                  {initials}
-                </div>
-              )}
-            </div>
+            {/* Logo — primitive owns box, clipping, and shrink behaviour */}
+            <BusinessLogo
+              src={b.logo_url}
+              name={b.name}
+              size="xl"
+              fallbackTone="strong"
+              label={initials}
+              className="shadow-sm"
+              priority
+            />
 
             {/* Info */}
             <div className="flex-1 min-w-0">

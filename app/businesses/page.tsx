@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import AppNav from '@/app/components/AppNav'
 import PublicFooter from '@/app/components/PublicFooter'
+import BusinessLogo from '@/app/components/design/BusinessLogo'
 
 /**
  * /businesses — public directory index.
@@ -427,20 +428,16 @@ function BusinessTile({ b }: { b: BusinessCard }) {
 
       {/* Body */}
       <div className="relative p-5 pt-0">
-        {/* Logo — half-overlapping the cover */}
+        {/* Logo — half-overlapping the cover, primitive owns box + clipping */}
         <div className="-mt-8 mb-3">
-          {b.logo_url ? (
-            <div
-              style={{ backgroundImage: `url(${b.logo_url})` }}
-              className="w-14 h-14 rounded-xl bg-white bg-cover bg-center border border-gray-200 shadow"
-              role="img"
-              aria-label={`${b.name} logo`}
-            />
-          ) : (
-            <div className="w-14 h-14 rounded-xl bg-green-600 flex items-center justify-center text-white text-lg font-bold border border-green-700 shadow">
-              {initials}
-            </div>
-          )}
+          <BusinessLogo
+            src={b.logo_url}
+            name={b.name}
+            size="md"
+            fallbackTone="strong"
+            label={initials}
+            className="shadow"
+          />
         </div>
 
         <h2 className="text-base font-bold text-gray-900 dark:text-white leading-snug line-clamp-2 group-hover:text-green-700 dark:group-hover:text-green-400 transition-colors">
