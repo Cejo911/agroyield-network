@@ -5,6 +5,7 @@ import Image from 'next/image'
 import FollowButton from './follow-button'
 import OnlineIndicator from '@/app/components/OnlineIndicator'
 import { useSearchLog } from '@/lib/useSearchLog'
+import { isOpenNow } from '@/lib/open-to-opportunities'
 
 const ROLES = ['All', 'Student', 'Researcher', 'Farmer', 'Agripreneur', 'Institution']
 const INTERESTS = [
@@ -40,6 +41,8 @@ type Profile = {
   institution_display_name?: string | null
   is_institution_verified?: boolean | null
   last_seen_at?: string | null
+  open_to_opportunities?: boolean | null
+  open_to_opportunities_until?: string | null
 }
 
 const INST_TYPE_LABELS: Record<string, string> = {
@@ -65,6 +68,7 @@ export default function DirectoryClient({ profiles, currentUserId, followingIds,
   const [interestFilter, setInterestFilter] = useState('')
   const [locationFilter, setLocationFilter] = useState('')
   const [connectionFilter, setConnectionFilter] = useState('All')
+  const [openOnly,         setOpenOnly]         = useState(false)
 
   const followingSet = new Set(followingIds)
   const followerSet = new Set(followerIds)
@@ -93,7 +97,8 @@ export default function DirectoryClient({ profiles, currentUserId, followingIds,
       (connectionFilter === 'Followers' && followerSet.has(p.id)) ||
       (connectionFilter === 'Mentors' && mentorSet.has(p.id)) ||
       (connectionFilter === 'Mentees' && menteeSet.has(p.id))
-    return matchesSearch && matchesRole && matchesInterest && matchesLocation && matchesConnection
+    const matchesOpen = !openOnly || isOpenNow(p)
+    return matchesSearch && matchesRole && matchesInterest && matchesLocation && matchesConnection && matchesOpen
   })
 
   useSearchLog(search, 'directory', filtered.length)
@@ -142,6 +147,26 @@ export default function DirectoryClient({ profiles, currentUserId, followingIds,
             {STATES.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
         </div>
+        {/* Open to Opportunities pill — sits between the location row and  */}
+        {/* the connection-scope row so it reads as "filter the list" not    */}
+        {/* "scope to my graph". Visually distinguished with a green tint    */}
+        {/* when active so it never feels like a passive checkbox.           */}
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setOpenOnly(prev => !prev)}
+            className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors flex items-center gap-1.5 ${
+              openOnly
+                ? 'bg-green-600 text-white border-green-600'
+                : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-green-400 dark:hover:border-green-500'
+            }`}
+            aria-pressed={openOnly}
+          >
+            <span className={`inline-block w-1.5 h-1.5 rounded-full ${openOnly ? 'bg-white' : 'bg-green-500'}`} />
+            Open to Opportunities
+          </button>
+        </div>
+
         {/* Connection filters */}
         <div className="flex flex-wrap gap-2">
           {['All', 'Following', 'Followers', 'Mentors', 'Mentees'].map(opt => (
@@ -244,6 +269,12 @@ export default function DirectoryClient({ profiles, currentUserId, followingIds,
 
                 {/* Badges */}
                 <div className="flex flex-wrap gap-1 mt-1.5">
+                  {isOpenNow(profile) && (
+                    <span className="inline-flex items-center gap-0.5 text-xs bg-green-600 text-white px-2 py-0.5 rounded-full font-bold tracking-wide" title="Open to opportunities">
+                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                      OPEN
+                    </span>
+                  )}
                   {profile.subscription_tier === 'growth' && (
                     <span className="inline-flex items-center gap-0.5 text-xs bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full font-medium border border-amber-200 dark:border-amber-800">
                       ⭐ Growth

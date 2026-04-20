@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import BookmarkButton from '@/app/components/design/BookmarkButton'
 
 type DocItem = { name: string; completed: boolean }
 
@@ -31,9 +32,10 @@ interface Props {
   application: any | null
   userProfile: any
   userId: string
+  initiallySaved?: boolean
 }
 
-export default function GrantDetail({ grant, application, userProfile, userId }: Props) {
+export default function GrantDetail({ grant, application, userProfile, userId, initiallySaved = false }: Props) {
   const supabase = createClient()
   const router = useRouter()
   const [app, setApp] = useState(application)
@@ -142,8 +144,16 @@ export default function GrantDetail({ grant, application, userProfile, userId }:
   return (
     <div>
       {/* Grant info card */}
-      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 mb-6">
-        <div className="flex items-center gap-2 flex-wrap mb-3">
+      <div className="relative bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 mb-6">
+        <div className="absolute top-4 right-4 z-10">
+          <BookmarkButton
+            contentType="grant"
+            contentId={grant.id}
+            initiallySaved={initiallySaved}
+            size="md"
+          />
+        </div>
+        <div className="flex items-center gap-2 flex-wrap mb-3 pr-12">
           {grant.featured && (
             <span className="text-xs font-bold bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 px-2 py-0.5 rounded-full">⭐ Featured</span>
           )}

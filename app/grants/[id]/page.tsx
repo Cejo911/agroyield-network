@@ -13,10 +13,17 @@ export default async function GrantPage({ params }: { params: Promise<{ id: stri
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const supabaseAny = supabase as any
 
-  const [{ data: grant }, { data: application }, { data: profile }] = await Promise.all([
+  const [{ data: grant }, { data: application }, { data: profile }, { data: savedRow }] = await Promise.all([
     supabaseAny.from('grants').select('*').eq('id', id).single(),
     supabaseAny.from('grant_applications').select('*').eq('user_id', user.id).eq('grant_id', id).maybeSingle(),
     supabase.from('profiles').select('first_name, last_name, role, institution, location, bio, linkedin, email').eq('id', user.id).single(),
+    supabaseAny
+      .from('saves')
+      .select('content_id')
+      .eq('user_id', user.id)
+      .eq('content_type', 'grant')
+      .eq('content_id', id)
+      .maybeSingle(),
   ])
 
   if (!grant) notFound()
@@ -33,6 +40,7 @@ export default async function GrantPage({ params }: { params: Promise<{ id: stri
           application={application}
           userProfile={profile}
           userId={user.id}
+          initiallySaved={!!savedRow}
         />
       </main>
     </div>

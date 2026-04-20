@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { notifyFollowers } from '@/lib/notify-followers'
+import { notifyOpenToOpportunities } from '@/lib/notify-open-to-opportunities'
 import { sanitiseText, sanitiseUrl } from '@/lib/sanitise'
 
 export async function GET() {
@@ -91,6 +92,17 @@ export async function POST(request: NextRequest) {
         contentType: 'opportunity',
         contentTitle: body.title,
         contentId: data.id,
+      })
+
+      // Also notify users who flipped their "open to opportunities" flag.
+      // The helper excludes followers + the actor themselves, so there's no
+      // duplicate-notification risk with the notifyFollowers call above.
+      notifyOpenToOpportunities({
+        actorId:          user.id,
+        actorName:        name,
+        opportunityId:    data.id,
+        opportunityTitle: body.title,
+        opportunityType:  body.type ?? null,
       })
     }
 

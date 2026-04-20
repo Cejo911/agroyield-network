@@ -198,6 +198,8 @@ type ProfileFormProps = {
     institution_website?:      string | null
     institution_cac?:          string | null
     is_institution_verified?:  boolean | null
+    open_to_opportunities?:        boolean | null
+    open_to_opportunities_until?:  string  | null
   }
 }
 
@@ -244,6 +246,8 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
     contact_person_role:      initialData.contact_person_role      || '',
     institution_website:      initialData.institution_website      || '',
     institution_cac:          initialData.institution_cac          || '',
+    open_to_opportunities:       initialData.open_to_opportunities       ?? false,
+    open_to_opportunities_until: initialData.open_to_opportunities_until || '',
   })
 
   const isInstitution = form.account_type === 'institution'
@@ -752,6 +756,50 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
                 className={inputCls} />
             </div>
           </div>
+        </div>
+
+        {/* ── Open to Opportunities ── */}
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            Discoverability
+          </h2>
+          <label className="flex items-start gap-3 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={form.open_to_opportunities}
+              onChange={e => setForm(prev => ({
+                ...prev,
+                open_to_opportunities: e.target.checked,
+                // Clear expiry when toggling off so we don't keep stale dates.
+                open_to_opportunities_until: e.target.checked ? prev.open_to_opportunities_until : '',
+              }))}
+              className="mt-1 h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+            />
+            <span className="text-sm">
+              <span className="block font-medium text-gray-900 dark:text-gray-100">
+                I&apos;m open to opportunities
+              </span>
+              <span className="block text-gray-500 dark:text-gray-400 text-xs mt-0.5">
+                Adds an <strong className="font-semibold text-green-700 dark:text-green-400">OPEN</strong> badge to your profile and surfaces you in the <em>Open to Opportunities</em> filter on the directory. Ideal for agripreneurs seeking partnerships, researchers open to collaborations, or job seekers.
+              </span>
+            </span>
+          </label>
+          {form.open_to_opportunities && (
+            <div className="mt-4 ml-7">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Show until <span className="text-gray-400 dark:text-gray-500 font-normal">(Optional)</span>
+              </label>
+              <input
+                type="date"
+                value={form.open_to_opportunities_until}
+                onChange={e => setForm(prev => ({ ...prev, open_to_opportunities_until: e.target.value }))}
+                className={`${inputCls} sm:max-w-xs`}
+              />
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                The badge will hide after this date. Leave blank to keep it on indefinitely.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* ── Security & Notifications ── */}

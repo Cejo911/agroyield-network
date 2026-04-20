@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { getEffectiveTier } from '@/lib/tiers'
 import ThemeToggle from './ThemeToggle'
 import NotificationBell from './NotificationBell'
+import GlobalSearchBar from './GlobalSearchBar'
 import Image from 'next/image'
 
 const NAV_LINKS = [
@@ -170,6 +171,8 @@ export default function AppNav() {
 
         {/* Desktop right side — ThemeToggle + User avatar dropdown */}
         <div className="hidden xl:flex items-center gap-2 shrink-0">
+          <GlobalSearchBar variant="icon" />
+
           <ThemeToggle />
 
           {/* Messages icon */}
@@ -272,6 +275,18 @@ export default function AppNav() {
                   <span>👤</span> My Profile
                 </Link>
 
+                <Link
+                  href="/saved"
+                  onClick={() => setUserOpen(false)}
+                  className={`flex items-center gap-2 px-4 py-2 text-sm transition-colors ${
+                    isActive('/saved')
+                      ? 'text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/30'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+                  }`}
+                >
+                  <span>🔖</span> Saved
+                </Link>
+
                 {isAdmin && (
                   <Link
                     href="/admin"
@@ -336,6 +351,10 @@ export default function AppNav() {
       {/* Mobile menu */}
       {menuOpen && (
         <div className="xl:hidden border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 py-3 space-y-1">
+          <div className="pb-2 mb-2 border-b border-gray-100 dark:border-gray-800">
+            <GlobalSearchBar variant="full" />
+          </div>
+
           {NAV_LINKS.map(link => (
             <Link
               key={link.href}
@@ -358,6 +377,14 @@ export default function AppNav() {
               className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-green-700 dark:hover:text-green-400 hover:bg-gray-50 dark:hover:bg-gray-800"
             >
               <span>👤</span> My Profile
+            </Link>
+
+            <Link
+              href="/saved"
+              onClick={() => setMenuOpen(false)}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-green-700 dark:hover:text-green-400 hover:bg-gray-50 dark:hover:bg-gray-800"
+            >
+              <span>🔖</span> Saved
             </Link>
 
             {isAdmin && (

@@ -13,11 +13,22 @@ export default async function MarketplacePage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: listings } = await supabase
-    .from('marketplace_listings')
-    .select('id, user_id, title, category, type, price, price_negotiable, description, state, condition, image_urls, is_closed, is_featured, featured_until, created_at')
-    .eq('is_active', true)
-    .order('created_at', { ascending: false })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabaseAny = supabase as any
+  const [{ data: listings }, { data: savedRows }] = await Promise.all([
+    supabase
+      .from('marketplace_listings')
+      .select('id, user_id, title, category, type, price, price_negotiable, description, state, condition, image_urls, is_closed, is_featured, featured_until, created_at')
+      .eq('is_active', true)
+      .order('created_at', { ascending: false }),
+    supabaseAny
+      .from('saves')
+      .select('content_id')
+      .eq('user_id', user.id)
+      .eq('content_type', 'marketplace_listing'),
+  ])
+
+  const savedIds: string[] = (savedRows ?? []).map((r: { content_id: string }) => r.content_id)
 
   const listingList = (listings ?? []) as any[]
   const userIds = [...new Set(listingList.map((l: any) => l.user_id))]
@@ -48,7 +59,7 @@ export default async function MarketplacePage() {
           </div>
         }
       />
-      <MarketplaceClient listings={listingList} profileMap={profileMap} userId={user.id} />
+      <MarketplaceClient listings={listingList} profileMap={profileMap} userId={user.id} savedIds={savedIds} />
       <FAQAccordion items={MODULE_FAQS.marketplace} title="Frequently Asked Questions" subtitle="Common questions about Marketplace" compact />
     </PageShell>
   )

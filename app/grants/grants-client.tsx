@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useSearchLog } from '@/lib/useSearchLog'
+import BookmarkButton from '@/app/components/design/BookmarkButton'
 
 const CATEGORIES = ['All', 'Research', 'Startup', 'Student', 'Women', 'Innovation', 'Farmer', 'Policy']
 const STATUSES = ['All', 'open', 'upcoming', 'closed']
@@ -34,6 +35,7 @@ type Grant = {
 type Props = {
   grants: Grant[]
   applicationMap: Record<string, string>
+  savedIds?: string[]
 }
 
 function formatAmount(min: number | null, max: number | null, currency: string): string {
@@ -72,7 +74,8 @@ const appStatusLabels: Record<string, { label: string; color: string }> = {
   awarded: { label: 'Awarded', color: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' },
 }
 
-export default function GrantsClient({ grants, applicationMap }: Props) {
+export default function GrantsClient({ grants, applicationMap, savedIds = [] }: Props) {
+  const savedSet = new Set(savedIds)
   const [search, setSearch] = useState('')
   const [sortBy, setSortBy] = useState<'featured' | 'deadline' | 'newest' | 'oldest'>('featured')
   const [categoryFilter, setCategoryFilter] = useState('All')
@@ -186,10 +189,19 @@ export default function GrantsClient({ grants, applicationMap }: Props) {
             const appStatus = applicationMap[grant.id]
 
             return (
+              <div key={grant.id} className="relative">
+                {/* Overlay bookmark so the card-level Link stays as the main target. */}
+                <div className="absolute top-4 right-4 z-10">
+                  <BookmarkButton
+                    contentType="grant"
+                    contentId={grant.id}
+                    initiallySaved={savedSet.has(grant.id)}
+                    stopPropagation
+                  />
+                </div>
               <Link
-                key={grant.id}
                 href={`/grants/${grant.id}`}
-                className="block bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 hover:border-green-300 dark:hover:border-green-700 hover:shadow-md transition-all"
+                className="block bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 pr-14 hover:border-green-300 dark:hover:border-green-700 hover:shadow-md transition-all"
               >
                 <div className="flex items-start gap-4">
                   {grant.thumbnail_url && (
@@ -245,6 +257,7 @@ export default function GrantsClient({ grants, applicationMap }: Props) {
                   )}
                 </div>
               </Link>
+              </div>
             )
           })}
         </div>

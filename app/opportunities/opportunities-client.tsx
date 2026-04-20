@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import LikeButton from '@/app/components/LikeButton'
 import ReportButton from '@/app/components/ReportButton'
+import BookmarkButton from '@/app/components/design/BookmarkButton'
 import { useSearchLog } from '@/lib/useSearchLog'
 
 export type Opportunity = {
@@ -25,10 +26,13 @@ export type Opportunity = {
 export default function OpportunitiesClient({
   opportunities: initial,
   userId,
+  savedIds = [],
 }: {
   opportunities: Opportunity[]
   userId: string
+  savedIds?: string[]
 }) {
+  const savedSet = new Set(savedIds)
   const [opportunities, setOpportunities] = useState(initial)
   const [search, setSearch]               = useState('')
   const [sortBy, setSortBy]               = useState<'newest' | 'oldest' | 'deadline'>('newest')
@@ -152,9 +156,19 @@ export default function OpportunitiesClient({
         return (
           <div
             key={opportunity.id}
-            className={`bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm transition-all ${isClosed ? 'opacity-70' : ''}`}
+            className={`relative bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm transition-all ${isClosed ? 'opacity-70' : ''}`}
           >
-            <Link href={`/opportunities/${opportunity.id}`} className="block p-5 group">
+            {/* BookmarkButton overlays the card-level <Link>. stopPropagation */}
+            {/* ensures a click here doesn't also navigate to the detail page. */}
+            <div className="absolute top-4 right-4 z-10">
+              <BookmarkButton
+                contentType="opportunity"
+                contentId={opportunity.id}
+                initiallySaved={savedSet.has(opportunity.id)}
+                stopPropagation
+              />
+            </div>
+            <Link href={`/opportunities/${opportunity.id}`} className="block p-5 pr-14 group">
               <div className="flex items-start gap-4 mb-2">
                 {opportunity.thumbnail_url && (
                   <Image

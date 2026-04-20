@@ -8,6 +8,10 @@ import MessageButton from '@/app/components/MessageButton'
 import BackButton from '@/app/components/BackButton'
 import OnlineIndicator from '@/app/components/OnlineIndicator'
 import { safeHref } from '@/lib/safe-href'
+import { isOpenNow } from '@/lib/open-to-opportunities'
+import { recordProfileView } from '@/lib/profile-views'
+import { getProfileExperience } from '@/lib/profile-experience'
+import ExperienceList from '@/app/components/ExperienceList'
 
 export default async function PublicProfilePage({
   params,
@@ -22,18 +26,26 @@ export default async function PublicProfilePage({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const supabaseAny = supabase as any
 
-  const [{ data: profile }, { data: mentorProfile }, { count: followerCount }, { count: followingCount }, { data: followCheck }] = await Promise.all([
+  const [{ data: profile }, { data: mentorProfile }, { count: followerCount }, { count: followingCount }, { data: followCheck }, experience] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', id).single(),
     supabaseAny.from('mentor_profiles').select('user_id, headline, is_active').eq('user_id', id).eq('is_active', true).maybeSingle(),
     supabaseAny.from('follows').select('*', { count: 'exact', head: true }).eq('following_id', id),
     supabaseAny.from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', id),
     supabaseAny.from('follows').select('id').eq('follower_id', user.id).eq('following_id', id).maybeSingle(),
+    getProfileExperience(supabaseAny, id),
   ])
 
   if (!profile) notFound()
 
   const isOwnProfile = user.id === id
   const isFollowing = !!followCheck
+
+  // Record this view (deduped per day by the unique index). Fire-and-forget —
+  // a failure here must never break the profile render. The helper swallows
+  // its own errors; we intentionally don't await-throw.
+  if (!isOwnProfile) {
+    await recordProfileView(supabaseAny, user.id, id)
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
@@ -74,6 +86,12 @@ export default async function PublicProfilePage({
 
               {/* Badges */}
               <div className="flex flex-wrap gap-1.5 mt-2">
+                {isOpenNow(profile) && (
+                  <span className="inline-flex items-center gap-1 text-xs bg-green-600 text-white px-2 py-0.5 rounded-full font-bold tracking-wide" title="Open to opportunities">
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                    OPEN
+                  </span>
+                )}
                 {mentorProfile && (
                   <Link href={`/mentorship/${id}`}
                     className="inline-flex items-center gap-1 text-xs bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full font-medium border border-green-200 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/40 transition-colors">
@@ -200,6 +218,9 @@ export default async function PublicProfilePage({
               )}
             </div>
           )}
+
+          {/* Experience timeline */}
+          <ExperienceList rows={experience} />
 
           {/* Edit button */}
           {isOwnProfile && (

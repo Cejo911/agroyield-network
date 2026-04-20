@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import LikeButton from '@/app/components/LikeButton'
 import ReportButton from '@/app/components/ReportButton'
+import BookmarkButton from '@/app/components/design/BookmarkButton'
 import { useSearchLog } from '@/lib/useSearchLog'
 
 const CATEGORIES = ['All', 'Produce', 'Inputs', 'Equipment', 'Livestock', 'Oil', 'Services', 'Other']
@@ -74,11 +75,14 @@ export default function MarketplaceClient({
   listings: initial,
   profileMap,
   userId,
+  savedIds = [],
 }: {
   listings: Listing[]
   profileMap: Record<string, { first_name: string | null; last_name: string | null; avatar_url: string | null; username: string | null }>
   userId: string
+  savedIds?: string[]
 }) {
+  const savedSet = new Set(savedIds)
   const [listings, setListings]           = useState(initial)
   const [search, setSearch]               = useState('')
   const [sortBy, setSortBy]               = useState<'newest' | 'oldest' | 'price_low' | 'price_high'>('newest')
@@ -230,7 +234,16 @@ export default function MarketplaceClient({
             const isClosed = listing.is_closed ?? false
             const isFeatured = listing.is_featured && listing.featured_until && new Date(listing.featured_until) > new Date()
             return (
-              <div key={listing.id} className={`bg-white dark:bg-gray-900 rounded-2xl border shadow-sm hover:shadow-md transition-all group flex flex-col ${isFeatured ? 'border-amber-300 dark:border-amber-600 ring-1 ring-amber-200 dark:ring-amber-800' : 'border-gray-100 dark:border-gray-800 hover:border-green-200 dark:hover:border-green-800'} ${isClosed ? 'opacity-70' : ''}`}>
+              <div key={listing.id} className={`relative bg-white dark:bg-gray-900 rounded-2xl border shadow-sm hover:shadow-md transition-all group flex flex-col ${isFeatured ? 'border-amber-300 dark:border-amber-600 ring-1 ring-amber-200 dark:ring-amber-800' : 'border-gray-100 dark:border-gray-800 hover:border-green-200 dark:hover:border-green-800'} ${isClosed ? 'opacity-70' : ''}`}>
+                {/* Overlay bookmark so the card-level Link stays as the main target. */}
+                <div className="absolute top-3 right-3 z-10">
+                  <BookmarkButton
+                    contentType="marketplace_listing"
+                    contentId={listing.id}
+                    initiallySaved={savedSet.has(listing.id)}
+                    stopPropagation
+                  />
+                </div>
                 <Link href={`/marketplace/${listing.id}`} className="block flex-1">
                   {listing.image_urls?.[0] && (
                     <div className="relative w-full aspect-[4/3] bg-gray-100 dark:bg-gray-800 rounded-t-2xl overflow-hidden">

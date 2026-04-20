@@ -4,6 +4,11 @@ import ProfileForm from './profile-form'
 import PageShell from '@/app/components/design/PageShell'
 import PageHeader from '@/app/components/design/PageHeader'
 import ShareProfileLink from './share-profile-link'
+import ProfileViewStatsPanel from './profile-view-stats'
+import ExperienceEditor from './experience-editor'
+import { getProfileViewStats, getRecentViewers } from '@/lib/profile-views'
+import { getProfileExperience } from '@/lib/profile-experience'
+import { getEffectiveTier } from '@/lib/tiers'
 
 export default async function ProfilePage() {
   const supabase = await createClient()
@@ -25,6 +30,21 @@ export default async function ProfilePage() {
   const username: string | null  = (rawProfile && typeof rawProfile.username === 'string')   ? rawProfile.username  : null
   const phone: string | null     = (rawProfile && typeof rawProfile.phone === 'string')      ? rawProfile.phone     : null
   const whatsapp: string | null  = (rawProfile && typeof rawProfile.whatsapp === 'string')   ? rawProfile.whatsapp  : null
+
+  // Profile view stats + viewer list (the latter only for Pro tier). Running
+  // the viewer fetch conditionally avoids leaking identities through RLS
+  // error paths — free-tier users just never see the list.
+  const tierHint = {
+    subscription_tier:       (rawProfile?.subscription_tier as string | null | undefined) ?? null,
+    subscription_expires_at: (rawProfile?.subscription_expires_at as string | null | undefined) ?? null,
+  }
+  const effectiveTier = getEffectiveTier(tierHint)
+  const isPro = effectiveTier !== 'free'
+  const [viewStats, viewers, experience] = await Promise.all([
+    getProfileViewStats(supabaseAny, user.id),
+    isPro ? getRecentViewers(supabaseAny, user.id, 10) : Promise.resolve(null),
+    getProfileExperience(supabaseAny, user.id),
+  ])
 
   return (
     <PageShell maxWidth="2xl">
@@ -52,6 +72,10 @@ export default async function ProfilePage() {
             <a href="/directory" className="text-sm text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 font-medium transition-colors">Browse members &rarr;</a>
           </div>
         </div>
+
+        <ProfileViewStatsPanel stats={viewStats} viewers={viewers} isPro={isPro} />
+
+        <ExperienceEditor initialRows={experience} />
 
         {username && (
           <div className="mb-6">
@@ -91,6 +115,8 @@ export default async function ProfilePage() {
               institution_website:      (rawProfile?.institution_website as string) ?? null,
               institution_cac:          (rawProfile?.institution_cac as string) ?? null,
               is_institution_verified:  (rawProfile?.is_institution_verified as boolean) ?? false,
+              open_to_opportunities:       (rawProfile?.open_to_opportunities as boolean) ?? false,
+              open_to_opportunities_until: (rawProfile?.open_to_opportunities_until as string) ?? null,
             }}
           />
         </div>

@@ -15,7 +15,7 @@ export default async function GrantsPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const supabaseAny = supabase as any
 
-  const [{ data: grants }, { data: applications }, { data: profile }] = await Promise.all([
+  const [{ data: grants }, { data: applications }, { data: profile }, { data: savedRows }] = await Promise.all([
     supabaseAny
       .from('grants')
       .select('*')
@@ -30,7 +30,14 @@ export default async function GrantsPage() {
       .select('is_admin, admin_role')
       .eq('id', user.id)
       .single(),
+    supabaseAny
+      .from('saves')
+      .select('content_id')
+      .eq('user_id', user.id)
+      .eq('content_type', 'grant'),
   ])
+
+  const savedIds: string[] = (savedRows ?? []).map((r: { content_id: string }) => r.content_id)
 
   // Build a map of user's applications: grant_id -> status
   const applicationMap: Record<string, string> = {}
@@ -52,7 +59,7 @@ export default async function GrantsPage() {
           </>
         }
       />
-      <GrantsClient grants={grants ?? []} applicationMap={applicationMap} />
+      <GrantsClient grants={grants ?? []} applicationMap={applicationMap} savedIds={savedIds} />
       <FAQAccordion items={MODULE_FAQS.grants} title="Frequently Asked Questions" subtitle="Common questions about Grants" compact />
     </PageShell>
   )

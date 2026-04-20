@@ -79,6 +79,13 @@ export async function POST(req: Request) {
       contact_person_role:      sanitiseText(body.contact_person_role),
       institution_website:      sanitiseUrl(body.institution_website),
       institution_cac:          sanitiseText(body.institution_cac),
+      // #6 Open to Opportunities — LinkedIn-style discoverability signal.
+      // Empty-string expiry normalised to null so the indexed-partial column
+      // is clean; DB treats null-expiry as "forever while toggle is on".
+      open_to_opportunities:       typeof body.open_to_opportunities === 'boolean' ? body.open_to_opportunities : false,
+      open_to_opportunities_until: body.open_to_opportunities_until && body.open_to_opportunities_until.length > 0
+        ? body.open_to_opportunities_until
+        : null,
     }
 
     const { error } = await supabaseAny

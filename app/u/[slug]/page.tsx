@@ -11,6 +11,10 @@ import VerifiedBadge from '@/app/components/VerifiedBadge'
 import EliteBadge from '@/app/components/EliteBadge'
 import { safeHref } from '@/lib/safe-href'
 import { getEffectiveTier } from '@/lib/tiers'
+import { isOpenNow } from '@/lib/open-to-opportunities'
+import { recordProfileView } from '@/lib/profile-views'
+import { getProfileExperience } from '@/lib/profile-experience'
+import ExperienceList from '@/app/components/ExperienceList'
 
 export async function generateMetadata(
   { params }: { params: Promise<{ slug: string }> }
@@ -57,10 +61,11 @@ export default async function PublicProfilePage(
 
   const raw = profile as Record<string, unknown>
 
-  const [followersResult, followingResult, { data: { user } }] = await Promise.all([
+  const [followersResult, followingResult, { data: { user } }, experience] = await Promise.all([
     supabaseAny.from('follows').select('*', { count: 'exact', head: true }).eq('following_id', raw.id),
     supabaseAny.from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', raw.id),
     supabase.auth.getUser(),
+    getProfileExperience(supabaseAny, raw.id as string),
   ])
 
   const followersCount: number = followersResult.count ?? 0
@@ -74,6 +79,10 @@ export default async function PublicProfilePage(
       .eq('following_id', raw.id)
       .maybeSingle()
     isFollowing = !!followData
+
+    // Record this view (deduped per day). Pulled into a shared helper so the
+    // /directory and /u surfaces never drift on dedup semantics.
+    await recordProfileView(supabaseAny, user.id, raw.id as string)
   }
 
   const avatarUrl   = typeof raw.avatar_url  === 'string' ? raw.avatar_url  : null
@@ -98,6 +107,10 @@ export default async function PublicProfilePage(
   })
   const isVerified = effectiveTier === 'pro' || effectiveTier === 'growth'
   const isElite = effectiveTier === 'growth'
+  const openNow = isOpenNow({
+    open_to_opportunities:       typeof raw.open_to_opportunities       === 'boolean' ? raw.open_to_opportunities       : false,
+    open_to_opportunities_until: typeof raw.open_to_opportunities_until === 'string'  ? raw.open_to_opportunities_until : null,
+  })
 
   const initials = [firstName, lastName]
     .filter(Boolean).map(n => n.charAt(0).toUpperCase()).join('') || '?'
@@ -148,6 +161,12 @@ export default async function PublicProfilePage(
                     {firstName} {lastName}
                     {isVerified && <VerifiedBadge size="md" />}
                     {isElite && <EliteBadge size="md" />}
+                    {openNow && (
+                      <span className="inline-flex items-center gap-1 text-xs bg-green-600 text-white px-2 py-0.5 rounded-full font-bold tracking-wide" title="Open to opportunities">
+                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                        OPEN
+                      </span>
+                    )}
                   </h1>
                   {role && <p className="text-sm text-green-600 font-semibold capitalize mt-0.5">{role}</p>}
                   {institution && <p className="text-sm text-gray-500 mt-0.5">🏛 {institution}</p>}
@@ -234,6 +253,9 @@ export default async function PublicProfilePage(
               )}
             </div>
           )}
+
+          {/* Experience timeline */}
+          <ExperienceList rows={experience} />
         </div>
 
         {/* Guest CTA */}

@@ -6,6 +6,7 @@ import ListingActions from './ListingActions'
 import CommentsSection from '@/app/components/CommentsSection'
 import MessageButton from '@/app/components/MessageButton'
 import PageShell from '@/app/components/design/PageShell'
+import BookmarkButton from '@/app/components/design/BookmarkButton'
 import ListingGallery from './ListingGallery'
 import BuyNowButton from './BuyNowButton'
 import FeatureListingButton from './FeatureListingButton'
@@ -46,14 +47,26 @@ export default async function ListingPage({
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: listing } = await supabase
-    .from('marketplace_listings')
-    .select('*')
-    .eq('id', id)
-    .single()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabaseAny = supabase as any
+  const [{ data: listing }, { data: savedRow }] = await Promise.all([
+    supabase
+      .from('marketplace_listings')
+      .select('*')
+      .eq('id', id)
+      .single(),
+    supabaseAny
+      .from('saves')
+      .select('content_id')
+      .eq('user_id', user.id)
+      .eq('content_type', 'marketplace_listing')
+      .eq('content_id', id)
+      .maybeSingle(),
+  ])
 
   if (!listing) notFound()
 
+  const isSaved  = !!savedRow
   const isOwner  = user.id === listing.user_id
   const isClosed = listing.is_closed ?? false
 
@@ -74,7 +87,15 @@ export default async function ListingPage({
       <Link href="/marketplace" className="inline-flex items-center text-sm text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 mb-4 transition-colors">
         ← Back to Marketplace
       </Link>
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-8">
+        <div className="relative bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-8">
+          <div className="absolute top-5 right-5 z-10">
+            <BookmarkButton
+              contentType="marketplace_listing"
+              contentId={id}
+              initiallySaved={isSaved}
+              size="md"
+            />
+          </div>
 
           {isClosed && (
             <div className="mb-5 flex items-center gap-2 px-4 py-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">

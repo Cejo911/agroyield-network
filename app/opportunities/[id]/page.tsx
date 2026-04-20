@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import AppNav from '@/app/components/AppNav'
 import LikeButton from '@/app/components/LikeButton'
 import ReportButton from '@/app/components/ReportButton'
+import BookmarkButton from '@/app/components/design/BookmarkButton'
 import OpportunityActions from './OpportunityActions'
 import CommentsSection from '@/app/components/CommentsSection'
 
@@ -25,6 +26,22 @@ export default async function OpportunityDetailPage({
 
   if (!opportunity) notFound()
 
+  // Bookmark state for logged-in users (anonymous visitors see the outline button
+  // but cannot interact — the API route enforces auth anyway).
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabaseAny = supabase as any
+  let isSaved = false
+  if (user) {
+    const { data: savedRow } = await supabaseAny
+      .from('saves')
+      .select('content_id')
+      .eq('user_id', user.id)
+      .eq('content_type', 'opportunity')
+      .eq('content_id', id)
+      .maybeSingle()
+    isSaved = !!savedRow
+  }
+
   const isOwner  = !!user && user.id === opportunity.user_id
   const isClosed = opportunity.is_closed ?? false
 
@@ -40,14 +57,24 @@ export default async function OpportunityDetailPage({
       <main className="max-w-2xl mx-auto px-4 py-10">
         <a href="/opportunities" className="text-sm text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 mb-6 inline-block">{'← Back to Opportunities'}</a>
 
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-6">
+        <div className="relative bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-6">
+          {user && (
+            <div className="absolute top-4 right-4 z-10">
+              <BookmarkButton
+                contentType="opportunity"
+                contentId={id}
+                initiallySaved={isSaved}
+                size="md"
+              />
+            </div>
+          )}
           {isClosed && (
             <div className="mb-5 flex items-center gap-2 px-4 py-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
               <span className="text-sm font-semibold text-red-600 dark:text-red-400">🔴 This opportunity is now closed</span>
             </div>
           )}
 
-          <div className="flex items-start justify-between gap-4 mb-4">
+          <div className="flex items-start justify-between gap-4 mb-4 pr-12">
             <div>
               <div className="flex flex-wrap items-center gap-2 mb-2">
                 <span className="inline-block text-xs font-semibold px-2.5 py-1 rounded-full bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400">
