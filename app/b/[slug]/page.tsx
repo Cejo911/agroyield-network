@@ -308,19 +308,31 @@ export default async function PublicBusinessPage(
 
   // Escape `<` → `\u003c` to prevent any `</script>` breakout inside the
   // inline script tag. Valid JSON either way (JSON accepts \u003c).
-  // Array form emits both schemas in a single `<script>` tag — Google parses
-  // top-level arrays the same as multiple consecutive JSON-LD blocks.
-  const jsonLdScript = JSON.stringify([jsonLd, breadcrumbJsonLd]).replace(/</g, '\\u003c')
+  //
+  // Parser-compat note (20 Apr 2026, Sentry issue f2499c29…): we previously
+  // emitted ONE <script> containing `[jsonLd, breadcrumbJsonLd]` as an array.
+  // Google parses top-level arrays fine, but naive parsers in the wild
+  // (browser extensions, Safari Reader Mode, SEO toolbars) call
+  // `JSON.parse(s.textContent)["@context"].toLowerCase()` on each script's
+  // contents directly and crash when the root is an array (arrays don't have
+  // `@context`). Split into two scripts so every root is a single object with
+  // a top-level `@context`. Mirrors the fix in app/layout.tsx.
+  const localBusinessJsonLdScript = JSON.stringify(jsonLd).replace(/</g, '\\u003c')
+  const breadcrumbJsonLdScript    = JSON.stringify(breadcrumbJsonLd).replace(/</g, '\\u003c')
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* LocalBusiness + BreadcrumbList structured data — SEO rich snippet */}
+      {/* LocalBusiness + BreadcrumbList structured data — SEO rich snippet.   */}
+      {/* Two <script> blocks (not one JSON array) per the parser-compat note  */}
+      {/* above; sitewide Organization + WebSite schemas live in layout.tsx    */}
+      {/* and are referenced by @id via parentOrganization above.              */}
       <script
         type="application/ld+json"
-        // Scoped to server-built object literals with `<` pre-escaped. The
-        // sitewide Organization + WebSite schemas live in app/layout.tsx and
-        // are referenced by @id via parentOrganization above.
-        dangerouslySetInnerHTML={{ __html: jsonLdScript }}
+        dangerouslySetInnerHTML={{ __html: localBusinessJsonLdScript }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: breadcrumbJsonLdScript }}
       />
       {/* Nav: AppNav for logged-in members, marketing nav for anonymous visitors */}
       {user ? <AppNav /> : (

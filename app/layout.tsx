@@ -66,8 +66,18 @@ const websiteJsonLd = {
 
 // Escape `<` → `\u003c` to prevent any `</script>` breakout inside the inline
 // script tag. JSON accepts \u003c either way. Same pattern as /b/[slug].
-const sitewideJsonLdScript = JSON.stringify([organizationJsonLd, websiteJsonLd])
-  .replace(/</g, '\\u003c')
+//
+// Parser-compat note (20 Apr 2026, Sentry issue f2499c29…): we previously
+// emitted ONE <script> containing a JSON array `[organizationJsonLd,
+// websiteJsonLd]`. Per JSON-LD spec that's valid — per naive parsers in the
+// wild (browser extensions, Safari Reader Mode, SEO toolbars) that do
+// `JSON.parse(s.textContent)["@context"].toLowerCase()` on each script's
+// contents directly, it's not — arrays don't have `@context`, the parser
+// crashes. Splitting into two scripts means every root is a single object
+// with a top-level `@context`. Defence-in-depth at the JSON-LD-to-parser
+// boundary; rationale mirrored at the corresponding /b/[slug] emission.
+const organizationJsonLdScript = JSON.stringify(organizationJsonLd).replace(/</g, '\\u003c')
+const websiteJsonLdScript      = JSON.stringify(websiteJsonLd).replace(/</g, '\\u003c')
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -158,10 +168,15 @@ export default function RootLayout({
             __html: `(function(){try{var t=localStorage.getItem('theme');if(t==='dark'){document.documentElement.classList.add('dark');document.documentElement.style.backgroundColor='#030712';}else{document.documentElement.style.backgroundColor='#ffffff';}}catch(e){}})()`,
           }}
         />
-        {/* Sitewide JSON-LD: Organization + WebSite. See top of file. */}
+        {/* Sitewide JSON-LD: Organization + WebSite. See top of file for the  */}
+        {/* two-script-instead-of-one-array rationale (Sentry f2499c29…).      */}
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: sitewideJsonLdScript }}
+          dangerouslySetInnerHTML={{ __html: organizationJsonLdScript }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: websiteJsonLdScript }}
         />
         <PostHogProvider>
           <ThemeProvider>

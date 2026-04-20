@@ -1,6 +1,6 @@
 # AgroYield Network — Project Status
 
-> **Last updated:** 20 April 2026 (Checkpoint 37)
+> **Last updated:** 20 April 2026 (Checkpoint 38)
 > **Maintained by:** Okoli (okolichijiokei@gmail.com)
 > **Launch Target:** 5 July 2026 (~11 weeks remaining)
 > **Purpose:** Permanent reference for any developer or Claude session to get up to speed instantly.
@@ -365,6 +365,14 @@ Note: `/insights`, `/connections` are pre-registered for future modules.
 ---
 
 ## Changelog
+
+### Checkpoint 38 — April 20, 2026 (JSON-LD Parser-Compat Hotfix — Sentry f2499c29…)
+
+- **Production Sentry hit at 07:54 UTC**: `TypeError: undefined is not an object (evaluating 'r["@context"].toLowerCase')` on `/login`, Safari 26.3 on Mac, IP 102.91.71.99, `mechanism = auto.browser.global_handlers.onerror`, `handled = no`, single occurrence. Triaged: the only JSON-LD on `/login` is the sitewide Organization + WebSite pair from `app/layout.tsx`, which had been emitted as `JSON.stringify([organizationJsonLd, websiteJsonLd])` inside a single `<script type="application/ld+json">`. Per JSON-LD spec, top-level arrays are valid. Per naive parsers in the wild (browser extensions, Safari Reader Mode, SEO toolbars), they aren't — many consumers do `JSON.parse(s.textContent)["@context"].toLowerCase()` directly on each script's contents, which works when the root is a single object with a top-level `@context` but crashes when the root is an array (arrays don't have `@context` → undefined.toLowerCase → throw).
+- **Fix shipped**: split the single JSON-array `<script>` into two separate `<script type="application/ld+json">` blocks at each emission site so every root is a single object with a top-level `@context`. Applied in two files: (1) `app/layout.tsx` — Organization and WebSite now render as two scripts (`organizationJsonLdScript`, `websiteJsonLdScript`); (2) `app/b/[slug]/page.tsx` — LocalBusiness and BreadcrumbList likewise split into `localBusinessJsonLdScript` + `breadcrumbJsonLdScript`. Inline comment blocks at both sites cross-reference the Sentry issue ID (f2499c29…) so future readers find the rationale without doc-hunting.
+- **Defence-in-depth framing**: per scratchpad #66 (client defaults AND server normalisation at every user-input-to-DB-CHECK boundary), the same pattern applies at every data-format boundary — here, the JSON-LD-to-parser boundary. Being spec-compliant at the producer side isn't enough when naive consumers in the wild aren't spec-compliant on the reader side; we widen compatibility by narrowing our output shape to the intersection of what spec-strict AND spec-loose parsers handle. Zero functional or SEO regression — Google's Rich Results Test accepts both single-script-with-array and multiple-single-document-scripts identically.
+- **Scope boundary held**: this is a pure frontend edit — zero migrations, zero settings changes, zero env vars. Two files touched. `./node_modules/.bin/tsc --noEmit` EXIT=0. Pre-Beta surface remains locked for QA day Sun 26 Apr.
+- **Scratchpad entry added**: #69 (spec-valid ≠ parser-compatible in the wild — the JSON-LD-array-in-one-script pattern is spec-valid but breaks naive consumers that call `.["@context"]` on the parsed root; at every data-format boundary where we produce and a universe of unknown clients consume, narrow the output shape to the intersection of permissive AND strict parser behaviour, not just the spec). Generalises beyond JSON-LD: any wire format consumed by third-parties (webhook payloads, RSS feeds, oEmbed responses, robots.txt, sitemap.xml) has the same producer-consumer asymmetry.
 
 ### Checkpoint 37 — April 20, 2026 (Day-0 Production Verification + 3 Hotfixes — Pre-Beta Surface Locked)
 
