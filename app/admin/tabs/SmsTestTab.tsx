@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from 'react'
  * SMS Test admin panel — super admin only.
  *
  * Fires a single plain-text SMS through the Termii provider so we can
- * verify the Fastbeep sender ID, API key, and channel config before
+ * verify the AgroYield sender ID, API key, and channel config before
  * wiring SMS into production flows (OTP, notifications, etc.).
  *
  * Shows wallet balance on mount so the admin knows there's credit.
@@ -32,7 +32,7 @@ interface LastResult {
 
 export default function SmsTestTab() {
   const [to, setTo] = useState('')
-  const [message, setMessage] = useState('AgroYield test from Fastbeep: your SMS pipeline is live.')
+  const [message, setMessage] = useState('AgroYield test: your SMS pipeline is live.')
   const [senderOverride, setSenderOverride] = useState('')
   const [sending, setSending] = useState(false)
   const [info, setInfo] = useState<BalanceState | null>(null)
@@ -119,7 +119,7 @@ export default function SmsTestTab() {
       <div>
         <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">SMS Test — Termii</h2>
         <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-          Fire a single plain-text SMS through Termii to verify Fastbeep sender ID and API credentials.
+          Fire a single plain-text SMS through Termii to verify the AgroYield sender ID and API credentials.
         </p>
       </div>
 
@@ -201,7 +201,7 @@ export default function SmsTestTab() {
           </label>
           <input
             type="text"
-            placeholder={info?.senderId || 'Fastbeep'}
+            placeholder={info?.senderId || 'AgroYield'}
             value={senderOverride}
             onChange={(e) => setSenderOverride(e.target.value)}
             className={`${sInput} w-full`}

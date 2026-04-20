@@ -7,7 +7,7 @@
  *
  * Envs:
  *   TERMII_API_KEY           required — same key used by the WA provider
- *   TERMII_SMS_SENDER_ID     sender ID as registered with Termii (default: "Fastbeep")
+ *   TERMII_SMS_SENDER_ID     sender ID as registered with Termii (default: "AgroYield")
  *   TERMII_SMS_CHANNEL       "generic" | "dnd" | "whatsapp" (default: "generic")
  *   TERMII_BASE_URL          optional override (default: https://api.ng.termii.com)
  *
@@ -43,7 +43,7 @@ interface TermiiSmsResponse {
 export async function sendSms(params: {
   to: string
   message: string
-  /** Optional override; falls back to TERMII_SMS_SENDER_ID or "Fastbeep". */
+  /** Optional override; falls back to TERMII_SMS_SENDER_ID or "AgroYield". */
   senderId?: string
   /** Optional override; falls back to TERMII_SMS_CHANNEL or "generic". */
   channel?: 'generic' | 'dnd' | 'whatsapp'
@@ -54,8 +54,11 @@ export async function sendSms(params: {
       return { success: false, error: 'TERMII_API_KEY is not set' }
     }
 
+    // Termii approved the "AgroYield" sender ID on 20 Apr 2026; that's the
+    // production default. "Fastbeep" was the interim Termii-issued test sender
+    // used during credential validation before the brand sender was approved.
     const senderId =
-      params.senderId || process.env.TERMII_SMS_SENDER_ID || 'Fastbeep'
+      params.senderId || process.env.TERMII_SMS_SENDER_ID || 'AgroYield'
     const channel =
       params.channel ||
       (process.env.TERMII_SMS_CHANNEL as 'generic' | 'dnd' | 'whatsapp') ||

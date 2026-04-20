@@ -51,7 +51,7 @@ export async function GET() {
   const balance = await getSmsBalance()
   return NextResponse.json({
     ok: true,
-    senderId: process.env.TERMII_SMS_SENDER_ID || 'Fastbeep',
+    senderId: process.env.TERMII_SMS_SENDER_ID || 'AgroYield',
     channel: process.env.TERMII_SMS_CHANNEL || 'generic',
     balance: balance.success ? balance.balance : null,
     currency: balance.success ? balance.currency : null,
@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
       details: {
         success: result.success,
         messageId: result.messageId ?? null,
-        senderId: body.senderId || process.env.TERMII_SMS_SENDER_ID || 'Fastbeep',
+        senderId: body.senderId || process.env.TERMII_SMS_SENDER_ID || 'AgroYield',
         bytes: body.message.length,
         error: result.error ?? null,
       },
