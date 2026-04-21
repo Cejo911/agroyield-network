@@ -1,0 +1,11 @@
+# Pre-commit hook — intentionally minimal.
+#
+# We run lint + typecheck in CI against the PR diff rather than every local
+# commit. Blocking the commit loop on a 20-30s typecheck slows iteration to
+# a crawl, and developers end up reflexively --no-verify'ing, which defeats
+# the point. Keep this hook cheap.
+#
+# If we later want pre-commit lint against STAGED files only (not the whole
+# repo), wire in lint-staged here. Until then this is a no-op.
+
+exit 0

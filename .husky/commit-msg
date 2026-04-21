@@ -1,0 +1,15 @@
+# Commit-msg hook — enforces Conventional Commits format.
+#
+# Every commit message must match:
+#   <type>(<scope>): <sentence>
+#
+# e.g. fix(sms): partial-delivery reporting shows carrier status per number
+#
+# Rules live in commitlint.config.cjs at repo root. Bypassing this with
+# --no-verify is explicitly against the H1.5 team agreement — if a commit
+# message is getting rejected, rewrite it, don't skip the hook.
+#
+# The $1 argument is the path to the .git/COMMIT_EDITMSG file husky passes
+# us; commitlint reads it with --edit.
+
+npx --no-install commitlint --edit "$1"
