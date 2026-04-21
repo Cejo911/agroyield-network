@@ -177,7 +177,7 @@ export default function GrantsClient({ grants, applicationMap, savedIds = [] }: 
       {/* Grant cards */}
       {sorted.length === 0 ? (
         <div className="text-center py-16 text-gray-400 dark:text-gray-500">
-          <p className="text-4xl mb-3">🌱</p>
+          <Image src="/logo-icon-colored.png" alt="AgroYield Network" width={44} height={44} className="mx-auto mb-3" />
           <p className="font-medium">No grants match your filters</p>
           <p className="text-sm mt-1">Try adjusting your search or check back later for new opportunities</p>
         </div>

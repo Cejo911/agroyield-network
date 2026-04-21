@@ -40,7 +40,7 @@ export async function POST(request: Request) {
     await getResend().emails.send({
       from: SENDERS.noreply,
       to: email,
-      subject: "You're on the AgroYield waitlist 🌾",
+      subject: "You're on the AgroYield waitlist",
       html: `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>

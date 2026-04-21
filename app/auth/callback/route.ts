@@ -110,7 +110,7 @@ export async function GET(request: Request) {
             await getResend().emails.send({
               from: SENDERS.noreply,
               to: user.email!,
-              subject: 'Welcome to AgroYield Network 🌾',
+              subject: 'Welcome to AgroYield Network',
               html: `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>

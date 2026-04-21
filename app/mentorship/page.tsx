@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import Image from 'next/image'
 import AppNav from '@/app/components/AppNav'
 import MentorBrowser from './mentor-browser'
 import { getSettings } from '@/lib/settings'
@@ -27,7 +28,7 @@ export default async function MentorshipPage() {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
         <AppNav />
         <main className="max-w-2xl mx-auto px-4 py-20 text-center">
-          <div className="text-5xl mb-4">🌱</div>
+          <Image src="/logo-icon-colored.png" alt="AgroYield Network" width={56} height={56} className="mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Mentorship Coming Soon</h1>
           <p className="text-gray-500 dark:text-gray-400">
             The mentorship module is currently being set up. Check back soon to connect with experienced agricultural professionals.

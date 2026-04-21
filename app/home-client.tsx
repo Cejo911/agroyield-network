@@ -109,7 +109,7 @@ function WaitlistForm({ id }: { id: string }) {
   if (submitted) {
     return (
       <div style={{ background: 'var(--badge-bg)', border: '1px solid var(--badge-border)', borderRadius: 14, padding: '24px 32px', maxWidth: 420, margin: '0 auto', textAlign: 'center' }}>
-        <div style={{ fontSize: 36, marginBottom: 12 }}>🌱</div>
+        <Image src="/logo-icon-colored.png" alt="AgroYield Network" width={40} height={40} style={{ marginBottom: 12, display: 'inline-block' }} />
         <h3 style={{ color: '#4ade80', fontWeight: 700, fontSize: 18, marginBottom: 8 }}>You&apos;re on the list!</h3>
         <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Check your inbox — we&apos;ve sent you a confirmation. Tell a friend who&apos;s in agriculture!</p>
       </div>

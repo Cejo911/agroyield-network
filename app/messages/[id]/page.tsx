@@ -31,7 +31,7 @@ export default async function ConversationPage({ params }: { params: Promise<{ i
     supabase.from('profiles').select('id, first_name, last_name, avatar_url, role, username, last_seen_at').eq('id', otherId).single(),
     supabaseAny
       .from('messages')
-      .select('id, sender_id, body, status, created_at, read_at')
+      .select('id, sender_id, body, media_url, media_type, media_filename, status, created_at, read_at')
       .eq('conversation_id', id)
       .order('created_at', { ascending: true })
       .limit(200),
@@ -68,6 +68,9 @@ export default async function ConversationPage({ params }: { params: Promise<{ i
           id: m.id,
           senderId: m.sender_id,
           body: m.body,
+          mediaUrl: m.media_url,
+          mediaType: m.media_type,
+          mediaFilename: m.media_filename,
           status: m.status,
           createdAt: m.created_at,
         }))}

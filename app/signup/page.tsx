@@ -208,7 +208,7 @@ export default function SignUp() {
         `}</style>
         <main style={{ fontFamily: "'Inter', system-ui, sans-serif", background: 'var(--bg-page)', color: 'var(--text-primary)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
           <div style={{ maxWidth: 440, width: '100%', textAlign: 'center' }}>
-            <div style={{ fontSize: 52, marginBottom: 24 }}>🌱</div>
+            <Image src="/logo-icon-colored.png" alt="AgroYield Network" width={56} height={56} style={{ marginBottom: 24, display: 'inline-block' }} />
             <h1 style={{ fontSize: 28, fontWeight: 900, color: 'var(--text-primary)', letterSpacing: -1, marginBottom: 12 }}>Check your inbox!</h1>
             <p style={{ fontSize: 16, color: 'var(--text-secondary)', lineHeight: 1.75, marginBottom: 32 }}>
               We&apos;ve sent a confirmation link to <strong style={{ color: 'var(--text-primary)' }}>{form.email}</strong>. Click the link to activate your account and access AgroYield.

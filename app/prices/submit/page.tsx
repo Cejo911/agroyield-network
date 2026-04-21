@@ -4,16 +4,7 @@ import { useRouter } from 'next/navigation'
 import AppNav from '@/app/components/AppNav'
 import useProfileGate from '@/app/hooks/useProfileGate'
 import ProfileGateBanner from '@/app/components/ProfileGateBanner'
-
-const COMMODITIES: Record<string, string[]> = {
-  grains:     ['Maize', 'Rice', 'Sorghum', 'Millet', 'Wheat', 'Barley'],
-  legumes:    ['Soybeans', 'Cowpea', 'Groundnut', 'Sesame', 'Beans'],
-  tubers:     ['Cassava', 'Yam', 'Sweet Potato', 'Cocoyam', 'Irish Potato'],
-  vegetables: ['Tomato', 'Pepper', 'Onion', 'Cabbage', 'Carrot', 'Spinach'],
-  fruits:     ['Banana', 'Plantain', 'Mango', 'Orange', 'Pineapple', 'Watermelon'],
-  livestock:  ['Cattle', 'Goat', 'Sheep', 'Pig', 'Poultry', 'Fish'],
-  cash_crops: ['Cocoa', 'Coffee', 'Cotton', 'Rubber', 'Palm Oil', 'Sugarcane'],
-}
+import { COMMODITIES } from '@/app/prices/commodities'
 const STATES = [
   'Abia','Adamawa','Akwa Ibom','Anambra','Bauchi','Bayelsa','Benue','Borno',
   'Cross River','Delta','Ebonyi','Edo','Ekiti','Enugu','FCT','Gombe','Imo',

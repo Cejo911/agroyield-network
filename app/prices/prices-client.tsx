@@ -7,14 +7,17 @@ import ReportButton from '@/app/components/ReportButton'
 import { useSearchLog } from '@/lib/useSearchLog'
 import { createClient } from '@/lib/supabase/client'
 
-const FALLBACK_CATEGORIES = ['Grains', 'Tubers', 'Legumes', 'Vegetables', 'Fruits', 'Livestock', 'Cash Crops']
+const FALLBACK_CATEGORIES = ['Grains', 'Tubers', 'Legumes', 'Vegetables', 'Fruits', 'Livestock', 'Oils', 'Cash Crops']
 const CATEGORY_COLOURS: Record<string, string> = {
   grains:     'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400',
   tubers:     'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400',
   legumes:    'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
   vegetables: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400',
-  oils:       'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
+  fruits:     'bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-400',
   livestock:  'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
+  oils:       'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
+  cash_crops: 'bg-stone-100 dark:bg-stone-800/60 text-stone-700 dark:text-stone-300',
+  'cash crops': 'bg-stone-100 dark:bg-stone-800/60 text-stone-700 dark:text-stone-300',
   other:      'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400',
 }
 

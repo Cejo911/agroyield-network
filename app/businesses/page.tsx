@@ -470,7 +470,7 @@ function BusinessTile({ b }: { b: BusinessCard }) {
 function EmptyState({ hasActiveFilter }: { hasActiveFilter: boolean }) {
   return (
     <div className="max-w-lg mx-auto text-center py-16 sm:py-24 px-4">
-      <div className="text-5xl mb-4">🌱</div>
+      <Image src="/logo-icon-colored.png" alt="AgroYield Network" width={56} height={56} className="mx-auto mb-4" />
       {hasActiveFilter ? (
         <>
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">

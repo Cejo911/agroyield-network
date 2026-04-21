@@ -205,7 +205,7 @@ export default function About() {
           Our advisors bring decades of experience across agri-research, rural finance, agritech entrepreneurship, and food policy across Africa.
         </p>
         <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 20, padding: '56px 40px', textAlign: 'center' }}>
-          <div style={{ fontSize: 40, marginBottom: 20 }}>🌿</div>
+          <Image src="/logo-icon-colored.png" alt="AgroYield Network" width={44} height={44} style={{ marginBottom: 20, display: 'inline-block' }} />
           <h3 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', letterSpacing: -0.5, marginBottom: 12 }}>Advisory board to be revealed soon</h3>
           <p style={{ fontSize: 15, color: 'var(--text-secondary)', maxWidth: 440, margin: '0 auto', lineHeight: 1.75 }}>
             We are assembling a world-class group of advisors from across Africa&apos;s agricultural, research, and investment communities. Stay tuned.

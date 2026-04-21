@@ -4,11 +4,15 @@ import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import OnlineIndicator from '@/app/components/OnlineIndicator'
+import { createClient } from '@/lib/supabase/client'
 
 interface Message {
   id: string
   senderId: string
-  body: string
+  body: string | null
+  mediaUrl: string | null
+  mediaType: string | null        // 'image' | 'file' | null
+  mediaFilename: string | null
   status: string
   createdAt: string
 }
@@ -29,12 +33,54 @@ interface Props {
   initialMessages: Message[]
 }
 
+// ---------------------------------------------------------------------------
+// File constraints — kept in step with FileUploader.tsx / ImageUploader.tsx
+// ---------------------------------------------------------------------------
+const IMAGE_MIME = /^image\/(jpeg|jpg|png|webp|gif)$/
+const DOC_MIME: Record<string, string> = {
+  'application/pdf': 'PDF',
+  'application/msword': 'DOC',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'DOCX',
+  'application/vnd.ms-excel': 'XLS',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'XLSX',
+  'text/csv': 'CSV',
+}
+const ACCEPT_ATTR =
+  'image/*,application/pdf,.pdf,' +
+  'application/msword,.doc,' +
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx,' +
+  'application/vnd.ms-excel,.xls,' +
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.xlsx,' +
+  'text/csv,.csv'
+
+const MAX_IMAGE_MB = 5
+const MAX_FILE_MB = 10
+
+type StagedAttachment = {
+  url: string
+  type: 'image' | 'file'
+  filename: string
+}
+
+function fileIcon(name: string | null) {
+  if (!name) return '📎'
+  const ext = name.split('.').pop()?.toLowerCase()
+  if (ext === 'pdf') return '📕'
+  if (ext === 'doc' || ext === 'docx') return '📘'
+  if (ext === 'xls' || ext === 'xlsx' || ext === 'csv') return '📗'
+  return '📎'
+}
+
 export default function MessageThread({ conversationId, currentUserId, otherUser, initialMessages }: Props) {
   const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [attachment, setAttachment] = useState<StagedAttachment | null>(null)
+  const [attachError, setAttachError] = useState('')
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
 
   // Scroll to bottom on load and new messages
   useEffect(() => {
@@ -79,39 +125,122 @@ export default function MessageThread({ conversationId, currentUserId, otherUser
     return () => clearInterval(interval)
   }, [conversationId, messages])
 
+  // ------------------------------------------------------------------------
+  // Attachment upload — direct-to-Supabase, under the sender's uid folder so
+  // the RLS policy on the message-attachments bucket accepts it.
+  // ------------------------------------------------------------------------
+  async function handleAttachPick(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (fileRef.current) fileRef.current.value = ''
+    if (!file) return
+
+    setAttachError('')
+
+    // Classify
+    const isImage = IMAGE_MIME.test(file.type)
+    const isDoc = !!DOC_MIME[file.type]
+    if (!isImage && !isDoc) {
+      setAttachError('Only images, PDFs, Word and Excel docs are allowed.')
+      return
+    }
+
+    const capMB = isImage ? MAX_IMAGE_MB : MAX_FILE_MB
+    if (file.size > capMB * 1024 * 1024) {
+      setAttachError(`File must be under ${capMB}MB.`)
+      return
+    }
+
+    setUploading(true)
+    try {
+      const supabase = createClient()
+      const ext = file.name.split('.').pop() ?? (isImage ? 'jpg' : 'bin')
+      const path = `${currentUserId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('message-attachments')
+        .upload(path, file, { contentType: file.type })
+
+      if (uploadError) throw uploadError
+
+      const { data } = supabase.storage.from('message-attachments').getPublicUrl(path)
+      setAttachment({
+        url: data.publicUrl,
+        type: isImage ? 'image' : 'file',
+        filename: file.name,
+      })
+    } catch {
+      setAttachError('Upload failed. Please try again.')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  function clearAttachment() {
+    setAttachment(null)
+    setAttachError('')
+  }
+
   async function handleSend(e: React.FormEvent) {
     e.preventDefault()
-    if (!input.trim() || sending) return
+    const trimmed = input.trim()
+    if ((!trimmed && !attachment) || sending) return
     setSending(true)
 
     const optimisticMsg: Message = {
       id: `temp-${Date.now()}`,
       senderId: currentUserId,
-      body: input.trim(),
+      body: trimmed || null,
+      mediaUrl: attachment?.url ?? null,
+      mediaType: attachment?.type ?? null,
+      mediaFilename: attachment?.filename ?? null,
       status: 'sent',
       createdAt: new Date().toISOString(),
     }
     setMessages(prev => [...prev, optimisticMsg])
+    const stagedAttachment = attachment
     setInput('')
+    setAttachment(null)
 
     try {
       const res = await fetch('/api/messages/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ conversationId, body: optimisticMsg.body }),
+        body: JSON.stringify({
+          conversationId,
+          body: trimmed,
+          mediaUrl: stagedAttachment?.url ?? null,
+          mediaType: stagedAttachment?.type ?? null,
+          mediaFilename: stagedAttachment?.filename ?? null,
+        }),
       })
       const data = await res.json()
       if (data.message) {
         // Replace optimistic message with real one
         setMessages(prev => prev.map(m =>
           m.id === optimisticMsg.id
-            ? { id: data.message.id, senderId: data.message.sender_id, body: data.message.body, status: data.message.status, createdAt: data.message.created_at }
+            ? {
+                id: data.message.id,
+                senderId: data.message.sender_id,
+                body: data.message.body,
+                mediaUrl: data.message.media_url,
+                mediaType: data.message.media_type,
+                mediaFilename: data.message.media_filename,
+                status: data.message.status,
+                createdAt: data.message.created_at,
+              }
             : m
         ))
+      } else {
+        // Non-OK response — roll back the optimistic bubble
+        setMessages(prev => prev.filter(m => m.id !== optimisticMsg.id))
+        setInput(trimmed)
+        setAttachment(stagedAttachment)
       }
     } catch {
       // Remove optimistic message on error
       setMessages(prev => prev.filter(m => m.id !== optimisticMsg.id))
+      setInput(trimmed)
+      setAttachment(stagedAttachment)
     }
     setSending(false)
     inputRef.current?.focus()
@@ -142,6 +271,7 @@ export default function MessageThread({ conversationId, currentUserId, otherUser
   const initial = (otherUser.name[0] || '?').toUpperCase()
 
   let lastDateLabel = ''
+  const canSend = !sending && !uploading && (input.trim().length > 0 || !!attachment)
 
   return (
     <div className="flex-1 flex flex-col max-w-2xl mx-auto w-full">
@@ -191,6 +321,9 @@ export default function MessageThread({ conversationId, currentUserId, otherUser
           const prevMsg = i > 0 ? messages[i - 1] : null
           const timeDiff = prevMsg ? (new Date(msg.createdAt).getTime() - new Date(prevMsg.createdAt).getTime()) / 60000 : Infinity
 
+          const hasImage = msg.mediaType === 'image' && msg.mediaUrl
+          const hasFile = msg.mediaType === 'file' && msg.mediaUrl
+
           return (
             <div key={msg.id}>
               {/* Date separator */}
@@ -208,18 +341,67 @@ export default function MessageThread({ conversationId, currentUserId, otherUser
               {/* Message bubble */}
               <div className={`flex ${isMe ? 'justify-end' : 'justify-start'} ${timeDiff > 2 || showDate ? 'mt-2' : 'mt-0.5'}`}>
                 <div
-                  className={`max-w-[75%] rounded-2xl px-3.5 py-2 text-sm leading-relaxed ${
+                  className={`max-w-[75%] rounded-2xl text-sm leading-relaxed overflow-hidden ${
                     isMe
                       ? 'bg-green-600 text-white rounded-br-md'
                       : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700 rounded-bl-md'
                   }`}
                 >
-                  <p className="whitespace-pre-line break-words">{msg.body}</p>
-                  <p className={`text-[10px] mt-1 ${isMe ? 'text-green-200' : 'text-gray-400 dark:text-gray-500'}`}>
-                    {formatTime(msg.createdAt)}
-                    {isMe && msg.status === 'read' && ' ✓✓'}
-                    {isMe && msg.status === 'delivered' && ' ✓'}
-                  </p>
+                  {/* Image attachment — rendered flush to bubble edges */}
+                  {hasImage && (
+                    <a
+                      href={msg.mediaUrl!}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block"
+                    >
+                      <Image
+                        src={msg.mediaUrl!}
+                        alt={msg.mediaFilename || 'Attachment'}
+                        width={320}
+                        height={320}
+                        unoptimized
+                        className="w-full max-w-[280px] h-auto object-cover"
+                      />
+                    </a>
+                  )}
+
+                  {/* File attachment — download chip */}
+                  {hasFile && (
+                    <a
+                      href={msg.mediaUrl!}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      download={msg.mediaFilename || undefined}
+                      className={`flex items-center gap-2.5 px-3 py-2.5 ${
+                        isMe
+                          ? 'bg-green-700/60 hover:bg-green-700/80'
+                          : 'bg-gray-50 dark:bg-gray-900/50 hover:bg-gray-100 dark:hover:bg-gray-900 border-b border-gray-200 dark:border-gray-700'
+                      } transition-colors`}
+                    >
+                      <span className="text-2xl leading-none shrink-0">{fileIcon(msg.mediaFilename)}</span>
+                      <div className="min-w-0 flex-1">
+                        <p className={`text-xs font-medium truncate ${isMe ? 'text-white' : 'text-gray-900 dark:text-gray-100'}`}>
+                          {msg.mediaFilename || 'Attachment'}
+                        </p>
+                        <p className={`text-[10px] ${isMe ? 'text-green-100' : 'text-gray-500 dark:text-gray-400'}`}>
+                          Tap to download
+                        </p>
+                      </div>
+                    </a>
+                  )}
+
+                  {/* Body + timestamp */}
+                  <div className="px-3.5 py-2">
+                    {msg.body && (
+                      <p className="whitespace-pre-line break-words">{msg.body}</p>
+                    )}
+                    <p className={`text-[10px] ${msg.body ? 'mt-1' : ''} ${isMe ? 'text-green-200' : 'text-gray-400 dark:text-gray-500'}`}>
+                      {formatTime(msg.createdAt)}
+                      {isMe && msg.status === 'read' && ' ✓✓'}
+                      {isMe && msg.status === 'delivered' && ' ✓'}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -230,18 +412,71 @@ export default function MessageThread({ conversationId, currentUserId, otherUser
 
       {/* Input */}
       <div className="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 px-4 py-3">
-        <form onSubmit={handleSend} className="flex gap-2">
+        {/* Staged-attachment preview (sits above the composer) */}
+        {attachment && (
+          <div className="mb-2 flex items-center gap-3 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+            {attachment.type === 'image' ? (
+              <div className="relative w-12 h-12 rounded-md overflow-hidden shrink-0 bg-gray-100 dark:bg-gray-700">
+                <Image src={attachment.url} alt="" fill sizes="48px" unoptimized className="object-cover" />
+              </div>
+            ) : (
+              <span className="text-2xl leading-none shrink-0">{fileIcon(attachment.filename)}</span>
+            )}
+            <span className="text-xs text-gray-700 dark:text-gray-300 truncate flex-1">{attachment.filename}</span>
+            <button
+              type="button"
+              onClick={clearAttachment}
+              className="text-xs text-red-500 hover:text-red-700 dark:hover:text-red-400 font-medium shrink-0"
+            >
+              Remove
+            </button>
+          </div>
+        )}
+
+        {/* Inline upload error */}
+        {attachError && (
+          <p className="mb-2 text-xs text-red-600 dark:text-red-400">{attachError}</p>
+        )}
+
+        {/* Uploading indicator */}
+        {uploading && (
+          <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">Uploading attachment…</p>
+        )}
+
+        <form onSubmit={handleSend} className="flex items-center gap-2">
+          {/* Attach button */}
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            disabled={uploading || sending || !!attachment}
+            title={attachment ? 'One attachment per message' : 'Attach photo or file'}
+            aria-label="Attach photo or file"
+            className="shrink-0 w-10 h-10 flex items-center justify-center rounded-full text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+              <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+            </svg>
+          </button>
+
+          <input
+            ref={fileRef}
+            type="file"
+            accept={ACCEPT_ATTR}
+            onChange={handleAttachPick}
+            className="hidden"
+          />
+
           <input
             ref={inputRef}
             type="text"
             value={input}
             onChange={e => setInput(e.target.value)}
-            placeholder="Type a message..."
+            placeholder={attachment ? 'Add a caption (optional)…' : 'Type a message...'}
             className="flex-1 px-4 py-2.5 rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500 placeholder-gray-400 dark:placeholder-gray-500"
           />
           <button
             type="submit"
-            disabled={sending || !input.trim()}
+            disabled={!canSend}
             className="bg-green-600 hover:bg-green-700 text-white rounded-full w-10 h-10 flex items-center justify-center disabled:opacity-50 transition-colors shrink-0"
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
@@ -249,6 +484,10 @@ export default function MessageThread({ conversationId, currentUserId, otherUser
             </svg>
           </button>
         </form>
+
+        <p className="mt-2 text-[10px] text-gray-400 dark:text-gray-500">
+          Images up to {MAX_IMAGE_MB}MB · PDF, DOC, DOCX, XLS, XLSX, CSV up to {MAX_FILE_MB}MB
+        </p>
       </div>
     </div>
   )

@@ -191,7 +191,7 @@ export default function ContactClient() {
         <div>
           {submitted ? (
             <div style={{ background: 'var(--badge-bg)', border: '1px solid var(--badge-border)', borderRadius: 20, padding: '48px 40px', textAlign: 'center' }}>
-              <div style={{ fontSize: 48, marginBottom: 20 }}>🌱</div>
+              <Image src="/logo-icon-colored.png" alt="AgroYield Network" width={52} height={52} style={{ marginBottom: 20, display: 'inline-block' }} />
               <h3 style={{ color: '#4ade80', fontWeight: 800, fontSize: 22, marginBottom: 12 }}>Message received!</h3>
               <p style={{ color: 'var(--text-secondary)', fontSize: 15, lineHeight: 1.7 }}>
                 Thanks for reaching out, {form.name.split(' ')[0]}. We&apos;ll get back to you within 1–2 business days at <strong style={{ color: 'var(--strong-color)' }}>{form.email}</strong>.
