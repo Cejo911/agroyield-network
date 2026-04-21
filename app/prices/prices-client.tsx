@@ -7,7 +7,7 @@ import ReportButton from '@/app/components/ReportButton'
 import { useSearchLog } from '@/lib/useSearchLog'
 import { createClient } from '@/lib/supabase/client'
 
-const FALLBACK_CATEGORIES = ['Grains', 'Tubers', 'Legumes', 'Vegetables', 'Fruits', 'Livestock', 'Oils', 'Cash Crops']
+const FALLBACK_CATEGORIES = ['Grains', 'Tubers', 'Legumes', 'Vegetables', 'Fruits', 'Livestock', 'Oil', 'Cash Crops']
 const CATEGORY_COLOURS: Record<string, string> = {
   grains:     'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400',
   tubers:     'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400',
@@ -15,6 +15,10 @@ const CATEGORY_COLOURS: Record<string, string> = {
   vegetables: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400',
   fruits:     'bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-400',
   livestock:  'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
+  // Keep both 'oil' (new canonical) and 'oils' (legacy, pre-21-Apr-2026 rows
+  // that haven't been touched by the rename migration yet) so existing
+  // reports still get coloured correctly during rollout.
+  oil:        'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
   oils:       'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
   cash_crops: 'bg-stone-100 dark:bg-stone-800/60 text-stone-700 dark:text-stone-300',
   'cash crops': 'bg-stone-100 dark:bg-stone-800/60 text-stone-700 dark:text-stone-300',

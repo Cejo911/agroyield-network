@@ -7,9 +7,11 @@
 // Adding a new category: add the key here, then wire a colour into
 // CATEGORY_COLOURS in prices-client.tsx so the badge renders.
 //
-// Note on Oils: edible/refined oils are sold by the litre and trade as a
+// Note on Oil: edible/refined oils are sold by the litre and trade as a
 // distinct commodity from the raw crop (Palm Oil ≠ palm fruit kernel),
 // so they get their own category rather than living under cash_crops.
+// Key is singular "oil" to stay consistent with Marketplace's "oil"
+// category and match the label the admin settings expose.
 
 export const COMMODITIES: Record<string, string[]> = {
   grains:     ['Maize', 'Rice', 'Sorghum', 'Millet', 'Wheat', 'Barley'],
@@ -18,7 +20,7 @@ export const COMMODITIES: Record<string, string[]> = {
   vegetables: ['Tomato', 'Pepper', 'Onion', 'Cabbage', 'Carrot', 'Spinach'],
   fruits:     ['Banana', 'Plantain', 'Mango', 'Orange', 'Pineapple', 'Watermelon'],
   livestock:  ['Cattle', 'Goat', 'Sheep', 'Pig', 'Poultry', 'Fish'],
-  oils:       ['Palm Oil', 'Groundnut Oil', 'Vegetable Oil', 'Coconut Oil', 'Sesame Oil', 'Soybean Oil'],
+  oil:        ['Palm Oil', 'Groundnut Oil', 'Vegetable Oil', 'Coconut Oil', 'Sesame Oil', 'Soybean Oil'],
   cash_crops: ['Cocoa', 'Coffee', 'Cotton', 'Rubber', 'Sugarcane'],
 }
 
