@@ -3,6 +3,9 @@ import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { logAdminAction } from '@/lib/admin/audit-log'
 import { DEFAULT_MODERATOR_PERMISSIONS } from '@/lib/admin/permissions'
+import { SENDERS } from '@/lib/email/senders'
+import { getResend } from '@/lib/email/client'
+import { slackAlert } from '@/lib/slack'
 
 export async function PATCH(request: NextRequest) {
   try {
@@ -112,6 +115,96 @@ export async function PATCH(request: NextRequest) {
       await adminAny.from('profiles').update({
         is_institution_verified: true,
       }).eq('id', userId)
+
+      // Fire-and-forget: notify the institution + alert the team.
+      // Never block the admin response on email or Slack.
+      ;(async () => {
+        try {
+          const { data: verifiedProfile } = await adminAny
+            .from('profiles')
+            .select('institution_display_name, contact_person_name, first_name')
+            .eq('id', userId)
+            .single()
+
+          // Look up the auth email (profiles doesn't store it)
+          const { data: { user: verifiedUser } } = await adminClient.auth.admin.getUserById(userId)
+          const toEmail = verifiedUser?.email
+          const institutionName =
+            verifiedProfile?.institution_display_name || 'Your institution'
+          const contactName =
+            verifiedProfile?.contact_person_name ||
+            verifiedProfile?.first_name ||
+            'there'
+          const origin =
+            process.env.NEXT_PUBLIC_SITE_URL || 'https://agroyield.africa'
+
+          if (toEmail) {
+            await getResend().emails.send({
+              from: SENDERS.hello,
+              to: toEmail,
+              subject: `${institutionName} is now verified on AgroYield Network ✅`,
+              html: `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#060d09;font-family:'Helvetica Neue',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#060d09;padding:40px 0;">
+    <tr><td align="center">
+      <table width="560" cellpadding="0" cellspacing="0" style="background:#0c1c11;border:1px solid #1c3825;border-radius:16px;overflow:hidden;max-width:560px;">
+        <tr><td style="padding:36px 48px;border-bottom:1px solid #1c3825;">
+          <img src="${origin}/logo-horizontal-white.png" alt="AgroYield Network" style="height:70px;width:auto;" />
+        </td></tr>
+        <tr><td style="padding:40px 48px;">
+          <p style="font-size:28px;margin:0 0 16px;font-weight:900;color:#f0fdf4;letter-spacing:-1px;">You're verified. 🎉</p>
+          <p style="font-size:16px;color:#bbf7d0;line-height:1.75;margin:0 0 28px;">
+            Hi ${contactName}, <strong style="color:#f0fdf4;">${institutionName}</strong> has been approved by our team. You can now post opportunities, grants, research, and marketplace listings on behalf of your institution.
+          </p>
+          <table width="100%" cellpadding="0" cellspacing="0" style="background:#0f2318;border:1px solid #1c3825;border-radius:12px;margin:0 0 28px;">
+            <tr><td style="padding:24px 28px;">
+              <p style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#22c55e;margin:0 0 14px;">What you can do now</p>
+              <p style="font-size:14px;color:#bbf7d0;line-height:2;margin:0;">
+                🎯 &nbsp;<strong style="color:#f0fdf4;">Post opportunities</strong> — grants, roles, partnerships, events<br>
+                💰 &nbsp;<strong style="color:#f0fdf4;">List grant programmes</strong> — publish your RFPs to the network<br>
+                📚 &nbsp;<strong style="color:#f0fdf4;">Publish research</strong> — share findings and collaborations<br>
+                🤝 &nbsp;<strong style="color:#f0fdf4;">Marketplace listings</strong> — buy, sell and source inputs
+              </p>
+            </td></tr>
+          </table>
+          <table cellpadding="0" cellspacing="0">
+            <tr><td style="background:#22c55e;border-radius:10px;padding:14px 28px;">
+              <a href="${origin}/dashboard" style="font-size:14px;font-weight:700;color:#030a05;text-decoration:none;display:block;white-space:nowrap;">
+                Go to Dashboard &rarr;
+              </a>
+            </td></tr>
+          </table>
+        </td></tr>
+        <tr><td style="padding:24px 48px;border-top:1px solid #1c3825;">
+          <p style="font-size:12px;color:#4b7a5c;margin:0;line-height:1.6;">
+            If you have questions, reply to this email or reach us at
+            <a href="mailto:hello@agroyield.africa" style="color:#22c55e;text-decoration:none;">hello@agroyield.africa</a>.<br>
+            © 2026 AgroYield Network · Nigeria
+          </p>
+          <p style="font-size:10px;color:#4b7a5c;opacity:0.6;margin:4px 0 0;">An Agcoms International Project</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`,
+            })
+          }
+
+          await slackAlert({
+            title: 'Institution Verified',
+            level: 'info',
+            fields: {
+              'Institution': institutionName,
+              'Contact': contactName,
+              'Email': toEmail ?? 'unknown',
+              'Verified by': user.email ?? user.id,
+            },
+          })
+        } catch (e) {
+          console.error('verify_institution notification error:', e)
+        }
+      })()
     } else if (action === 'update_permissions') {
       if (!permissions) {
         return NextResponse.json({ error: 'Permissions object required' }, { status: 400 })

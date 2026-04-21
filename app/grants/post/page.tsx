@@ -43,6 +43,18 @@ export default function PostGrantPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+
+    // Client-side gate: unverified institutions cannot post. This matches the
+    // Postgres RLS policy in 20260421_institution_posting_rls.sql; the UI
+    // check avoids a raw "new row violates row-level security policy" error.
+    if (isInstitution && !isInstitutionVerified) {
+      alert(
+        'Your institution account is pending admin verification. ' +
+        'Posting will unlock once our team approves your profile.'
+      )
+      return
+    }
+
     setSaving(true)
 
     const { data: { user } } = await supabase.auth.getUser()
@@ -72,7 +84,11 @@ export default function PostGrantPage() {
 
     setSaving(false)
     if (error) {
-      alert(`Error: ${error.message}`)
+      // Translate RLS violation into a friendly message
+      const msg = /row-level security|row level security/i.test(error.message)
+        ? 'Your institution account is pending admin verification. Posting will unlock once our team approves your profile.'
+        : `Error: ${error.message}`
+      alert(msg)
       return
     }
     router.push('/grants')

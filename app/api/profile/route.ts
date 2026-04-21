@@ -22,6 +22,30 @@ export async function POST(req: Request) {
 
     const body = await req.json()
 
+    // ── Institution submissions: enforce required identity fields ────────
+    // The client form already validates, but a direct POST could bypass it.
+    const submittedAccountType = body.account_type || 'individual'
+    if (submittedAccountType === 'institution') {
+      const ALLOWED_INSTITUTION_TYPES = ['university', 'government', 'ngo', 'agri_company']
+      const missing: string[] = []
+      if (!body.institution_display_name?.trim()) missing.push('institution_display_name')
+      if (!body.institution_type?.trim())         missing.push('institution_type')
+      if (!body.first_name?.trim())               missing.push('first_name (contact person)')
+      if (!body.last_name?.trim())                missing.push('last_name (contact person)')
+      if (missing.length > 0) {
+        return NextResponse.json(
+          { error: 'Missing required institution fields', missing },
+          { status: 400 }
+        )
+      }
+      if (!ALLOWED_INSTITUTION_TYPES.includes(body.institution_type)) {
+        return NextResponse.json(
+          { error: `Invalid institution_type. Must be one of: ${ALLOWED_INSTITUTION_TYPES.join(', ')}` },
+          { status: 400 }
+        )
+      }
+    }
+
     const { data: existing } = await supabaseAny
       .from('profiles')
       .select('username')

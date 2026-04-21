@@ -47,17 +47,51 @@ export async function GET(request: Request) {
 
         const { data: profile } = await (supabase as any)
           .from('profiles')
-          .select('id, first_name, account_type')
+          .select('id, first_name, account_type, institution_display_name, institution_type')
           .eq('id', user.id)
           .single()
 
-        // Persist account_type from signup metadata if not already set
-        const metaAccountType = user.user_metadata?.account_type
-        if (profile && metaAccountType && (!profile.account_type || profile.account_type === 'individual') && metaAccountType === 'institution') {
-          await (supabase as any)
+        // ── Backfill account_type + institution fields from signup metadata ──
+        // The auth.users trigger only captures first_name/last_name. Institution
+        // identity (name, type, contact role) lives in user_metadata at signup
+        // time and must be promoted into the profiles row here.
+        const meta = user.user_metadata ?? {}
+        const metaAccountType = meta.account_type
+        const profileUpdates: Record<string, unknown> = {}
+
+        if (metaAccountType === 'institution' && profile?.account_type !== 'institution') {
+          profileUpdates.account_type = 'institution'
+        } else if (metaAccountType === 'individual' && !profile?.account_type) {
+          profileUpdates.account_type = 'individual'
+        }
+
+        if (metaAccountType === 'institution') {
+          if (meta.institution_display_name && !profile?.institution_display_name) {
+            profileUpdates.institution_display_name = meta.institution_display_name
+          }
+          if (meta.institution_type && !profile?.institution_type) {
+            profileUpdates.institution_type = meta.institution_type
+          }
+          if (meta.contact_person_name) {
+            profileUpdates.contact_person_name = meta.contact_person_name
+          }
+          if (meta.contact_person_role) {
+            profileUpdates.contact_person_role = meta.contact_person_role
+          }
+          // Institutions skip the individual-role OnboardingWizard; their
+          // onboarding flow is profile completion → admin verification.
+          profileUpdates.has_onboarded = true
+        }
+
+        if (Object.keys(profileUpdates).length > 0) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const supabaseAny = supabase as any
+          await supabaseAny
             .from('profiles')
-            .update({ account_type: metaAccountType })
+            .update(profileUpdates)
             .eq('id', user.id)
+          // Merge back so the slack alert below sees the right account_type
+          Object.assign(profile ?? {}, profileUpdates)
         }
 
         if (profile && !profile.first_name) {

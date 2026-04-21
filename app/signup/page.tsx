@@ -5,9 +5,26 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import ThemeToggle from '@/app/components/ThemeToggle'
 
+const INSTITUTION_TYPES = [
+  { value: 'university',   label: 'University / Research Institute' },
+  { value: 'government',   label: 'Government Agency' },
+  { value: 'ngo',          label: 'NGO / Foundation' },
+  { value: 'agri_company', label: 'Agri-Company / Cooperative' },
+] as const
+
 export default function SignUp() {
   const router = useRouter()
-  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', password: '', confirm: '', accountType: 'individual' as 'individual' | 'institution' })
+  const [form, setForm] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+    confirm: '',
+    accountType: 'individual' as 'individual' | 'institution',
+    institutionName: '',
+    institutionType: '' as '' | 'university' | 'government' | 'ngo' | 'agri_company',
+    contactRole: '',
+  })
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [error, setError] = useState('')
@@ -75,20 +92,35 @@ export default function SignUp() {
     if (!registrationEnabled) return
     if (form.password !== form.confirm) { setError('Passwords do not match.'); return }
     if (form.password.length < 8) { setError('Password must be at least 8 characters.'); return }
+
+    // Institution-specific required fields
+    if (form.accountType === 'institution') {
+      if (!form.institutionName.trim()) { setError('Please enter your institution name.'); return }
+      if (!form.institutionType)        { setError('Please select an institution type.'); return }
+    }
+
     setLoading(true)
     setError('')
     const supabase = createClient()
+    const isInstitution = form.accountType === 'institution'
+    const metadata: Record<string, string> = {
+      first_name: form.firstName,
+      last_name: form.lastName,
+      full_name: `${form.firstName} ${form.lastName}`,
+      account_type: form.accountType,
+    }
+    if (isInstitution) {
+      metadata.institution_display_name = form.institutionName.trim()
+      metadata.institution_type         = form.institutionType
+      metadata.contact_person_name      = `${form.firstName} ${form.lastName}`.trim()
+      if (form.contactRole.trim()) metadata.contact_person_role = form.contactRole.trim()
+    }
     const { error: err } = await supabase.auth.signUp({
       email: form.email,
       password: form.password,
       options: {
         emailRedirectTo: 'https://agroyield.africa/auth/callback',
-        data: {
-          first_name: form.firstName,
-          last_name: form.lastName,
-          full_name: `${form.firstName} ${form.lastName}`,
-          account_type: form.accountType,
-        }
+        data: metadata,
       }
     })
     if (err) { setError(err.message); setLoading(false); return }
@@ -256,7 +288,9 @@ export default function SignUp() {
                 <Image src="/logo-stacked-colored.png" alt="AgroYield Network" width={120} height={120} className="auth-logo-colored" style={{ height: 120, width: 'auto' }} />
                 <Image src="/logo-stacked-white.png" alt="AgroYield Network" width={120} height={120} className="auth-logo-white" style={{ height: 120, width: 'auto' }} />
               </div>
-              <h1 style={{ fontSize: 28, fontWeight: 900, color: 'var(--text-primary)', letterSpacing: -1, marginBottom: 8 }}>Create your account</h1>
+              <h1 style={{ fontSize: 28, fontWeight: 900, color: 'var(--text-primary)', letterSpacing: -1, marginBottom: 8 }}>
+                {form.accountType === 'institution' ? 'Register your institution' : 'Create your account'}
+              </h1>
               <p style={{ fontSize: 15, color: 'var(--text-secondary)' }}>Join AgroYield Network as a member or institution</p>
             </div>
 
@@ -371,6 +405,65 @@ export default function SignUp() {
                     </p>
                   )}
                 </div>
+
+                {/* Institution identity (only when accountType === 'institution') */}
+                {form.accountType === 'institution' && (
+                  <>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text-label)', marginBottom: 8 }}>
+                        Institution name <span style={{ color: '#ef4444' }}>*</span>
+                      </label>
+                      <input
+                        name="institutionName"
+                        value={form.institutionName}
+                        onChange={handleChange}
+                        placeholder="e.g. Ahmadu Bello University, Green Acres Cooperative"
+                        required
+                        style={inputStyle}
+                      />
+                      <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6 }}>
+                        This is the public display name that appears across the network.
+                      </p>
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text-label)', marginBottom: 8 }}>
+                        Institution type <span style={{ color: '#ef4444' }}>*</span>
+                      </label>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                        {INSTITUTION_TYPES.map(t => (
+                          <button
+                            key={t.value}
+                            type="button"
+                            onClick={() => setForm(prev => ({ ...prev, institutionType: t.value }))}
+                            style={{
+                              padding: '12px 14px', borderRadius: 10, fontSize: 13, fontWeight: 600, fontFamily: 'inherit',
+                              cursor: 'pointer', transition: 'all 0.2s', textAlign: 'left',
+                              background: form.institutionType === t.value ? 'rgba(34,197,94,0.1)' : 'transparent',
+                              border: form.institutionType === t.value ? '2px solid #22c55e' : '2px solid var(--border-color)',
+                              color: form.institutionType === t.value ? '#16a34a' : 'var(--text-secondary)',
+                            }}
+                          >
+                            {t.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text-label)', marginBottom: 8 }}>
+                        Contact person&rsquo;s role <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>(optional)</span>
+                      </label>
+                      <input
+                        name="contactRole"
+                        value={form.contactRole}
+                        onChange={handleChange}
+                        placeholder="e.g. Director of Research, Programme Lead"
+                        style={inputStyle}
+                      />
+                    </div>
+                  </>
+                )}
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                   <div>

@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { notifyFollowers } from '@/lib/notify-followers'
 import { notifyOpenToOpportunities } from '@/lib/notify-open-to-opportunities'
 import { sanitiseText, sanitiseUrl } from '@/lib/sanitise'
+import { requireVerifiedInstitution } from '@/lib/auth/require-verified-institution'
 
 export async function GET() {
   return NextResponse.json({ status: 'ok' })
@@ -25,6 +26,10 @@ export async function POST(request: NextRequest) {
         { status: 403 }
       )
     }
+
+    // Institutions must be admin-verified before posting
+    const gate = await requireVerifiedInstitution(supabase, user.id)
+    if (gate.block) return gate.block
 
     // Read rate limit from settings (fallback: 3)
     const { data: rateSetting } = await supabaseAny

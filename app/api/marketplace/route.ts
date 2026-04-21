@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { notifyFollowers } from '@/lib/notify-followers'
 import { sanitiseText } from '@/lib/sanitise'
+import { requireVerifiedInstitution } from '@/lib/auth/require-verified-institution'
 
 export async function GET() {
   return NextResponse.json({ status: 'ok' })
@@ -24,6 +25,10 @@ export async function POST(request: NextRequest) {
         { status: 403 }
       )
     }
+
+    // Institutions must be admin-verified before posting
+    const gate = await requireVerifiedInstitution(supabase, user.id)
+    if (gate.block) return gate.block
 
     // Read rate limit from settings (fallback: 5)
     const { data: rateSetting } = await supabaseAny
