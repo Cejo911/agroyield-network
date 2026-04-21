@@ -57,6 +57,17 @@ interface RecipientResult {
   error?: string
 }
 
+/** Delivery status looked up from Termii after the send. */
+interface DeliveryStatus {
+  messageId: string
+  success: boolean
+  /** Normalised: queued | sent | delivered | failed | unknown */
+  status: string
+  rawStatus: string | null
+  reason: string | null
+  error: string | null
+}
+
 interface LastResult {
   ok: boolean
   at: string
@@ -64,13 +75,26 @@ interface LastResult {
   successCount?: number
   failureCount?: number
   results?: RecipientResult[]
+  /** Keyed by messageId — populated by the Check delivery button. */
+  delivery?: Record<string, DeliveryStatus>
+  deliveryLoading?: boolean
+  deliveryError?: string
   error?: string
 }
+
+type SmsChannel = 'generic' | 'dnd' | 'whatsapp'
+const CHANNEL_OPTIONS: { value: '' | SmsChannel; label: string; hint: string }[] = [
+  { value: '',         label: 'Default (env config)', hint: 'Use TERMII_SMS_CHANNEL' },
+  { value: 'generic',  label: 'Generic',              hint: 'Cheapest · dropped for DND-listed numbers' },
+  { value: 'dnd',      label: 'DND',                  hint: 'Reaches DND-listed numbers · costs more' },
+  { value: 'whatsapp', label: 'WhatsApp',             hint: 'Rarely used for plain SMS' },
+]
 
 export default function SmsTestTab() {
   const [to, setTo] = useState('')
   const [message, setMessage] = useState('AgroYield test: your SMS pipeline is live.')
   const [senderOverride, setSenderOverride] = useState('')
+  const [channelOverride, setChannelOverride] = useState<'' | SmsChannel>('')
   const [sending, setSending] = useState(false)
   const [info, setInfo] = useState<BalanceState | null>(null)
   const [infoLoading, setInfoLoading] = useState(true)
@@ -129,6 +153,9 @@ export default function SmsTestTab() {
           to: to.trim(),
           message: message.trim(),
           senderId: senderOverride.trim() || undefined,
+          // Omit channel when empty so the server falls back to env config
+          // instead of receiving a literal "" and failing validation.
+          channel: channelOverride || undefined,
         }),
       })
       const json = await res.json()
@@ -160,6 +187,60 @@ export default function SmsTestTab() {
       })
     } finally {
       setSending(false)
+    }
+  }
+
+  /**
+   * Poll Termii for the carrier-side delivery status of every messageId
+   * in the current result panel. Runs as a single batch request so the
+   * admin sees all N statuses at once instead of them trickling in.
+   *
+   * Termii's status reporting is near-realtime on delivery (sub-second
+   * for most carriers) but can lag 10-30s on rejection, so we don't
+   * auto-poll — admin clicks when they want a fresh read.
+   */
+  async function checkDelivery() {
+    if (!last?.results) return
+    const ids = last.results
+      .filter(r => r.success && r.messageId)
+      .map(r => r.messageId as string)
+    if (ids.length === 0) return
+
+    setLast(prev => prev && { ...prev, deliveryLoading: true, deliveryError: undefined })
+
+    try {
+      const res = await fetch(
+        `/api/admin/sms/test/status?ids=${encodeURIComponent(ids.join(','))}`,
+        { method: 'GET' },
+      )
+      const json = await res.json()
+
+      if (!res.ok) {
+        setLast(prev => prev && {
+          ...prev,
+          deliveryLoading: false,
+          deliveryError: json.error || `HTTP ${res.status}`,
+        })
+        return
+      }
+
+      // Index by messageId for O(1) lookup during render.
+      const deliveryMap: Record<string, DeliveryStatus> = {}
+      for (const d of (json.results as DeliveryStatus[]) || []) {
+        deliveryMap[d.messageId] = d
+      }
+
+      setLast(prev => prev && {
+        ...prev,
+        deliveryLoading: false,
+        delivery: deliveryMap,
+      })
+    } catch (err) {
+      setLast(prev => prev && {
+        ...prev,
+        deliveryLoading: false,
+        deliveryError: err instanceof Error ? err.message : 'Network error',
+      })
     }
   }
 
@@ -279,20 +360,44 @@ export default function SmsTestTab() {
           </div>
         </div>
 
-        <div>
-          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Sender ID override <span className="text-gray-400 font-normal">(optional)</span>
-          </label>
-          <input
-            type="text"
-            placeholder={info?.senderId || 'AgroYield'}
-            value={senderOverride}
-            onChange={(e) => setSenderOverride(e.target.value)}
-            className={`${sInput} w-full`}
-          />
-          <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
-            Leave blank to use the env-configured sender ID.
-          </p>
+        {/* Sender ID + channel on one row so the form doesn't grow too tall.
+            Both are power-user overrides — collapsed hint captions keep the
+            rail compact while still telling the admin what they do. */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Sender ID override <span className="text-gray-400 font-normal">(optional)</span>
+            </label>
+            <input
+              type="text"
+              placeholder={info?.senderId || 'AgroYield'}
+              value={senderOverride}
+              onChange={(e) => setSenderOverride(e.target.value)}
+              className={`${sInput} w-full`}
+            />
+            <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
+              Leave blank to use the env-configured sender ID.
+            </p>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Channel <span className="text-gray-400 font-normal">(optional)</span>
+            </label>
+            <select
+              value={channelOverride}
+              onChange={(e) => setChannelOverride(e.target.value as '' | SmsChannel)}
+              className={`${sInput} w-full`}
+            >
+              {CHANNEL_OPTIONS.map(opt => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+            <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
+              {CHANNEL_OPTIONS.find(o => o.value === channelOverride)?.hint ?? ''}
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center gap-3 pt-2">
@@ -331,38 +436,119 @@ export default function SmsTestTab() {
             </>
           ) : last.results ? (
             <>
-              <div className="font-medium">
-                {last.failureCount === 0
-                  ? `✓ Sent to all ${last.successCount} recipient${last.successCount === 1 ? '' : 's'}`
-                  : last.successCount === 0
-                    ? `✗ All ${last.failureCount} sends failed`
-                    : `⚠ ${last.successCount} sent · ${last.failureCount} failed`}
-              </div>
-              <div className="mt-2 space-y-1">
-                {last.results.map((r, i) => (
-                  <div
-                    key={`${r.input}-${i}`}
-                    className={`text-xs font-mono flex items-start gap-2 ${
-                      r.success ? 'opacity-90' : 'text-red-700 dark:text-red-400'
-                    }`}
+              <div className="flex items-start justify-between gap-3 flex-wrap">
+                <div className="font-medium">
+                  {last.failureCount === 0
+                    ? `✓ Sent to all ${last.successCount} recipient${last.successCount === 1 ? '' : 's'}`
+                    : last.successCount === 0
+                      ? `✗ All ${last.failureCount} sends failed`
+                      : `⚠ ${last.successCount} sent · ${last.failureCount} failed`}
+                </div>
+                {/* "Check delivery" is only useful when we have at least one
+                    successful messageId to look up. Hidden otherwise to
+                    avoid a button that would always return empty. */}
+                {(last.successCount ?? 0) > 0 && (
+                  <button
+                    type="button"
+                    onClick={checkDelivery}
+                    disabled={last.deliveryLoading}
+                    className="text-xs px-2.5 py-1 rounded border border-current/20 hover:bg-black/5 dark:hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Ask Termii whether the carrier actually delivered each SMS. Termii can accept a send that the carrier later drops (DND, sender ID not whitelisted, etc.)."
                   >
-                    <span className="flex-shrink-0">{r.success ? '✓' : '✗'}</span>
-                    <span className="flex-shrink-0 whitespace-nowrap">
-                      {r.to ?? r.input}
-                    </span>
-                    {r.success && r.messageId && (
-                      <span className="opacity-70 truncate">id: {r.messageId}</span>
-                    )}
-                    {!r.success && r.error && (
-                      <span className="opacity-90">— {r.error}</span>
-                    )}
-                  </div>
-                ))}
+                    {last.deliveryLoading ? 'Checking…' : last.delivery ? '↻ Refresh delivery' : 'Check delivery'}
+                  </button>
+                )}
               </div>
+
+              {last.deliveryError && (
+                <div className="mt-2 text-xs text-red-700 dark:text-red-400">
+                  Delivery check failed: {last.deliveryError}
+                </div>
+              )}
+
+              <div className="mt-2 space-y-1">
+                {last.results.map((r, i) => {
+                  const d = r.messageId ? last.delivery?.[r.messageId] : undefined
+                  return (
+                    <div
+                      key={`${r.input}-${i}`}
+                      className={`text-xs font-mono flex items-start gap-2 flex-wrap ${
+                        r.success ? 'opacity-90' : 'text-red-700 dark:text-red-400'
+                      }`}
+                    >
+                      <span className="flex-shrink-0">{r.success ? '✓' : '✗'}</span>
+                      <span className="flex-shrink-0 whitespace-nowrap">
+                        {r.to ?? r.input}
+                      </span>
+                      {r.success && r.messageId && (
+                        <span className="opacity-70 truncate">id: {r.messageId}</span>
+                      )}
+                      {!r.success && r.error && (
+                        <span className="opacity-90">— {r.error}</span>
+                      )}
+                      {/* Delivery pill — only shown once checkDelivery has
+                          populated the map. Colour-coded so the admin can
+                          eyeball the column: green=delivered, blue=sent
+                          (handed to carrier, not yet confirmed on handset),
+                          red=failed (carrier rejected), gray=queued/unknown. */}
+                      {d && (
+                        <DeliveryPill status={d.status} rawStatus={d.rawStatus} reason={d.reason} />
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+
+              {last.delivery && (
+                <p className="mt-2 text-[11px] opacity-70">
+                  Delivery pills reflect Termii&apos;s last report — a pending row may take up to ~30s to flip to delivered/failed.
+                </p>
+              )}
             </>
           ) : null}
         </div>
       )}
     </div>
+  )
+}
+
+/**
+ * Small colour-coded pill showing the carrier-side delivery status.
+ * Hover reveals Termii's raw status string + any rejection reason so
+ * the admin can grep the Termii dashboard if something looks off.
+ */
+function DeliveryPill({
+  status,
+  rawStatus,
+  reason,
+}: {
+  status: string
+  rawStatus: string | null
+  reason: string | null
+}) {
+  const cls =
+    status === 'delivered'
+      ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300 border-green-200 dark:border-green-800'
+      : status === 'sent'
+        ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border-blue-200 dark:border-blue-800'
+        : status === 'failed'
+          ? 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300 border-red-200 dark:border-red-800'
+          : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 border-gray-200 dark:border-gray-700'
+
+  const tooltip = [
+    rawStatus ? `Termii status: ${rawStatus}` : null,
+    reason ? `Reason: ${reason}` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ') || 'No extra detail from Termii'
+
+  return (
+    <span
+      title={tooltip}
+      className={`text-[10px] font-sans font-medium px-1.5 py-0.5 rounded border ${cls}`}
+    >
+      {status}
+      {status === 'failed' && reason ? ` · ${reason}` : ''}
+    </span>
   )
 }

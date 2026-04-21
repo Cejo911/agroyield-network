@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { logAdminAction } from '@/lib/admin/audit-log'
-import { sendSms, getSmsBalance } from '@/lib/messaging/sms/termii-sms'
+import { sendSms, getSmsBalance, isSmsChannel } from '@/lib/messaging/sms/termii-sms'
+import type { SmsChannel } from '@/lib/messaging/sms/termii-sms'
 import { toTermiiDigits, splitPhoneCandidates } from '@/lib/messaging/utils/phone'
 import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
 
@@ -12,9 +13,16 @@ import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
  *        Lets the admin UI show credit before firing a test send.
  *
  * POST — sends a plain-text SMS to one or more test recipients.
- *        Body: { to: string | string[], message: string, senderId?: string }
+ *        Body: {
+ *          to: string | string[],
+ *          message: string,
+ *          senderId?: string,
+ *          channel?: 'generic' | 'dnd' | 'whatsapp'
+ *        }
  *        The `to` field accepts either an array OR a string containing
  *        multiple numbers separated by commas / semicolons / newlines.
+ *        The `channel` field overrides TERMII_SMS_CHANNEL for this send —
+ *        useful for A/B testing DND bypass from the admin panel.
  *        Super admin only. Rate limited 5 calls/min per admin (not per
  *        recipient — the whole blast counts as one call).
  *
@@ -94,6 +102,7 @@ export async function POST(request: NextRequest) {
       to?: string | string[]
       message?: string
       senderId?: string
+      channel?: string
     }
 
     if (body.to === undefined || body.to === null) {
@@ -101,6 +110,19 @@ export async function POST(request: NextRequest) {
     }
     if (!body.message || typeof body.message !== 'string') {
       return NextResponse.json({ error: 'Missing "message" (SMS body)' }, { status: 400 })
+    }
+
+    // Channel override — opt-in, validated. If omitted, sendSms picks up
+    // TERMII_SMS_CHANNEL from env (or 'generic' as the final fallback).
+    let channelOverride: SmsChannel | undefined
+    if (body.channel !== undefined && body.channel !== null && body.channel !== '') {
+      if (!isSmsChannel(body.channel)) {
+        return NextResponse.json(
+          { error: `Invalid channel "${body.channel}". Expected: generic | dnd | whatsapp` },
+          { status: 400 },
+        )
+      }
+      channelOverride = body.channel
     }
 
     // Build the candidate list. Accept either an array (from a future
@@ -155,6 +177,7 @@ export async function POST(request: NextRequest) {
         to: normalised,
         message: body.message,
         senderId: body.senderId,
+        channel: channelOverride,
       })
 
       if (result.success) {
@@ -193,6 +216,7 @@ export async function POST(request: NextRequest) {
         success: successCount,
         failure: failureCount,
         senderId: body.senderId || process.env.TERMII_SMS_SENDER_ID || 'AgroYield',
+        channel: channelOverride || process.env.TERMII_SMS_CHANNEL || 'generic',
         bytes: body.message.length,
         perRecipient: results.map(r => ({
           to: r.to ?? r.input,
