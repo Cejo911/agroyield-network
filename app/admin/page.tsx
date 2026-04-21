@@ -73,7 +73,7 @@ export default async function AdminPage() {
     adminAny.from('research_posts').select('id, user_id, title, type, is_active, is_locked, created_at').order('created_at', { ascending: false }).limit(500),
     adminAny.from('comments').select('id, user_id, post_id, post_type, content, user_name, is_hidden, created_at').order('created_at', { ascending: false }).limit(500),
     adminAny.from('price_reports').select('id, user_id, commodity, state, market_name, price, unit, reported_at').order('reported_at', { ascending: false }).limit(500),
-    adminAny.from('mentor_profiles').select('user_id, headline, expertise, availability, is_active, updated_at').order('updated_at', { ascending: false }),
+    adminAny.from('mentor_profiles').select('user_id, headline, expertise, availability, is_active, updated_at, approval_status, approved_at, approved_by, rejection_reason, created_at').order('updated_at', { ascending: false }),
     adminAny.from('mentorship_requests').select('id, mentor_id, mentee_id, topic, status, created_at').order('created_at', { ascending: false }).limit(200),
     adminAny.from('settings').select('key, value'),
     adminAny.from('reports').select('*').order('created_at', { ascending: false }),

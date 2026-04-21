@@ -31,7 +31,8 @@ export default async function DirectoryPage() {
     supabaseAny
       .from('mentor_profiles')
       .select('user_id')
-      .eq('is_active', true),
+      .eq('is_active', true)
+      .eq('approval_status', 'approved'),
     supabaseAny
       .from('follows')
       .select('follower_id')

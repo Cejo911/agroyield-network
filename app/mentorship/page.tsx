@@ -65,19 +65,33 @@ export default async function MentorshipPage() {
     }
   }
 
-  // Fetch active mentor profiles with user info
+  // Fetch active, admin-approved mentor profiles with user info.
+  // approval_status is the authoritative gate — a mentor can toggle is_active
+  // themselves (to pause accepting mentees), but can't self-approve. Both
+  // flags must line up for a profile to appear in the public browser.
   const { data: mentors } = await supabase
     .from('mentor_profiles')
     .select('*, profiles!mentor_profiles_user_id_fkey(first_name, last_name, role, institution, avatar_url, is_verified, last_seen_at)')
     .eq('is_active', true)
+    .eq('approval_status', 'approved')
     .order('created_at', { ascending: false })
 
-  // Check if current user is already a mentor
+  // Check if current user is already a mentor — and what state their
+  // application is in. We use approval_status to tailor the CTA label and
+  // surface a "Pending review" banner without needing a separate call.
   const { data: ownProfile } = await supabase
     .from('mentor_profiles')
-    .select('id')
+    .select('id, approval_status, rejection_reason')
     .eq('user_id', user.id)
     .maybeSingle()
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const ownStatus = (ownProfile as any)?.approval_status as 'pending' | 'approved' | 'rejected' | undefined
+  const mentorCtaLabel =
+    !ownProfile ? 'Become a Mentor'
+    : ownStatus === 'pending'  ? 'Application Pending'
+    : ownStatus === 'rejected' ? 'Update Application'
+    : 'Edit Mentor Profile'
 
   // Get average ratings for all mentors
   const { data: ratings } = await supabase
@@ -107,11 +121,33 @@ export default async function MentorshipPage() {
           <>
             <SecondaryLink href="/mentorship/sessions">My Requests</SecondaryLink>
             <PrimaryLink href="/mentorship/become-mentor">
-              {ownProfile ? 'Edit Mentor Profile' : 'Become a Mentor'}
+              {mentorCtaLabel}
             </PrimaryLink>
           </>
         }
       />
+      {ownStatus === 'pending' && (
+        <div className="mb-6 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4 flex items-start gap-3">
+          <div className="text-xl">⏳</div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">Your mentor application is under review</p>
+            <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">
+              We&apos;ll email you the moment it&apos;s approved — typically within 2 business days.
+            </p>
+          </div>
+        </div>
+      )}
+      {ownStatus === 'rejected' && (
+        <div className="mb-6 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg p-4 flex items-start gap-3">
+          <div className="text-xl">⚠️</div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-red-800 dark:text-red-300">Your mentor application needs an update</p>
+            <p className="text-xs text-red-700 dark:text-red-400 mt-1">
+              Check the reviewer note on your application page and resubmit — we&apos;ll re-review automatically.
+            </p>
+          </div>
+        </div>
+      )}
       <MentorBrowser mentors={mentorsWithRatings} userId={user.id} />
       <FAQAccordion items={MODULE_FAQS.mentorship} title="Frequently Asked Questions" subtitle="Common questions about Mentorship" compact />
     </PageShell>

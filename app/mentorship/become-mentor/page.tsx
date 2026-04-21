@@ -28,6 +28,8 @@ export default function BecomeMentorPage() {
   const [isEdit, setIsEdit] = useState(false)
   const [moduleDisabled, setModuleDisabled] = useState(false)
   const [verificationRequired, setVerificationRequired] = useState(false)
+  const [approvalStatus, setApprovalStatus] = useState<'pending' | 'approved' | 'rejected' | null>(null)
+  const [rejectionReason, setRejectionReason] = useState<string | null>(null)
   const [form, setForm] = useState({
     headline: '',
     expertise: [] as string[],
@@ -78,6 +80,8 @@ export default function BecomeMentorPage() {
 
       if (existing) {
         setIsEdit(true)
+        setApprovalStatus((existing.approval_status as 'pending' | 'approved' | 'rejected' | null) ?? 'pending')
+        setRejectionReason(existing.rejection_reason ?? null)
         setForm({
           headline: existing.headline || '',
           expertise: existing.expertise || [],
@@ -124,8 +128,11 @@ export default function BecomeMentorPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    const payload = {
-      user_id: user.id,
+    // Shared payload — note is_active and approval_status are controlled by
+    // the server-side approval flow, not the applicant. On new insert we
+    // always start at pending. On edit we leave approval_status alone so
+    // editing a bio doesn't accidentally re-approve (or un-approve) someone.
+    const basePayload = {
       headline: form.headline.trim(),
       expertise: form.expertise,
       bio: form.bio.trim() || null,
@@ -136,16 +143,21 @@ export default function BecomeMentorPage() {
       languages: form.languages.split(',').map(l => l.trim()).filter(Boolean),
       location: form.location.trim() || null,
       linkedin_url: form.linkedin_url.trim() || null,
-      is_active: true,
       updated_at: new Date().toISOString(),
     }
 
     let error
     if (isEdit) {
-      const result = await supabase.from('mentor_profiles').update(payload).eq('user_id', user.id)
+      const result = await supabase.from('mentor_profiles').update(basePayload).eq('user_id', user.id)
       error = result.error
     } else {
-      const result = await supabase.from('mentor_profiles').insert(payload)
+      const result = await supabase.from('mentor_profiles').insert({
+        ...basePayload,
+        user_id: user.id,
+        // New applications start inactive + pending — admin approval flips both.
+        is_active: false,
+        approval_status: 'pending',
+      })
       error = result.error
     }
 
@@ -153,6 +165,15 @@ export default function BecomeMentorPage() {
 
     if (error) {
       alert(`Failed to save mentor profile: ${error.message}`)
+      return
+    }
+    // On first submit show the pending banner instead of punting to the
+    // browser (which would hide the mentor's own profile since it's not yet
+    // approved). Re-loads the page state so the banner picks up approval_status.
+    if (!isEdit) {
+      setIsEdit(true)
+      setApprovalStatus('pending')
+      window.scrollTo({ top: 0, behavior: 'smooth' })
       return
     }
     router.push('/mentorship')
@@ -201,9 +222,62 @@ export default function BecomeMentorPage() {
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
           {isEdit ? 'Edit Mentor Profile' : 'Become a Mentor'}
         </h1>
-        <p className="text-gray-500 dark:text-gray-400 text-sm mb-8">
+        <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">
           Share your expertise with the next generation of agricultural professionals.
         </p>
+
+        {/* Approval status banner — only shown for existing applications.
+            Pending: friendly "waiting on review" note. Rejected: show the
+            admin-supplied reason so the applicant can address it and resubmit. */}
+        {isEdit && approvalStatus === 'pending' && (
+          <div className="mb-6 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <div className="text-xl">⏳</div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">Application under review</p>
+                <p className="text-xs text-amber-700 dark:text-amber-400 mt-1 leading-relaxed">
+                  Your mentor application is with the AgroYield team. We review new mentors to keep the network high-trust —
+                  most decisions land within 2 business days. You&apos;ll get an email the moment it&apos;s approved.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+        {isEdit && approvalStatus === 'rejected' && (
+          <div className="mb-6 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <div className="text-xl">⚠️</div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-red-800 dark:text-red-300">Application not approved</p>
+                {rejectionReason ? (
+                  <p className="text-xs text-red-700 dark:text-red-400 mt-1 leading-relaxed">
+                    Reviewer note: <span className="italic">{rejectionReason}</span>
+                  </p>
+                ) : (
+                  <p className="text-xs text-red-700 dark:text-red-400 mt-1">
+                    Your application wasn&apos;t approved on this round.
+                  </p>
+                )}
+                <p className="text-xs text-red-700 dark:text-red-400 mt-2">
+                  Update your details below and save — we&apos;ll re-review automatically.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+        {isEdit && approvalStatus === 'approved' && (
+          <div className="mb-6 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <div className="text-xl">✓</div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-green-800 dark:text-green-300">You&apos;re an approved mentor</p>
+                <p className="text-xs text-green-700 dark:text-green-400 mt-1">
+                  Your profile is visible in the mentor browser. Edit details below — admin approval persists.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Headline */}

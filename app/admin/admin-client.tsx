@@ -148,6 +148,11 @@ interface MentorProfile {
   availability: string | null
   is_active: boolean
   updated_at: string
+  approval_status?: 'pending' | 'approved' | 'rejected' | null
+  approved_at?: string | null
+  approved_by?: string | null
+  rejection_reason?: string | null
+  created_at?: string | null
 }
 interface MentorshipRequest {
   id: string

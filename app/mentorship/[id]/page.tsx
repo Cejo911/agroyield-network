@@ -9,13 +9,20 @@ export default async function MentorPage({ params }: { params: Promise<{ id: str
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  // Fetch mentor profile with user info
-  const { data: mentor } = await supabase
+  // Fetch mentor profile with user info. We allow owners to view their own
+  // profile while still pending — the detail page doubles as the applicant's
+  // preview. For everyone else, approval_status must be 'approved'.
+  const isOwnProfile = id === user.id
+  let mentorQuery = supabase
     .from('mentor_profiles')
     .select('*, profiles!mentor_profiles_user_id_fkey(first_name, last_name, role, institution, avatar_url, is_verified, bio)')
     .eq('user_id', id)
-    .eq('is_active', true)
-    .single()
+
+  if (!isOwnProfile) {
+    mentorQuery = mentorQuery.eq('is_active', true).eq('approval_status', 'approved')
+  }
+
+  const { data: mentor } = await mentorQuery.single()
 
   if (!mentor) notFound()
 

@@ -28,7 +28,7 @@ export default async function PublicProfilePage({
 
   const [{ data: profile }, { data: mentorProfile }, { count: followerCount }, { count: followingCount }, { data: followCheck }, experience] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', id).single(),
-    supabaseAny.from('mentor_profiles').select('user_id, headline, is_active').eq('user_id', id).eq('is_active', true).maybeSingle(),
+    supabaseAny.from('mentor_profiles').select('user_id, headline, is_active').eq('user_id', id).eq('is_active', true).eq('approval_status', 'approved').maybeSingle(),
     supabaseAny.from('follows').select('*', { count: 'exact', head: true }).eq('following_id', id),
     supabaseAny.from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', id),
     supabaseAny.from('follows').select('id').eq('follower_id', user.id).eq('following_id', id).maybeSingle(),
