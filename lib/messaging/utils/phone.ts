@@ -65,3 +65,32 @@ export function normalizeToE164Nigerian(raw: string): string {
 export function toTermiiDigits(raw: string): string {
   return normalizeToE164Nigerian(raw).slice(1)
 }
+
+/**
+ * Split a user-supplied string of phone numbers into trimmed candidates.
+ *
+ * Admins pasting numbers don't follow one format — we see commas, semicolons,
+ * newlines (when copying from a spreadsheet column), and sometimes stray
+ * spaces between a country code and the rest of the number. We split on the
+ * separators that clearly delimit *distinct* numbers, but we DO NOT split on
+ * whitespace alone because a single number often has internal spaces
+ * ("+234 801 234 5678"). normalizeToE164Nigerian strips intra-number spaces,
+ * so leaving them in is safe.
+ *
+ * Duplicates and empty entries are removed. Preserves input order.
+ */
+export function splitPhoneCandidates(raw: string): string[] {
+  if (!raw) return []
+  const seen = new Set<string>()
+  const out: string[] = []
+  // Split on commas, semicolons, or newlines (including \r\n). Tabs too —
+  // Excel pastes use \t between columns.
+  for (const chunk of raw.split(/[,;\n\r\t]+/)) {
+    const trimmed = chunk.trim()
+    if (!trimmed) continue
+    if (seen.has(trimmed)) continue
+    seen.add(trimmed)
+    out.push(trimmed)
+  }
+  return out
+}
