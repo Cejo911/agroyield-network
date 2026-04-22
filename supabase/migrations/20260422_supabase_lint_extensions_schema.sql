@@ -1,0 +1,157 @@
+-- 2026-04-22  Supabase lint: move extensions out of the public schema
+--
+-- Supabase lint: extension_in_public (WARN × 2: citext, pg_trgm)
+--
+-- STATUS (22 Apr 2026): NO-OP on this project.
+-- ---------------------------------------------
+-- Post-writing this migration, a direct pg_extension inspection on
+-- main showed both target extensions are already installed in the
+-- `extensions` schema, not `public`:
+--
+--   extname   | schema
+--   ----------+------------
+--   citext    | extensions
+--   pg_trgm   | extensions
+--
+-- Supabase's hosted platform auto-migrates extensions out of public
+-- for existing projects, and the move had already been applied
+-- server-side by the time the Security Advisor snapshot CSV was
+-- exported on 21 Apr 2026. The lint findings were stale cache; they
+-- clear on the next advisor rescan.
+--
+-- This file is RETAINED (not deleted) because:
+--   • It documents the intended posture for this project.
+--   • If we ever migrate to a self-hosted Postgres or a fresh
+--     Supabase project, we may need to re-apply these statements.
+--   • A deleted migration leaves a confusing gap in the commit
+--     history ("what was 20260422_*_extensions_schema for?").
+--
+-- If you ever need to re-apply this on a fresh cluster, uncomment
+-- the statements at the bottom of the file. On this project as of
+-- 22 Apr 2026, running them is unnecessary and the ALTER lines
+-- would error with "extension already in schema extensions" or be
+-- no-ops.
+--
+-- Background (retained for audit)
+-- -------------------------------
+-- Extensions installed in `public` leave their functions, operators,
+-- and operator-classes at an unqualified name. For a hosted Supabase
+-- project the practical exploitability is low (only the `postgres`
+-- role has CREATE on `public`), but Supabase's linter flags the
+-- pattern because moving extensions out of `public` eliminates a
+-- whole class of "what if an attacker gets CREATE" concerns and keeps
+-- user-facing schemas clean of extension-owned objects.
+--
+-- Supabase's convention is an `extensions` schema placed after `public`
+-- in the default search_path. Unqualified references — `gin_trgm_ops`,
+-- `citext`, `similarity()`, the `%` operator, etc. — continue to
+-- resolve transparently because `extensions` is searchable.
+--
+-- IMPORTANT — test on a Supabase branch FIRST
+-- -------------------------------------------
+-- This migration touches catalog-level objects that 28 GIN indexes
+-- depend on. `ALTER EXTENSION ... SET SCHEMA` is documented as a safe
+-- operation (pg_depend tracks by OID, not by name), but Supabase's own
+-- docs note edge-case failures with "system extensions or when other
+-- objects depend on them". Before running on prod:
+--
+--   1. Create a Supabase branch (Dashboard → Branching → new branch).
+--   2. Apply this migration there.
+--   3. Run the three verification queries at the bottom of this file.
+--   4. Run the ILIKE-based search smoke test (search agroyield.africa
+--      for "cassava" / "abuja" on the branch; results should match prod).
+--   5. If everything is green, apply to prod.
+--
+-- Pre-condition diagnostics (run BEFORE this migration)
+-- -----------------------------------------------------
+-- A. Is citext actually in use? The baseline migration comment says
+--    `email was originally citext` — suggesting we migrated away. If
+--    this query returns 0 rows, citext is dead weight and should be
+--    DROPped instead of moved. Comment out the ALTER line below and
+--    uncomment the DROP line.
+--
+--      SELECT table_schema, table_name, column_name
+--        FROM information_schema.columns
+--       WHERE udt_name = 'citext'
+--       ORDER BY table_schema, table_name;
+--
+-- B. pg_trgm index inventory — capture before + after to confirm
+--    no indexes silently disappear:
+--
+--      SELECT schemaname, tablename, indexname
+--        FROM pg_indexes
+--       WHERE indexdef ILIKE '%gin_trgm_ops%'
+--       ORDER BY tablename, indexname;
+--
+--    Expected: ~28 rows across profiles, opportunities, grants,
+--    marketplace_listings, businesses. Re-run after the migration —
+--    count must be unchanged.
+--
+-- Rollback
+-- --------
+-- ALTER EXTENSION pg_trgm  SET SCHEMA public;
+-- ALTER EXTENSION citext   SET SCHEMA public;   -- skip if you DROPped it
+-- (The search_path change is harmless either direction — `extensions`
+-- simply becomes a no-op schema on the path.)
+
+-- ---------------------------------------------------------------------------
+-- Statements preserved for fresh-cluster provisioning — commented out
+-- because this project already has the target state (see STATUS block
+-- at the top). Uncomment only if running against a new Postgres cluster
+-- where pg_trgm and/or citext are installed in `public`.
+-- ---------------------------------------------------------------------------
+
+-- CREATE SCHEMA IF NOT EXISTS extensions;
+--
+-- GRANT USAGE ON SCHEMA extensions
+--   TO postgres, anon, authenticated, service_role;
+--
+-- ALTER EXTENSION pg_trgm SET SCHEMA extensions;
+-- ALTER EXTENSION citext  SET SCHEMA extensions;
+-- -- If the citext diagnostic below returns 0 rows in target cluster,
+-- -- prefer DROP EXTENSION IF EXISTS citext; instead of the ALTER line.
+--
+-- ALTER DATABASE postgres
+--   SET search_path = "$user", public, extensions;
+
+-- ---------------------------------------------------------------------------
+-- 5. Interaction with previously-pinned function search_paths
+-- ---------------------------------------------------------------------------
+-- The 54 functions pinned in 20260421_supabase_lint_function_search_path
+-- use `search_path = public, pg_catalog` — no `extensions`. None of them
+-- reference pg_trgm operators or citext (all 54 are trigger/counter/
+-- notification helpers), so the pinned value remains correct.
+--
+-- If a FUTURE function needs extension functions (e.g. similarity(),
+-- unaccent(), etc.), pin its search_path to:
+--   SET search_path = public, extensions, pg_catalog
+-- on creation.
+
+-- ---------------------------------------------------------------------------
+-- Verification queries (run AFTER this migration)
+-- ---------------------------------------------------------------------------
+-- 1. Extensions are in the new schema:
+--      SELECT extname, nspname
+--        FROM pg_extension e
+--        JOIN pg_namespace n ON n.oid = e.extnamespace
+--       WHERE e.extname IN ('pg_trgm', 'citext');
+--      Expected: both rows show nspname = 'extensions'
+--      (or zero rows for citext if you DROPped it).
+--
+-- 2. Index inventory unchanged:
+--      SELECT count(*) FROM pg_indexes
+--       WHERE indexdef ILIKE '%gin_trgm_ops%';
+--      Expected: same count as pre-migration (~28).
+--
+-- 3. Search path includes extensions:
+--      SHOW search_path;
+--      Expected: contains 'extensions' (open a fresh session to check —
+--      the ALTER DATABASE only takes effect for new connections).
+--
+-- 4. Smoke test via ILIKE that the trgm indexes still fire:
+--      EXPLAIN ANALYZE
+--      SELECT id FROM public.opportunities
+--       WHERE title ILIKE '%cassava%' LIMIT 10;
+--      Expected: plan shows `Bitmap Index Scan on idx_opportunities_title_trgm`
+--      (not a Seq Scan). Same pattern for profiles / grants / marketplace /
+--      businesses.
