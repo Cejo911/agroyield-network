@@ -1,0 +1,63 @@
+-- 2026-04-22  Supabase lint: tighten admin_audit_log INSERT policy
+--
+-- Supabase lint: rls_policy_always_true (WARN)
+--
+-- Background
+-- ----------
+-- The INSERT policy `Service role can insert audit log` on
+-- public.admin_audit_log is named as if it restricts writes to the
+-- service role, but its actual Postgres definition has no `TO <role>`
+-- clause — which in Postgres RLS defaults to PUBLIC (all roles).
+-- Combined with Supabase's default INSERT grant to `authenticated`
+-- on public-schema tables, any logged-in user could POST rows into
+-- the audit log via PostgREST and forge entries in the trail we
+-- rely on to investigate incidents.
+--
+-- The policy was never load-bearing for legitimate writes: all live
+-- inserts into this table come from server code running as
+-- service_role (app/api/** routes using the admin Supabase client,
+-- cron handlers, on_admin_user_inserted trigger), and service_role
+-- bypasses RLS by design. Dropping the policy closes the hole
+-- without breaking anything that actually writes today.
+--
+-- Verification
+-- ------------
+-- After applying, confirm in the SQL editor:
+--
+--   1. No INSERT policies remain on the table.
+--      SELECT count(*) FROM pg_policies
+--       WHERE schemaname = 'public'
+--         AND tablename  = 'admin_audit_log'
+--         AND cmd        = 'INSERT';
+--      Expected: 0.
+--
+--   2. Server-side admin actions still write successfully. Smoke test:
+--      flip a feature flag via the /admin dashboard and confirm a new
+--      row appears in admin_audit_log.
+--
+--   3. An authenticated (non-admin) session CANNOT insert. From a
+--      browser logged in as a regular user, run in the devtools:
+--        const { error } = await supabase
+--          .from('admin_audit_log')
+--          .insert({ action: 'forged', actor_id: null });
+--        console.log(error);
+--      Expected: "new row violates row-level security policy for
+--      table 'admin_audit_log'".
+--
+-- If any SECURITY INVOKER trigger on another table turns out to
+-- write into admin_audit_log from a user session (unlikely — grep
+-- confirms all call sites use the admin client), the insert will
+-- fail and the right fix is a narrowly-scoped replacement policy,
+-- e.g.
+--   CREATE POLICY insert_via_trigger ON public.admin_audit_log
+--     FOR INSERT TO authenticated
+--     WITH CHECK (<whatever the legitimate trigger requires>);
+-- Do NOT re-add the open WITH CHECK (true) version.
+--
+-- Rollback (not recommended — this is the hole we just closed)
+-- ------------------------------------------------------------
+-- CREATE POLICY "Service role can insert audit log"
+--   ON public.admin_audit_log
+--   FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Service role can insert audit log" ON public.admin_audit_log;

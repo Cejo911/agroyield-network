@@ -27,120 +27,84 @@
 -- etc.) against the canonical Postgres catalog regardless of what the
 -- caller's search_path looks like.
 --
--- Implementation note: ALTER FUNCTION requires argument signatures,
--- not just names. Rather than hard-code 54 × signature tuples (and
--- risk mismatches on overloaded functions), we iterate pg_proc at
--- migration time and emit a correctly-signatured ALTER FUNCTION for
--- every matching (schema, name) pair. This handles overloads
--- gracefully — if a name has 2 signatures, both get pinned.
+-- Implementation note: this file originally used a DO block that
+-- iterated pg_proc and emitted ALTER FUNCTION statements dynamically
+-- via pg_get_function_identity_arguments — overload-safe and
+-- future-proof. On 21 Apr 2026 that block appeared to execute cleanly
+-- in Supabase Studio's SQL editor but left `proconfig` NULL on every
+-- target function. Root cause not diagnosed (transaction-boundary
+-- quirk / silent exception inside the editor's wrapper / Studio
+-- rolling back a session variable). Rather than keep hunting, the
+-- migration was rewritten as explicit, one-statement-per-function
+-- form below, which applied successfully on the first paste.
+--
+-- Signatures were generated from the original DO block's SELECT query
+-- (filtered to schema='public' AND name=ANY(target_names)); all 54
+-- target names resolved to exactly one signature each — no overloads
+-- in the current schema. If an overloaded version ever appears
+-- (same name, different args), add the new signature as its own
+-- ALTER FUNCTION line.
+--
+-- Statements are alphabetised to match the original audit list so
+-- diffs against a re-lint remain readable.
 --
 -- Rollback
 -- --------
 -- Reset with: ALTER FUNCTION public.<name>(<args>) RESET search_path;
--- Or, to mass-revert, run the DO block below with `RESET search_path`
--- instead of `SET search_path = public, pg_catalog`.
+-- To mass-revert, swap 'SET search_path = public, pg_catalog' for
+-- 'RESET search_path' in every line below.
 
-DO $$
-DECLARE
-  -- The 54 function names flagged by Supabase's linter on 21 Apr 2026.
-  -- Keep alphabetised so re-audits are diff-friendly.
-  target_names text[] := ARRAY[
-    'admin_can_view_logs',
-    'award_xp',
-    'award_xp_on_collab_posted',
-    'award_xp_on_paper_submitted',
-    'award_xp_on_post',
-    'award_xp_on_product_listed',
-    'businesses_auto_slug',
-    'calculate_profile_strength',
-    'capture_platform_stats',
-    'check_price_alerts',
-    'expire_old_notifications',
-    'feature_flags_set_updated_at',
-    'get_admin_role',
-    'immutable_array_to_string',
-    'increment_otp_attempt',
-    'is_active_admin',
-    'notify_connection_request',
-    'notify_post_commented',
-    'notify_post_liked',
-    'on_admin_user_inserted',
-    'on_announcement_published',
-    'on_collab_application',
-    'on_event_registration',
-    'on_grant_application',
-    'on_mentorship_request',
-    'on_platform_setting_changed',
-    'on_product_inquiry',
-    'on_session_completed',
-    'process_notification_digests',
-    'recalculate_citation_stats',
-    'recalculate_mentor_rating',
-    'recalculate_product_rating',
-    'seed_default_notification_preferences',
-    'send_grant_deadline_reminders',
-    'set_expense_receipts_updated_at',
-    'set_recurring_invoices_updated_at',
-    'set_updated_at',
-    'set_usage_tracking_updated_at',
-    'smart_notify',
-    'sync_comment_like_count',
-    'sync_event_save_count',
-    'sync_grant_save_count',
-    'sync_paper_downloads',
-    'sync_poll_vote_count',
-    'sync_post_comment_count',
-    'sync_post_like_count',
-    'sync_post_save_count',
-    'sync_product_save_count',
-    'tg_profile_experience_touch_updated_at',
-    'trg_fn_no_self_collab_application',
-    'trg_fn_papers_citation_sync',
-    'trg_fn_user_papers_citation_sync',
-    'update_conversation_on_message',
-    'user_has_business_access'
-  ];
-
-  fn_record RECORD;
-  altered_count int := 0;
-  missing_names text[] := ARRAY[]::text[];
-BEGIN
-  -- Loop over every target name. For each, find all matching
-  -- signatures in pg_proc (handles overloads) and ALTER them.
-  FOR fn_record IN
-    SELECT n.nspname AS schema_name,
-           p.proname  AS function_name,
-           pg_get_function_identity_arguments(p.oid) AS args
-      FROM pg_proc p
-      JOIN pg_namespace n ON n.oid = p.pronamespace
-     WHERE n.nspname = 'public'
-       AND p.proname = ANY(target_names)
-  LOOP
-    EXECUTE format(
-      'ALTER FUNCTION %I.%I(%s) SET search_path = public, pg_catalog',
-      fn_record.schema_name,
-      fn_record.function_name,
-      fn_record.args
-    );
-    altered_count := altered_count + 1;
-  END LOOP;
-
-  -- Report any names in the target list that had no matching function.
-  -- If this fires, it probably means a function was renamed/dropped
-  -- between the lint scan (21 Apr) and deploy — worth an eyeball
-  -- but not an error.
-  SELECT array_agg(t) INTO missing_names
-    FROM unnest(target_names) AS t
-   WHERE NOT EXISTS (
-         SELECT 1
-           FROM pg_proc p
-           JOIN pg_namespace n ON n.oid = p.pronamespace
-          WHERE n.nspname = 'public'
-            AND p.proname = t
-       );
-
-  RAISE NOTICE 'search_path pinned on % function signature(s)', altered_count;
-  IF array_length(missing_names, 1) IS NOT NULL THEN
-    RAISE NOTICE 'target names with no matching function (ok to ignore if renamed/dropped): %', missing_names;
-  END IF;
-END $$;
+ALTER FUNCTION public.admin_can_view_logs(p_user_id uuid) SET search_path = public, pg_catalog;
+ALTER FUNCTION public.award_xp(p_user_id uuid, p_points integer) SET search_path = public, pg_catalog;
+ALTER FUNCTION public.award_xp_on_collab_posted() SET search_path = public, pg_catalog;
+ALTER FUNCTION public.award_xp_on_paper_submitted() SET search_path = public, pg_catalog;
+ALTER FUNCTION public.award_xp_on_post() SET search_path = public, pg_catalog;
+ALTER FUNCTION public.award_xp_on_product_listed() SET search_path = public, pg_catalog;
+ALTER FUNCTION public.businesses_auto_slug() SET search_path = public, pg_catalog;
+ALTER FUNCTION public.calculate_profile_strength() SET search_path = public, pg_catalog;
+ALTER FUNCTION public.capture_platform_stats() SET search_path = public, pg_catalog;
+ALTER FUNCTION public.check_price_alerts() SET search_path = public, pg_catalog;
+ALTER FUNCTION public.expire_old_notifications() SET search_path = public, pg_catalog;
+ALTER FUNCTION public.feature_flags_set_updated_at() SET search_path = public, pg_catalog;
+ALTER FUNCTION public.get_admin_role(p_user_id uuid) SET search_path = public, pg_catalog;
+ALTER FUNCTION public.immutable_array_to_string(arr text[], sep text) SET search_path = public, pg_catalog;
+ALTER FUNCTION public.increment_otp_attempt(p_otp_id uuid) SET search_path = public, pg_catalog;
+ALTER FUNCTION public.is_active_admin(p_user_id uuid) SET search_path = public, pg_catalog;
+ALTER FUNCTION public.notify_connection_request() SET search_path = public, pg_catalog;
+ALTER FUNCTION public.notify_post_commented() SET search_path = public, pg_catalog;
+ALTER FUNCTION public.notify_post_liked() SET search_path = public, pg_catalog;
+ALTER FUNCTION public.on_admin_user_inserted() SET search_path = public, pg_catalog;
+ALTER FUNCTION public.on_announcement_published() SET search_path = public, pg_catalog;
+ALTER FUNCTION public.on_collab_application() SET search_path = public, pg_catalog;
+ALTER FUNCTION public.on_event_registration() SET search_path = public, pg_catalog;
+ALTER FUNCTION public.on_grant_application() SET search_path = public, pg_catalog;
+ALTER FUNCTION public.on_mentorship_request() SET search_path = public, pg_catalog;
+ALTER FUNCTION public.on_platform_setting_changed() SET search_path = public, pg_catalog;
+ALTER FUNCTION public.on_product_inquiry() SET search_path = public, pg_catalog;
+ALTER FUNCTION public.on_session_completed() SET search_path = public, pg_catalog;
+ALTER FUNCTION public.process_notification_digests() SET search_path = public, pg_catalog;
+ALTER FUNCTION public.recalculate_citation_stats(p_user_id uuid) SET search_path = public, pg_catalog;
+ALTER FUNCTION public.recalculate_mentor_rating() SET search_path = public, pg_catalog;
+ALTER FUNCTION public.recalculate_product_rating() SET search_path = public, pg_catalog;
+ALTER FUNCTION public.seed_default_notification_preferences(p_user_id uuid) SET search_path = public, pg_catalog;
+ALTER FUNCTION public.send_grant_deadline_reminders() SET search_path = public, pg_catalog;
+ALTER FUNCTION public.set_expense_receipts_updated_at() SET search_path = public, pg_catalog;
+ALTER FUNCTION public.set_recurring_invoices_updated_at() SET search_path = public, pg_catalog;
+ALTER FUNCTION public.set_updated_at() SET search_path = public, pg_catalog;
+ALTER FUNCTION public.set_usage_tracking_updated_at() SET search_path = public, pg_catalog;
+ALTER FUNCTION public.smart_notify(p_user_id uuid, p_type notification_type, p_title text, p_body text, p_link text, p_actor_id uuid, p_entity_id uuid, p_priority notification_priority, p_batch_key text, p_expires_at timestamp with time zone, p_dedup_window interval) SET search_path = public, pg_catalog;
+ALTER FUNCTION public.sync_comment_like_count() SET search_path = public, pg_catalog;
+ALTER FUNCTION public.sync_event_save_count() SET search_path = public, pg_catalog;
+ALTER FUNCTION public.sync_grant_save_count() SET search_path = public, pg_catalog;
+ALTER FUNCTION public.sync_paper_downloads() SET search_path = public, pg_catalog;
+ALTER FUNCTION public.sync_poll_vote_count() SET search_path = public, pg_catalog;
+ALTER FUNCTION public.sync_post_comment_count() SET search_path = public, pg_catalog;
+ALTER FUNCTION public.sync_post_like_count() SET search_path = public, pg_catalog;
+ALTER FUNCTION public.sync_post_save_count() SET search_path = public, pg_catalog;
+ALTER FUNCTION public.sync_product_save_count() SET search_path = public, pg_catalog;
+ALTER FUNCTION public.tg_profile_experience_touch_updated_at() SET search_path = public, pg_catalog;
+ALTER FUNCTION public.trg_fn_no_self_collab_application() SET search_path = public, pg_catalog;
+ALTER FUNCTION public.trg_fn_papers_citation_sync() SET search_path = public, pg_catalog;
+ALTER FUNCTION public.trg_fn_user_papers_citation_sync() SET search_path = public, pg_catalog;
+ALTER FUNCTION public.update_conversation_on_message() SET search_path = public, pg_catalog;
+ALTER FUNCTION public.user_has_business_access(biz_id uuid, usr_id uuid) SET search_path = public, pg_catalog;
