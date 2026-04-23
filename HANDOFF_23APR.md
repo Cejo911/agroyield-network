@@ -126,23 +126,51 @@ Pre-launch Item 6: H1.3 Claude-in-Chrome QA walk scheduled
 Sun 26 Apr 2026, day before launch. The walk should now include a
 mentions smoke test since #41/#42/#43 all landed pre-launch.
 
-## Do NOT touch
+## Pre-flip state (as of evening 23 Apr 2026)
 
-- `20260422_comment_mentions.sql` stays DRAFT until it's had a QA
-  walk in staging. Apply is safe (table is dormant behind the flag)
-  but prefer to batch-apply with the flag flip so rollback is a
-  single atomic undo.
-- `20260423_drop_dead_post_comments.sql` is NOT DRAFT — it's idempotent
-  and independent of the flag. Safe to apply in the next migration run.
-- Feature flag `comment_mentions_enabled` stays OFF at beta launch
-  by design. The client refactor (#43) is live but falls back to the
-  direct-insert path while the flag is off, so there's no behaviour
-  change visible to beta users on day one. Flip order when ready:
-  (a) apply `20260422_comment_mentions.sql` to production,
-  (b) flip `comment_mentions_enabled` → true in feature_flags,
-  (c) QA walk with the flag on in staging first,
-  (d) after 24–48h of beta observation, consider locking the dual-path
-      fallback removal as a follow-up task.
+All three prerequisites for a flag flip are now satisfied:
+
+- [x] `20260422_comment_mentions.sql` applied to production
+- [x] `20260423_drop_dead_post_comments.sql` applied to production
+- [x] Client dual-path live in prod (deploy `cfcff40`)
+- [ ] `comment_mentions_enabled` = **false** (last remaining lever)
+
+Because the flag is still OFF, `/api/comments` returns 404 and the
+client transparently falls back to the pre-mentions direct-insert
+path. Users see zero behaviour change. The new table + trigger + RLS
+exist but are unwritten.
+
+## Flip runbook (when ready)
+
+1. **Staging first.** In staging, flip `comment_mentions_enabled`
+   to `true` in the `feature_flags` table. Post a comment with an
+   `@username` that's in the author's accepted connections; verify:
+   - `public.comment_mentions` gets a row
+   - `public.notifications` gets a `type='comment_mention'` row
+   - `public.comments.content` is stored with `<@uuid>` token, not
+     raw `@username`
+   - Bell icon refreshes for the mentioned user
+   Also post one with `@stranger` (not in connections) — should
+   silently store as plain text with no mention row.
+2. **Prod flip.** Same UPDATE in production's `feature_flags`.
+3. **Observe.** Watch Sentry + Slack #beta-alerts for 24–48h. Key
+   signals: spike in 429s on `/api/comments` (hourly cap working
+   too aggressively), 500s from the trigger, any "tokenize update
+   failed" log lines from the fan-out.
+4. **Dual-path fallback removal.** After the observation window,
+   file a task to remove the 404-fallback branch in
+   `CommentsSection.tsx` so the server endpoint becomes the single
+   write path. This is cleanup, not a rollback hazard — keep the
+   fallback until you're confident the flag won't need to go back OFF.
+
+## Rollback
+
+- **Flag on → flag off:** single UPDATE on `feature_flags`. Client
+  falls back to direct insert on next submit. No deploy needed.
+- **Migration rollback (last resort):** `DROP TABLE public.comment_mentions CASCADE;`
+  plus `DROP FUNCTION public.tg_comment_mentions_validate_post_type() CASCADE;`.
+  Notifications already emitted stay in `public.notifications` — they're
+  harmless, just no `comment_mentions` row to link back to on click-through.
 
 ## Context paths for quick re-orientation
 
