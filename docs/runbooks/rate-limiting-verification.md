@@ -123,9 +123,25 @@ is free tier).
 
 Tick when green:
 
-- [ ] `/api/waitlist` preview-deploy loop returns 5 × 200 then 429s
-- [ ] Vercel Firewall tab accessible; Attack Challenge Mode known-location
-- [ ] Test rows cleaned from `waitlist_signups`
+- [x] `/api/waitlist` preview-deploy loop returns 5 × 200 then 429s  _(verified 22 Apr 2026 against `agroyield-network-qgnj0z4zm-cejo911s-projects.vercel.app`)_
+- [x] Vercel Firewall tab accessible; Attack Challenge Mode known-location  _(22 Apr 2026)_
+- [x] Test rows cleaned from `waitlist_signups`  _(22 Apr 2026)_
+- [x] Bypass secret rotated after drill  _(22 Apr 2026)_
 - [ ] Runbook link in `docs/runbooks/INDEX.md` (if that index exists)
 
 Once ticked, rate-limiting posture is **green for launch**.
+
+### Note on Vercel Deployment Protection
+
+When running this drill, previews are SSO-gated by default — curl returns
+`401` until auth is bypassed. Use a **Protection Bypass for Automation** secret:
+
+```bash
+curl ... -H "x-vercel-protection-bypass: $BYPASS_SECRET"
+```
+
+Do NOT include `x-vercel-set-bypass-cookie: true` — it forces a 307 redirect
+that drops the POST body and breaks the drill. The bypass header alone is
+sufficient on a per-request basis.
+
+Rotate the secret after any ad-hoc drill; it grants full preview-deploy access.

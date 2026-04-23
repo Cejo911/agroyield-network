@@ -3,8 +3,8 @@
 **Owner:** Okoli
 **Driver:** Claude in Chrome
 **Window:** 14:00 – 16:00 WAT (2h, flex)
-**Target env:** <https://agroyield.network> (production)
-**Entry criteria:** H1.1 uptime monitors green; H1.2 #beta-alerts wired; H1.5 commit-hygiene hook live
+**Target env:** <https://agroyield.africa> (production)
+**Entry criteria:** H1.1 uptime monitors green; H1.2 #all-agroyield-alerts wired; H1.5 commit-hygiene hook live
 **Exit criteria:** every row in §2 has a verdict (✅ / 🟡 / ❌) and every ❌ has an owner + Unicorn Sprint ticket
 
 Launch is **Mon 27 Apr 06:30 WAT** — if anything in §2 lands ❌ without a
@@ -20,10 +20,12 @@ call tracked on the calendar block (see H1.4).
 2. Open a **fresh Chrome profile** — don't reuse the one with dev cookies.
    We want the walk to exercise first-time-visitor state.
 3. Seed two throwaway accounts in production beforehand:
-   - `qa-farmer+26apr@agroyield.network` — role: farmer
-   - `qa-inst+26apr@agroyield.network` — role: institution (Preeminent Solutions)
+   - `qa+farmer-26apr@agroyield.africa` — role: farmer
+   - `qa+inst-26apr@agroyield.africa` — role: institution (Preeminent Solutions)
    Both created via the real signup form; do not bypass with service-role.
-4. Open #beta-alerts in a side window — it should light up on any Sentry
+   Plus-addressing — both OTPs land in the shared `qa@agroyield.africa` inbox;
+   filter by `to:qa+farmer-26apr@` vs `to:qa+inst-26apr@` to disambiguate.
+4. Open #all-agroyield-alerts in a side window — it should light up on any Sentry
    or cron_runs error the walk triggers. That's a feature, not a bug.
 5. Start the session transcript to `/docs/qa/beta-launch-qa-26-apr.log`
    (Chrome MCP → `read_console_messages` + `read_network_requests` both
@@ -81,8 +83,8 @@ not inline prose — we want this doc to stay a checklist, not a report.
 
 | # | Flow | Expected | Verdict | Notes |
 |---|------|----------|---------|-------|
-| E1 | Trigger a known 500 (force a malformed /api/prices POST) | Sentry issue lands; #beta-alerts gets a message | | |
-| E2 | Kill uptime target (point a monitor at a nonexistent route for 10m, then revert) | Better Stack alert → email + #beta-alerts | | |
+| E1 | Trigger a known 500 (force a malformed /api/prices POST) | Sentry issue lands; #all-agroyield-alerts gets a message | | |
+| E2 | Kill uptime target (point a monitor at a nonexistent route for 10m, then revert) | Better Stack alert → email + #all-agroyield-alerts | | |
 | E3 | Read cron_runs table for last 7 days | No error rows; if any, justified + ticketed | | |
 
 ## 3. Post-walk
@@ -102,7 +104,7 @@ If any of these surface during the walk, we delay launch:
 - A5 fails (OTP doesn't land) — new users can't onboard.
 - C2 fails — institution verify breaks welcome-email fan-out.
 - D2 crashes (not partial-success — actual 500) — admin can't diagnose SMS.
-- E1 or E2 don't reach #beta-alerts — we're flying blind at launch.
+- E1 or E2 don't reach #all-agroyield-alerts — we're flying blind at launch.
 
 Everything else becomes a P1 shipped with a known-issues note, not a
 delay.

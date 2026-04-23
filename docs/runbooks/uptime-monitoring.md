@@ -22,11 +22,11 @@ users actually see.
 
 | # | Target | Expected | Why it matters |
 |---|--------|----------|----------------|
-| 1 | `https://agroyield.network/` | 200 + body contains `AgroYield` | Landing page. If this is down nothing else matters. |
-| 2 | `https://agroyield.network/login` | 200 + body contains `Sign in` | Auth entry. Signup and returning-user flows both go through here. |
-| 3 | `https://agroyield.network/api/cron/weekly-digest` | 200 (or 401 on GET — see note) | Cron target. Regression here means the digest silently skips. |
-| 4 | `https://agroyield.network/b/preeminent-solutions` | 200 + body contains `Preeminent` | Institution public page. Our lighthouse account — we've committed to them being reachable. |
-| 5 | `https://agroyield.network/prices` | 200 | Price Tracker. The feature Beta users are most likely to open daily. |
+| 1 | `https://agroyield.africa/` | 200 + body contains `AgroYield` | Landing page. If this is down nothing else matters. |
+| 2 | `https://agroyield.africa/login` | 200 + body contains `Sign in` | Auth entry. Signup and returning-user flows both go through here. |
+| 3 | `https://agroyield.africa/api/cron/weekly-digest` | 200 (or 401 on GET — see note) | Cron target. Regression here means the digest silently skips. |
+| 4 | `https://agroyield.africa/b/preeminent-solutions` | 200 + body contains `Preeminent` | Institution public page. Our lighthouse account — we've committed to them being reachable. |
+| 5 | `https://agroyield.africa/prices` | 200 | Price Tracker. The feature Beta users are most likely to open daily. |
 
 **Note on #3:** the cron endpoint accepts POST from Vercel Cron with a
 shared secret. Unauthed GETs return 401 by design. Configure the
@@ -39,7 +39,7 @@ exists and responds fast, not that the cron succeeded (that's what
 All monitor alerts fan out two places:
 
 1. **Email** → <okolichijiokei@gmail.com> (already verified)
-2. **Slack webhook** → `#beta-alerts` (wired under H1.2; incoming-webhook
+2. **Slack webhook** → `#all-agroyield-alerts` (wired under H1.2; incoming-webhook
    URL stored in Vercel env `BETTERSTACK_SLACK_WEBHOOK` for reference but
    the webhook is configured directly inside Better Stack's Integrations
    panel — not called from app code)
@@ -69,13 +69,13 @@ who onboards doesn't have to reverse-engineer the dashboard.
 4. Under Settings → Notifications:
    - Email: add okolichijiokei@gmail.com (verify the confirmation link)
    - Slack: Integrations → Slack → install app → select workspace →
-     route to `#beta-alerts`. Use Better Stack's native integration,
+     route to `#all-agroyield-alerts`. Use Better Stack's native integration,
      don't build a custom webhook.
 5. Under Settings → Alerting policy: set 2-consecutive-failure trigger,
    30-minute re-alert cadence, auto-resolve on 2 passes.
 6. Create a status page at <https://agroyield.betteruptime.com>
    (public, read-only). We'll link to this from our maintenance
-   comms when needed; not routed from `agroyield.network` yet.
+   comms when needed; not routed from `agroyield.africa` yet.
 
 ## 4. Verify the loop (DO BEFORE LAUNCH)
 
@@ -85,7 +85,7 @@ the launch window Mon 06:30 WAT:
 1. In Better Stack, open monitor #5 (Prices). Click "Trigger test
    incident". Confirm within 2 minutes:
    - Email lands at okolichijiokei@gmail.com.
-   - `#beta-alerts` receives a Slack message with a link back to the
+   - `#all-agroyield-alerts` receives a Slack message with a link back to the
      incident page.
 2. Resolve the test incident; confirm both channels receive a
    resolution notice.
@@ -127,7 +127,7 @@ critical paths.
   about, add a Checkly or Pingdom probe pointed from .ng.
 - **No TLS-expiry monitor.** Vercel auto-renews Let's Encrypt certs,
   but belt-and-braces: add a Better Stack SSL monitor for
-  agroyield.network in the first post-launch week.
+  agroyield.africa in the first post-launch week.
 - **No signup-flow synthetic.** We only check public pages. A synthetic
   that creates a throwaway account every 6h would catch auth
   regressions we'd otherwise only find from user complaints. Out of

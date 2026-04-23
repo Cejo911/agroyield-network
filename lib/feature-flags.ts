@@ -16,6 +16,10 @@ export type FeatureFlagKey =
   | 'agri_credit_score'
   | 'ai_assistant'
   | 'cooperatives'
+  // Added 22 Apr 2026 — dormant at launch, flipped post-Beta per
+  // docs/features/mentions.md §7. Seeded OFF by
+  // supabase/migrations/20260422_comment_mentions.sql.
+  | 'comment_mentions_enabled'
 
 interface FeatureFlagRow {
   key: string

@@ -39,6 +39,7 @@ export default function CommentsSection({ postId, postType }: Props) {
   const [submitting,  setSubmitting]  = useState(false)
   const [loading,     setLoading]     = useState(true)
   const [sortNewest,  setSortNewest]  = useState(true)
+  const [submitError, setSubmitError] = useState<string | null>(null)
   const replyInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -139,41 +140,115 @@ export default function CommentsSection({ postId, postType }: Props) {
     const text = parentId ? replyContent : content
     if (!text.trim() || !userId) return
     setSubmitting(true)
-    const supabase = createClient()
-    const { data, error } = await supabase
-      .from('comments')
-      .insert({
-        user_id:   userId,
-        post_id:   postId,
-        post_type: postType,
-        content:   text.trim(),
-        user_name: userName,
-        parent_id: parentId,
-      })
-      .select('id, user_id, content, user_name, parent_id, created_at')
-      .single()
-    setSubmitting(false)
-    if (!error && data) {
-      setComments(prev => [...prev, { ...data, likeCount: 0, liked: false }])
-      if (parentId) {
-        setReplyContent('')
-        setReplyingTo(null)
-      } else {
-        setContent('')
-        if (sortNewest) {
-          window.scrollTo({
-            top: (document.querySelector('.comments-section')?.getBoundingClientRect().top ?? 0) + window.scrollY - 100,
-            behavior: 'smooth',
-          })
-        }
-      }
-      // Notify post author (fire and forget)
-      fetch('/api/notifications', {
+    setSubmitError(null)
+
+    // Dual-path write.
+    //
+    // When `comment_mentions_enabled` is ON, /api/comments returns a 200 and
+    // handles the mention parse + fan-out + notification emission server-side.
+    // When the flag is OFF, /api/comments returns a 404 (opaque by design)
+    // and we fall back to the direct Supabase insert — the pre-mentions path
+    // that shipped at beta launch. Rollback from "flag on" back to "flag off"
+    // is therefore a single feature-flag flip, no client deploy required.
+    //
+    // Error surface: 400 (too_many_mentions), 429 (rate limit or
+    // hourly_cap_exceeded), 401 (not authed) are propagated to the user.
+    // We do NOT fall back on those statuses — the user's submit failed and
+    // bypassing into the direct insert would silently hide the reason.
+    let inserted:
+      | { id: string; user_id: string; content: string; user_name: string | null; parent_id: string | null; created_at: string }
+      | null = null
+
+    try {
+      const res = await fetch('/api/comments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'comment', postId, postType }),
-      }).catch(() => {})
+        body: JSON.stringify({
+          post_id: postId,
+          post_type: postType,
+          content: text.trim(),
+          user_name: userName,
+          parent_id: parentId,
+        }),
+      })
+
+      if (res.ok) {
+        const payload = await res.json()
+        inserted = payload.comment
+      } else if (res.status === 404) {
+        // Feature flag off — fall through to direct-insert branch below.
+      } else {
+        const err = await res.json().catch(() => ({} as { error?: string; count?: number }))
+        const reason = typeof err.error === 'string' ? err.error : ''
+        if (reason === 'too_many_mentions') {
+          setSubmitError('You can only @mention up to 5 people per comment.')
+        } else if (reason === 'hourly_cap_exceeded') {
+          setSubmitError('You\u2019ve hit the hourly @mention limit. Try again in a bit.')
+        } else if (res.status === 429) {
+          setSubmitError('Too many comments in a short time. Try again shortly.')
+        } else if (res.status === 401) {
+          setSubmitError('Your session expired. Please sign in again.')
+        } else {
+          setSubmitError('Failed to post comment. Please try again.')
+        }
+        setSubmitting(false)
+        return
+      }
+    } catch {
+      // Network error calling the endpoint. Don't fall back silently either —
+      // if the user's offline, the direct-insert path from the browser won't
+      // work either, and we'd prefer a clear error to a misleading retry.
+      setSubmitError('Network error. Please check your connection and retry.')
+      setSubmitting(false)
+      return
     }
+
+    // Fall-back: direct Supabase insert (flag-off path).
+    if (!inserted) {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('comments')
+        .insert({
+          user_id:   userId,
+          post_id:   postId,
+          post_type: postType,
+          content:   text.trim(),
+          user_name: userName,
+          parent_id: parentId,
+        })
+        .select('id, user_id, content, user_name, parent_id, created_at')
+        .single()
+      if (error || !data) {
+        setSubmitError('Failed to post comment. Please try again.')
+        setSubmitting(false)
+        return
+      }
+      inserted = data
+    }
+
+    setSubmitting(false)
+    setComments(prev => [...prev, { ...inserted!, likeCount: 0, liked: false }])
+    if (parentId) {
+      setReplyContent('')
+      setReplyingTo(null)
+    } else {
+      setContent('')
+      if (sortNewest) {
+        window.scrollTo({
+          top: (document.querySelector('.comments-section')?.getBoundingClientRect().top ?? 0) + window.scrollY - 100,
+          behavior: 'smooth',
+        })
+      }
+    }
+
+    // Notify post author (fire and forget). This is the "someone commented on
+    // your post" notification and is separate from the mention fan-out, which
+    // /api/comments handles server-side. Always fire, regardless of path.
+    fetch('/api/notifications', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'comment', postId, postType }),
+    }).catch(() => {})
   }
 
   const handleDelete = async (id: string) => {
@@ -344,6 +419,25 @@ export default function CommentsSection({ postId, postType }: Props) {
               </div>
             )
           })}
+        </div>
+      )}
+
+      {/* Submit error banner — shown for rate limits, mention caps, etc.
+          Clears automatically on next submit attempt. */}
+      {submitError && (
+        <div
+          role="alert"
+          className="mt-4 mb-2 flex items-start gap-2 rounded-lg border border-red-200 dark:border-red-900/40 bg-red-50 dark:bg-red-900/20 px-3 py-2 text-xs text-red-700 dark:text-red-300"
+        >
+          <span className="flex-1">{submitError}</span>
+          <button
+            type="button"
+            onClick={() => setSubmitError(null)}
+            className="text-red-400 hover:text-red-600 dark:hover:text-red-200 transition-colors font-semibold"
+            aria-label="Dismiss"
+          >
+            ×
+          </button>
         </div>
       )}
 
