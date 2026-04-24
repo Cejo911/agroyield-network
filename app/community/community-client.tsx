@@ -9,6 +9,7 @@ import useProfileGate from '@/app/hooks/useProfileGate'
 import ProfileGateBanner from '@/app/components/ProfileGateBanner'
 import ImageUploader from '@/app/components/ImageUploader'
 import OnlineIndicator from '@/app/components/OnlineIndicator'
+import ReportButton from '@/app/components/ReportButton'
 import { safeHref } from '@/lib/safe-href'
 
 const POST_TYPES = [
@@ -538,6 +539,16 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
                       <span>🔁</span>
                       <span className="text-xs">Repost</span>
                     </button>
+                  )}
+                  {/* Report button — community self-moderation. Hidden on own
+                      posts; logged-out users see the button but the server
+                      returns 401 cleanly on submit (ReportButton's own GET
+                      also noops for anon). Auto-hide kicks in server-side
+                      once settings.report_threshold (default 3) is met. */}
+                  {post.user_id !== currentUserId && (
+                    <div className="ml-auto">
+                      <ReportButton postId={post.id} postType="community_post" />
+                    </div>
                   )}
                 </div>
               </div>
