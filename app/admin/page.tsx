@@ -8,7 +8,14 @@ import AdminClient from './admin-client'
 
 type ReportGroup = {
   postId:    string
-  postType:  'opportunity' | 'listing' | 'business_review'
+  // Must mirror the union in app/admin/admin-client.tsx.
+  postType:
+    | 'opportunity'
+    | 'listing'
+    | 'business_review'
+    | 'price_report'
+    | 'research'
+    | 'community_post'
   postTitle: string
   isActive:  boolean
   count:     number
@@ -72,7 +79,7 @@ export default async function AdminPage() {
     adminAny.from('community_posts').select('id, user_id, post_type, content, image_url, is_active, is_pinned, created_at').order('created_at', { ascending: false }).limit(500),
     adminAny.from('research_posts').select('id, user_id, title, type, is_active, is_locked, created_at').order('created_at', { ascending: false }).limit(500),
     adminAny.from('comments').select('id, user_id, post_id, post_type, content, user_name, is_hidden, created_at').order('created_at', { ascending: false }).limit(500),
-    adminAny.from('price_reports').select('id, user_id, commodity, state, market_name, price, unit, reported_at').order('reported_at', { ascending: false }).limit(500),
+    adminAny.from('price_reports').select('id, user_id, commodity, state, market_name, price, unit, reported_at, is_active').order('reported_at', { ascending: false }).limit(500),
     adminAny.from('mentor_profiles').select('user_id, headline, expertise, availability, is_active, updated_at, approval_status, approved_at, approved_by, rejection_reason, created_at').order('updated_at', { ascending: false }),
     adminAny.from('mentorship_requests').select('id, mentor_id, mentee_id, topic, status, created_at').order('created_at', { ascending: false }).limit(200),
     adminAny.from('settings').select('key, value'),
@@ -116,7 +123,15 @@ export default async function AdminPage() {
   for (const r of (reports ?? [])) {
     const raw = r as Record<string, unknown>
     const postId   = raw.post_id   as string
-    const postType = raw.post_type as 'opportunity' | 'listing' | 'business_review'
+    // All surfaces reports can originate from. The reports table stores
+    // post_type as free text so we cast tolerantly and branch below.
+    const postType = raw.post_type as
+      | 'opportunity'
+      | 'listing'
+      | 'business_review'
+      | 'price_report'
+      | 'research'
+      | 'community_post'
     const reason   = raw.reason    as string
     const key      = `${postType}:${postId}`
 
@@ -147,7 +162,50 @@ export default async function AdminPage() {
         } else {
           postTitle = 'Business review'
         }
+      } else if (postType === 'price_report') {
+        // price_reports has no `title` column — synthesise one from the
+        // commodity + market + state so admins can tell at a glance which
+        // report was flagged without clicking through.
+        const match = (priceReports ?? []).find(
+          (p: unknown) => (p as Record<string, unknown>).id === postId
+        ) as Record<string, unknown> | undefined
+        if (match) {
+          const commodity = typeof match.commodity   === 'string' ? match.commodity   : ''
+          const market    = typeof match.market_name === 'string' ? match.market_name : ''
+          const state     = typeof match.state       === 'string' ? match.state       : ''
+          const loc       = [market, state].filter(Boolean).join(', ')
+          postTitle = loc ? `${commodity} @ ${loc}` : (commodity || 'Price report')
+          isActive  = (match.is_active as boolean | undefined) ?? true
+        } else {
+          postTitle = 'Price report'
+        }
+      } else if (postType === 'research') {
+        const match = (researchPosts ?? []).find(
+          (rp: unknown) => (rp as Record<string, unknown>).id === postId
+        ) as Record<string, unknown> | undefined
+        if (match) {
+          postTitle = typeof match.title === 'string' ? match.title : 'Research post'
+          isActive  = match.is_active as boolean
+        } else {
+          postTitle = 'Research post'
+        }
+      } else if (postType === 'community_post') {
+        // community_posts has no `title` — use a 60-char content preview.
+        const match = (communityPosts ?? []).find(
+          (cp: unknown) => (cp as Record<string, unknown>).id === postId
+        ) as Record<string, unknown> | undefined
+        if (match) {
+          const body = typeof match.content === 'string' ? match.content : ''
+          postTitle = body.trim().slice(0, 60) || 'Community post'
+          isActive  = match.is_active as boolean
+        } else {
+          postTitle = 'Community post'
+        }
       } else {
+        // Default branch: marketplace listings. Kept as the final fall-through
+        // because historically pre-4/2026 reports were stored with a
+        // best-effort post_type — any unknown value lands here and at worst
+        // shows as 'Untitled' rather than crashing.
         const match = (listings ?? []).find(
           (l: unknown) => (l as Record<string, unknown>).id === postId
         ) as Record<string, unknown> | undefined

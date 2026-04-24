@@ -83,7 +83,15 @@ interface Member {
 }
 interface ReportGroup {
   postId: string
-  postType: 'opportunity' | 'listing' | 'business_review'
+  // Must mirror the branches in app/admin/page.tsx grouping logic and the
+  // dismissReports / removeReportedPost dispatch tables below.
+  postType:
+    | 'opportunity'
+    | 'listing'
+    | 'business_review'
+    | 'price_report'
+    | 'research'
+    | 'community_post'
   postTitle: string
   isActive: boolean
   count: number
@@ -311,10 +319,10 @@ export default function AdminClient({
   listings: initialListings,
   members: initialMembers,
   grants: initialGrants,
-  communityPosts,
-  researchPosts,
+  communityPosts: initialCommunityPosts,
+  researchPosts: initialResearchPosts,
   comments,
-  priceReports,
+  priceReports: initialPriceReports,
   mentorProfiles,
   mentorshipRequests,
   auditLog,
@@ -351,6 +359,13 @@ export default function AdminClient({
   const [grants, setGrants] = useState<Grant[]>(initialGrants)
   const [reportGroups, setReportGroups] = useState<ReportGroup[]>(initialReportGroups)
   const [businessesList, setBusinessesList] = useState<Business[]>(businesses)
+  // Promoted to local state (was prop-only) so report-tab dismiss/remove
+  // actions can reflect immediately in the Community/Research/Prices tabs
+  // without a full page reload. Matches the toggleOpportunity / toggleListing
+  // pattern used for those tabs.
+  const [communityPosts, setCommunityPosts] = useState<CommunityPost[]>(initialCommunityPosts)
+  const [researchPosts, setResearchPosts] = useState<ResearchPost[]>(initialResearchPosts)
+  const [priceReports, setPriceReports] = useState<PriceReport[]>(initialPriceReports)
 
   // Search / filter state
   const [oppSearch, setOppSearch] = useState('')
@@ -654,6 +669,18 @@ export default function AdminClient({
     setListings(prev => prev.map(l => l.id === id ? { ...l, is_active } : l))
     await fetch('/api/admin/listing', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, is_active }) })
   }
+  const togglePriceReport = async (id: string, is_active: boolean) => {
+    setPriceReports(prev => prev.map(p => p.id === id ? { ...p, is_active } : p))
+    await fetch('/api/admin/prices', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, action: is_active ? 'show' : 'hide' }) })
+  }
+  const toggleResearchPost = async (id: string, is_active: boolean) => {
+    setResearchPosts(prev => prev.map(r => r.id === id ? { ...r, is_active } : r))
+    await fetch('/api/admin/research', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, action: is_active ? 'show' : 'hide' }) })
+  }
+  const toggleCommunityPost = async (id: string, is_active: boolean) => {
+    setCommunityPosts(prev => prev.map(c => c.id === id ? { ...c, is_active } : c))
+    await fetch('/api/admin/community', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, action: is_active ? 'show' : 'hide' }) })
+  }
   const approveListing = async (id: string) => {
     setListings(prev => prev.map(l => l.id === id ? { ...l, is_active: true, is_pending_review: false } : l))
     await fetch('/api/admin/listing', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, is_active: true, is_pending_review: false }) })
@@ -688,20 +715,42 @@ export default function AdminClient({
     }
   }
   const dismissReports = async (postId: string, postType: string) => {
+    // Server DELETE /api/admin/reports clears the report rows and restores
+    // is_active=true (or published=true for business_review). Here we mirror
+    // that in local state per surface.
     await fetch('/api/admin/reports', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ postId, postType }) })
     setReportGroups(prev => prev.filter(rg => !(rg.postId === postId && rg.postType === postType)))
     if (postType === 'opportunity') {
       setOpportunities(prev => prev.map(o => o.id === postId ? { ...o, is_active: true } : o))
     } else if (postType === 'listing') {
       setListings(prev => prev.map(l => l.id === postId ? { ...l, is_active: true } : l))
+    } else if (postType === 'price_report') {
+      setPriceReports(prev => prev.map(p => p.id === postId ? { ...p, is_active: true } : p))
+    } else if (postType === 'research') {
+      setResearchPosts(prev => prev.map(r => r.id === postId ? { ...r, is_active: true } : r))
+    } else if (postType === 'community_post') {
+      setCommunityPosts(prev => prev.map(c => c.id === postId ? { ...c, is_active: true } : c))
     }
     // For business_review there's no in-page list to mutate — the review row
     // lives on /b/{slug}, not in admin state. `published` is restored on the
     // server by /api/admin/reports DELETE.
   }
   const removeReportedPost = async (postId: string, postType: string) => {
+    // Full dispatch table — no fall-through. Historically 'listing' was the
+    // implicit default which meant a price_report/research/community_post
+    // report would fire a PATCH at /api/admin/listing with an id that
+    // doesn't exist in marketplace_listings (silent no-op). Each surface
+    // now routes to its own PATCH endpoint.
     if (postType === 'opportunity') {
       await toggleOpportunity(postId, false)
+    } else if (postType === 'listing') {
+      await toggleListing(postId, false)
+    } else if (postType === 'price_report') {
+      await togglePriceReport(postId, false)
+    } else if (postType === 'research') {
+      await toggleResearchPost(postId, false)
+    } else if (postType === 'community_post') {
+      await toggleCommunityPost(postId, false)
     } else if (postType === 'business_review') {
       // Hide the review via the dedicated admin route (service-role +
       // audit log). `isActive` on the report group mirrors `published`.
@@ -710,12 +759,11 @@ export default function AdminClient({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ reviewId: postId, action: 'hide' }),
       })
-      setReportGroups(prev => prev.map(rg =>
-        (rg.postId === postId && rg.postType === postType) ? { ...rg, isActive: false } : rg
-      ))
-    } else {
-      await toggleListing(postId, false)
     }
+    // Reflect the hidden state on the report-group card (all branches).
+    setReportGroups(prev => prev.map(rg =>
+      (rg.postId === postId && rg.postType === postType) ? { ...rg, isActive: false } : rg
+    ))
   }
 
   const addOpportunityType = () => {

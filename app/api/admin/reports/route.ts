@@ -63,10 +63,11 @@ export async function DELETE(req: Request) {
     if (restoreError) return NextResponse.json({ error: restoreError.message }, { status: 500 })
   } else {
     const table =
-      postType === 'opportunity'  ? 'opportunities'
-    : postType === 'research'     ? 'research_posts'
-    : postType === 'price_report' ? 'price_reports'
-    :                               'marketplace_listings'
+      postType === 'opportunity'    ? 'opportunities'
+    : postType === 'research'       ? 'research_posts'
+    : postType === 'price_report'   ? 'price_reports'
+    : postType === 'community_post' ? 'community_posts'
+    :                                 'marketplace_listings'
     const { error: restoreError } = await adminAny
       .from(table)
       .update({ is_active: true })

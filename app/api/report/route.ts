@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
 
     const { postId, postType, reason } = await request.json() as {
       postId:   string
-      postType: 'opportunity' | 'listing' | 'research' | 'price_report' | 'business_review'
+      postType: 'opportunity' | 'listing' | 'research' | 'price_report' | 'business_review' | 'community_post'
       reason:   string
     }
 
@@ -94,10 +94,11 @@ export async function POST(request: NextRequest) {
         await adminAny.from('business_reviews').update({ published: false }).eq('id', postId)
       } else {
         const table =
-          postType === 'opportunity'  ? 'opportunities'
-        : postType === 'price_report' ? 'price_reports'
-        : postType === 'research'     ? 'research_posts'
-        :                               'marketplace_listings'
+          postType === 'opportunity'   ? 'opportunities'
+        : postType === 'price_report'  ? 'price_reports'
+        : postType === 'research'      ? 'research_posts'
+        : postType === 'community_post' ? 'community_posts'
+        :                                'marketplace_listings'
         await adminAny.from(table).update({ is_active: false }).eq('id', postId)
       }
     }
@@ -108,6 +109,7 @@ export async function POST(request: NextRequest) {
     : postType === 'price_report'    ? 'Price Report'
     : postType === 'research'        ? 'Research Post'
     : postType === 'business_review' ? 'Business Review'
+    : postType === 'community_post'  ? 'Community Post'
     :                                  'Marketplace Listing'
     slackAlert({
       title: autoHidden ? 'Content Auto-Hidden' : 'New Content Report',
@@ -138,6 +140,7 @@ export async function POST(request: NextRequest) {
         : postType === 'price_report'    ? `prices`
         : postType === 'research'        ? `research/${postId}`
         : postType === 'business_review' ? `admin`
+        : postType === 'community_post'  ? `community/${postId}`
         :                                  `marketplace/${postId}`
         const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://agroyield.africa'
 
