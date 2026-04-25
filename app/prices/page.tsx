@@ -15,10 +15,19 @@ export default async function PricesPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  // Fetch all reports
+  // Fetch all active reports.
+  //
+  // is_active=true filter is REQUIRED. price_reports.is_active is the
+  // platform's moderation column for both user self-delete (DELETE
+  // /api/prices flips it to false) and admin "Hide price" actions
+  // (PATCH /api/admin/prices with action='hide' or 'delete'). Before
+  // this filter existed the listing showed every row regardless of
+  // moderation state, so soft-deleted rows reappeared on refresh and
+  // the admin hide action was silently no-op'd.
   const { data: rawReports } = await supabase
     .from('price_reports')
     .select('id, user_id, commodity, category, price, unit, market_name, state, reported_at')
+    .eq('is_active', true)
     .order('reported_at', { ascending: false })
     .limit(500)
 
