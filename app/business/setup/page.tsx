@@ -167,8 +167,24 @@ function BusinessSetup() {
     setUploading(true)
     try {
       const ext = file.name.split('.').pop()
-      // Use businessId if editing, or a timestamp for new businesses (will be unique)
-      const folder = businessId || `${userId}/new_${Date.now()}`
+      // Path shape: <userId>/<businessId|new_ts>/logo.<ext>
+      //
+      // First folder MUST be userId so the business-logos INSERT/UPDATE
+      // policy passes via the simple check
+      //   (storage.foldername(name))[1] = auth.uid()::text
+      // The earlier businessId-as-first-folder shape relied on a subquery
+      // against public.businesses that can be silently broken by RLS
+      // changes added through the Supabase dashboard. Routing under
+      // userId/ first is a strict subset of "owner-only" semantically and
+      // doesn't depend on any other table's RLS state.
+      //
+      // Existing logos at the old <businessId>/logo.<ext> paths keep
+      // rendering via the public bucket URL (bucket.public=true makes
+      // SELECT policy-free). On re-upload we write the new path; the old
+      // file is left orphaned, which is harmless.
+      const folder = businessId
+        ? `${userId}/${businessId}`
+        : `${userId}/new_${Date.now()}`
       const path = `${folder}/logo.${ext}`
       const { error } = await supabase.storage
         .from('business-logos')
@@ -200,7 +216,13 @@ function BusinessSetup() {
     setUploadingCover(true)
     try {
       const ext = file.name.split('.').pop()
-      const folder = businessId || `${userId}/new_${Date.now()}`
+      // Same userId-first path shape as handleLogoUpload — see comment there
+      // for the policy rationale. The two uploaders share a folder so a
+      // re-uploaded logo and cover live alongside each other under
+      // <userId>/<businessId>/.
+      const folder = businessId
+        ? `${userId}/${businessId}`
+        : `${userId}/new_${Date.now()}`
       const path = `${folder}/cover.${ext}`
       const { error } = await supabase.storage
         .from('business-logos')
