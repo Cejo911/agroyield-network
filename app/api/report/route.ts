@@ -66,10 +66,35 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'You have already reported this post' }, { status: 409 })
     }
 
-    // Insert report
-    await adminAny.from('reports').insert({
+    // Insert report.
+    //
+    // We DESTRUCTURE the error here. Earlier this call was `await adminAny
+    // .from('reports').insert({...})` with no check — when the insert
+    // failed silently (RLS edge cases, schema drift, network blip, etc.)
+    // the route still returned `{ok: true}` to the client. The user saw
+    // "✓ Reported", but no row landed in public.reports and the admin
+    // moderation queue stayed empty. Surface the failure now so:
+    //   • the dropdown shows the real error to the user
+    //   • Vercel logs / Sentry capture the cause
+    //   • we don't proceed to threshold checks against a non-existent row
+    const { error: insertErr } = await adminAny.from('reports').insert({
       user_id: user.id, post_type: postType, post_id: postId, reason,
     })
+    if (insertErr) {
+      console.error('[reports] insert failed:', {
+        postType,
+        postId,
+        userId: user.id,
+        message: insertErr.message,
+        details: (insertErr as Record<string, unknown>).details,
+        hint:    (insertErr as Record<string, unknown>).hint,
+        code:    (insertErr as Record<string, unknown>).code,
+      })
+      return NextResponse.json(
+        { error: insertErr.message || 'Failed to save report' },
+        { status: 500 },
+      )
+    }
 
     // Read report threshold
     const { data: thresholdRow } = await adminAny.from('settings')
@@ -88,10 +113,15 @@ export async function POST(request: NextRequest) {
     // Auto-hide if threshold reached.
     // Most post types use `is_active: false`; business_reviews uses `published: false`
     // because the table mirrors the product_reviews schema (moderation column).
+    // Auto-hide errors are LOGGED but not fatal — the report row already
+    // landed (above), so the moderator can still action it from the queue
+    // even if the visibility flip didn't take.
     const autoHidden = totalReports >= threshold
     if (autoHidden) {
       if (postType === 'business_review') {
-        await adminAny.from('business_reviews').update({ published: false }).eq('id', postId)
+        const { error: hideErr } = await adminAny.from('business_reviews')
+          .update({ published: false }).eq('id', postId)
+        if (hideErr) console.error('[reports] auto-hide business_review failed:', hideErr)
       } else {
         const table =
           postType === 'opportunity'   ? 'opportunities'
@@ -99,7 +129,9 @@ export async function POST(request: NextRequest) {
         : postType === 'research'      ? 'research_posts'
         : postType === 'community_post' ? 'community_posts'
         :                                'marketplace_listings'
-        await adminAny.from(table).update({ is_active: false }).eq('id', postId)
+        const { error: hideErr } = await adminAny.from(table)
+          .update({ is_active: false }).eq('id', postId)
+        if (hideErr) console.error(`[reports] auto-hide ${table} failed:`, hideErr)
       }
     }
 
