@@ -166,41 +166,30 @@ function BusinessSetup() {
     if (!file || !userId) return
     setUploading(true)
     try {
-      const ext = file.name.split('.').pop()
-      // Path shape: <userId>/<businessId|new_ts>/logo.<ext>
-      //
-      // First folder MUST be userId so the business-logos INSERT/UPDATE
-      // policy passes via the simple check
-      //   (storage.foldername(name))[1] = auth.uid()::text
-      // The earlier businessId-as-first-folder shape relied on a subquery
-      // against public.businesses that can be silently broken by RLS
-      // changes added through the Supabase dashboard. Routing under
-      // userId/ first is a strict subset of "owner-only" semantically and
-      // doesn't depend on any other table's RLS state.
-      //
-      // Existing logos at the old <businessId>/logo.<ext> paths keep
-      // rendering via the public bucket URL (bucket.public=true makes
-      // SELECT policy-free). On re-upload we write the new path; the old
-      // file is left orphaned, which is harmless.
-      const folder = businessId
-        ? `${userId}/${businessId}`
-        : `${userId}/new_${Date.now()}`
-      const path = `${folder}/logo.${ext}`
-      const { error } = await supabase.storage
-        .from('business-logos')
-        .upload(path, file, { upsert: true })
-      if (error) {
-        console.error('Logo upload error:', error)
-        alert('Failed to upload logo: ' + error.message)
+      // Route through /api/business/upload instead of calling
+      // supabase.storage.upload(...) directly. The server endpoint uses
+      // the service-role admin client to bypass storage.objects RLS —
+      // production was rejecting direct uploads even with userId-first
+      // paths that should satisfy policy condition A. Ownership is now
+      // checked explicitly on the server before the upload runs, so the
+      // security model is the same.
+      const fd = new FormData()
+      fd.append('file', file)
+      fd.append('kind', 'logo')
+      if (businessId) fd.append('businessId', businessId)
+      const res = await fetch('/api/business/upload', { method: 'POST', body: fd })
+      const data = (await res.json().catch(() => ({}))) as {
+        publicUrl?: string
+        error?: string
+      }
+      if (!res.ok || !data.publicUrl) {
+        console.error('Logo upload error:', data.error || res.statusText)
+        alert('Failed to upload logo: ' + (data.error || 'Upload failed'))
       } else {
-        const { data: { publicUrl } } = supabase.storage
-          .from('business-logos')
-          .getPublicUrl(path)
-        // Cache-buster: upsert writes to the same path, so the public URL is
-        // stable and browsers + Supabase CDN keep serving the old bytes.
-        // Appending ?v=<timestamp> forces a fresh fetch without changing the
-        // underlying file name.
-        setForm(f => ({ ...f, logo_url: `${publicUrl}?v=${Date.now()}` }))
+        // Cache-buster: re-uploads write to the same path, so the public
+        // URL is stable. Appending ?v=<timestamp> forces a fresh fetch
+        // without changing the underlying file name.
+        setForm(f => ({ ...f, logo_url: `${data.publicUrl}?v=${Date.now()}` }))
       }
     } catch (err: unknown) {
       console.error('Logo upload exception:', err)
@@ -215,27 +204,22 @@ function BusinessSetup() {
     if (!file || !userId) return
     setUploadingCover(true)
     try {
-      const ext = file.name.split('.').pop()
-      // Same userId-first path shape as handleLogoUpload — see comment there
-      // for the policy rationale. The two uploaders share a folder so a
-      // re-uploaded logo and cover live alongside each other under
-      // <userId>/<businessId>/.
-      const folder = businessId
-        ? `${userId}/${businessId}`
-        : `${userId}/new_${Date.now()}`
-      const path = `${folder}/cover.${ext}`
-      const { error } = await supabase.storage
-        .from('business-logos')
-        .upload(path, file, { upsert: true })
-      if (error) {
-        alert('Failed to upload cover image: ' + error.message)
+      // Same /api/business/upload pattern as handleLogoUpload — see the
+      // rationale comment there.
+      const fd = new FormData()
+      fd.append('file', file)
+      fd.append('kind', 'cover')
+      if (businessId) fd.append('businessId', businessId)
+      const res = await fetch('/api/business/upload', { method: 'POST', body: fd })
+      const data = (await res.json().catch(() => ({}))) as {
+        publicUrl?: string
+        error?: string
+      }
+      if (!res.ok || !data.publicUrl) {
+        console.error('Cover upload error:', data.error || res.statusText)
+        alert('Failed to upload cover image: ' + (data.error || 'Upload failed'))
       } else {
-        const { data: { publicUrl } } = supabase.storage
-          .from('business-logos')
-          .getPublicUrl(path)
-        // Cache-buster — same-path upsert means the public URL is stable, so
-        // browsers + CDN keep serving the old image without this query string.
-        setForm(f => ({ ...f, cover_image_url: `${publicUrl}?v=${Date.now()}` }))
+        setForm(f => ({ ...f, cover_image_url: `${data.publicUrl}?v=${Date.now()}` }))
       }
     } catch (err) {
       console.error('Cover upload exception:', err)
