@@ -105,8 +105,35 @@ export default function PricesClient({
 
   const handleDelete = async (id: string) => {
     setDeletingId(id)
-    const supabase = createClient()
-    await supabase.from('price_reports').delete().eq('id', id)
+    // Routes through DELETE /api/prices so the soft-delete happens
+    // server-side via the service-role admin client after an explicit
+    // ownership check. The previous direct browser delete silently
+    // failed (no error destructure → local state filtered the row out
+    // → refresh re-fetched the still-active row from the server).
+    try {
+      const res = await fetch('/api/prices', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      })
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean
+        error?: string
+      }
+      if (!res.ok || !data.ok) {
+        console.error('Price delete failed:', data.error || res.statusText)
+        alert('Failed to delete report: ' + (data.error || 'Please try again.'))
+        setDeletingId(null)
+        setConfirmingId(null)
+        return
+      }
+    } catch (err) {
+      console.error('Price delete exception:', err)
+      alert('Network error — please check your connection and retry.')
+      setDeletingId(null)
+      setConfirmingId(null)
+      return
+    }
     setLocalReports(prev => prev.filter(r => r.id !== id))
     setDeletingId(null)
     setConfirmingId(null)
