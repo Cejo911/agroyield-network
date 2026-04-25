@@ -462,13 +462,23 @@ function FeaturedCard({ b }: { b: FeaturedBusiness }) {
 
       {/* Body */}
       <div style={{ padding: '0 18px 20px', position: 'relative' }}>
-        {/* Logo — half-overlapping the cover */}
+        {/* Logo — half-overlapping the cover.
+            backgroundSize MUST be 'contain' (not 'cover') — logos have
+            varying aspect ratios and cropping a wide brand mark to fill a
+            square box looks broken. 'contain' letterboxes the image
+            instead, preserving the full logo. backgroundRepeat 'no-repeat'
+            is defensive: a small logo would otherwise tile across the
+            white background. The neighbouring cover-image div above uses
+            'cover' correctly because cover images SHOULD fill the banner.
+            Same conceptual fix shape as the profile avatar — wrap in a
+            sized box, set object/background fit by image type. */}
         <div
           style={{
             width: 52, height: 52, marginTop: -26, marginBottom: 14,
             backgroundColor: '#fff',
             backgroundImage: `url(${b.logo_url})`,
-            backgroundSize: 'cover',
+            backgroundSize: 'contain',
+            backgroundRepeat: 'no-repeat',
             backgroundPosition: 'center',
             borderRadius: 13,
             border: '1px solid var(--border-color)',
