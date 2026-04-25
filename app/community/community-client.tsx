@@ -186,7 +186,32 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
 
   async function deletePost(postId: string) {
     if (!confirm('Delete this post?')) return
-    await (supabase as any).from('community_posts').update({ is_active: false }).eq('id', postId)
+    // Routes through /api/community/post DELETE so the soft-delete
+    // happens server-side via the service-role admin client after an
+    // explicit ownership check. The previous direct browser update
+    // silently failed (no error destructure → ok:true response → no
+    // visible change after router.refresh()), which is the bug this
+    // fixes.
+    try {
+      const res = await fetch('/api/community/post', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ postId }),
+      })
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean
+        error?: string
+      }
+      if (!res.ok || !data.ok) {
+        console.error('Community delete failed:', data.error || res.statusText)
+        alert('Failed to delete post: ' + (data.error || 'Please try again.'))
+        return
+      }
+    } catch (err) {
+      console.error('Community delete exception:', err)
+      alert('Network error — please check your connection and retry.')
+      return
+    }
     router.refresh()
   }
 
