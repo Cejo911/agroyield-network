@@ -6,6 +6,7 @@ import "./globals.css"
 import AnnouncementBanner from "./components/AnnouncementBanner"
 import ThemeProvider from "./components/ThemeProvider"
 import PostHogProvider from "./components/PostHogProvider"
+import { ToastProvider } from "./components/Toast"
 
 const SITE_ORIGIN =
   process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ?? 'https://agroyield.africa'
@@ -180,8 +181,10 @@ export default function RootLayout({
         />
         <PostHogProvider>
           <ThemeProvider>
-            <AnnouncementBanner />
-            {children}
+            <ToastProvider>
+              <AnnouncementBanner />
+              {children}
+            </ToastProvider>
           </ThemeProvider>
         </PostHogProvider>
         <Analytics />

@@ -60,7 +60,7 @@ function Countdown() {
   return (
     <div style={{ margin: '0 auto 44px', textAlign: 'center' }}>
       <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: 'var(--countdown-label)', marginBottom: 18 }}>
-        Platform launches in
+        Public launch in
       </p>
       <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' as const }}>
         {units.map(({ label, value }) => (
@@ -75,7 +75,7 @@ function Countdown() {
         ))}
       </div>
       <p style={{ fontSize: 13, color: 'var(--countdown-label)', marginTop: 14 }}>
-        Launching <strong style={{ color: 'var(--text-muted)' }}>5 July 2026</strong> — join the waitlist to get early access
+        Beta is live now (invite-only). Public launch <strong style={{ color: 'var(--text-muted)' }}>5 July 2026</strong> — join the waitlist for early access.
       </p>
     </div>
   )
