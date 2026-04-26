@@ -34,11 +34,14 @@ Sentry.init({
   //    mostly fixed by the singleton in lib/supabase/client.ts but
   //    can still surface on iOS Safari/Chrome tab suspend/resume.
   //
-  // 2. Cross-tab lock contention (AbortError variant)
-  //    "AbortError: Lock was stolen by another request"
-  //    Same user with multiple tabs of the site open. Web Locks
-  //    deliberately spans tabs in the same origin; this is expected
-  //    behaviour, not a bug at our layer.
+  // 2. Cross-tab lock contention (AbortError variants)
+  //    Two phrasings of the same underlying issue have been observed:
+  //      "AbortError: Lock was stolen by another request"
+  //      "AbortError: Lock broken by another request with the 'steal' option"
+  //    Both fire when the same user has multiple tabs of the site open.
+  //    Web Locks deliberately spans tabs in the same origin; this is
+  //    expected behaviour, not a bug at our layer. Different browsers
+  //    and Web Locks polyfill versions surface the message differently.
   //
   // 3. Storage access denied
   //    "Failed to read the 'sessionStorage' property from 'Window':
@@ -76,6 +79,7 @@ Sentry.init({
   ignoreErrors: [
     /Lock .* was released because another request stole it/,
     /Lock was stolen by another request/,
+    /Lock broken by another request/,
     /Failed to read the 'sessionStorage' property/,
     /Failed to read the 'localStorage' property/,
     /The user denied permission to use Service Worker/,
