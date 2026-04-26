@@ -13,10 +13,22 @@ type Props = {
     | 'price_report'
     | 'business_review'
     | 'community_post'
+  /**
+   * Whether the current user has already reported this post. When the
+   * caller knows this up-front (e.g. /community batch-fetches it
+   * server-side and passes it down), supplying this prop skips the
+   * mount-time GET /api/report?postId=… that would otherwise fire on
+   * every visible card. Performance fix for the N+1 Sentry flagged
+   * (issue 112707340). Optional — surfaces that don't pre-fetch
+   * (price cards, opportunities, marketplace, research, business
+   * reviews) keep firing the GET as before.
+   */
+  initialReported?: boolean
 }
 
-export default function ReportButton({ postId, postType }: Props) {
-  const [reported, setReported] = useState(false)
+export default function ReportButton({ postId, postType, initialReported }: Props) {
+  // Seed `reported` from the prop if provided; default to false otherwise.
+  const [reported, setReported] = useState(initialReported ?? false)
   const [open,     setOpen]     = useState(false)
   const [loading,  setLoading]  = useState(false)
   const [error,    setError]    = useState<string | null>(null)
@@ -24,6 +36,12 @@ export default function ReportButton({ postId, postType }: Props) {
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    // Skip the mount-time GET when the caller pre-fetched the state.
+    // This is the surface-level fix for the /community N+1 — without
+    // this guard, every <ReportButton> instance fires its own request
+    // on mount, regardless of the prop. With it, /community goes from
+    // ~40-50 redundant calls per page load to zero.
+    if (initialReported !== undefined) return
     const init = async () => {
       try {
         const res  = await fetch(`/api/report?postId=${postId}&postType=${postType}`)
@@ -32,7 +50,7 @@ export default function ReportButton({ postId, postType }: Props) {
       } catch { /* keep default */ }
     }
     init()
-  }, [postId, postType])
+  }, [postId, postType, initialReported])
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {

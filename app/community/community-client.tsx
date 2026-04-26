@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
@@ -45,10 +45,15 @@ interface Props {
   likeCountMap: Record<string, number>
   userLikedSet: string[]
   commentCountMap: Record<string, number>
+  // post_ids the current user has already reported. Pre-fetched server-side
+  // and threaded down to <ReportButton initialReported> so the button
+  // skips its mount-time GET. Optional for back-compat; missing prop just
+  // means the button does its own GET as before.
+  userReportedSet?: string[]
   currentUserId: string
 }
 
-export default function CommunityClient({ posts, parentMap = {}, profileMap, likeCountMap, userLikedSet: initialLiked, commentCountMap, currentUserId }: Props) {
+export default function CommunityClient({ posts, parentMap = {}, profileMap, likeCountMap, userLikedSet: initialLiked, commentCountMap, userReportedSet = [], currentUserId }: Props) {
   const supabase = createClient()
   const router = useRouter()
   const { showError } = useToast()
@@ -68,6 +73,12 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
   const [repostTarget, setRepostTarget] = useState<any | null>(null)
   const [repostCaption, setRepostCaption] = useState('')
   const [reposting, setReposting] = useState(false)
+
+  // Pre-fetched server-side (see app/community/page.tsx). Memoised so
+  // identity is stable across renders and ReportButton's prop change
+  // doesn't churn — the array reference from the server is stable per
+  // page load, so the Set is too.
+  const reportedSet = useMemo(() => new Set(userReportedSet), [userReportedSet])
 
   const filtered = filter === 'all' ? posts : posts.filter(p => p.post_type === filter)
 
@@ -574,7 +585,11 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
                       once settings.report_threshold (default 3) is met. */}
                   {post.user_id !== currentUserId && (
                     <div className="ml-auto">
-                      <ReportButton postId={post.id} postType="community_post" />
+                      <ReportButton
+                        postId={post.id}
+                        postType="community_post"
+                        initialReported={reportedSet.has(post.id)}
+                      />
                     </div>
                   )}
                 </div>
