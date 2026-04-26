@@ -52,16 +52,33 @@ Sentry.init({
   //    of the user's browser environment, not a code bug.
   //    Same filter covers the localStorage variant the SDK falls back to.
   //
-  // All three are SDK-internal noise that overwhelms the alert feed
+  // 4. Service Worker registration denied
+  //    "NotSupportedError: Failed to register a ServiceWorker for scope
+  //     ('https://...') with script ('https://.../sw.js'): The user denied
+  //     permission to use Service Worker."
+  //    @ducanh2912/next-pwa auto-registers public/sw.js on page load.
+  //    When the user has explicitly denied service-worker permission for
+  //    the origin (or the OS / browser policy blocks it), the registration
+  //    throws NotSupportedError. We don't control the registration code
+  //    (the plugin generates it). PWA features are degraded — no offline,
+  //    no background sync — but everything else works fine. Filtering
+  //    matches the "user denied permission to use Service Worker" tail of
+  //    the error so we still capture other ServiceWorker failure modes
+  //    (script not found, MIME type wrong, scope mismatch) which would
+  //    indicate a real bug.
+  //
+  // All four are SDK-internal noise that overwhelms the alert feed
   // during launch monitoring. Filter strings are narrow enough that
   // real errors are still captured: the lock-name substring, the
-  // AbortError message, and the storage-property phrase are all
-  // specific enough that legitimate code paths won't get caught.
+  // AbortError message, the storage-property phrase, and the
+  // user-denied-permission tail are all specific enough that
+  // legitimate code paths won't get caught.
   ignoreErrors: [
     /Lock .* was released because another request stole it/,
     /Lock was stolen by another request/,
     /Failed to read the 'sessionStorage' property/,
     /Failed to read the 'localStorage' property/,
+    /The user denied permission to use Service Worker/,
   ],
 });
 
