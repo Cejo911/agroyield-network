@@ -118,14 +118,14 @@ export default async function PublicProfilePage(
   const isOwnProfile = user?.id === profileId
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       {user ? <AppNav /> : (
-        <nav className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+        <nav className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between">
           <a href="/" className="flex items-center gap-2 no-underline">
             <Image src="/logo-horizontal-colored.png" alt="AgroYield Network" width={200} height={58} className="h-[58px] w-auto" />
           </a>
           <div className="flex items-center gap-3">
-            <a href="/login" className="text-sm text-gray-600 hover:text-gray-900 font-medium">Log in</a>
+            <a href="/login" className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium">Log in</a>
             <a href="/signup" className="text-sm bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700">Sign up</a>
           </div>
         </nav>
@@ -134,7 +134,7 @@ export default async function PublicProfilePage(
       <main className="max-w-2xl mx-auto px-4 py-10">
         {/* Back button */}
         {user && <BackButton fallbackHref="/directory" label="Back" />}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 mb-6">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-8 mb-6">
           <div className="flex flex-col sm:flex-row sm:items-start gap-6">
 
             {/* Avatar */}
@@ -142,12 +142,12 @@ export default async function PublicProfilePage(
               {avatarUrl ? (
                 <div
                   style={{ backgroundImage: `url(${avatarUrl})` }}
-                  className="w-24 h-24 rounded-full bg-cover bg-center border-4 border-white shadow-md"
+                  className="w-24 h-24 rounded-full bg-cover bg-center border-4 border-white dark:border-gray-800 shadow-md"
                   role="img"
                   aria-label={`${firstName} ${lastName}`}
                 />
               ) : (
-                <div className="w-24 h-24 rounded-full bg-green-600 flex items-center justify-center text-white text-2xl font-bold border-4 border-white shadow-md">
+                <div className="w-24 h-24 rounded-full bg-green-600 flex items-center justify-center text-white text-2xl font-bold border-4 border-white dark:border-gray-800 shadow-md">
                   {initials}
                 </div>
               )}
@@ -157,7 +157,7 @@ export default async function PublicProfilePage(
             <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2 flex-wrap">
+                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2 flex-wrap">
                     {firstName} {lastName}
                     {isVerified && <VerifiedBadge size="md" />}
                     {isElite && <EliteBadge size="md" />}
@@ -168,9 +168,9 @@ export default async function PublicProfilePage(
                       </span>
                     )}
                   </h1>
-                  {role && <p className="text-sm text-green-600 font-semibold capitalize mt-0.5">{role}</p>}
-                  {institution && <p className="text-sm text-gray-500 mt-0.5">🏛 {institution}</p>}
-                  {location && <p className="text-sm text-gray-500 mt-0.5">📍 {location}</p>}
+                  {role && <p className="text-sm text-green-600 dark:text-green-400 font-semibold capitalize mt-0.5">{role}</p>}
+                  {institution && <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">🏛 {institution}</p>}
+                  {location && <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">📍 {location}</p>}
                 </div>
                 {!isOwnProfile && user && (
                   <div className="flex items-center gap-2">
@@ -180,37 +180,37 @@ export default async function PublicProfilePage(
                 )}
                 {isOwnProfile && (
                   <a href="/profile"
-                    className="text-sm text-gray-500 border border-gray-300 rounded-lg px-3 py-1.5 hover:border-green-400 transition-colors">
+                    className="text-sm text-gray-500 dark:text-gray-400 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-1.5 hover:border-green-400 dark:hover:border-green-600 transition-colors">
                     Edit profile
                   </a>
                 )}
               </div>
 
               <div className="flex gap-6 mt-4">
-                <Link href={`/directory/${profileId}/followers`} className="hover:text-green-600 transition-colors">
-                  <span className="text-lg font-bold text-gray-900">{followersCount}</span>
-                  <span className="text-sm text-gray-500 ml-1">followers</span>
+                <Link href={`/directory/${profileId}/followers`} className="hover:text-green-600 dark:hover:text-green-400 transition-colors">
+                  <span className="text-lg font-bold text-gray-900 dark:text-white">{followersCount}</span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400 ml-1">followers</span>
                 </Link>
-                <Link href={`/directory/${profileId}/following`} className="hover:text-green-600 transition-colors">
-                  <span className="text-lg font-bold text-gray-900">{followingCount}</span>
-                  <span className="text-sm text-gray-500 ml-1">following</span>
+                <Link href={`/directory/${profileId}/following`} className="hover:text-green-600 dark:hover:text-green-400 transition-colors">
+                  <span className="text-lg font-bold text-gray-900 dark:text-white">{followingCount}</span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400 ml-1">following</span>
                 </Link>
               </div>
             </div>
           </div>
 
           {bio && (
-            <div className="mt-6 pt-6 border-t border-gray-100">
-              <p className="text-gray-700 leading-relaxed">{bio}</p>
+            <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-800">
+              <p className="text-gray-700 dark:text-gray-300 leading-relaxed">{bio}</p>
             </div>
           )}
 
           {interests.length > 0 && (
             <div className="mt-5">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Interests</p>
+              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Interests</p>
               <div className="flex flex-wrap gap-2">
                 {interests.map((interest: string) => (
-                  <span key={interest} className="text-xs bg-green-50 text-green-700 border border-green-100 px-3 py-1 rounded-full">
+                  <span key={interest} className="text-xs bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-100 dark:border-green-800 px-3 py-1 rounded-full">
                     {interest}
                   </span>
                 ))}
@@ -220,16 +220,16 @@ export default async function PublicProfilePage(
 
           {/* Contact — only visible to logged-in members */}
           {user && (phone || whatsapp) && (
-            <div className="mt-5 pt-5 border-t border-gray-100">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Contact</p>
+            <div className="mt-5 pt-5 border-t border-gray-100 dark:border-gray-800">
+              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Contact</p>
               <div className="flex flex-wrap gap-4">
                 {phone && (
-                  <a href={`tel:${phone}`} className="text-sm text-gray-700 hover:text-green-600 transition-colors">
+                  <a href={`tel:${phone}`} className="text-sm text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 transition-colors">
                     📞 {phone}
                   </a>
                 )}
                 {whatsapp && (
-                  <a href={'https://wa.me/' + whatsapp.replace(/[^0-9]/g, '')} target="_blank" rel="noopener noreferrer" className="text-sm text-green-600 hover:underline">
+                  <a href={'https://wa.me/' + whatsapp.replace(/[^0-9]/g, '')} target="_blank" rel="noopener noreferrer" className="text-sm text-green-600 dark:text-green-400 hover:underline">
                     💬 WhatsApp
                   </a>
                 )}
@@ -238,18 +238,18 @@ export default async function PublicProfilePage(
           )}
 
           {(safeHref(linkedin) || safeHref(twitter) || safeHref(website)) && (
-            <div className="mt-5 pt-5 border-t border-gray-100 flex flex-wrap gap-4">
+            <div className="mt-5 pt-5 border-t border-gray-100 dark:border-gray-800 flex flex-wrap gap-4">
               {safeHref(linkedin) && (
                 <a href={safeHref(linkedin)} target="_blank" rel="noopener noreferrer"
-                  className="text-sm text-blue-600 hover:underline">🔗 LinkedIn</a>
+                  className="text-sm text-blue-600 dark:text-blue-400 hover:underline">🔗 LinkedIn</a>
               )}
               {safeHref(twitter) && (
                 <a href={safeHref(twitter)} target="_blank" rel="noopener noreferrer"
-                  className="text-sm text-blue-400 hover:underline">🐦 Twitter / X</a>
+                  className="text-sm text-blue-400 dark:text-blue-300 hover:underline">🐦 Twitter / X</a>
               )}
               {safeHref(website) && (
                 <a href={safeHref(website)} target="_blank" rel="noopener noreferrer"
-                  className="text-sm text-green-600 hover:underline">🌐 Website</a>
+                  className="text-sm text-green-600 dark:text-green-400 hover:underline">🌐 Website</a>
               )}
             </div>
           )}
@@ -260,11 +260,11 @@ export default async function PublicProfilePage(
 
         {/* Guest CTA */}
         {!user && (
-          <div className="bg-green-50 border border-green-200 rounded-2xl p-6 text-center">
-            <p className="text-green-800 font-semibold mb-1">
+          <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-2xl p-6 text-center">
+            <p className="text-green-800 dark:text-green-300 font-semibold mb-1">
               Connect with {firstName} on AgroYield Network
             </p>
-            <p className="text-green-700 text-sm mb-4">
+            <p className="text-green-700 dark:text-green-400 text-sm mb-4">
               Join Nigeria&apos;s agricultural professional network to follow and collaborate.
             </p>
             <div className="flex justify-center gap-3">
@@ -273,7 +273,7 @@ export default async function PublicProfilePage(
                 Create free account
               </a>
               <a href="/login"
-                className="border border-green-300 text-green-700 px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-100 transition-colors">
+                className="border border-green-300 dark:border-green-800 text-green-700 dark:text-green-400 px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-100 dark:hover:bg-green-900/40 transition-colors">
                 Sign in
               </a>
             </div>

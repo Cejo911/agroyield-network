@@ -321,7 +321,7 @@ export default async function PublicBusinessPage(
   const breadcrumbJsonLdScript    = JSON.stringify(breadcrumbJsonLd).replace(/</g, '\\u003c')
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       {/* LocalBusiness + BreadcrumbList structured data — SEO rich snippet.   */}
       {/* Two <script> blocks (not one JSON array) per the parser-compat note  */}
       {/* above; sitewide Organization + WebSite schemas live in layout.tsx    */}
@@ -336,7 +336,7 @@ export default async function PublicBusinessPage(
       />
       {/* Nav: AppNav for logged-in members, marketing nav for anonymous visitors */}
       {user ? <AppNav /> : (
-        <nav className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+        <nav className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center shrink-0 no-underline">
             {/* Icon only on mobile */}
             <Image
@@ -363,7 +363,7 @@ export default async function PublicBusinessPage(
             />
           </Link>
           <div className="flex items-center gap-3">
-            <Link href="/login" className="text-sm text-gray-600 hover:text-gray-900 font-medium">
+            <Link href="/login" className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium">
               Log in
             </Link>
             <Link
@@ -389,7 +389,7 @@ export default async function PublicBusinessPage(
       <main className="max-w-3xl mx-auto px-4 py-10">
         {/* Header card */}
         <section
-          className={`bg-white rounded-2xl border border-gray-100 shadow-sm p-8 mb-6 ${
+          className={`bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-8 mb-6 ${
             b.cover_image_url ? '-mt-16 relative z-10' : ''
           }`}
         >
@@ -407,11 +407,11 @@ export default async function PublicBusinessPage(
 
             {/* Info */}
             <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2 flex-wrap">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2 flex-wrap">
                 <span>{b.name}</span>
                 {b.is_verified && (
                   <span
-                    className="inline-flex items-center gap-1 text-xs font-semibold text-green-700 bg-green-50 border border-green-200 px-2 py-0.5 rounded-full"
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 px-2 py-0.5 rounded-full"
                     title="Admin-verified business on AgroYield Network"
                   >
                     <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
@@ -422,12 +422,12 @@ export default async function PublicBusinessPage(
                 )}
               </h1>
               {b.tagline && (
-                <p className="text-sm text-green-700 font-medium mt-1 italic">{b.tagline}</p>
+                <p className="text-sm text-green-700 dark:text-green-400 font-medium mt-1 italic">{b.tagline}</p>
               )}
               {b.address && (
-                <p className="text-sm text-gray-500 mt-2">📍 {b.address}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">📍 {b.address}</p>
               )}
-              <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 text-xs text-gray-400">
+              <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 text-xs text-gray-400 dark:text-gray-500">
                 {b.cac_number && <span>CAC: {b.cac_number}</span>}
                 {b.founded_year && <span>· Founded {b.founded_year}</span>}
               </div>
@@ -437,7 +437,7 @@ export default async function PublicBusinessPage(
                 {b.phone && (
                   <a
                     href={`tel:${b.phone}`}
-                    className="text-xs bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-700 px-3 py-1.5 rounded-full"
+                    className="text-xs bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 px-3 py-1.5 rounded-full"
                   >
                     📞 {b.phone}
                   </a>
@@ -447,7 +447,7 @@ export default async function PublicBusinessPage(
                     href={whatsappHref}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs bg-green-50 hover:bg-green-100 border border-green-200 text-green-700 px-3 py-1.5 rounded-full"
+                    className="text-xs bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/40 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 px-3 py-1.5 rounded-full"
                   >
                     💬 WhatsApp
                   </a>
@@ -455,13 +455,13 @@ export default async function PublicBusinessPage(
                 {b.email && (
                   <a
                     href={`mailto:${b.email}`}
-                    className="text-xs bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-700 px-3 py-1.5 rounded-full"
+                    className="text-xs bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 px-3 py-1.5 rounded-full"
                   >
                     ✉ {b.email}
                   </a>
                 )}
                 {b.sector && (
-                  <span className="text-xs bg-green-50 border border-green-200 text-green-700 px-3 py-1.5 rounded-full">
+                  <span className="text-xs bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 px-3 py-1.5 rounded-full">
                     🌾 {b.sector}
                   </span>
                 )}
@@ -471,23 +471,23 @@ export default async function PublicBusinessPage(
 
           {/* About */}
           {b.about && (
-            <div className="mt-6 pt-6 border-t border-gray-100">
-              <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+            <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-800">
+              <h2 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
                 About
               </h2>
-              <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{b.about}</p>
+              <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">{b.about}</p>
             </div>
           )}
 
           {/* Socials + website */}
           {(websiteUrl || instagramUrl || facebookUrl) && (
-            <div className="mt-5 pt-5 border-t border-gray-100 flex flex-wrap gap-4">
+            <div className="mt-5 pt-5 border-t border-gray-100 dark:border-gray-800 flex flex-wrap gap-4">
               {websiteUrl && (
                 <a
                   href={websiteUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-green-600 hover:underline"
+                  className="text-sm text-green-600 dark:text-green-400 hover:underline"
                 >
                   🌐 Website
                 </a>
@@ -497,7 +497,7 @@ export default async function PublicBusinessPage(
                   href={instagramUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-pink-600 hover:underline"
+                  className="text-sm text-pink-600 dark:text-pink-400 hover:underline"
                 >
                   📸 Instagram
                 </a>
@@ -507,7 +507,7 @@ export default async function PublicBusinessPage(
                   href={facebookUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-blue-600 hover:underline"
+                  className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
                 >
                   👥 Facebook
                 </a>
@@ -517,30 +517,30 @@ export default async function PublicBusinessPage(
 
           {/* Opening hours */}
           {b.opening_hours && (
-            <div className="mt-5 pt-5 border-t border-gray-100">
-              <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+            <div className="mt-5 pt-5 border-t border-gray-100 dark:border-gray-800">
+              <h2 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
                 🕒 Opening Hours
               </h2>
-              <p className="text-sm text-gray-700 whitespace-pre-wrap">{b.opening_hours}</p>
+              <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{b.opening_hours}</p>
             </div>
           )}
         </section>
 
         {/* Catalog */}
         {products.length > 0 && (
-          <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
-            <h2 className="font-semibold text-gray-800 mb-4">Products & Services</h2>
-            <div className="divide-y divide-gray-100">
+          <section className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-6 mb-6">
+            <h2 className="font-semibold text-gray-800 dark:text-gray-200 mb-4">Products & Services</h2>
+            <div className="divide-y divide-gray-100 dark:divide-gray-800">
               {products.map((p) => (
                 <div
                   key={p.id}
                   className="flex items-center justify-between py-3 first:pt-0 last:pb-0"
                 >
                   <div>
-                    <p className="text-sm font-medium text-gray-900">{p.name}</p>
-                    {p.unit && <p className="text-xs text-gray-400">per {p.unit}</p>}
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{p.name}</p>
+                    {p.unit && <p className="text-xs text-gray-400 dark:text-gray-500">per {p.unit}</p>}
                   </div>
-                  <p className="text-sm font-semibold text-gray-900">{fmt(p.unit_price)}</p>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">{fmt(p.unit_price)}</p>
                 </div>
               ))}
             </div>
@@ -549,33 +549,33 @@ export default async function PublicBusinessPage(
 
         {/* Bank details — optional, only if all three present */}
         {b.bank_name && b.account_name && b.account_number && (
-          <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
-            <h2 className="font-semibold text-gray-800 mb-3">Payment Details</h2>
+          <section className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-6 mb-6">
+            <h2 className="font-semibold text-gray-800 dark:text-gray-200 mb-3">Payment Details</h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
               <div>
-                <p className="text-xs text-gray-500">Bank</p>
-                <p className="font-medium text-gray-900">{b.bank_name}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Bank</p>
+                <p className="font-medium text-gray-900 dark:text-white">{b.bank_name}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-500">Account Name</p>
-                <p className="font-medium text-gray-900">{b.account_name}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Account Name</p>
+                <p className="font-medium text-gray-900 dark:text-white">{b.account_name}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-500">Account Number</p>
-                <p className="font-mono font-medium text-gray-900">{b.account_number}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Account Number</p>
+                <p className="font-mono font-medium text-gray-900 dark:text-white">{b.account_number}</p>
               </div>
             </div>
           </section>
         )}
 
         {/* Reviews */}
-        <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
+        <section className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-6 mb-6">
           <div className="flex items-start justify-between gap-4 mb-4">
             <div>
-              <h2 className="font-semibold text-gray-800">Reviews</h2>
+              <h2 className="font-semibold text-gray-800 dark:text-gray-200">Reviews</h2>
               {reviewCount > 0 ? (
-                <p className="text-xs text-gray-500 mt-0.5">
-                  <span className="text-amber-500" aria-hidden="true">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  <span className="text-amber-500 dark:text-amber-400" aria-hidden="true">
                     {'★'.repeat(Math.round(avgRating))}{'☆'.repeat(5 - Math.round(avgRating))}
                   </span>
                   <span className="ml-2">
@@ -583,26 +583,26 @@ export default async function PublicBusinessPage(
                   </span>
                 </p>
               ) : (
-                <p className="text-xs text-gray-500 mt-0.5">No reviews yet.</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">No reviews yet.</p>
               )}
             </div>
             {canWriteReview && (
               <WriteReviewButton businessId={b.id} businessName={b.name} />
             )}
             {viewerIsOwner && (
-              <span className="text-xs text-gray-400 italic">
+              <span className="text-xs text-gray-400 dark:text-gray-500 italic">
                 You can&rsquo;t review your own business.
               </span>
             )}
             {viewerAlreadyReviewed && (
-              <span className="text-xs text-gray-400 italic">
+              <span className="text-xs text-gray-400 dark:text-gray-500 italic">
                 You&rsquo;ve already reviewed this business.
               </span>
             )}
             {!user && reviewCount === 0 && (
               <Link
                 href={`/login?next=${encodeURIComponent(`/b/${b.slug}`)}`}
-                className="text-xs text-green-700 font-medium hover:underline"
+                className="text-xs text-green-700 dark:text-green-400 font-medium hover:underline"
               >
                 Sign in to review
               </Link>
@@ -610,7 +610,7 @@ export default async function PublicBusinessPage(
           </div>
 
           {reviews.length > 0 && (
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-gray-100 dark:divide-gray-800">
               {reviews.map((r) => {
                 const reviewerName = r.reviewer?.full_name?.trim() || 'AgroYield member'
                 const reviewerInitials = reviewerName
@@ -622,41 +622,41 @@ export default async function PublicBusinessPage(
                       {r.reviewer?.avatar_url ? (
                         <div
                           style={{ backgroundImage: `url(${r.reviewer.avatar_url})` }}
-                          className="w-9 h-9 rounded-full bg-cover bg-center shrink-0 border border-gray-200"
+                          className="w-9 h-9 rounded-full bg-cover bg-center shrink-0 border border-gray-200 dark:border-gray-700"
                           role="img"
                           aria-label={reviewerName}
                         />
                       ) : (
-                        <div className="w-9 h-9 rounded-full bg-green-100 text-green-700 flex items-center justify-center text-xs font-semibold shrink-0">
+                        <div className="w-9 h-9 rounded-full bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 flex items-center justify-center text-xs font-semibold shrink-0">
                           {reviewerInitials}
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <p className="text-sm font-semibold text-gray-900">{reviewerName}</p>
-                          <span className="text-amber-500 text-xs" aria-label={`${r.rating} out of 5 stars`}>
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white">{reviewerName}</p>
+                          <span className="text-amber-500 dark:text-amber-400 text-xs" aria-label={`${r.rating} out of 5 stars`}>
                             {'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}
                           </span>
-                          <span className="text-xs text-gray-400">{reviewDateFmt(r.created_at)}</span>
+                          <span className="text-xs text-gray-400 dark:text-gray-500">{reviewDateFmt(r.created_at)}</span>
                         </div>
                         {r.headline && (
-                          <p className="text-sm font-medium text-gray-900 mt-1">{r.headline}</p>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white mt-1">{r.headline}</p>
                         )}
                         {r.body && (
-                          <p className="text-sm text-gray-700 leading-relaxed mt-1 whitespace-pre-wrap">{r.body}</p>
+                          <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed mt-1 whitespace-pre-wrap">{r.body}</p>
                         )}
 
                         {r.seller_reply && (
-                          <div className="mt-3 ml-2 pl-3 border-l-2 border-green-200 bg-green-50/40 rounded-r-md py-2 pr-3">
-                            <p className="text-xs font-semibold text-green-800">
+                          <div className="mt-3 ml-2 pl-3 border-l-2 border-green-200 dark:border-green-800 bg-green-50/40 dark:bg-green-900/20 rounded-r-md py-2 pr-3">
+                            <p className="text-xs font-semibold text-green-800 dark:text-green-300">
                               Reply from {b.name}
                               {r.replied_at && (
-                                <span className="ml-2 text-gray-400 font-normal">
+                                <span className="ml-2 text-gray-400 dark:text-gray-500 font-normal">
                                   · {reviewDateFmt(r.replied_at)}
                                 </span>
                               )}
                             </p>
-                            <p className="text-sm text-gray-700 mt-1 whitespace-pre-wrap">{r.seller_reply}</p>
+                            <p className="text-sm text-gray-700 dark:text-gray-300 mt-1 whitespace-pre-wrap">{r.seller_reply}</p>
                           </div>
                         )}
 
@@ -680,11 +680,11 @@ export default async function PublicBusinessPage(
              so a future session can read it and auto-follow the owner post-signup.
              `?next=/b/{slug}` on /login bounces returning members back to this page. */}
         {!user && (
-          <div className="bg-green-50 border border-green-200 rounded-2xl p-6 text-center">
-            <p className="text-green-800 font-semibold mb-1">
+          <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-2xl p-6 text-center">
+            <p className="text-green-800 dark:text-green-300 font-semibold mb-1">
               Follow {b.name} on AgroYield Network
             </p>
-            <p className="text-green-700 text-sm mb-4">
+            <p className="text-green-700 dark:text-green-400 text-sm mb-4">
               Get updates from {b.name}, message them directly, and discover other Nigerian agri businesses.
             </p>
             <div className="flex justify-center gap-3 flex-wrap">
@@ -701,7 +701,7 @@ export default async function PublicBusinessPage(
               {/* default. Promote when a 3rd green-tinted secondary appears.    */}
               <Link
                 href={`/login?next=${encodeURIComponent(`/b/${b.slug}`)}`}
-                className="inline-flex items-center justify-center border border-green-300 text-green-700 px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-100 transition-colors"
+                className="inline-flex items-center justify-center border border-green-300 dark:border-green-800 text-green-700 dark:text-green-400 px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-100 dark:hover:bg-green-900/40 transition-colors"
               >
                 Already a member? Sign in
               </Link>
