@@ -79,7 +79,7 @@ export default function MessageThread({ conversationId, currentUserId, otherUser
   const [attachment, setAttachment] = useState<StagedAttachment | null>(null)
   const [attachError, setAttachError] = useState('')
   const bottomRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
   // Scroll to bottom on load and new messages
@@ -466,13 +466,32 @@ export default function MessageThread({ conversationId, currentUserId, otherUser
             className="hidden"
           />
 
-          <input
+          <textarea
             ref={inputRef}
-            type="text"
+            rows={1}
             value={input}
-            onChange={e => setInput(e.target.value)}
-            placeholder={attachment ? 'Add a caption (optional)…' : 'Type a message...'}
-            className="flex-1 px-4 py-2.5 rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500 placeholder-gray-400 dark:placeholder-gray-500"
+            onChange={e => {
+              setInput(e.target.value)
+              // Auto-grow up to ~5 lines (matches WhatsApp / Telegram pattern).
+              const el = e.target as HTMLTextAreaElement
+              el.style.height = 'auto'
+              el.style.height = Math.min(el.scrollHeight, 120) + 'px'
+            }}
+            onKeyDown={e => {
+              // Cmd/Ctrl+Enter and plain Enter both submit (matches DM
+              // convention everywhere — Slack, WhatsApp, Telegram). Shift+Enter
+              // inserts a newline.
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                if (canSend) {
+                  // Submit by dispatching the parent form's submit event.
+                  const form = (e.target as HTMLTextAreaElement).closest('form')
+                  form?.requestSubmit()
+                }
+              }
+            }}
+            placeholder={attachment ? 'Add a caption (optional)…' : 'Type a message…'}
+            className="flex-1 resize-none overflow-y-auto max-h-[120px] px-4 py-2.5 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500 placeholder-gray-400 dark:placeholder-gray-500"
           />
           <button
             type="submit"

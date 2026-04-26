@@ -40,7 +40,7 @@ export default function CommentsSection({ postId, postType }: Props) {
   const [loading,     setLoading]     = useState(true)
   const [sortNewest,  setSortNewest]  = useState(true)
   const [submitError, setSubmitError] = useState<string | null>(null)
-  const replyInputRef = useRef<HTMLInputElement>(null)
+  const replyInputRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
     const supabase = createClient()
@@ -390,18 +390,28 @@ export default function CommentsSection({ postId, postType }: Props) {
                         </span>
                       </div>
                       <div className="flex-1 flex gap-2">
-                        <input
+                        <textarea
                           ref={replyInputRef}
-                          type="text"
+                          rows={2}
                           value={replyContent}
                           onChange={e => setReplyContent(e.target.value)}
-                          placeholder={`Reply to ${comment.user_id === userId ? 'yourself' : (comment.user_name ?? 'User')}...`}
-                          className="flex-1 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-green-500 placeholder-gray-400 dark:placeholder-gray-500"
+                          onKeyDown={e => {
+                            // Cmd/Ctrl+Enter submits; plain Enter inserts a newline.
+                            // Matches LinkedIn / Twitter comment composer behavior.
+                            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                              e.preventDefault()
+                              if (replyContent.trim() && !submitting) {
+                                handleSubmit(e as unknown as React.FormEvent, comment.id)
+                              }
+                            }
+                          }}
+                          placeholder={`Reply to ${comment.user_id === userId ? 'yourself' : (comment.user_name ?? 'User')}…  (\u2318+Enter to send)`}
+                          className="flex-1 resize-none px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500 placeholder-gray-400 dark:placeholder-gray-500"
                         />
                         <button
                           type="submit"
                           disabled={submitting || !replyContent.trim()}
-                          className="px-3 py-1.5 rounded-lg bg-green-600 text-white text-xs font-medium hover:bg-green-700 disabled:opacity-50 transition-colors"
+                          className="px-3 py-1.5 rounded-lg bg-green-600 text-white text-xs font-medium hover:bg-green-700 disabled:opacity-50 transition-colors min-w-[60px] self-start"
                         >
                           {submitting ? '...' : 'Reply'}
                         </button>
@@ -450,17 +460,26 @@ export default function CommentsSection({ postId, postType }: Props) {
             </span>
           </div>
           <div className="flex-1 flex gap-2">
-            <input
-              type="text"
+            <textarea
+              rows={2}
               value={content}
               onChange={e => setContent(e.target.value)}
-              placeholder="Write a comment..."
-              className="flex-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500 placeholder-gray-400 dark:placeholder-gray-500"
+              onKeyDown={e => {
+                // Cmd/Ctrl+Enter submits; plain Enter inserts a newline.
+                if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                  e.preventDefault()
+                  if (content.trim() && !submitting) {
+                    handleSubmit(e as unknown as React.FormEvent, null)
+                  }
+                }
+              }}
+              placeholder="Write a comment…  (\u2318+Enter to send)"
+              className="flex-1 resize-none px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500 placeholder-gray-400 dark:placeholder-gray-500"
             />
             <button
               type="submit"
               disabled={submitting || !content.trim()}
-              className="px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50 transition-colors"
+              className="px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50 transition-colors min-w-[68px] self-start"
             >
               {submitting ? '...' : 'Post'}
             </button>
