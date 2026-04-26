@@ -67,7 +67,16 @@ export async function PATCH(request: NextRequest) {
       await adminAny.from('profiles').update({ is_suspended: true }).eq('id', userId)
       await adminClient.auth.admin.updateUserById(userId, { ban_duration: '87600h' })
     } else if (action === 'unsuspend') {
-      await adminAny.from('profiles').update({ is_suspended: false }).eq('id', userId)
+      // Stamp last_suspension_cleared_at = now() so the auto-suspend
+      // threshold check in /api/report POST resets the user's
+      // "distinct reporters" counter from this moment forward. Without
+      // this stamp, an unsuspended user with a stale stack of past
+      // reports would be re-suspended on the next single new report.
+      // We keep the report rows themselves intact for audit history.
+      await adminAny.from('profiles').update({
+        is_suspended: false,
+        last_suspension_cleared_at: new Date().toISOString(),
+      }).eq('id', userId)
       await adminClient.auth.admin.updateUserById(userId, { ban_duration: 'none' })
     } else if (action === 'set_tier') {
       if (!tier || !['free', 'pro', 'growth'].includes(tier)) {
