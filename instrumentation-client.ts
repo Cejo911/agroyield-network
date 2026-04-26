@@ -25,32 +25,43 @@ Sentry.init({
   // https://docs.sentry.io/platforms/javascript/guides/nextjs/configuration/options/#sendDefaultPii
   sendDefaultPii: true,
 
-  // Filter out Supabase auth-token lock-contention noise.
+  // Filter out Supabase SDK noise that isn't a bug in our code.
   //
-  // Supabase's auth client uses the Web Locks API to coordinate token
-  // refreshes. Two flavours of contention bubble up as unhandled
-  // rejections that aren't user-visible (sessions still refresh
-  // successfully via Supabase's internal retry):
+  // 1. Auth-token lock contention (Web Locks API)
+  //    "Lock \"lock:sb-<project>-auth-token\" was released because
+  //     another request stole it"
+  //    Within-tab contention from multiple SupabaseClient instances —
+  //    mostly fixed by the singleton in lib/supabase/client.ts but
+  //    can still surface on iOS Safari/Chrome tab suspend/resume.
   //
-  //   1. "Lock \"lock:sb-<project>-auth-token\" was released because
-  //      another request stole it"
-  //      Within-tab contention from multiple SupabaseClient instances —
-  //      mostly fixed by the singleton in lib/supabase/client.ts but
-  //      can still surface on iOS Safari/Chrome tab suspend/resume.
+  // 2. Cross-tab lock contention (AbortError variant)
+  //    "AbortError: Lock was stolen by another request"
+  //    Same user with multiple tabs of the site open. Web Locks
+  //    deliberately spans tabs in the same origin; this is expected
+  //    behaviour, not a bug at our layer.
   //
-  //   2. "AbortError: Lock was stolen by another request"
-  //      Cross-tab contention from the same user having multiple tabs
-  //      of the site open. Web Locks deliberately spans tabs in the
-  //      same origin; this is expected behaviour, not a bug at our
-  //      layer.
+  // 3. Storage access denied
+  //    "Failed to read the 'sessionStorage' property from 'Window':
+  //     Access is denied for this document."
+  //    Supabase's RealtimeClient tries to access sessionStorage during
+  //    init. The browser denies it because the user is in private mode,
+  //    has strict tracking protection on, is in an in-app webview
+  //    (Facebook / WhatsApp / Instagram browsers), or has site storage
+  //    blocked. Auth still works (in-memory token fallback); only
+  //    realtime subscriptions are degraded — and that's a UX limitation
+  //    of the user's browser environment, not a code bug.
+  //    Same filter covers the localStorage variant the SDK falls back to.
   //
-  // Both are SDK-internal noise that overwhelms the alert feed during
-  // launch monitoring. Filter strings are narrow enough that real
-  // errors are still captured: the lock-name substring in (1) and the
-  // exact AbortError message in (2) are both Supabase-specific.
+  // All three are SDK-internal noise that overwhelms the alert feed
+  // during launch monitoring. Filter strings are narrow enough that
+  // real errors are still captured: the lock-name substring, the
+  // AbortError message, and the storage-property phrase are all
+  // specific enough that legitimate code paths won't get caught.
   ignoreErrors: [
     /Lock .* was released because another request stole it/,
     /Lock was stolen by another request/,
+    /Failed to read the 'sessionStorage' property/,
+    /Failed to read the 'localStorage' property/,
   ],
 });
 
