@@ -7,6 +7,7 @@ import { getBusinessAccess } from '@/lib/business-access'
 import { getActiveBusinessId, setActiveBusinessId } from '@/lib/business-cookie'
 import BusinessSetupGuide from './BusinessSetupGuide'
 import BusinessLogo from '@/app/components/design/BusinessLogo'
+import { useToast } from '@/app/components/Toast'
 
 /** Wrapper with Suspense boundary — required by Next.js for useSearchParams */
 export default function BusinessSetupPage() {
@@ -85,6 +86,7 @@ const BUSINESS_SIZES = [
 function BusinessSetup() {
   const supabase = createClient()
   const router = useRouter()
+  const { showError } = useToast()
   const searchParams = useSearchParams()
   const isNewMode = searchParams.get('new') === 'true'
   const fileRef = useRef<HTMLInputElement>(null)
@@ -184,7 +186,7 @@ function BusinessSetup() {
       }
       if (!res.ok || !data.publicUrl) {
         console.error('Logo upload error:', data.error || res.statusText)
-        alert('Failed to upload logo: ' + (data.error || 'Upload failed'))
+        showError('Failed to upload logo: ' + (data.error || 'Upload failed'))
       } else {
         // Cache-buster: re-uploads write to the same path, so the public
         // URL is stable. Appending ?v=<timestamp> forces a fresh fetch
@@ -193,7 +195,7 @@ function BusinessSetup() {
       }
     } catch (err: unknown) {
       console.error('Logo upload exception:', err)
-      alert('Upload failed — please try again.')
+      showError('Upload failed — please try again.')
     }
     setUploading(false)
   }
@@ -217,13 +219,13 @@ function BusinessSetup() {
       }
       if (!res.ok || !data.publicUrl) {
         console.error('Cover upload error:', data.error || res.statusText)
-        alert('Failed to upload cover image: ' + (data.error || 'Upload failed'))
+        showError('Failed to upload cover image: ' + (data.error || 'Upload failed'))
       } else {
         setForm(f => ({ ...f, cover_image_url: `${data.publicUrl}?v=${Date.now()}` }))
       }
     } catch (err) {
       console.error('Cover upload exception:', err)
-      alert('Upload failed — please try again.')
+      showError('Upload failed — please try again.')
     }
     setUploadingCover(false)
   }
@@ -244,7 +246,7 @@ function BusinessSetup() {
     if (businessId) {
       const { error } = await supabase.from('businesses').update({ ...payload, updated_at: new Date().toISOString() }).eq('id', businessId)
       if (error) {
-        alert('Failed to update business: ' + error.message)
+        showError('Failed to update business: ' + error.message)
         setSaving(false)
         return
       }
@@ -261,14 +263,14 @@ function BusinessSetup() {
         })
         const tierCheck = await tierRes.json()
         if (!tierCheck.allowed) {
-          alert(tierCheck.reason + '. Upgrade your plan at /pricing to create more businesses.')
+          showError(tierCheck.reason + '. Upgrade your plan at /pricing to create more businesses.')
           setSaving(false)
           return
         }
       } catch { /* fail open if tier check fails */ }
       const { data: newBiz, error } = await supabase.from('businesses').insert({ ...payload, user_id: user.id }).select('id, slug').single()
       if (error) {
-        alert('Failed to create business: ' + error.message)
+        showError('Failed to create business: ' + error.message)
         setSaving(false)
         return
       }

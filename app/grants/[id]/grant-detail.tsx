@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import BookmarkButton from '@/app/components/design/BookmarkButton'
+import { useToast } from '@/app/components/Toast'
 
 type DocItem = { name: string; completed: boolean }
 
@@ -38,7 +39,10 @@ interface Props {
 export default function GrantDetail({ grant, application, userProfile, userId, initiallySaved = false }: Props) {
   const supabase = createClient()
   const router = useRouter()
+  const { showError } = useToast()
   const [app, setApp] = useState(application)
+  const [newDocName, setNewDocName] = useState('')
+  const [showDocInput, setShowDocInput] = useState(false)
   const [saving, setSaving] = useState(false)
   const [notes, setNotes] = useState(app?.notes || '')
   const [documents, setDocuments] = useState<DocItem[]>(
@@ -69,7 +73,7 @@ export default function GrantDetail({ grant, application, userProfile, userId, i
       setStatus('draft')
       setDocuments(DEFAULT_DOCS)
     } else if (error) {
-      alert(`Error: ${error.message}`)
+      showError(error.message || 'Could not save. Please try again.')
     }
     setSaving(false)
   }
@@ -94,7 +98,7 @@ export default function GrantDetail({ grant, application, userProfile, userId, i
       .eq('id', app.id)
 
     if (error) {
-      alert(`Error: ${error.message}`)
+      showError(error.message || 'Could not save. Please try again.')
     } else {
       setApp({ ...app, ...updates })
     }
@@ -115,11 +119,20 @@ export default function GrantDetail({ grant, application, userProfile, userId, i
     setDocuments(prev => prev.map((d, i) => i === index ? { ...d, completed: !d.completed } : d))
   }
 
-  function addDoc() {
-    const name = prompt('Document name:')
-    if (name?.trim()) {
-      setDocuments(prev => [...prev, { name: name.trim(), completed: false }])
+  // Add-document UX: inline input row instead of native prompt() — see
+  // ux-ui-audit-26apr.md Theme 1. The input is shown on click of "Add
+  // document"; pressing Enter or "Add" appends the doc and clears the
+  // input; Escape or "Cancel" hides it. State (showDocInput, newDocName)
+  // lives at the component level alongside other form state.
+  function commitNewDoc() {
+    const name = newDocName.trim()
+    if (!name) {
+      setShowDocInput(false)
+      return
     }
+    setDocuments(prev => [...prev, { name, completed: false }])
+    setNewDocName('')
+    setShowDocInput(false)
   }
 
   function removeDoc(index: number) {
@@ -333,11 +346,45 @@ export default function GrantDetail({ grant, application, userProfile, userId, i
             {/* Document checklist */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                   Document Checklist ({documents.filter(d => d.completed).length}/{documents.length})
                 </p>
-                <button onClick={addDoc} className="text-xs text-green-600 hover:underline font-medium">+ Add item</button>
+                {!showDocInput && (
+                  <button onClick={() => setShowDocInput(true)} className="text-xs text-green-600 hover:underline font-medium">+ Add item</button>
+                )}
               </div>
+              {/* Inline doc-add input (replaces native prompt()). Enter
+                  commits, Escape cancels. Auto-focuses when shown. */}
+              {showDocInput && (
+                <div className="flex items-center gap-2 mb-3">
+                  <input
+                    type="text"
+                    autoFocus
+                    value={newDocName}
+                    onChange={e => setNewDocName(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') { e.preventDefault(); commitNewDoc() }
+                      else if (e.key === 'Escape') { setShowDocInput(false); setNewDocName('') }
+                    }}
+                    placeholder="Document name…"
+                    className="flex-1 text-sm px-3 py-1.5 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={commitNewDoc}
+                    className="text-xs text-white bg-green-600 hover:bg-green-700 font-medium px-3 py-1.5 rounded-md"
+                  >
+                    Add
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setShowDocInput(false); setNewDocName('') }}
+                    className="text-xs text-gray-500 dark:text-gray-400 hover:underline px-2"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
               <div className="space-y-2">
                 {documents.map((doc, i) => (
                   <div key={i} className="flex items-center gap-3 group">

@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import AppNav from '@/app/components/AppNav'
+import { useToast } from '@/app/components/Toast'
 import Link from 'next/link'
 
 // Shape of a row in public.mentorship_sessions we care about
@@ -77,6 +78,7 @@ function toDateTimeLocalValue(date: Date): string {
 export default function RequestsPage() {
   const supabase = createClient()
   const router = useRouter()
+  const { showError } = useToast()
   const [userId, setUserId] = useState<string | null>(null)
   const [requests, setRequests] = useState<Request[]>([])
   const [loading, setLoading] = useState(true)
@@ -199,7 +201,7 @@ export default function RequestsPage() {
     const { error } = await (supabase as any).from('mentorship_requests').update(patch).eq('id', requestId)
     if (error) {
       console.error('Request status update failed:', error)
-      alert(`Could not update request: ${error.message}`)
+      showError(`Could not update request: ${error.message}`)
       setUpdating(null)
       return false
     }
@@ -255,7 +257,7 @@ export default function RequestsPage() {
 
     if (error) {
       console.error('Session insert failed:', error)
-      alert(`Could not schedule session: ${error.message}`)
+      showError(`Could not schedule session: ${error.message}`)
       setScheduleSubmitting(false)
       return
     }
@@ -283,7 +285,7 @@ export default function RequestsPage() {
       .eq('id', r.session.id)
     if (sErr) {
       console.error('Session complete failed:', sErr)
-      alert(`Could not mark session completed: ${sErr.message}`)
+      showError(`Could not mark session completed: ${sErr.message}`)
       setUpdating(null)
       return
     }
@@ -294,7 +296,7 @@ export default function RequestsPage() {
       .eq('id', r.id)
     if (rErr) {
       console.error('Request complete failed:', rErr)
-      alert(`Session marked complete but could not update request: ${rErr.message}`)
+      showError(`Session marked complete but could not update request: ${rErr.message}`)
       setUpdating(null)
       return
     }
@@ -319,7 +321,7 @@ export default function RequestsPage() {
       .eq('id', r.session.id)
     if (error) {
       console.error('Session cancel failed:', error)
-      alert(`Could not cancel session: ${error.message}`)
+      showError(`Could not cancel session: ${error.message}`)
       setUpdating(null)
       return
     }
@@ -356,7 +358,7 @@ export default function RequestsPage() {
 
     if (error) {
       console.error('Review insert failed:', error)
-      alert(`Could not submit review: ${error.message}`)
+      showError(`Could not submit review: ${error.message}`)
       setReviewSubmitting(false)
       return
     }

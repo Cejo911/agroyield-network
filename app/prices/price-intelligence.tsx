@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { useToast } from '@/app/components/Toast'
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Legend,
@@ -44,6 +45,7 @@ export default function PriceIntelligence({
   userId: string
 }) {
   const supabase = createClient()
+  const { showError } = useToast()
   const [alerts, setAlerts] = useState<Alert[]>(initialAlerts)
 
   // Extract unique commodities and states from reports
@@ -126,7 +128,7 @@ export default function PriceIntelligence({
 
     if (error) {
       console.error('Alert insert error:', error)
-      alert(`Failed to create alert: ${error.message}`)
+      showError(`Failed to create alert: ${error.message}`)
       setSavingAlert(false)
       return
     }

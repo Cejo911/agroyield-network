@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import ReportButton from '@/app/components/ReportButton'
+import { useToast } from '@/app/components/Toast'
 import { useSearchLog } from '@/lib/useSearchLog'
 import { createClient } from '@/lib/supabase/client'
 
@@ -54,6 +55,7 @@ export default function PricesClient({
 }) {
   const CATEGORIES = ['All', ...(categoriesProp ?? FALLBACK_CATEGORIES)]
   const router = useRouter()
+  const { showError } = useToast()
   const [search, setSearch] = useState('')
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'price_low' | 'price_high'>('newest')
   const [categoryFilter, setCategoryFilter] = useState('All')
@@ -122,14 +124,14 @@ export default function PricesClient({
       }
       if (!res.ok || !data.ok) {
         console.error('Price delete failed:', data.error || res.statusText)
-        alert('Failed to delete report: ' + (data.error || 'Please try again.'))
+        showError('Failed to delete report: ' + (data.error || 'Please try again.'))
         setDeletingId(null)
         setConfirmingId(null)
         return
       }
     } catch (err) {
       console.error('Price delete exception:', err)
-      alert('Network error — please check your connection and retry.')
+      showError('Network error — please check your connection and retry.')
       setDeletingId(null)
       setConfirmingId(null)
       return

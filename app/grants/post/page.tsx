@@ -9,12 +9,14 @@ import ProfileGateBanner from '@/app/components/ProfileGateBanner'
 import InstitutionGateBanner from '@/app/components/InstitutionGateBanner'
 import Link from 'next/link'
 import ImageUploader from '@/app/components/ImageUploader'
+import { useToast } from '@/app/components/Toast'
 
 const CATEGORIES = ['Research', 'Startup', 'Student', 'Women', 'Innovation', 'Farmer', 'Policy']
 
 export default function PostGrantPage() {
   const supabase = createClient()
   const router = useRouter()
+  const { showError } = useToast()
   const [saving, setSaving] = useState(false)
   const [thumbnailUrls, setThumbnailUrls] = useState<string[]>([])
   const [userId, setUserId] = useState<string>('')
@@ -48,9 +50,8 @@ export default function PostGrantPage() {
     // Postgres RLS policy in 20260421_institution_posting_rls.sql; the UI
     // check avoids a raw "new row violates row-level security policy" error.
     if (isInstitution && !isInstitutionVerified) {
-      alert(
-        'Your institution account is pending admin verification. ' +
-        'Posting will unlock once our team approves your profile.'
+      showError(
+        'Your institution account is pending admin verification. Posting will unlock once our team approves your profile.'
       )
       return
     }
@@ -87,8 +88,8 @@ export default function PostGrantPage() {
       // Translate RLS violation into a friendly message
       const msg = /row-level security|row level security/i.test(error.message)
         ? 'Your institution account is pending admin verification. Posting will unlock once our team approves your profile.'
-        : `Error: ${error.message}`
-      alert(msg)
+        : (error.message || 'Could not post grant. Please try again.')
+      showError(msg)
       return
     }
     router.push('/grants')

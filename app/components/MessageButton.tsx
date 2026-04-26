@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useToast } from '@/app/components/Toast'
 
 interface Props {
   recipientId: string
@@ -12,6 +13,7 @@ interface Props {
 export default function MessageButton({ recipientId, className, label = 'Message' }: Props) {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const { showError } = useToast()
 
   async function handleClick() {
     setLoading(true)
@@ -25,11 +27,11 @@ export default function MessageButton({ recipientId, className, label = 'Message
       if (data.conversationId) {
         router.push(`/messages/${data.conversationId}`)
       } else {
-        alert(data.error || 'Could not start conversation')
+        showError(data.error || 'Could not start conversation')
         setLoading(false)
       }
     } catch {
-      alert('Something went wrong')
+      showError('Network error — please check your connection and retry.')
       setLoading(false)
     }
   }

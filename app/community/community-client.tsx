@@ -10,6 +10,7 @@ import ProfileGateBanner from '@/app/components/ProfileGateBanner'
 import ImageUploader from '@/app/components/ImageUploader'
 import OnlineIndicator from '@/app/components/OnlineIndicator'
 import ReportButton from '@/app/components/ReportButton'
+import { useToast } from '@/app/components/Toast'
 import { safeHref } from '@/lib/safe-href'
 
 const POST_TYPES = [
@@ -50,6 +51,7 @@ interface Props {
 export default function CommunityClient({ posts, parentMap = {}, profileMap, likeCountMap, userLikedSet: initialLiked, commentCountMap, currentUserId }: Props) {
   const supabase = createClient()
   const router = useRouter()
+  const { showError } = useToast()
   const { allowed: profileComplete, missing: profileMissing } = useProfileGate()
   const [filter, setFilter] = useState('all')
   const [showForm, setShowForm] = useState(false)
@@ -85,7 +87,7 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
       .eq('user_id', currentUserId)
       .gte('created_at', todayStart.toISOString())
     if ((todayCount ?? 0) >= dailyLimit) {
-      alert(`You can post a maximum of ${dailyLimit} community posts per day. Please try again tomorrow.`)
+      showError(`You can post a maximum of ${dailyLimit} community posts per day. Please try again tomorrow.`)
       setPosting(false)
       return
     }
@@ -101,7 +103,7 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
     if (postType === 'poll') {
       const opts = pollOptions.map(o => o.trim()).filter(Boolean)
       if (opts.length < 2) {
-        alert('Please provide at least 2 poll options.')
+        showError('Please provide at least 2 poll options.')
         setPosting(false)
         return
       }
@@ -116,7 +118,7 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
     setPosting(false)
 
     if (error) {
-      alert(`Error: ${error.message}`)
+      showError(error.message || 'Could not create post. Please try again.')
       return
     }
 
@@ -161,7 +163,7 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
     if (!repostTarget) return
     // Don't allow reposting your own post
     if (repostTarget.user_id === currentUserId) {
-      alert("You can't repost your own post.")
+      showError("You can't repost your own post.")
       return
     }
     // If target is itself a repost, point to the underlying original
@@ -177,7 +179,7 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
     const { error } = await (supabase as any).from('community_posts').insert(payload)
     setReposting(false)
 
-    if (error) { alert(`Error: ${error.message}`); return }
+    if (error) { showError(error.message || 'Failed to repost. Please try again.'); return }
 
     setRepostTarget(null)
     setRepostCaption('')
@@ -204,12 +206,12 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
       }
       if (!res.ok || !data.ok) {
         console.error('Community delete failed:', data.error || res.statusText)
-        alert('Failed to delete post: ' + (data.error || 'Please try again.'))
+        showError('Failed to delete post: ' + (data.error || 'Please try again.'))
         return
       }
     } catch (err) {
       console.error('Community delete exception:', err)
-      alert('Network error — please check your connection and retry.')
+      showError('Network error — please check your connection and retry.')
       return
     }
     router.refresh()

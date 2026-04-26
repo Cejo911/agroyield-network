@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { useToast } from '@/app/components/Toast'
 import { getBusinessAccess } from '@/lib/business-access'
 import { getActiveBusinessId } from '@/lib/business-cookie'
 
@@ -32,6 +33,7 @@ const PREDEFINED_UNITS = ['unit', 'bag', 'kg', 'litre', 'tonne', 'carton', 'piec
 
 export default function ProductsPage() {
   const supabase = createClient()
+  const { showError } = useToast()
   const [products, setProducts] = useState<Product[]>([])
   const [businessId, setBusinessId] = useState<string | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
@@ -148,7 +150,7 @@ export default function ProductsPage() {
 
     // For stock out, check if sufficient stock
     if (stockForm.type === 'out' && qty > stockProduct.stock_quantity) {
-      alert(`Insufficient stock. Available: ${stockProduct.stock_quantity} ${stockProduct.unit}`)
+      showError(`Insufficient stock. Available: ${stockProduct.stock_quantity} ${stockProduct.unit}`)
       return
     }
 

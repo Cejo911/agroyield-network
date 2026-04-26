@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import AppNav from '@/app/components/AppNav'
+import { useToast } from '@/app/components/Toast'
 import { getEffectiveTier } from '@/lib/tiers'
 
 const EXPERTISE_TAGS = [
@@ -23,6 +24,7 @@ const SESSION_FORMATS = [
 export default function BecomeMentorPage() {
   const supabase = createClient()
   const router = useRouter()
+  const { showError } = useToast()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [isEdit, setIsEdit] = useState(false)
@@ -164,7 +166,7 @@ export default function BecomeMentorPage() {
     setSaving(false)
 
     if (error) {
-      alert(`Failed to save mentor profile: ${error.message}`)
+      showError(`Failed to save mentor profile: ${error.message}`)
       return
     }
     // On first submit show the pending banner instead of punting to the
