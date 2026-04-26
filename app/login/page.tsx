@@ -213,17 +213,17 @@ export default function Login() {
             <form onSubmit={handleSignIn} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
               <div>
                 <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text-label)', marginBottom: 8 }}>Email address</label>
-                <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required style={inputStyle} />
+                <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required autoComplete="email" autoFocus style={inputStyle} />
               </div>
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                   <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-label)' }}>Password</label>
                   <a href="/forgot-password" style={{ fontSize: 12, color: 'var(--text-accent)', textDecoration: 'none' }}>Forgot password?</a>
                 </div>
-                <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Enter your password" required style={inputStyle} />
+                <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Enter your password" required autoComplete="current-password" style={inputStyle} />
               </div>
               {error && (
-                <div style={{ fontSize: 13, color: '#ef4444', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 10, padding: '10px 14px' }}>
+                <div role="alert" style={{ fontSize: 13, color: '#ef4444', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 10, padding: '10px 14px' }}>
                   {error}
                 </div>
               )}

@@ -222,7 +222,7 @@ export default function AppNav() {
               <div className="absolute right-0 mt-2 w-52 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl shadow-lg py-1.5 z-50">
                 {/* User info + tier */}
                 <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-800 mb-1">
-                  <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{userEmail}</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 truncate">{userEmail}</p>
                   {isAdmin === false && (
                     <Link
                       href="/pricing"
@@ -272,7 +272,10 @@ export default function AppNav() {
                       : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
                   }`}
                 >
-                  <span>👤</span> My Profile
+                  <svg aria-hidden="true" className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  My Profile
                 </Link>
 
                 <Link
@@ -284,7 +287,10 @@ export default function AppNav() {
                       : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
                   }`}
                 >
-                  <span>🔖</span> Saved
+                  <svg aria-hidden="true" className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                  </svg>
+                  Saved
                 </Link>
 
                 {isAdmin && (
@@ -297,7 +303,10 @@ export default function AppNav() {
                         : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
                     }`}
                   >
-                    <span>⚙️</span> Admin Dashboard
+                    <svg aria-hidden="true" className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317a1 1 0 011.35 0l1.06 1.06a1 1 0 00.708.293h1.5a1 1 0 011 1v1.5a1 1 0 00.293.707l1.06 1.06a1 1 0 010 1.414l-1.06 1.06a1 1 0 00-.293.707v1.5a1 1 0 01-1 1h-1.5a1 1 0 00-.708.293l-1.06 1.06a1 1 0 01-1.414 0l-1.06-1.06a1 1 0 00-.707-.293h-1.5a1 1 0 01-1-1v-1.5a1 1 0 00-.293-.707l-1.06-1.06a1 1 0 010-1.414l1.06-1.06a1 1 0 00.293-.707V6.67a1 1 0 011-1h1.5a1 1 0 00.707-.293l1.06-1.06zM12 14a3 3 0 100-6 3 3 0 000 6z" />
+                    </svg>
+                    Admin Dashboard
                   </Link>
                 )}
 
@@ -311,7 +320,11 @@ export default function AppNav() {
                         : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
                     }`}
                   >
-                    <span>🎫</span> Support
+                    <svg aria-hidden="true" className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636L5.636 18.364M5.636 5.636l12.728 12.728M3 12a9 9 0 1118 0 9 9 0 01-18 0z" opacity="0" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 7a2 2 0 012-2h14a2 2 0 012 2v3.5a1.5 1.5 0 100 3V17a2 2 0 01-2 2H5a2 2 0 01-2-2v-3.5a1.5 1.5 0 100-3V7z" />
+                    </svg>
+                    Support
                   </Link>
                   <Link
                     href="/faq"
@@ -322,7 +335,10 @@ export default function AppNav() {
                         : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
                     }`}
                   >
-                    <span>❓</span> FAQ
+                    <svg aria-hidden="true" className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093M12 17h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    FAQ
                   </Link>
                 </div>
 
@@ -331,7 +347,10 @@ export default function AppNav() {
                     onClick={handleSignOut}
                     className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                   >
-                    <span>🚪</span> Sign out
+                    <svg aria-hidden="true" className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    Sign out
                   </button>
                 </div>
               </div>
@@ -339,18 +358,36 @@ export default function AppNav() {
           </div>
         </div>
 
-        {/* Mobile hamburger */}
+        {/* Mobile hamburger.
+            44x44 touch target (Apple HIG min, larger than Material's 48
+            requires extra padding the surrounding row can't absorb).
+            Icons are SVGs (not unicode glyphs) so they don't reflow
+            mid-tap when the open/close states swap. ARIA attributes
+            announce "Open/Close navigation menu" + the expanded state to
+            screen readers; aria-controls points at the panel below. */}
         <button
-          className="xl:hidden p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 text-lg"
+          className="xl:hidden inline-flex items-center justify-center w-11 h-11 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
           onClick={() => setMenuOpen(!menuOpen)}
+          aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+          aria-expanded={menuOpen}
+          aria-controls="mobile-nav"
+          type="button"
         >
-          {menuOpen ? '✕' : '☰'}
+          {menuOpen ? (
+            <svg aria-hidden="true" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          ) : (
+            <svg aria-hidden="true" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          )}
         </button>
       </div>
 
       {/* Mobile menu */}
       {menuOpen && (
-        <div className="xl:hidden border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 py-3 space-y-1">
+        <div id="mobile-nav" className="xl:hidden border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 py-3 space-y-1">
           <div className="pb-2 mb-2 border-b border-gray-100 dark:border-gray-800">
             <GlobalSearchBar variant="full" />
           </div>
@@ -376,7 +413,10 @@ export default function AppNav() {
               onClick={() => setMenuOpen(false)}
               className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-green-700 dark:hover:text-green-400 hover:bg-gray-50 dark:hover:bg-gray-800"
             >
-              <span>👤</span> My Profile
+              <svg aria-hidden="true" className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              My Profile
             </Link>
 
             <Link
@@ -384,7 +424,10 @@ export default function AppNav() {
               onClick={() => setMenuOpen(false)}
               className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-green-700 dark:hover:text-green-400 hover:bg-gray-50 dark:hover:bg-gray-800"
             >
-              <span>🔖</span> Saved
+              <svg aria-hidden="true" className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+              </svg>
+              Saved
             </Link>
 
             {isAdmin && (
@@ -393,7 +436,10 @@ export default function AppNav() {
                 onClick={() => setMenuOpen(false)}
                 className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
               >
-                <span>⚙️</span> Admin Dashboard
+                <svg aria-hidden="true" className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317a1 1 0 011.35 0l1.06 1.06a1 1 0 00.708.293h1.5a1 1 0 011 1v1.5a1 1 0 00.293.707l1.06 1.06a1 1 0 010 1.414l-1.06 1.06a1 1 0 00-.293.707v1.5a1 1 0 01-1 1h-1.5a1 1 0 00-.708.293l-1.06 1.06a1 1 0 01-1.414 0l-1.06-1.06a1 1 0 00-.707-.293h-1.5a1 1 0 01-1-1v-1.5a1 1 0 00-.293-.707l-1.06-1.06a1 1 0 010-1.414l1.06-1.06a1 1 0 00.293-.707V6.67a1 1 0 011-1h1.5a1 1 0 00.707-.293l1.06-1.06zM12 14a3 3 0 100-6 3 3 0 000 6z" />
+                </svg>
+                Admin Dashboard
               </Link>
             )}
 
@@ -477,7 +523,10 @@ export default function AppNav() {
                   : 'text-gray-600 dark:text-gray-300 hover:text-green-700 dark:hover:text-green-400 hover:bg-gray-50 dark:hover:bg-gray-800'
               }`}
             >
-              <span>🎫</span> Support
+              <svg aria-hidden="true" className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 7a2 2 0 012-2h14a2 2 0 012 2v3.5a1.5 1.5 0 100 3V17a2 2 0 01-2 2H5a2 2 0 01-2-2v-3.5a1.5 1.5 0 100-3V7z" />
+              </svg>
+              Support
             </Link>
             <Link
               href="/faq"
@@ -488,14 +537,20 @@ export default function AppNav() {
                   : 'text-gray-600 dark:text-gray-300 hover:text-green-700 dark:hover:text-green-400 hover:bg-gray-50 dark:hover:bg-gray-800'
               }`}
             >
-              <span>❓</span> FAQ
+              <svg aria-hidden="true" className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093M12 17h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              FAQ
             </Link>
 
             <button
               onClick={handleSignOut}
               className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
             >
-              <span>🚪</span> Sign out
+              <svg aria-hidden="true" className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              Sign out
             </button>
           </div>
         </div>

@@ -291,7 +291,7 @@ export default function CommentsSection({ postId, postType }: Props) {
           <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
             {comment.user_id === userId ? 'You' : (comment.user_name ?? 'User')}
           </span>
-          <span className="text-xs text-gray-400 dark:text-gray-500">{timeAgo(comment.created_at)}</span>
+          <span className="text-xs text-gray-500 dark:text-gray-400">{timeAgo(comment.created_at)}</span>
         </div>
         <p className="text-sm text-gray-600 dark:text-gray-400">{comment.content}</p>
         <div className="flex items-center gap-3 mt-1">
@@ -299,14 +299,14 @@ export default function CommentsSection({ postId, postType }: Props) {
             <button
               onClick={() => toggleCommentLike(comment.id)}
               className={`text-xs flex items-center gap-1 transition-colors ${
-                comment.liked ? 'text-red-500' : 'text-gray-400 hover:text-red-400 dark:hover:text-red-400'
+                comment.liked ? 'text-red-500' : 'text-gray-500 dark:text-gray-400 hover:text-red-400 dark:hover:text-red-400'
               }`}
             >
               {comment.liked ? '♥' : '♡'}{comment.likeCount > 0 && ` ${comment.likeCount}`}
             </button>
           )}
           {!userId && comment.likeCount > 0 && (
-            <span className="text-xs text-gray-400">♥ {comment.likeCount}</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">♥ {comment.likeCount}</span>
           )}
           {/* Reply button — only on top-level comments, only for logged-in users */}
           {userId && !isReply && (
@@ -315,7 +315,7 @@ export default function CommentsSection({ postId, postType }: Props) {
                 setReplyingTo(replyingTo === comment.id ? null : comment.id)
                 setReplyContent('')
               }}
-              className="text-xs text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors font-medium"
+              className="text-xs text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors font-medium"
             >
               Reply
             </button>
@@ -323,7 +323,7 @@ export default function CommentsSection({ postId, postType }: Props) {
           {comment.user_id === userId && (
             <button
               onClick={() => handleDelete(comment.id)}
-              className="text-xs text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+              className="text-xs text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
             >
               Delete
             </button>

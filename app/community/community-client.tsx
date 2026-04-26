@@ -235,7 +235,7 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
       ) : !showForm ? (
         <button
           onClick={() => setShowForm(true)}
-          className="w-full bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 text-left text-gray-400 dark:text-gray-500 hover:border-green-300 dark:hover:border-green-700 transition-colors mb-6 text-sm"
+          className="w-full bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 text-left text-gray-500 dark:text-gray-400 hover:border-green-300 dark:hover:border-green-700 transition-colors mb-6 text-sm"
         >
           What&apos;s on your mind? Share with the community...
         </button>
@@ -526,7 +526,7 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
                         </button>
                       )
                     })}
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                       {totalVotes} vote{totalVotes !== 1 ? 's' : ''}
                       {pollClosed && <span className="ml-2 text-red-500 font-medium">· Poll closed</span>}
                       {!pollClosed && post.poll_closes_at && (

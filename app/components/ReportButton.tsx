@@ -70,7 +70,7 @@ export default function ReportButton({ postId, postType }: Props) {
 
   if (reported && !open) {
     return (
-      <span className="flex items-center gap-1 text-xs text-gray-300" title="You reported this post">
+      <span className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400" title="You reported this post">
         <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
           <path fillRule="evenodd" d="M3 2.25a.75.75 0 01.75.75v.54l1.838-.46a9.75 9.75 0 016.317.175l.41.131a8.25 8.25 0 005.37.148l2.929-.863A.75.75 0 0121 3v13.5a.75.75 0 01-.513.707l-3.337.985a9.75 9.75 0 01-6.338-.175l-.41-.131a8.25 8.25 0 00-5.37-.148L3 18.88V21a.75.75 0 01-1.5 0V3A.75.75 0 013 2.25z" clipRule="evenodd" />
         </svg>
@@ -83,7 +83,7 @@ export default function ReportButton({ postId, postType }: Props) {
     <div className="relative" ref={ref}>
       <button
         onClick={() => { setOpen(!open); setError(null) }}
-        className="flex items-center gap-1 text-xs text-gray-400 hover:text-orange-500 transition-colors"
+        className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-orange-500 transition-colors"
         aria-label="Report post">
         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round"
@@ -101,7 +101,7 @@ export default function ReportButton({ postId, postType }: Props) {
               <div className="px-3 py-2 border-b border-gray-100">
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Report reason</p>
               </div>
-              {error && <p className="px-3 py-1.5 text-xs text-red-600">{error}</p>}
+              {error && <p role="alert" className="px-3 py-1.5 text-xs text-red-600">{error}</p>}
               {REASONS.map(reason => (
                 <button key={reason} onClick={() => submit(reason)} disabled={loading}
                   className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-700 transition-colors disabled:opacity-50">

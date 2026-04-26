@@ -470,29 +470,29 @@ export default function SignUp() {
                     <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text-label)', marginBottom: 8 }}>
                       {form.accountType === 'institution' ? 'Contact person first name' : 'First name'}
                     </label>
-                    <input name="firstName" value={form.firstName} onChange={handleChange} placeholder="Chidi" required style={inputStyle} />
+                    <input name="firstName" value={form.firstName} onChange={handleChange} placeholder="Chidi" required autoComplete="given-name" autoFocus style={inputStyle} />
                   </div>
                   <div>
                     <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text-label)', marginBottom: 8 }}>
                       {form.accountType === 'institution' ? 'Contact person last name' : 'Last name'}
                     </label>
-                    <input name="lastName" value={form.lastName} onChange={handleChange} placeholder="Okonkwo" required style={inputStyle} />
+                    <input name="lastName" value={form.lastName} onChange={handleChange} placeholder="Okonkwo" required autoComplete="family-name" style={inputStyle} />
                   </div>
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text-label)', marginBottom: 8 }}>Email address</label>
-                  <input name="email" type="email" value={form.email} onChange={handleChange} placeholder="you@example.com" required style={inputStyle} />
+                  <input name="email" type="email" value={form.email} onChange={handleChange} placeholder="you@example.com" required autoComplete="email" style={inputStyle} />
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text-label)', marginBottom: 8 }}>Password</label>
-                  <input name="password" type="password" value={form.password} onChange={handleChange} placeholder="At least 8 characters" required style={inputStyle} />
+                  <input name="password" type="password" value={form.password} onChange={handleChange} placeholder="At least 8 characters" required autoComplete="new-password" style={inputStyle} />
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text-label)', marginBottom: 8 }}>Confirm password</label>
-                  <input name="confirm" type="password" value={form.confirm} onChange={handleChange} placeholder="Repeat your password" required style={inputStyle} />
+                  <input name="confirm" type="password" value={form.confirm} onChange={handleChange} placeholder="Repeat your password" required autoComplete="new-password" style={inputStyle} />
                 </div>
                 {error && (
-                  <div style={{ fontSize: 13, color: '#ef4444', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 10, padding: '10px 14px' }}>
+                  <div role="alert" style={{ fontSize: 13, color: '#ef4444', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 10, padding: '10px 14px' }}>
                     {error}
                   </div>
                 )}

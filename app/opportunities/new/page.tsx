@@ -176,7 +176,7 @@ export default function NewOpportunityPage() {
             </div>
 
             {message && (
-              <div className={`rounded-lg px-4 py-3 text-sm ${
+              <div role={message.type === 'error' ? 'alert' : 'status'} className={`rounded-lg px-4 py-3 text-sm ${
                 message.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
               }`}>
                 {message.text}

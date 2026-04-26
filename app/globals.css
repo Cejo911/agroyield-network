@@ -63,3 +63,20 @@ input::placeholder,
 textarea::placeholder {
   color: #9ca3af;
 }
+
+/* iOS Safari auto-zooms on any input with font-size < 16px when focused.
+   Many of our forms use Tailwind's text-sm (14px) or text-xs (12px), which
+   triggered a jarring zoom on every input tap on iPhone — and the page
+   never zoomed back, leaving the layout offset until the user pinched out.
+   Forcing 16px on small viewports kills the regression sitewide without
+   touching individual class names. Larger viewports keep their original
+   text-sm/text-xs sizing.
+
+   See docs/ux-ui-audit-26apr.md Theme 3. */
+@media (max-width: 640px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}

@@ -279,7 +279,7 @@ export default function NewListingPage() {
 
             {/* Message */}
             {message && (
-              <div className={`rounded-lg px-4 py-3 text-sm ${
+              <div role={message.type === 'error' ? 'alert' : 'status'} className={`rounded-lg px-4 py-3 text-sm ${
                 message.type === 'success'
                   ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'
                   : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400'
