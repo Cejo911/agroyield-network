@@ -1,11 +1,13 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import AppNav from '@/app/components/AppNav'
-import MentorDetail from './mentor-detail'
+import MentorDetail, { type MentorWithProfile, type MentorReview } from './mentor-detail'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/database.types'
 
 export default async function MentorPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const supabase = await createClient()
+  const supabase = (await createClient()) as SupabaseClient<Database>
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
@@ -36,7 +38,7 @@ export default async function MentorPage({ params }: { params: Promise<{ id: str
 
   // Compute average rating
   const avgRating = reviews && reviews.length > 0
-    ? Math.round((reviews.reduce((s: number, r: any) => s + r.rating, 0) / reviews.length) * 10) / 10
+    ? Math.round((reviews.reduce((s: number, r) => s + (r.rating ?? 0), 0) / reviews.length) * 10) / 10
     : null
 
   // Count completed requests (mentorship_sessions joins via request_id; for now count completed requests)
@@ -60,11 +62,11 @@ export default async function MentorPage({ params }: { params: Promise<{ id: str
       <AppNav />
       <main className="max-w-3xl mx-auto px-4 py-10">
         <MentorDetail
-          mentor={mentor as any}
-          reviews={(reviews ?? []) as any}
+          mentor={mentor as unknown as MentorWithProfile}
+          reviews={(reviews ?? []) as unknown as MentorReview[]}
           avgRating={avgRating}
           sessionCount={sessionCount ?? 0}
-          existingSession={existingSession as any}
+          existingSession={existingSession}
           userId={user.id}
         />
       </main>

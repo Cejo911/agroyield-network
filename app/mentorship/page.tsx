@@ -10,9 +10,11 @@ import PageShell from '@/app/components/design/PageShell'
 import PageHeader from '@/app/components/design/PageHeader'
 import { PrimaryLink, SecondaryLink } from '@/app/components/design/Button'
 import { MODULE_FAQS } from '@/lib/faq-data'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/database.types'
 
 export default async function MentorshipPage() {
-  const supabase = await createClient()
+  const supabase = (await createClient()) as SupabaseClient<Database>
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
@@ -43,7 +45,7 @@ export default async function MentorshipPage() {
 
   // Check if verification is required for mentorship
   if (settings.mentorship_requires_verification === 'true') {
-    const { data: userProfile } = await (supabase as any)
+    const { data: userProfile } = await supabase
       .from('profiles').select('subscription_tier, subscription_expires_at').eq('id', user.id).single()
     const effectiveTier = getEffectiveTier(userProfile ?? {})
     if (effectiveTier === 'free') {
@@ -79,14 +81,15 @@ export default async function MentorshipPage() {
   // Check if current user is already a mentor — and what state their
   // application is in. We use approval_status to tailor the CTA label and
   // surface a "Pending review" banner without needing a separate call.
+  // Note: mentor_profiles has no `id` column — user_id IS the PK. Previous
+  // selection of `id` was silently failing under the `any` cast. Bug fixed.
   const { data: ownProfile } = await supabase
     .from('mentor_profiles')
-    .select('id, approval_status, rejection_reason')
+    .select('user_id, approval_status, rejection_reason')
     .eq('user_id', user.id)
     .maybeSingle()
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const ownStatus = (ownProfile as any)?.approval_status as 'pending' | 'approved' | 'rejected' | undefined
+  const ownStatus = ownProfile?.approval_status as 'pending' | 'approved' | 'rejected' | undefined
   const mentorCtaLabel =
     !ownProfile ? 'Become a Mentor'
     : ownStatus === 'pending'  ? 'Application Pending'
@@ -101,12 +104,14 @@ export default async function MentorshipPage() {
   // Compute averages
   const ratingMap: Record<string, { sum: number; count: number }> = {}
   for (const r of ratings ?? []) {
+    if (!r.reviewee_id) continue
+    const rating = r.rating ?? 0
     if (!ratingMap[r.reviewee_id]) ratingMap[r.reviewee_id] = { sum: 0, count: 0 }
-    ratingMap[r.reviewee_id].sum += r.rating
+    ratingMap[r.reviewee_id].sum += rating
     ratingMap[r.reviewee_id].count++
   }
 
-  const mentorsWithRatings = (mentors ?? []).map((m: any) => ({
+  const mentorsWithRatings = (mentors ?? []).map((m) => ({
     ...m,
     avgRating: ratingMap[m.user_id] ? Math.round((ratingMap[m.user_id].sum / ratingMap[m.user_id].count) * 10) / 10 : null,
     reviewCount: ratingMap[m.user_id]?.count ?? 0,
@@ -148,7 +153,7 @@ export default async function MentorshipPage() {
           </div>
         </div>
       )}
-      <MentorBrowser mentors={mentorsWithRatings} userId={user.id} />
+      <MentorBrowser mentors={mentorsWithRatings as unknown as Parameters<typeof MentorBrowser>[0]['mentors']} userId={user.id} />
       <FAQAccordion items={MODULE_FAQS.mentorship} title="Frequently Asked Questions" subtitle="Common questions about Mentorship" compact />
     </PageShell>
   )

@@ -45,6 +45,10 @@ function Countdown() {
   const [time, setTime] = useState<TimeLeft | null>(null)
 
   useEffect(() => {
+    // setTime on mount + interval is the canonical "live ticking clock"
+    // pattern; the synchronous setTime is intentional to avoid the first
+    // render flashing the placeholder.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTime(calcTimeLeft())
     const id = setInterval(() => setTime(calcTimeLeft()), 1000)
     return () => clearInterval(id)

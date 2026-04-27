@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import ThemeToggle from '@/app/components/ThemeToggle'
 
 export default function ForgotPassword() {
@@ -66,13 +67,13 @@ export default function ForgotPassword() {
 
       {/* NAV */}
       <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 40px', borderBottom: '1px solid var(--nav-border)' }}>
-        <a href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
           <Image src="/logo-horizontal-colored.png" alt="AgroYield Network" className="auth-logo-colored" width={200} height={58} style={{ height: 58, width: 'auto' }} />
           <Image src="/logo-horizontal-white.png"   alt="AgroYield Network" className="auth-logo-white"   width={200} height={58} style={{ height: 58, width: 'auto' }} />
-        </a>
+        </Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <ThemeToggle />
-          <a href="/login" style={{ fontSize: 13, color: 'var(--text-secondary)', textDecoration: 'none' }}>← Back to login</a>
+          <Link href="/login" style={{ fontSize: 13, color: 'var(--text-secondary)', textDecoration: 'none' }}>← Back to login</Link>
         </div>
       </nav>
 
@@ -137,7 +138,7 @@ export default function ForgotPassword() {
 
             <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>
               Remember your password?{' '}
-              <a href="/login" style={{ color: 'var(--text-accent)', textDecoration: 'none', fontWeight: 600 }}>Sign in</a>
+              <Link href="/login" style={{ color: 'var(--text-accent)', textDecoration: 'none', fontWeight: 600 }}>Sign in</Link>
             </p>
           </div>
         </div>

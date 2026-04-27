@@ -6,29 +6,54 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import MessageButton from '@/app/components/MessageButton'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/database.types'
+
+type MentorProfile = Database['public']['Tables']['mentor_profiles']['Row']
+type ProfileSnippet = {
+  first_name: string | null
+  last_name: string | null
+  role: string | null
+  institution: string | null
+  avatar_url: string | null
+  is_verified: boolean | null
+  bio: string | null
+}
+export type MentorWithProfile = MentorProfile & { profiles: ProfileSnippet | ProfileSnippet[] | null }
+
+type ReviewRow = Database['public']['Tables']['mentorship_reviews']['Row']
+export type MentorReview = ReviewRow & {
+  profiles: { first_name: string | null; last_name: string | null; avatar_url: string | null } | { first_name: string | null; last_name: string | null; avatar_url: string | null }[] | null
+}
 
 interface Props {
-  mentor: any
-  reviews: any[]
+  mentor: MentorWithProfile
+  reviews: MentorReview[]
   avgRating: number | null
   sessionCount: number
   existingSession: { id: string; status: string } | null
   userId: string
 }
 
+function pickProfile<T>(p: T | T[] | null | undefined): T | null {
+  if (!p) return null
+  return Array.isArray(p) ? (p[0] ?? null) : p
+}
+
 export default function MentorDetail({ mentor, reviews, avgRating, sessionCount, existingSession, userId }: Props) {
-  const supabase = createClient()
+  const supabase = createClient() as SupabaseClient<Database>
   const router = useRouter()
   const [showRequest, setShowRequest] = useState(false)
   const [topic, setTopic] = useState('')
   const [message, setMessage] = useState('')
-  const [format, setFormat] = useState(mentor.session_format?.[0] || 'video')
+  const [format, setFormat] = useState((mentor.session_format && mentor.session_format[0]) || 'video')
   const [sending, setSending] = useState(false)
   const [sent, setSent] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
-  const name = `${mentor.profiles?.first_name ?? ''} ${mentor.profiles?.last_name ?? ''}`.trim() || 'Mentor'
-  const initials = name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()
+  const profile = pickProfile(mentor.profiles)
+  const name = `${profile?.first_name ?? ''} ${profile?.last_name ?? ''}`.trim() || 'Mentor'
+  const initials = name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()
   const isOwnProfile = mentor.user_id === userId
 
   async function handleRequest(e: React.FormEvent) {
@@ -70,8 +95,8 @@ export default function MentorDetail({ mentor, reviews, avgRating, sessionCount,
       {/* Profile header */}
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 mb-6">
         <div className="flex items-start gap-5">
-          {mentor.profiles?.avatar_url ? (
-            <Image src={mentor.profiles.avatar_url} alt={name} width={80} height={80} className="w-20 h-20 rounded-full object-cover shrink-0" />
+          {profile?.avatar_url ? (
+            <Image src={profile.avatar_url} alt={name} width={80} height={80} className="w-20 h-20 rounded-full object-cover shrink-0" />
           ) : (
             <div className="w-20 h-20 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-700 dark:text-green-400 font-bold text-2xl shrink-0">
               {initials}
@@ -80,14 +105,14 @@ export default function MentorDetail({ mentor, reviews, avgRating, sessionCount,
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{name}</h1>
-              {mentor.profiles?.is_verified && <span className="text-green-500" title="Verified">✓</span>}
+              {profile?.is_verified && <span className="text-green-500" title="Verified">✓</span>}
             </div>
             <p className="text-gray-600 dark:text-gray-400 mt-1">{mentor.headline}</p>
             <div className="flex items-center gap-4 mt-3 text-sm text-gray-500 dark:text-gray-400 flex-wrap">
-              {mentor.profiles?.role && <span>{mentor.profiles.role}</span>}
-              {mentor.profiles?.institution && <span>{mentor.profiles.institution}</span>}
+              {profile?.role && <span>{profile.role}</span>}
+              {profile?.institution && <span>{profile.institution}</span>}
               {mentor.location && <span>📍 {mentor.location}</span>}
-              {mentor.years_experience > 0 && <span>{mentor.years_experience} years experience</span>}
+              {mentor.years_experience !== null && mentor.years_experience > 0 && <span>{mentor.years_experience} years experience</span>}
             </div>
 
             {/* Stats row */}
@@ -126,7 +151,7 @@ export default function MentorDetail({ mentor, reviews, avgRating, sessionCount,
           <div>
             <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Expertise</h3>
             <div className="flex flex-wrap gap-1.5">
-              {(mentor.expertise ?? []).map((tag: string) => (
+              {(mentor.expertise ?? []).map((tag) => (
                 <span key={tag} className="text-xs font-medium bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 px-2.5 py-1 rounded-full">
                   {tag}
                 </span>
@@ -136,13 +161,13 @@ export default function MentorDetail({ mentor, reviews, avgRating, sessionCount,
           <div>
             <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Session Formats</h3>
             <div className="flex flex-wrap gap-1.5">
-              {(mentor.session_format ?? []).map((f: string) => (
+              {(mentor.session_format ?? []).map((f) => (
                 <span key={f} className="text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-2.5 py-1 rounded-full capitalize">
                   {f.replace('_', ' ')}
                 </span>
               ))}
             </div>
-            {mentor.languages?.length > 0 && (
+            {mentor.languages && mentor.languages.length > 0 && (
               <p className="text-xs text-gray-500 mt-2">Languages: {mentor.languages.join(', ')}</p>
             )}
           </div>
@@ -221,7 +246,7 @@ export default function MentorDetail({ mentor, reviews, avgRating, sessionCount,
                     onChange={e => setFormat(e.target.value)}
                     className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-green-500"
                   >
-                    {(mentor.session_format ?? []).map((f: string) => (
+                    {(mentor.session_format ?? []).map((f) => (
                       <option key={f} value={f}>{f.replace('_', ' ')}</option>
                     ))}
                   </select>
@@ -264,13 +289,15 @@ export default function MentorDetail({ mentor, reviews, avgRating, sessionCount,
           <p className="text-sm text-gray-400">No reviews yet.</p>
         ) : (
           <div className="space-y-4">
-            {reviews.map((r: any) => {
-              const rName = `${r.profiles?.first_name ?? ''} ${r.profiles?.last_name ?? ''}`.trim() || 'Anonymous'
+            {reviews.map((r) => {
+              const rProfile = pickProfile(r.profiles)
+              const rName = `${rProfile?.first_name ?? ''} ${rProfile?.last_name ?? ''}`.trim() || 'Anonymous'
+              const rating = r.rating ?? 0
               return (
                 <div key={r.id} className="border-b border-gray-100 dark:border-gray-800 pb-4 last:border-0 last:pb-0">
                   <div className="flex items-center gap-3">
-                    {r.profiles?.avatar_url ? (
-                      <Image src={r.profiles.avatar_url} alt="" width={32} height={32} className="w-8 h-8 rounded-full object-cover" />
+                    {rProfile?.avatar_url ? (
+                      <Image src={rProfile.avatar_url} alt="" width={32} height={32} className="w-8 h-8 rounded-full object-cover" />
                     ) : (
                       <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-xs font-bold text-gray-500">
                         {rName[0]}
@@ -278,10 +305,10 @@ export default function MentorDetail({ mentor, reviews, avgRating, sessionCount,
                     )}
                     <div>
                       <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{rName}</span>
-                      <span className="text-yellow-500 ml-2 text-sm">{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span>
+                      <span className="text-yellow-500 ml-2 text-sm">{'★'.repeat(rating)}{'☆'.repeat(5 - rating)}</span>
                     </div>
                     <span className="text-xs text-gray-400 ml-auto">
-                      {new Date(r.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      {r.created_at ? new Date(r.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : ''}
                     </span>
                   </div>
                   {r.comment && <p className="text-sm text-gray-600 dark:text-gray-400 mt-2 ml-11">{r.comment}</p>}

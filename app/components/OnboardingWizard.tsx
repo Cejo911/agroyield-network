@@ -92,7 +92,7 @@ export default function OnboardingWizard({ userId, firstName, lastName, email }:
                 Welcome to AgroYield! 🌱
               </h2>
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                Let's get you set up. First, tell us about yourself.
+                Let&apos;s get you set up. First, tell us about yourself.
               </p>
 
               <div className="grid grid-cols-2 gap-3 mb-5">
@@ -204,10 +204,10 @@ export default function OnboardingWizard({ userId, firstName, lastName, email }:
           {step === 3 && (
             <>
               <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
-                You're all set! 🎉
+                You&apos;re all set! 🎉
               </h2>
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                Here's what you can do next to get the most out of AgroYield.
+                Here&apos;s what you can do next to get the most out of AgroYield.
               </p>
 
               <div className="space-y-3 mb-6">

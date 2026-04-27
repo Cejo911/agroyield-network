@@ -20,6 +20,10 @@ function SuccessContent() {
     if (isTrial) return
 
     if (!reference) {
+      // Synchronous setState on the missing-reference path is intentional —
+      // this is a one-shot "fail closed and show the error" branch, not a
+      // cascading-render risk.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setStatus('error')
       setErrorMsg('No payment reference found.')
       return

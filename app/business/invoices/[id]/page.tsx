@@ -1,9 +1,18 @@
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 import { notFound } from 'next/navigation'
+import Link from 'next/link'
 import InvoiceActions from './InvoiceActions'
 import RecurringCreateWarning from './RecurringCreateWarning'
 import { getBusinessAccess } from '@/lib/business-access'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/database.types'
+
+type Customer = Pick<
+  Database['public']['Tables']['customers']['Row'],
+  'name' | 'email' | 'phone' | 'address'
+>
+type InvoiceItem = Database['public']['Tables']['invoice_items']['Row']
 
 const DOC_LABELS: Record<string, string> = {
   invoice: 'INVOICE', proforma: 'PROFORMA INVOICE',
@@ -19,7 +28,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default async function InvoiceViewPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const supabase = await createClient()
+  const supabase = (await createClient()) as SupabaseClient<Database>
   const { data: { user } } = await supabase.auth.getUser()
 
   const cookieStore = await cookies()
@@ -38,8 +47,11 @@ export default async function InvoiceViewPage({ params }: { params: Promise<{ id
   const { data: business } = await supabase.from('businesses').select('*').eq('id', inv.business_id).single()
 
   const fmt = (n: number) => `₦${n.toLocaleString('en-NG', { minimumFractionDigits: 2 })}`
-  const customer = inv.customers as any
-  const items = (inv.invoice_items as any[]) ?? []
+  // Embedded relations: `customers` is a one-to-one (returns object or null);
+  // `invoice_items` is a one-to-many (array). Narrow defensively in case the
+  // generated types surface either as a union.
+  const customer = (Array.isArray(inv.customers) ? inv.customers[0] : inv.customers) as Customer | null
+  const items: InvoiceItem[] = (inv.invoice_items as unknown as InvoiceItem[] | null) ?? []
 
   return (
     <div className="space-y-5 max-w-3xl">
@@ -50,13 +62,13 @@ export default async function InvoiceViewPage({ params }: { params: Promise<{ id
 
       {/* Header actions */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <a href="/business/invoices" className="text-sm text-gray-500 hover:text-gray-700">← Back to Invoices</a>
+        <Link href="/business/invoices" className="text-sm text-gray-500 hover:text-gray-700">← Back to Invoices</Link>
         <div className="flex items-center gap-2">
-          <a href={`/invoice-print/${id}`} target="_blank"
+          <Link href={`/invoice-print/${id}`} target="_blank"
             className="border border-gray-200 text-gray-600 px-3 py-1.5 rounded-lg text-sm hover:bg-gray-50 transition-colors">
             🖨 Print / PDF
-          </a>
-          <InvoiceActions id={id} status={inv.status} />
+          </Link>
+          <InvoiceActions id={id} status={inv.status ?? ''} />
         </div>
       </div>
 
@@ -77,9 +89,9 @@ export default async function InvoiceViewPage({ params }: { params: Promise<{ id
             )}
           </div>
           <div className="sm:text-right">
-            <div className="text-2xl font-bold text-gray-400 dark:text-gray-500">{DOC_LABELS[inv.document_type] ?? inv.document_type}</div>
+            <div className="text-2xl font-bold text-gray-400 dark:text-gray-500">{(inv.document_type && DOC_LABELS[inv.document_type]) ?? inv.document_type}</div>
             <div className="text-lg font-bold text-gray-900 dark:text-white mt-1">{inv.invoice_number}</div>
-            <span className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-medium capitalize ${STATUS_COLORS[inv.status] ?? 'bg-gray-100 text-gray-600'}`}>
+            <span className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-medium capitalize ${(inv.status && STATUS_COLORS[inv.status]) ?? 'bg-gray-100 text-gray-600'}`}>
               {inv.status}
             </span>
           </div>
@@ -123,12 +135,12 @@ export default async function InvoiceViewPage({ params }: { params: Promise<{ id
             </tr>
           </thead>
           <tbody>
-            {items.map((item: any) => (
+            {items.map((item) => (
               <tr key={item.id} className="border-b border-gray-50 dark:border-gray-800">
                 <td className="py-2.5 text-gray-700 dark:text-gray-300">{item.description}</td>
                 <td className="py-2.5 text-right text-gray-600 dark:text-gray-400 pr-3">{item.quantity}</td>
-                <td className="py-2.5 text-right text-gray-600 dark:text-gray-400 pr-3">{fmt(item.unit_price)}</td>
-                <td className="py-2.5 text-right font-medium text-gray-800 dark:text-white">{fmt(item.line_total)}</td>
+                <td className="py-2.5 text-right text-gray-600 dark:text-gray-400 pr-3">{fmt(item.unit_price ?? 0)}</td>
+                <td className="py-2.5 text-right font-medium text-gray-800 dark:text-white">{fmt(item.line_total ?? 0)}</td>
               </tr>
             ))}
           </tbody>
@@ -139,13 +151,13 @@ export default async function InvoiceViewPage({ params }: { params: Promise<{ id
           <div className="border-b-2 border-gray-200 dark:border-gray-700 pb-2">
             <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Items</p>
           </div>
-          {items.map((item: any) => (
+          {items.map((item) => (
             <div key={item.id} className="flex items-start justify-between py-2 border-b border-gray-50 dark:border-gray-800">
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-gray-700 dark:text-gray-300">{item.description}</p>
-                <p className="text-xs text-gray-400">{item.quantity} × {fmt(item.unit_price)}</p>
+                <p className="text-xs text-gray-400">{item.quantity} × {fmt(item.unit_price ?? 0)}</p>
               </div>
-              <p className="text-sm font-medium text-gray-800 dark:text-white ml-3">{fmt(item.line_total)}</p>
+              <p className="text-sm font-medium text-gray-800 dark:text-white ml-3">{fmt(item.line_total ?? 0)}</p>
             </div>
           ))}
         </div>

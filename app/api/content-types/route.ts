@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase/admin'
 import { SAFE_DEFAULT_EXPENSE_CATEGORIES } from '@/lib/expense-categories'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/database.types'
 
 const DEFAULTS = {
   // IMPORTANT: `opportunities_type_check` in the DB enforces lowercase values
@@ -31,7 +33,8 @@ function parseList(raw: string | undefined, fallback: string[]): string[] {
 
 export async function GET() {
   try {
-    const { data } = await (getSupabaseAdmin() as any)
+    const admin = getSupabaseAdmin() as SupabaseClient<Database>
+    const { data } = await admin
       .from('settings')
       .select('key, value')
       .in('key', ['opportunity_types', 'marketplace_categories', 'expense_categories'])

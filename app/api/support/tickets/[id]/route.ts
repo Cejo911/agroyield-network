@@ -6,26 +6,16 @@ import { createNotification } from '@/lib/notifications'
 import { logAdminAction } from '@/lib/admin/audit-log'
 import { getResend } from '@/lib/email/client'
 import { SENDERS } from '@/lib/email/senders'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/database.types'
 
 const VALID_STATUSES = ['open', 'in_progress', 'resolved', 'closed']
 const VALID_PRIORITIES = ['low', 'medium', 'high', 'urgent']
 const VALID_CATEGORIES = ['general', 'account', 'billing', 'technical', 'content', 'other']
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-interface SupportTicket {
-  id: string
-  user_id: string
-  subject: string
-  description: string
-  status: string
-  priority: string
-  category: string
-  assigned_to: string | null
-  sla_deadline: string
-  resolved_at: string | null
-  created_at: string
-  updated_at: string
-}
+type SupportTicket = Database['public']['Tables']['support_tickets']['Row']
+type SupportTicketUpdate = Database['public']['Tables']['support_tickets']['Update']
+type ProfileSummary = { id: string; name: string }
 
 /**
  * GET /api/support/tickets/[id]
@@ -44,7 +34,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const admin = getSupabaseAdmin()
+    const admin = getSupabaseAdmin() as SupabaseClient<Database>
 
     // Fetch ticket
     const { data: ticket, error: ticketError } = await admin
@@ -96,13 +86,13 @@ export async function GET(
     // Build profile map for all unique user IDs in messages and events
     const userIds = new Set<string>()
     if (messages) {
-      messages.forEach((m: any) => userIds.add(m.user_id))
+      messages.forEach((m) => userIds.add(m.user_id))
     }
     if (events) {
-      events.forEach((e: any) => userIds.add(e.actor_id))
+      events.forEach((e) => { if (e.actor_id) userIds.add(e.actor_id) })
     }
 
-    let profilesMap: Record<string, any> = {}
+    let profilesMap: Record<string, ProfileSummary> = {}
     if (userIds.size > 0) {
       const { data: profiles, error: profilesError } = await admin
         .from('profiles')
@@ -110,9 +100,9 @@ export async function GET(
         .in('id', Array.from(userIds))
 
       if (!profilesError && profiles) {
-        profilesMap = profiles.reduce((acc: Record<string, any>, p: any) => {
+        profilesMap = profiles.reduce<Record<string, ProfileSummary>>((acc, p) => {
           acc[p.id] = {
-            name: `${p.first_name} ${p.last_name}`.trim(),
+            name: `${p.first_name ?? ''} ${p.last_name ?? ''}`.trim(),
             id: p.id,
           }
           return acc
@@ -150,7 +140,7 @@ export async function PATCH(
     }
 
     // Verify admin
-    const admin = getSupabaseAdmin()
+    const admin = getSupabaseAdmin() as SupabaseClient<Database>
     const { data: userProfile } = await admin
       .from('profiles')
       .select('is_admin')
@@ -166,7 +156,7 @@ export async function PATCH(
       .from('support_tickets')
       .select('*')
       .eq('id', id)
-      .single() as { data: SupportTicket | null; error: any }
+      .single<SupportTicket>()
 
     if (ticketError || !currentTicket) {
       return NextResponse.json({ error: 'Ticket not found' }, { status: 404 })
@@ -199,8 +189,7 @@ export async function PATCH(
     }
 
     // Build update object
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const updateObj: any = {
+    const updateObj: SupportTicketUpdate = {
       updated_at: new Date().toISOString(),
     }
 

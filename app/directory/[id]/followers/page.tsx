@@ -3,32 +3,38 @@ import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import AppNav from '@/app/components/AppNav'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/database.types'
+
+type FollowerProfile = Pick<
+  Database['public']['Tables']['profiles']['Row'],
+  'id' | 'first_name' | 'last_name' | 'role' | 'institution' | 'avatar_url' | 'username'
+>
 
 export default async function FollowersPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const supabase = await createClient()
+  const supabase = (await createClient()) as SupabaseClient<Database>
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const supabaseAny = supabase as any
 
   // Get the profile owner's name
   const { data: profile } = await supabase.from('profiles').select('first_name, last_name').eq('id', id).single()
   if (!profile) notFound()
 
   // Get all follower IDs
-  const { data: follows } = await supabaseAny
+  const { data: follows } = await supabase
     .from('follows')
     .select('follower_id')
     .eq('following_id', id)
 
-  const followerIds: string[] = (follows ?? []).map((f: any) => f.follower_id)
+  const followerIds: string[] = (follows ?? [])
+    .map((f) => f.follower_id)
+    .filter((id): id is string => id !== null)
 
   // Fetch follower profiles
   const { data: followers } = followerIds.length > 0
     ? await supabase.from('profiles').select('id, first_name, last_name, role, institution, avatar_url, username').in('id', followerIds)
-    : { data: [] }
+    : { data: [] as FollowerProfile[] }
 
   const ownerName = `${profile.first_name ?? ''} ${profile.last_name ?? ''}`.trim() || 'This user'
 
@@ -48,7 +54,7 @@ export default async function FollowersPage({ params }: { params: Promise<{ id: 
           <p className="text-gray-400 text-sm">No followers yet.</p>
         ) : (
           <div className="space-y-3">
-            {(followers ?? []).map((p: any) => {
+            {(followers ?? []).map((p) => {
               const name = `${p.first_name ?? ''} ${p.last_name ?? ''}`.trim() || 'Anonymous'
               const href = p.username ? `/u/${p.username}` : `/directory/${p.id}`
               return (
@@ -58,7 +64,7 @@ export default async function FollowersPage({ params }: { params: Promise<{ id: 
                     <Image src={p.avatar_url} alt={name} width={40} height={40} className="w-10 h-10 rounded-full object-cover" />
                   ) : (
                     <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-700 dark:text-green-400 font-bold text-sm">
-                      {name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()}
+                      {name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()}
                     </div>
                   )}
                   <div className="min-w-0">

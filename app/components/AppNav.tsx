@@ -8,6 +8,8 @@ import ThemeToggle from './ThemeToggle'
 import NotificationBell from './NotificationBell'
 import GlobalSearchBar from './GlobalSearchBar'
 import Image from 'next/image'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/database.types'
 
 const NAV_LINKS = [
   { href: '/dashboard',     label: 'Dashboard' },
@@ -37,17 +39,16 @@ export default function AppNav() {
   const cleanupRef = useRef<(() => void) | null>(null)
 
   useEffect(() => {
-    const supabase = createClient()
-    const supabaseAny = supabase as any
+    const supabase = createClient() as SupabaseClient<Database>
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return
       setUserEmail(user.email || '')
-      supabaseAny
+      supabase
         .from('profiles')
         .select('is_admin, first_name, avatar_url, subscription_tier, subscription_expires_at')
         .eq('id', user.id)
         .single()
-        .then(({ data }: { data: { is_admin: boolean; first_name: string; avatar_url: string | null; subscription_tier: string | null; subscription_expires_at: string | null } | null }) => {
+        .then(({ data }) => {
           if (data) {
             setIsAdmin(data.is_admin)
             setUserInitial((data.first_name || user.email || '?')[0].toUpperCase())
@@ -62,7 +63,7 @@ export default function AppNav() {
       const heartbeat = () => {
         if (Date.now() - lastHeartbeat < 120000) return // skip if < 2 min since last
         lastHeartbeat = Date.now()
-        supabaseAny
+        supabase
           .from('profiles')
           .update({ last_seen_at: new Date().toISOString() })
           .eq('id', user.id)
@@ -74,12 +75,12 @@ export default function AppNav() {
       // Fetch unread message count
       const fetchUnread = async () => {
         const [{ data: convosA }, { data: convosB }] = await Promise.all([
-          supabaseAny.from('conversations').select('id').eq('participant_a', user.id),
-          supabaseAny.from('conversations').select('id').eq('participant_b', user.id),
+          supabase.from('conversations').select('id').eq('participant_a', user.id),
+          supabase.from('conversations').select('id').eq('participant_b', user.id),
         ])
-        const convoIds = [...(convosA ?? []), ...(convosB ?? [])].map((c: { id: string }) => c.id)
+        const convoIds = [...(convosA ?? []), ...(convosB ?? [])].map((c) => c.id)
         if (convoIds.length === 0) return
-        const { count } = await supabaseAny
+        const { count } = await supabase
           .from('messages')
           .select('*', { count: 'exact', head: true })
           .in('conversation_id', convoIds)

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
+import Link from 'next/link'
 import ThemeToggle from '@/app/components/ThemeToggle'
 import PublicFooter from '@/app/components/PublicFooter'
 
@@ -92,17 +93,17 @@ export default function About() {
 
       {/* NAV */}
       <nav className="agy-nav" style={{ position: 'sticky', top: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--nav-bg)', backdropFilter: 'blur(16px)', borderBottom: '1px solid var(--nav-border)' }}>
-        <a href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
           <Image src="/logo-horizontal-colored.png" alt="AgroYield Network" className="auth-logo-colored" width={200} height={58} style={{ height: 58, width: 'auto' }} />
           <Image src="/logo-horizontal-white.png"   alt="AgroYield Network" className="auth-logo-white"   width={200} height={58} style={{ height: 58, width: 'auto' }} />
-        </a>
+        </Link>
         <div className="agy-nav-links">
-          <a href="/about" style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-accent)', textDecoration: 'none' }}>About</a>
-          <a href="/contact" className="agy-nav-contact" style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', textDecoration: 'none' }}>Contact</a>
+          <Link href="/about" style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-accent)', textDecoration: 'none' }}>About</Link>
+          <Link href="/contact" className="agy-nav-contact" style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', textDecoration: 'none' }}>Contact</Link>
           <ThemeToggle />
-          <a href="/" style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-accent)', background: 'var(--badge-bg)', border: '1px solid var(--badge-border)', borderRadius: 100, padding: '6px 16px', textDecoration: 'none' }}>
+          <Link href="/" style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-accent)', background: 'var(--badge-bg)', border: '1px solid var(--badge-border)', borderRadius: 100, padding: '6px 16px', textDecoration: 'none' }}>
             Join Waitlist
-          </a>
+          </Link>
         </div>
       </nav>
 
@@ -219,9 +220,9 @@ export default function About() {
       <div className="agy-section-cta" style={{ textAlign: 'center' }}>
         <h2 style={{ fontSize: 'clamp(26px, 3.5vw, 42px)', fontWeight: 900, letterSpacing: -1.5, color: 'var(--text-primary)', marginBottom: 14, lineHeight: 1.1 }}>Want to be part of this?</h2>
         <p style={{ fontSize: 16, color: 'var(--text-secondary)', marginBottom: 32 }}>Join the waitlist. We&apos;re saving a spot for you.</p>
-        <a href="/" style={{ display: 'inline-block', padding: '16px 36px', fontSize: 15, fontWeight: 700, color: '#030a05', background: 'linear-gradient(135deg, #22c55e, #16a34a)', borderRadius: 12, textDecoration: 'none', boxShadow: '0 4px 20px rgba(34,197,94,0.3)' }}>
+        <Link href="/" style={{ display: 'inline-block', padding: '16px 36px', fontSize: 15, fontWeight: 700, color: '#030a05', background: 'linear-gradient(135deg, #22c55e, #16a34a)', borderRadius: 12, textDecoration: 'none', boxShadow: '0 4px 20px rgba(34,197,94,0.3)' }}>
           Join the Waitlist →
-        </a>
+        </Link>
       </div>
 
       {/* FOOTER — shared across all public pages */}

@@ -4,6 +4,8 @@ import { cookies } from 'next/headers'
 import Link from 'next/link'
 import ReportExport from './ReportExport'
 import { getBusinessAccess } from '@/lib/business-access'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/database.types'
 
 function fmt(n: number) {
   return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', minimumFractionDigits: 2 })
@@ -16,7 +18,7 @@ function monthLabel(yyyy_mm: string) {
 }
 
 export default async function ReportsPage() {
-  const supabase = await createClient()
+  const supabase = (await createClient()) as SupabaseClient<Database>
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
@@ -38,10 +40,12 @@ export default async function ReportsPage() {
     .select('id, status, total, issue_date')
     .eq('business_id', businessId)
 
-  // Invoice items — separate query for top products
+  // Invoice items — separate query for top products. Note: invoice_items has
+  // only `line_total`; previous code referenced `total`/`amount` (silently
+  // returned undefined under the `any` cast). Bug fixed.
   const { data: invoiceItemsRaw } = await supabase
     .from('invoice_items')
-    .select('invoice_id, description, total, amount')
+    .select('invoice_id, description, line_total')
 
   // Expenses
   const { data: expensesRaw } = await supabase
@@ -118,9 +122,9 @@ export default async function ReportsPage() {
   const productTotals: Record<string, number> = {}
   invoiceItems
     .filter(item => paidInvoiceIds.has(item.invoice_id))
-    .forEach((item: any) => {
+    .forEach((item) => {
       const key = item.description || 'Unknown'
-      const val = Number(item.total) || Number(item.amount) || 0
+      const val = Number(item.line_total) || 0
       productTotals[key] = (productTotals[key] || 0) + val
     })
   const topProducts = Object.entries(productTotals).sort((a, b) => b[1] - a[1]).slice(0, 5)

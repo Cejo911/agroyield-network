@@ -1,5 +1,7 @@
 import { unstable_noStore as noStore } from 'next/cache'
 import { getSupabaseAdmin } from '@/lib/supabase/admin'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/database.types'
 
 const COLOR_CLASSES: Record<string, string> = {
   green:  'bg-green-600 text-white',
@@ -11,8 +13,8 @@ const COLOR_CLASSES: Record<string, string> = {
 export default async function AnnouncementBanner() {
   noStore()
   try {
-    const adminAny = getSupabaseAdmin() as any
-    const { data } = await adminAny
+    const admin = getSupabaseAdmin() as SupabaseClient<Database>
+    const { data } = await admin
       .from('settings')
       .select('key, value')
       .in('key', ['announcement_enabled', 'announcement_text', 'announcement_color'])

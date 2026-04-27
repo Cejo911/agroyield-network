@@ -23,14 +23,36 @@ function fmt(n: number) {
   return `₦${n.toLocaleString('en-NG', { minimumFractionDigits: 2 })}`
 }
 
-export default function InvoicesTable({ invoices }: { invoices: any[] }) {
+export type InvoiceListRow = {
+  id: string
+  invoice_number: string
+  document_type: string | null
+  status: string | null
+  issue_date: string | null
+  due_date: string | null
+  total: number | null
+  paid_at: string | null
+  payment_method: string | null
+  business_id: string
+  user_id: string
+  customers: { name: string | null } | { name: string | null }[] | null
+}
+
+function customerName(inv: InvoiceListRow): string | null {
+  const c = inv.customers
+  if (!c) return null
+  return Array.isArray(c) ? (c[0]?.name ?? null) : c.name
+}
+
+export default function InvoicesTable({ invoices }: { invoices: InvoiceListRow[] }) {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('All')
 
   const filtered = invoices.filter(inv => {
+    const cName = customerName(inv) ?? ''
     const matchesSearch =
       inv.invoice_number?.toLowerCase().includes(search.toLowerCase()) ||
-      (inv.customers as any)?.name?.toLowerCase().includes(search.toLowerCase())
+      cName.toLowerCase().includes(search.toLowerCase())
     const matchesStatus = statusFilter === 'All' || inv.status === statusFilter
     return matchesSearch && matchesStatus
   })
@@ -92,17 +114,17 @@ export default function InvoicesTable({ invoices }: { invoices: any[] }) {
                     </Link>
                   </td>
                   <td className="px-4 py-3 text-gray-500 dark:text-gray-400">
-                    {DOC_LABELS[inv.document_type] ?? inv.document_type}
+                    {(inv.document_type && DOC_LABELS[inv.document_type]) ?? inv.document_type ?? ''}
                   </td>
                   <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
-                    {(inv.customers as any)?.name ?? '—'}
+                    {customerName(inv) ?? '—'}
                   </td>
                   <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{inv.issue_date}</td>
                   <td className="px-4 py-3 text-right font-medium text-gray-800 dark:text-white">
                     {fmt(inv.total ?? 0)}
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${STATUS_COLORS[inv.status] ?? 'bg-gray-100 text-gray-600'}`}>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${(inv.status && STATUS_COLORS[inv.status]) ?? 'bg-gray-100 text-gray-600'}`}>
                       {inv.status}
                     </span>
                   </td>
@@ -123,18 +145,18 @@ export default function InvoicesTable({ invoices }: { invoices: any[] }) {
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-green-700 dark:text-green-400 text-sm">{inv.invoice_number}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">
-                      {(inv.customers as any)?.name ?? '—'}
+                      {customerName(inv) ?? '—'}
                     </p>
                   </div>
                   <div className="text-right ml-3">
                     <p className="font-bold text-sm text-gray-800 dark:text-white">{fmt(inv.total ?? 0)}</p>
-                    <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-medium capitalize ${STATUS_COLORS[inv.status] ?? 'bg-gray-100 text-gray-600'}`}>
+                    <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-medium capitalize ${(inv.status && STATUS_COLORS[inv.status]) ?? 'bg-gray-100 text-gray-600'}`}>
                       {inv.status}
                     </span>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
-                  <span>{DOC_LABELS[inv.document_type] ?? inv.document_type}</span>
+                  <span>{(inv.document_type && DOC_LABELS[inv.document_type]) ?? inv.document_type ?? ''}</span>
                   <span>·</span>
                   <span>{inv.issue_date}</span>
                 </div>

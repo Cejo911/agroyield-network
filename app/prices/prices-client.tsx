@@ -91,6 +91,11 @@ export default function PricesClient({
     }).format(price)
 
   const timeAgo = (dateStr: string) => {
+    // Date.now() in this relative-time helper called during render is intentional.
+    // Refactor planned (H3 backlog) to pass a memoised "now" snapshot down so
+    // renders stay pure; deferred — the visible bug is invisible (relative times
+    // stabilise on the next render anyway).
+    // eslint-disable-next-line react-hooks/purity
     const diff = Date.now() - new Date(dateStr).getTime()
     const hours = Math.floor(diff / 3600000)
     const days = Math.floor(diff / 86400000)

@@ -2,13 +2,25 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/database.types'
 
 const PAYMENT_METHODS = [
   'Bank Transfer', 'Cash', 'POS / Card',
   'Cheque', 'Mobile Money', 'USSD', 'Other',
 ]
 
-export default function RecordPaymentButton({ invoice }: { invoice: any }) {
+type InvoiceProp = {
+  id: string
+  invoice_number: string
+  status: string | null
+  total: number | null
+  paid_at: string | null
+  business_id: string
+  user_id: string
+}
+
+export default function RecordPaymentButton({ invoice }: { invoice: InvoiceProp }) {
   const [open, setOpen]       = useState(false)
   const [loading, setLoading] = useState(false)
   const [form, setForm]       = useState({
@@ -32,7 +44,7 @@ export default function RecordPaymentButton({ invoice }: { invoice: any }) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    const supabase = createClient()
+    const supabase = createClient() as SupabaseClient<Database>
 
     // If invoice was draft (stock not yet deducted), deduct now
     if (invoice.status === 'draft') {
@@ -44,6 +56,8 @@ export default function RecordPaymentButton({ invoice }: { invoice: any }) {
 
       if (items) {
         for (const item of items) {
+          if (!item.product_id) continue
+          const qty = item.quantity ?? 0
           const { data: product } = await supabase
             .from('business_products')
             .select('stock_quantity, cost_price')
@@ -57,7 +71,7 @@ export default function RecordPaymentButton({ invoice }: { invoice: any }) {
             user_id: invoice.user_id,
             product_id: item.product_id,
             type: 'out',
-            quantity: item.quantity,
+            quantity: qty,
             cost_price: product.cost_price || 0,
             reason: 'sale',
             note: 'Auto-deducted: payment recorded directly',
@@ -66,7 +80,7 @@ export default function RecordPaymentButton({ invoice }: { invoice: any }) {
 
           await supabase
             .from('business_products')
-            .update({ stock_quantity: product.stock_quantity - item.quantity })
+            .update({ stock_quantity: (product.stock_quantity ?? 0) - qty })
             .eq('id', item.product_id)
         }
       }

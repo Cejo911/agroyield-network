@@ -9,9 +9,11 @@ import PageHeader from '@/app/components/design/PageHeader'
 import { PrimaryLink } from '@/app/components/design/Button'
 import PricesTabs from './prices-tabs'
 import { getSettings } from '@/lib/settings'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/database.types'
 
 export default async function PricesPage() {
-  const supabase = await createClient()
+  const supabase = (await createClient()) as SupabaseClient<Database>
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
@@ -31,8 +33,11 @@ export default async function PricesPage() {
     .order('reported_at', { ascending: false })
     .limit(500)
 
-  // Fetch profiles for all unique report authors
-  const uniqueUserIds = [...new Set((rawReports ?? []).map(r => r.user_id))]
+  // Fetch profiles for all unique report authors. Filter null user_ids — those
+  // are anomaly rows (anonymous reports?) we treat as orphans.
+  const uniqueUserIds: string[] = [...new Set(
+    (rawReports ?? []).map(r => r.user_id).filter((id): id is string => id !== null)
+  )]
   const { data: profiles } = uniqueUserIds.length > 0
     ? await supabase
         .from('profiles')
@@ -40,12 +45,18 @@ export default async function PricesPage() {
         .in('id', uniqueUserIds)
     : { data: [] }
 
-  // Merge profiles into reports
+  // Merge profiles into reports. Cast to the PriceReport-compatible shape
+  // expected downstream (non-null user_id and reported_at). Drop rows with null
+  // user_id or reported_at since they can't be displayed correctly.
   const profileMap = new Map((profiles ?? []).map(p => [p.id, p]))
-  const reports = (rawReports ?? []).map(r => ({
-    ...r,
-    profiles: profileMap.get(r.user_id) || null,
-  }))
+  const reports = (rawReports ?? [])
+    .filter(r => r.user_id !== null && r.reported_at !== null)
+    .map(r => ({
+      ...r,
+      user_id: r.user_id as string,
+      reported_at: r.reported_at as string,
+      profiles: (r.user_id ? profileMap.get(r.user_id) : null) || null,
+    }))
 
   // Fetch commodity categories from admin settings
   const settings = await getSettings(['commodity_categories'])
@@ -73,8 +84,8 @@ export default async function PricesPage() {
         reportsTab={<PricesClient reports={reports} userId={user.id} categories={categories} />}
         intelligenceTab={
           <PriceIntelligence
-            reports={reports as any}
-            alerts={(alerts ?? []) as any}
+            reports={reports as unknown as Parameters<typeof PriceIntelligence>[0]['reports']}
+            alerts={(alerts ?? []) as unknown as Parameters<typeof PriceIntelligence>[0]['alerts']}
             userId={user.id}
           />
         }

@@ -2,10 +2,13 @@
 // Returns the string value or null if not found. Uses the admin client to bypass RLS.
 
 import { getSupabaseAdmin } from '@/lib/supabase/admin'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/database.types'
 
 export async function getSetting(key: string): Promise<string | null> {
   try {
-    const { data } = await (getSupabaseAdmin() as any)
+    const admin = getSupabaseAdmin() as SupabaseClient<Database>
+    const { data } = await admin
       .from('settings')
       .select('value')
       .eq('key', key)
@@ -18,7 +21,8 @@ export async function getSetting(key: string): Promise<string | null> {
 
 export async function getSettings(keys: string[]): Promise<Record<string, string | null>> {
   try {
-    const { data } = await (getSupabaseAdmin() as any)
+    const admin = getSupabaseAdmin() as SupabaseClient<Database>
+    const { data } = await admin
       .from('settings')
       .select('key, value')
       .in('key', keys)

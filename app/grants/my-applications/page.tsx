@@ -2,6 +2,14 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import AppNav from '@/app/components/AppNav'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/database.types'
+
+type GrantApplicationRow = Database['public']['Tables']['grant_applications']['Row']
+type GrantRow = Database['public']['Tables']['grants']['Row']
+// Application enriched with the embedded `grants(*)` relation.
+type ApplicationWithGrant = GrantApplicationRow & { grants: GrantRow | null }
+type DocItem = { name: string; completed: boolean }
 
 const statusMeta: Record<string, { label: string; color: string }> = {
   draft:       { label: 'Draft',       color: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400' },
@@ -12,27 +20,24 @@ const statusMeta: Record<string, { label: string; color: string }> = {
 }
 
 export default async function MyApplicationsPage() {
-  const supabase = await createClient()
+  const supabase = (await createClient()) as SupabaseClient<Database>
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const supabaseAny = supabase as any
-
   // Fetch all applications with grant details
-  const { data: applications } = await supabaseAny
+  const { data: applications } = await supabase
     .from('grant_applications')
     .select('*, grants(*)')
     .eq('user_id', user.id)
     .order('updated_at', { ascending: false })
 
-  const apps = (applications ?? []) as any[]
+  const apps: ApplicationWithGrant[] = (applications ?? []) as ApplicationWithGrant[]
 
   // Stats
   const total = apps.length
-  const submitted = apps.filter((a: any) => a.status === 'submitted').length
-  const shortlisted = apps.filter((a: any) => a.status === 'shortlisted').length
-  const awarded = apps.filter((a: any) => a.status === 'awarded').length
+  const submitted = apps.filter((a) => a.status === 'submitted').length
+  const shortlisted = apps.filter((a) => a.status === 'shortlisted').length
+  const awarded = apps.filter((a) => a.status === 'awarded').length
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
@@ -70,12 +75,14 @@ export default async function MyApplicationsPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {apps.map((app: any) => {
+            {apps.map((app) => {
               const grant = app.grants
               if (!grant) return null
               const meta = statusMeta[app.status] || statusMeta.draft
-              const docsDone = (app.documents ?? []).filter((d: any) => d.completed).length
-              const docsTotal = (app.documents ?? []).length
+              // documents is Json in the schema; narrow defensively.
+              const docs: DocItem[] = Array.isArray(app.documents) ? (app.documents as unknown as DocItem[]) : []
+              const docsDone = docs.filter((d) => d.completed).length
+              const docsTotal = docs.length
               const deadline = grant.deadline
                 ? new Date(grant.deadline).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
                 : null

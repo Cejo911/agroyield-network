@@ -7,12 +7,11 @@ import OnlineIndicator from '@/app/components/OnlineIndicator'
 import { useSearchLog } from '@/lib/useSearchLog'
 
 interface Mentor {
-  id: string
   user_id: string
-  headline: string
+  headline: string | null
   expertise: string[]
   bio: string | null
-  years_experience: number
+  years_experience: number | null
   availability: string
   session_format: string[]
   location: string | null
@@ -25,9 +24,9 @@ interface Mentor {
     role: string | null
     institution: string | null
     avatar_url: string | null
-    is_verified: boolean
+    is_verified: boolean | null
     last_seen_at?: string | null
-  }
+  } | null
 }
 
 const EXPERTISE_TAGS = [
@@ -50,7 +49,7 @@ export default function MentorBrowser({ mentors, userId }: { mentors: Mentor[]; 
       const name = `${m.profiles?.first_name ?? ''} ${m.profiles?.last_name ?? ''}`.toLowerCase()
       return (
         name.includes(q) ||
-        m.headline.toLowerCase().includes(q) ||
+        (m.headline ?? '').toLowerCase().includes(q) ||
         m.expertise.some(e => e.toLowerCase().includes(q)) ||
         (m.location ?? '').toLowerCase().includes(q) ||
         (m.profiles?.institution ?? '').toLowerCase().includes(q)
@@ -120,7 +119,7 @@ export default function MentorBrowser({ mentors, userId }: { mentors: Mentor[]; 
       {sorted.length === 0 ? (
         <div className="text-center py-16 text-gray-400">
           <p className="text-lg mb-2">No mentors found</p>
-          <p className="text-sm">Try adjusting your filters or be the first to <a href="/mentorship/become-mentor" className="text-green-600 hover:underline">become a mentor</a>.</p>
+          <p className="text-sm">Try adjusting your filters or be the first to <Link href="/mentorship/become-mentor" className="text-green-600 hover:underline">become a mentor</Link>.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -129,7 +128,7 @@ export default function MentorBrowser({ mentors, userId }: { mentors: Mentor[]; 
             const initials = name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
             return (
               <Link
-                key={m.id}
+                key={m.user_id}
                 href={`/mentorship/${m.user_id}`}
                 className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 hover:border-green-300 dark:hover:border-green-700 transition-colors block"
               >
@@ -157,7 +156,7 @@ export default function MentorBrowser({ mentors, userId }: { mentors: Mentor[]; 
                     <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5 line-clamp-2">{m.headline}</p>
                     <div className="flex items-center gap-3 mt-2 text-xs text-gray-500 dark:text-gray-400">
                       {m.profiles?.role && <span>{m.profiles.role}</span>}
-                      {m.years_experience > 0 && <span>{m.years_experience}y exp</span>}
+                      {m.years_experience !== null && m.years_experience > 0 && <span>{m.years_experience}y exp</span>}
                       {m.location && <span>{m.location}</span>}
                     </div>
                   </div>

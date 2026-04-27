@@ -6,6 +6,17 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import BookmarkButton from '@/app/components/design/BookmarkButton'
 import { useToast } from '@/app/components/Toast'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/database.types'
+
+// Row aliases derived from the auto-generated Database type.
+type Grant = Database['public']['Tables']['grants']['Row']
+type GrantApplication = Database['public']['Tables']['grant_applications']['Row']
+type GrantApplicationUpdate = Database['public']['Tables']['grant_applications']['Update']
+type ProfileSummary = Pick<
+  Database['public']['Tables']['profiles']['Row'],
+  'first_name' | 'last_name' | 'role' | 'institution' | 'location' | 'bio' | 'linkedin' | 'email'
+>
 
 type DocItem = { name: string; completed: boolean }
 
@@ -29,26 +40,28 @@ const statusMeta: Record<string, { label: string; color: string; bg: string }> =
 }
 
 interface Props {
-  grant: any
-  application: any | null
-  userProfile: any
+  grant: Grant
+  application: GrantApplication | null
+  userProfile: ProfileSummary | null
   userId: string
   initiallySaved?: boolean
 }
 
 export default function GrantDetail({ grant, application, userProfile, userId, initiallySaved = false }: Props) {
-  const supabase = createClient()
+  const supabase = createClient() as SupabaseClient<Database>
   const router = useRouter()
   const { showError } = useToast()
-  const [app, setApp] = useState(application)
+  const [app, setApp] = useState<GrantApplication | null>(application)
   const [newDocName, setNewDocName] = useState('')
   const [showDocInput, setShowDocInput] = useState(false)
   const [saving, setSaving] = useState(false)
   const [notes, setNotes] = useState(app?.notes || '')
+  // documents is stored as Json in the DB; narrow to DocItem[] at the boundary.
+  const initialDocs = Array.isArray(app?.documents) ? (app?.documents as unknown as DocItem[]) : null
   const [documents, setDocuments] = useState<DocItem[]>(
-    app?.documents?.length > 0 ? app.documents : DEFAULT_DOCS
+    initialDocs && initialDocs.length > 0 ? initialDocs : DEFAULT_DOCS
   )
-  const [status, setStatus] = useState(app?.status || 'draft')
+  const [status, setStatus] = useState<GrantApplication['status']>(app?.status || 'draft')
 
   const isExpired = grant.deadline && new Date(grant.deadline) < new Date()
   const canApply = grant.status === 'open' && !isExpired
@@ -56,7 +69,7 @@ export default function GrantDetail({ grant, application, userProfile, userId, i
   // Start tracking this grant
   async function startApplication() {
     setSaving(true)
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from('grant_applications')
       .insert({
         user_id: userId,
@@ -82,7 +95,7 @@ export default function GrantDetail({ grant, application, userProfile, userId, i
   async function saveApplication() {
     if (!app) return
     setSaving(true)
-    const updates: any = {
+    const updates: GrantApplicationUpdate = {
       notes,
       documents,
       status,
@@ -92,7 +105,7 @@ export default function GrantDetail({ grant, application, userProfile, userId, i
       updates.submitted_at = new Date().toISOString()
     }
 
-    const { error } = await (supabase as any)
+    const { error } = await supabase
       .from('grant_applications')
       .update(updates)
       .eq('id', app.id)
@@ -108,7 +121,7 @@ export default function GrantDetail({ grant, application, userProfile, userId, i
   // Delete application
   async function deleteApplication() {
     if (!app || !confirm('Remove this application from your tracker?')) return
-    await (supabase as any).from('grant_applications').delete().eq('id', app.id)
+    await supabase.from('grant_applications').delete().eq('id', app.id)
     setApp(null)
     setStatus('draft')
     setNotes('')
@@ -259,7 +272,7 @@ export default function GrantDetail({ grant, application, userProfile, userId, i
           <p className="leading-relaxed text-green-700 dark:text-green-400">
             1. Click <strong>Start Tracking</strong> to begin monitoring this grant.
             2. Use the <strong>Status</strong> pills to update your progress — start at Draft while preparing, move to Submitted once you apply, then update as you hear back.
-            3. Tick off items in the <strong>Document Checklist</strong> as you prepare them. Add custom items with "+ Add item".
+            3. Tick off items in the <strong>Document Checklist</strong> as you prepare them. Add custom items with &quot;+ Add item&quot;.
             4. Use <strong>Notes</strong> for contact details, reference numbers, or reminders.
             5. Click <strong>Save Progress</strong> to save all changes. View all your tracked grants from <strong>My Applications</strong>.
           </p>
@@ -291,7 +304,7 @@ export default function GrantDetail({ grant, application, userProfile, userId, i
                 {STATUS_PIPELINE.map((s, i) => {
                   const meta = statusMeta[s]
                   const isActive = status === s
-                  const isPast = STATUS_PIPELINE.indexOf(status as any) > i
+                  const isPast = STATUS_PIPELINE.indexOf(status as typeof STATUS_PIPELINE[number]) > i
                   return (
                     <button
                       key={s}

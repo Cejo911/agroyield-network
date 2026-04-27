@@ -3,6 +3,13 @@ import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import PrintButton from './PrintButton'
 import { getBusinessAccess } from '@/lib/business-access'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/database.types'
+
+type Invoice = Database['public']['Tables']['invoices']['Row']
+type Expense = Database['public']['Tables']['business_expenses']['Row']
+type Customer = Pick<Database['public']['Tables']['customers']['Row'], 'id' | 'name'>
+type Business = Database['public']['Tables']['businesses']['Row']
 
 export const dynamic = 'force-dynamic'
 
@@ -15,8 +22,11 @@ function fmtDate(d: string) {
 function monthLabel(ym: string) {
   try { const [y, m] = ym.split('-'); return new Date(parseInt(y), parseInt(m) - 1).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }) } catch { return ym }
 }
-function invoiceTotal(inv: any): number {
-  return Number(inv.total_amount || inv.amount || inv.total || 0)
+// invoices.total is the only revenue column; previous fallbacks (total_amount,
+// amount) referenced columns that don't exist on the invoices table — the OR
+// chain always resolved to `total`. See typed-Supabase migration notes.
+function invoiceTotal(inv: Invoice): number {
+  return Number(inv.total ?? 0)
 }
 
 export default async function ReportsPrintPage({
@@ -27,7 +37,7 @@ export default async function ReportsPrintPage({
   const { period: rawPeriod } = await searchParams
   const period = ['month', 'quarter', 'year', 'all'].includes(rawPeriod || '') ? rawPeriod! : 'all'
 
-  const supabase = await createClient()
+  const supabase = (await createClient()) as SupabaseClient<Database>
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) redirect('/login')
 
@@ -42,10 +52,10 @@ export default async function ReportsPrintPage({
     supabase.from('businesses').select('*').eq('id', bizId).maybeSingle(),
   ])
 
-  const allInvoices = (invoicesRes.data  || []) as any[]
-  const allExpenses = (expensesRes.data  || []) as any[]
-  const customers   = (customersRes.data || []) as any[]
-  const business    = businessRes.data   || null
+  const allInvoices: Invoice[] = invoicesRes.data || []
+  const allExpenses: Expense[] = expensesRes.data || []
+  const customers: Customer[]  = customersRes.data || []
+  const business: Business | null = businessRes.data || null
 
   const customerMap = Object.fromEntries(customers.map((c) => [c.id, c.name]))
 
@@ -55,7 +65,7 @@ export default async function ReportsPrintPage({
   if (period === 'quarter') { const d = new Date(); d.setMonth(d.getMonth() - 3); periodStart = d.toISOString().slice(0, 10) }
   if (period === 'year')    periodStart = `${now.getFullYear()}-01-01`
 
-  const invoices = periodStart ? allInvoices.filter((i) => i.issue_date >= periodStart!) : allInvoices
+  const invoices = periodStart ? allInvoices.filter((i) => (i.issue_date ?? '') >= periodStart!) : allInvoices
   const expenses = periodStart ? allExpenses.filter((e) => e.date >= periodStart!) : allExpenses
 
   const paidInvoices  = invoices.filter((i) => i.status === 'paid')
@@ -246,11 +256,11 @@ export default async function ReportsPrintPage({
                       </tr>
                     </thead>
                     <tbody>
-                      {invoices.slice(0, 20).map((inv: any, idx: number) => (
+                      {invoices.slice(0, 20).map((inv, idx) => (
                         <tr key={inv.id} style={{ background: idx % 2 === 0 ? '#fff' : '#f9fafb', borderBottom: '1px solid #f3f4f6' }}>
                           <td style={{ padding: cell, fontWeight: 600 }}>{inv.invoice_number}</td>
-                          <td style={{ padding: cell, color: '#6b7280' }}>{fmtDate(inv.issue_date)}</td>
-                          <td style={{ padding: cell }}>{customerMap[inv.customer_id] || '—'}</td>
+                          <td style={{ padding: cell, color: '#6b7280' }}>{fmtDate(inv.issue_date ?? '')}</td>
+                          <td style={{ padding: cell }}>{(inv.customer_id && customerMap[inv.customer_id]) || '—'}</td>
                           <td style={{ padding: cell }}>
                             <span style={{
                               fontSize: '9px', fontWeight: 700, padding: '2px 6px', borderRadius: '100px',

@@ -1,11 +1,13 @@
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 import Link from 'next/link'
-import InvoicesTable from './InvoicesTable'
+import InvoicesTable, { type InvoiceListRow } from './InvoicesTable'
 import { getBusinessAccess } from '@/lib/business-access'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/database.types'
 
 export default async function InvoicesPage() {
-  const supabase = await createClient()
+  const supabase = (await createClient()) as SupabaseClient<Database>
   const { data: { user } } = await supabase.auth.getUser()
 
   const cookieStore = await cookies()
@@ -55,7 +57,7 @@ export default async function InvoicesPage() {
           </Link>
         </div>
       ) : (
-        <InvoicesTable invoices={invoices as any[]} />
+        <InvoicesTable invoices={invoices as unknown as InvoiceListRow[]} />
       )}
     </div>
   )

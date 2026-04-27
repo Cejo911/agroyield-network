@@ -4,6 +4,8 @@ import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/app/components/Toast'
 import { getBusinessAccess } from '@/lib/business-access'
 import { getActiveBusinessId } from '@/lib/business-cookie'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/database.types'
 
 type Product = {
   id: string
@@ -20,19 +22,19 @@ type Product = {
 type StockMovement = {
   id: string
   product_id: string
-  type: 'in' | 'out'
+  type: string
   quantity: number
-  cost_price: number
+  cost_price: number | null
   reason: string
   note: string | null
   invoice_id: string | null
-  created_at: string
+  created_at: string | null
 }
 
 const PREDEFINED_UNITS = ['unit', 'bag', 'kg', 'litre', 'tonne', 'carton', 'piece', 'crate', 'bundle', 'dozen', 'service']
 
 export default function ProductsPage() {
-  const supabase = createClient()
+  const supabase = createClient() as SupabaseClient<Database>
   const { showError } = useToast()
   const [products, setProducts] = useState<Product[]>([])
   const [businessId, setBusinessId] = useState<string | null>(null)
@@ -59,6 +61,9 @@ export default function ProductsPage() {
   const [movements, setMovements] = useState<StockMovement[]>([])
   const [historyLoading, setHistoryLoading] = useState(false)
 
+  // load() is declared below; the rule complains about TDZ but the effect
+  // runs after mount, by which point load is bound.
+  // eslint-disable-next-line react-hooks/immutability
   useEffect(() => { load() }, [])
 
   const load = async () => {
@@ -69,7 +74,17 @@ export default function ProductsPage() {
     if (!access) { setLoading(false); return }
     setBusinessId(access.businessId)
     const { data } = await supabase.from('business_products').select('*').eq('business_id', access.businessId).eq('is_active', true).order('name')
-    setProducts(data ?? [])
+    setProducts((data ?? []).map((p) => ({
+      id: p.id,
+      name: p.name,
+      description: p.description,
+      unit: p.unit ?? 'unit',
+      unit_price: p.unit_price,
+      cost_price: p.cost_price ?? 0,
+      stock_quantity: p.stock_quantity ?? 0,
+      low_stock_threshold: p.low_stock_threshold ?? 5,
+      is_active: p.is_active,
+    })))
     setLoading(false)
   }
 
@@ -173,7 +188,7 @@ export default function ProductsPage() {
       ? stockProduct.stock_quantity + qty
       : stockProduct.stock_quantity - qty
 
-    const updatePayload: any = { stock_quantity: newQty }
+    const updatePayload: Database['public']['Tables']['business_products']['Update'] = { stock_quantity: newQty }
     if (stockForm.type === 'in' && parseFloat(stockForm.cost_price) > 0) {
       updatePayload.cost_price = parseFloat(stockForm.cost_price)
     }
@@ -197,7 +212,7 @@ export default function ProductsPage() {
       .eq('product_id', p.id)
       .order('created_at', { ascending: false })
       .limit(50)
-    setMovements(data ?? [])
+    setMovements((data ?? []) as StockMovement[])
     setHistoryLoading(false)
   }
 
@@ -487,8 +502,8 @@ export default function ProductsPage() {
                       </div>
                     </div>
                     <div className="text-right">
-                      {m.cost_price > 0 && <p className="text-xs text-gray-500">{fmt(m.cost_price)}/{historyProduct.unit}</p>}
-                      <p className="text-xs text-gray-400">{new Date(m.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                      {m.cost_price !== null && m.cost_price > 0 && <p className="text-xs text-gray-500">{fmt(m.cost_price)}/{historyProduct.unit}</p>}
+                      {m.created_at && <p className="text-xs text-gray-400">{new Date(m.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p>}
                     </div>
                   </div>
                 ))}

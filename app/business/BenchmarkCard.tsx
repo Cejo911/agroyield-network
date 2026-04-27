@@ -31,6 +31,11 @@ export default function BenchmarkCard({ businessId, period }: { businessId: stri
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // setLoading(true) at the start of the fetch effect is intentional — it
+    // resets the spinner when businessId/period change. The async setData
+    // calls happen in the .then() callbacks, not synchronously. The lint
+    // rule still flags the synchronous setLoading; suppress.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true)
     fetch(`/api/business/benchmarks?business_id=${businessId}&period=${period}`)
       .then(r => r.json())

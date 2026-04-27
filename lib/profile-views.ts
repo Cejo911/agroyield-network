@@ -17,9 +17,10 @@
 
 import { getSupabaseAdmin } from '@/lib/supabase/admin'
 import { createNotification } from '@/lib/notifications'
+import type { SupabaseClient as SupabaseClientBase } from '@supabase/supabase-js'
+import type { Database } from '@/lib/database.types'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type SupabaseClient = any
+type SupabaseClient = SupabaseClientBase<Database>
 
 /**
  * Insert a profile-view row. Idempotent per (viewer, viewed, UTC-date) via the
@@ -71,8 +72,8 @@ export async function recordProfileView(
     // because the viewer cannot write notifications for another user under RLS.
     // Fire-and-forget — any failure here is logged but never surfaces.
     try {
-      const admin = getSupabaseAdmin()
-      const { data: viewerProfile } = await (admin as any)
+      const admin = getSupabaseAdmin() as SupabaseClient
+      const { data: viewerProfile } = await admin
         .from('profiles')
         .select('first_name, last_name, username')
         .eq('id', viewerId)

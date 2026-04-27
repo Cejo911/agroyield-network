@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/database.types'
 
 /**
  * Hook that checks whether the current user has completed the required
@@ -22,11 +24,11 @@ export default function useProfileGate() {
   const [isInstitutionVerified, setIsInstitutionVerified] = useState(false)
 
   useEffect(() => {
-    const supabase = createClient()
+    const supabase = createClient() as SupabaseClient<Database>
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) { setReady(true); return }
 
-      const { data: profile } = await (supabase as any)
+      const { data: profile } = await supabase
         .from('profiles')
         .select('first_name, last_name, phone, whatsapp, account_type, is_institution_verified')
         .eq('id', user.id)

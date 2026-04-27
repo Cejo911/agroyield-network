@@ -45,6 +45,9 @@ export default function OrdersList({ userId }: { userId: string }) {
   const [role, setRole] = useState<'all' | 'buyer' | 'seller'>('all')
 
   useEffect(() => {
+    // setLoading(true) at the start of the fetch effect resets the spinner
+    // when role changes. Async setOrders happens in .then(); rule suppress.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true)
     fetch(`/api/marketplace/orders?role=${role}`)
       .then(r => r.json())

@@ -2,23 +2,35 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import AppNav from '@/app/components/AppNav'
 import MessagesInbox from './messages-inbox'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/database.types'
+
+type ConvoRow = Pick<
+  Database['public']['Tables']['conversations']['Row'],
+  'id' | 'participant_a' | 'participant_b' | 'last_message_at' | 'last_message_preview'
+>
+type MessageRow = Pick<
+  Database['public']['Tables']['messages']['Row'],
+  'conversation_id' | 'body' | 'sender_id' | 'created_at'
+>
+type ProfileRow = Pick<
+  Database['public']['Tables']['profiles']['Row'],
+  'id' | 'first_name' | 'last_name' | 'avatar_url' | 'role' | 'last_seen_at'
+>
 
 export default async function MessagesPage() {
-  const supabase = await createClient()
+  const supabase = (await createClient()) as SupabaseClient<Database>
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const supabaseAny = supabase as any
-
   // Fetch all conversations for this user
   const [{ data: convosAsP1 }, { data: convosAsP2 }] = await Promise.all([
-    supabaseAny
+    supabase
       .from('conversations')
       .select('id, participant_a, participant_b, last_message_at, last_message_preview')
       .eq('participant_a', user.id)
       .order('last_message_at', { ascending: false }),
-    supabaseAny
+    supabase
       .from('conversations')
       .select('id, participant_a, participant_b, last_message_at, last_message_preview')
       .eq('participant_b', user.id)
@@ -26,9 +38,8 @@ export default async function MessagesPage() {
   ])
 
   // Merge and sort
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const allConvos: any[] = [...(convosAsP1 ?? []), ...(convosAsP2 ?? [])]
-    .sort((a, b) => new Date(b.last_message_at).getTime() - new Date(a.last_message_at).getTime())
+  const allConvos: ConvoRow[] = [...(convosAsP1 ?? []), ...(convosAsP2 ?? [])]
+    .sort((a, b) => new Date(b.last_message_at ?? 0).getTime() - new Date(a.last_message_at ?? 0).getTime())
 
   // Get other participant IDs
   const otherIds = allConvos.map(c =>
@@ -41,43 +52,45 @@ export default async function MessagesPage() {
   const [{ data: profiles }, { data: lastMessages }, { data: unreadMessages }] = await Promise.all([
     otherIds.length > 0
       ? supabase.from('profiles').select('id, first_name, last_name, avatar_url, role, last_seen_at').in('id', otherIds)
-      : Promise.resolve({ data: [] }),
+      : Promise.resolve({ data: [] as ProfileRow[] }),
     convoIds.length > 0
-      ? supabaseAny
+      ? supabase
           .from('messages')
           .select('conversation_id, body, sender_id, created_at')
           .in('conversation_id', convoIds)
           .order('created_at', { ascending: false })
-      : Promise.resolve({ data: [] }),
+      : Promise.resolve({ data: [] as MessageRow[] }),
     convoIds.length > 0
-      ? supabaseAny
+      ? supabase
           .from('messages')
           .select('conversation_id')
           .in('conversation_id', convoIds)
           .neq('sender_id', user.id)
           .neq('status', 'read')
-      : Promise.resolve({ data: [] }),
+      : Promise.resolve({ data: [] as Array<Pick<MessageRow, 'conversation_id'>> }),
   ])
 
   // Build profile map
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const profileMap: Record<string, any> = {}
-  for (const p of (profiles ?? []) as any[]) profileMap[p.id] = p
+  const profileMap: Record<string, ProfileRow> = {}
+  for (const p of (profiles ?? []) as ProfileRow[]) profileMap[p.id] = p
 
   // Build last message map (first message per conversation since ordered desc)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const lastMsgMap: Record<string, any> = {}
-  for (const m of (lastMessages ?? []) as any[]) {
+  const lastMsgMap: Record<string, MessageRow> = {}
+  for (const m of (lastMessages ?? []) as MessageRow[]) {
     if (!lastMsgMap[m.conversation_id]) lastMsgMap[m.conversation_id] = m
   }
 
   // Build unread count map
   const unreadMap: Record<string, number> = {}
-  for (const m of (unreadMessages ?? []) as any[]) {
+  for (const m of (unreadMessages ?? []) as Array<Pick<MessageRow, 'conversation_id'>>) {
     unreadMap[m.conversation_id] = (unreadMap[m.conversation_id] || 0) + 1
   }
 
   const timeAgo = (dateStr: string) => {
+    // Date.now() in this server-side relative-time helper is fine — runs once
+    // per request render, not part of a React render path. The lint rule
+    // flags it anyway because it can't tell server from client; suppress.
+    // eslint-disable-next-line react-hooks/purity
     const diff = Date.now() - new Date(dateStr).getTime()
     const mins = Math.floor(diff / 60000)
     const hours = Math.floor(diff / 3600000)
@@ -96,8 +109,9 @@ export default async function MessagesPage() {
     const name = profile ? `${profile.first_name ?? ''} ${profile.last_name ?? ''}`.trim() : 'User'
     const lastMsg = lastMsgMap[convo.id]
     const unread = unreadMap[convo.id] || 0
+    const body = lastMsg?.body ?? ''
     const preview = lastMsg
-      ? (lastMsg.sender_id === user.id ? 'You: ' : '') + (lastMsg.body?.slice(0, 60) || '') + (lastMsg.body?.length > 60 ? '…' : '')
+      ? (lastMsg.sender_id === user.id ? 'You: ' : '') + body.slice(0, 60) + (body.length > 60 ? '…' : '')
       : 'No messages yet'
     const time = lastMsg ? timeAgo(lastMsg.created_at) : ''
 

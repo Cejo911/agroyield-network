@@ -1,11 +1,14 @@
 'use client'
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { getBusinessAccess } from '@/lib/business-access'
 import { getActiveBusinessId } from '@/lib/business-cookie'
 import UpgradePrompt from '@/app/components/UpgradePrompt'
 import type { TierName } from '@/lib/tiers'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/database.types'
 
 interface LineItem {
   product_id: string
@@ -42,7 +45,7 @@ interface Product {
 
 export default function NewInvoicePage() {
   const router = useRouter()
-  const supabase = createClient()
+  const supabase = createClient() as SupabaseClient<Database>
 
   const [business, setBusiness] = useState<Business | null>(null)
   const [customers, setCustomers] = useState<Customer[]>([])
@@ -129,7 +132,14 @@ export default function NewInvoicePage() {
           .eq('business_id', biz.id)
           .eq('is_active', true)
           .order('name')
-        setProducts(prods || [])
+        setProducts((prods ?? []).map((p) => ({
+          id: p.id,
+          name: p.name,
+          description: p.description,
+          unit: p.unit ?? 'unit',
+          unit_price: p.unit_price,
+          stock_quantity: p.stock_quantity ?? 0,
+        })))
       }
       const { data: custs } = await supabase
         .from('customers')
@@ -357,8 +367,9 @@ export default function NewInvoicePage() {
       }
 
       router.push(`/business/invoices/${invoice.id}`)
-    } catch (err: any) {
-      setError(err.message || 'Something went wrong. Please try again.')
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Something went wrong. Please try again.'
+      setError(message)
       setSaving(false)
     }
   }
@@ -731,7 +742,7 @@ export default function NewInvoicePage() {
                   </select>
                   <p className="text-[11px] text-gray-500 dark:text-gray-400">
                     We&apos;ll create the first invoice now and regenerate on the next {recurringCadence === 'weekly' ? 'week' : recurringCadence === 'monthly' ? 'month' : 'quarter'}.
-                    Pause or end the schedule anytime from <a href="/business/invoices/recurring" className="text-green-700 hover:underline">Recurring Invoices</a>.
+                    Pause or end the schedule anytime from <Link href="/business/invoices/recurring" className="text-green-700 hover:underline">Recurring Invoices</Link>.
                   </p>
                 </div>
               )}

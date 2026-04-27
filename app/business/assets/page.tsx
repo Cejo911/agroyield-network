@@ -89,6 +89,10 @@ export default function AssetsPage() {
   // Detail view
   const [viewAsset, setViewAsset] = useState<Asset | null>(null)
 
+  // load() is hoisted via const declaration below; the lint rule doesn't
+  // see the closure it captures and complains about TDZ. Pattern is safe
+  // here because effect runs after mount, by which time load is bound.
+  // eslint-disable-next-line react-hooks/immutability
   useEffect(() => { load() }, [])
 
   const load = async () => {

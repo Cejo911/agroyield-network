@@ -2,6 +2,10 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { getBusinessAccess } from '@/lib/business-access'
 import InvoiceShareActions from './InvoiceShareActions'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/database.types'
+
+type InvoiceItem = Database['public']['Tables']['invoice_items']['Row']
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('en-GB', {
@@ -17,7 +21,7 @@ function formatCurrency(amount: number) {
 
 export default async function InvoicePrintPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const supabase = await createClient()
+  const supabase = (await createClient()) as SupabaseClient<Database>
 
   const { data: { user } } = await supabase.auth.getUser()
   const access = user ? await getBusinessAccess(supabase, user.id) : null
@@ -38,30 +42,34 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
     .eq('id', invoice.business_id)
     .single()
 
-  const { data: customer } = await supabase
-    .from('customers')
-    .select('*')
-    .eq('id', invoice.customer_id)
-    .single()
+  const { data: customer } = invoice.customer_id
+    ? await supabase
+        .from('customers')
+        .select('*')
+        .eq('id', invoice.customer_id)
+        .single()
+    : { data: null }
 
-  const items = invoice.invoice_items || []
+  const items: InvoiceItem[] = (invoice.invoice_items as InvoiceItem[] | null) ?? []
 
-  // Robustly compute each line total — falls back to qty × unit_price
-  // in case the DB column is null or named differently
-  const computedItems = items.map((item: any) => ({
+  // Compute each line total — falls back to qty × unit_price when line_total is null.
+  // Note: previous code referenced item.total / item.amount which never existed
+  // on invoice_items (canonical column is line_total). Bug fixed in pass.
+  const computedItems = items.map((item) => ({
     ...item,
     _total:
-      Number(item.total) ||
-      Number(item.amount) ||
-      (Number(item.quantity) * Number(item.unit_price)) ||
+      Number(item.line_total) ||
+      (Number(item.quantity ?? 0) * Number(item.unit_price ?? 0)) ||
       0,
   }))
 
-  const subtotal = computedItems.reduce((sum: number, item: any) => sum + item._total, 0)
+  const subtotal = computedItems.reduce((sum, item) => sum + item._total, 0)
   const delivery = Number(invoice.delivery_charge || 0)
   const vat = Number(invoice.vat_amount || 0)
-  // Prefer persisted total (total or total_amount); fall back to local calc
-  const total = Number(invoice.total) || Number(invoice.total_amount) || (subtotal + delivery + vat)
+  // Prefer the persisted invoice total; fall back to the locally computed sum.
+  // Previous code also tried `invoice.total_amount` — that column doesn't exist
+  // (canonical column is `total`). Bug fixed in pass.
+  const total = Number(invoice.total) || (subtotal + delivery + vat)
 
   const watermarkLabel =
     invoice.status === 'draft' ? 'DRAFT' :
@@ -201,7 +209,7 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
                 <div style={{ padding: '20px 24px', borderRight: '1px solid #e5e7eb' }}>
                   <div style={{ fontSize: '10px', fontWeight: 700, color: '#15803d', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '10px' }}>Bill To</div>
                   <div style={{ fontWeight: 700, fontSize: '15px', color: '#111827', marginBottom: '6px' }}>
-                    {customer?.name || invoice.customer_name}
+                    {customer?.name || 'Customer'}
                   </div>
                   {customer?.address && <div style={{ color: '#6b7280', marginBottom: '3px' }}>{customer.address}</div>}
                   {customer?.phone && <div style={{ color: '#6b7280', marginBottom: '3px' }}>{customer.phone}</div>}
@@ -209,12 +217,12 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
                 </div>
                 <div style={{ padding: '20px 24px', background: '#f0fdf4' }}>
                   <div style={{ fontSize: '10px', fontWeight: 700, color: '#15803d', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '10px' }}>Invoice Details</div>
-                  {[
-                    ['Issue Date', formatDate(invoice.issue_date)],
-                    invoice.due_date ? ['Due Date', formatDate(invoice.due_date)] : null,
-                    ['Reference', invoice.invoice_number],
-                    ['Status', invoice.status?.toUpperCase()],
-                  ].filter(Boolean).map(([label, value]: any) => (
+                  {([
+                    invoice.issue_date ? ['Issue Date', formatDate(invoice.issue_date)] as const : null,
+                    invoice.due_date ? ['Due Date', formatDate(invoice.due_date)] as const : null,
+                    ['Reference', invoice.invoice_number] as const,
+                    ['Status', invoice.status?.toUpperCase() ?? ''] as const,
+                  ].filter(Boolean) as ReadonlyArray<readonly [string, string | undefined]>).map(([label, value]) => (
                     <div key={label} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '7px' }}>
                       <span style={{ color: '#6b7280', fontSize: '12px' }}>{label}</span>
                       <span style={{ fontWeight: 600, fontSize: '12px', color: label === 'Status' ? statusColor : '#111827' }}>
@@ -250,14 +258,13 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
                   </tr>
                 </thead>
                 <tbody>
-                  {computedItems.map((item: any, idx: number) => (
+                  {computedItems.map((item, idx) => (
                     <tr key={item.id} style={{ background: idx % 2 === 0 ? '#fff' : '#f9fafb', borderBottom: '1px solid #f3f4f6' }}>
                       <td style={{ padding: '11px 14px', color: '#111827' }}>
                         <div style={{ fontWeight: 500 }}>{item.description}</div>
-                        {item.notes && <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '2px' }}>{item.notes}</div>}
                       </td>
                       <td style={{ padding: '11px 14px', textAlign: 'right', color: '#374151' }}>{item.quantity}</td>
-                      <td style={{ padding: '11px 14px', textAlign: 'right', color: '#374151' }}>{formatCurrency(Number(item.unit_price))}</td>
+                      <td style={{ padding: '11px 14px', textAlign: 'right', color: '#374151' }}>{formatCurrency(Number(item.unit_price ?? 0))}</td>
                       <td style={{ padding: '11px 14px', textAlign: 'right', fontWeight: 600, color: '#111827' }}>{formatCurrency(item._total)}</td>
                     </tr>
                   ))}

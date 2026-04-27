@@ -1,6 +1,18 @@
 import { NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { getSupabaseAdmin } from '@/lib/supabase/admin'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/database.types'
+
+// Schema-extension: the deletion-flow columns aren't yet in `profiles`
+// (planned migration). We carry them as a side-channel update payload that
+// goes through the admin client. When the migration lands these can be
+// promoted to typed `Database['public']['Tables']['profiles']['Update']`.
+interface ProfileDeletionPayload {
+  deletion_requested: boolean
+  deletion_code: string
+  deletion_requested_at: string
+}
 
 /**
  * Facebook Data Deletion Callback
@@ -44,12 +56,16 @@ export async function POST(request: Request) {
       )
 
       if (matchedUser) {
-        // Flag the user's profile for deletion
-        await (getSupabaseAdmin() as any).from('profiles').update({
+        // Flag the user's profile for deletion. Cast through unknown because
+        // the deletion_* columns aren't in the generated types yet (see
+        // ProfileDeletionPayload note above).
+        const admin = getSupabaseAdmin() as SupabaseClient<Database>
+        const payload: ProfileDeletionPayload = {
           deletion_requested: true,
           deletion_code: confirmationCode,
           deletion_requested_at: new Date().toISOString(),
-        }).eq('id', matchedUser.id)
+        }
+        await admin.from('profiles').update(payload as unknown as Database['public']['Tables']['profiles']['Update']).eq('id', matchedUser.id)
 
         console.log(`Facebook deletion request for user ${matchedUser.id}, code: ${confirmationCode}`)
       }

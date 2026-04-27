@@ -10,6 +10,8 @@
 
 import { getSupabaseAdmin } from '@/lib/supabase/admin'
 import { createNotificationBatch } from '@/lib/notifications'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/database.types'
 
 interface NotifyFollowersParams {
   actorId: string       // Who created the content
@@ -27,19 +29,21 @@ const CONTENT_META: Record<string, { label: string; path: string; type: string }
 
 export async function notifyFollowers(params: NotifyFollowersParams) {
   try {
-    const admin = getSupabaseAdmin()
+    const admin = getSupabaseAdmin() as SupabaseClient<Database>
     const meta = CONTENT_META[params.contentType]
     if (!meta) return
 
     // Get all users who follow this actor
-    const { data: followers } = await (admin as any)
+    const { data: followers } = await admin
       .from('follows')
       .select('follower_id')
       .eq('following_id', params.actorId)
 
     if (!followers || followers.length === 0) return
 
-    const followerIds = followers.map((f: { follower_id: string }) => f.follower_id)
+    const followerIds = followers
+      .map((f) => f.follower_id)
+      .filter((id): id is string => id !== null)
 
     await createNotificationBatch(admin, followerIds, {
       type: meta.type,

@@ -47,6 +47,10 @@ export default function OnlineIndicator({
   if (!lastSeenAt) return null
 
   const lastSeen = new Date(lastSeenAt)
+  // Date.now() during render is intentional here — the indicator is a relative
+  // "online now" badge, recomputed on every parent re-render. Refactor planned
+  // (H3 backlog) to feed in a memoised "now" snapshot.
+  // eslint-disable-next-line react-hooks/purity
   const isOnline = Date.now() - lastSeen.getTime() < ONLINE_THRESHOLD_MS
   const tooltip = isOnline ? 'Active now' : `Last seen ${timeAgoShort(lastSeen)}`
   const sizeClass = SIZE_CLASSES[size]

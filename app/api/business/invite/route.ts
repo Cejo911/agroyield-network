@@ -6,6 +6,7 @@ import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { SENDERS } from '@/lib/email/senders'
 import { getResend } from '@/lib/email/client'
 import { getEffectiveTier, checkTierLimit } from '@/lib/tiers'
+import type { Database } from '@/lib/database.types'
 
 export async function POST(request: Request) {
   try {
@@ -21,7 +22,7 @@ export async function POST(request: Request) {
     }
 
     // Service role client to bypass RLS and FK checks on auth.users
-    const admin = createAdmin(
+    const admin = createAdmin<Database>(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
@@ -50,13 +51,13 @@ export async function POST(request: Request) {
 
     // Check tier limit for team invites (only for new invites, not resends)
     if (!isResend) {
-      const { data: ownerProfile } = await (admin as any)
+      const { data: ownerProfile } = await admin
         .from('profiles')
         .select('subscription_tier, subscription_expires_at')
         .eq('id', user.id)
         .single()
       const tier = getEffectiveTier(ownerProfile ?? {})
-      const { count: teamCount } = await (admin as any)
+      const { count: teamCount } = await admin
         .from('business_team')
         .select('*', { count: 'exact', head: true })
         .eq('business_id', business_id)
@@ -82,7 +83,7 @@ export async function POST(request: Request) {
         .eq('email', email.toLowerCase())
         .single()
 
-      if (!existing || existing.status !== 'pending') {
+      if (!existing || existing.status !== 'pending' || !existing.invite_token) {
         return NextResponse.json({ error: 'No pending invitation found for this email' }, { status: 404 })
       }
 
@@ -121,7 +122,7 @@ export async function POST(request: Request) {
         .select('invite_token')
         .single()
 
-      if (insertError) {
+      if (insertError || !invite?.invite_token) {
         console.error('Insert error:', insertError)
         return NextResponse.json({ error: 'Failed to create invitation' }, { status: 500 })
       }

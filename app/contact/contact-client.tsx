@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import ThemeToggle from '@/app/components/ThemeToggle'
 import PublicFooter from '@/app/components/PublicFooter'
 
@@ -118,17 +119,17 @@ export default function ContactClient() {
 
       {/* NAV */}
       <nav className="agy-nav" style={{ position: 'sticky', top: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--nav-bg)', backdropFilter: 'blur(16px)', borderBottom: '1px solid var(--nav-border)' }}>
-        <a href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
           <Image src="/logo-horizontal-colored.png" alt="AgroYield Network" className="auth-logo-colored" width={200} height={58} style={{ height: 58, width: 'auto' }} />
           <Image src="/logo-horizontal-white.png"   alt="AgroYield Network" className="auth-logo-white"   width={200} height={58} style={{ height: 58, width: 'auto' }} />
-        </a>
+        </Link>
         <div className="agy-nav-links">
-          <a href="/about" className="agy-nav-about" style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', textDecoration: 'none' }}>About</a>
-          <a href="/contact" style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-accent)', textDecoration: 'none' }}>Contact</a>
+          <Link href="/about" className="agy-nav-about" style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', textDecoration: 'none' }}>About</Link>
+          <Link href="/contact" style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-accent)', textDecoration: 'none' }}>Contact</Link>
           <ThemeToggle />
-          <a href="/" style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-accent)', background: 'var(--badge-bg)', border: '1px solid var(--badge-border)', borderRadius: 100, padding: '6px 16px', textDecoration: 'none' }}>
+          <Link href="/" style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-accent)', background: 'var(--badge-bg)', border: '1px solid var(--badge-border)', borderRadius: 100, padding: '6px 16px', textDecoration: 'none' }}>
             Join Waitlist
-          </a>
+          </Link>
         </div>
       </nav>
 

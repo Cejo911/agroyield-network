@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import useProfileGate from '@/app/hooks/useProfileGate'
 import ProfileGateBanner from '@/app/components/ProfileGateBanner'
 import ImageUploader from '@/app/components/ImageUploader'
@@ -12,6 +13,21 @@ import OnlineIndicator from '@/app/components/OnlineIndicator'
 import ReportButton from '@/app/components/ReportButton'
 import { useToast } from '@/app/components/Toast'
 import { safeHref } from '@/lib/safe-href'
+import type { Database } from '@/lib/database.types'
+
+// Row aliases derived from the auto-generated Database type — replace
+// the previous `any` shapes that masked schema-mismatch bugs.
+type CommunityPost = Database['public']['Tables']['community_posts']['Row']
+type ProfileSummary = Pick<
+  Database['public']['Tables']['profiles']['Row'],
+  'id' | 'first_name' | 'last_name' | 'role' | 'avatar_url' | 'username' | 'last_seen_at'
+>
+type CommunityPostInsert = Database['public']['Tables']['community_posts']['Insert']
+
+// Poll vote storage shape: { [optionIndex: string]: string[] /* user IDs */ }.
+// Stored in DB as `community_posts.poll_votes Json`; this is the shape the
+// app actually writes/reads, narrowed from Json at the boundary.
+type PollVotes = Record<string, string[]>
 
 const POST_TYPES = [
   { value: 'all',        label: 'All',         icon: '' },
@@ -39,9 +55,9 @@ const typeColors: Record<string, string> = {
 }
 
 interface Props {
-  posts: any[]
-  parentMap?: Record<string, any>
-  profileMap: Record<string, any>
+  posts: CommunityPost[]
+  parentMap?: Record<string, CommunityPost>
+  profileMap: Record<string, ProfileSummary>
   likeCountMap: Record<string, number>
   userLikedSet: string[]
   commentCountMap: Record<string, number>
@@ -54,7 +70,12 @@ interface Props {
 }
 
 export default function CommunityClient({ posts, parentMap = {}, profileMap, likeCountMap, userLikedSet: initialLiked, commentCountMap, userReportedSet = [], currentUserId }: Props) {
-  const supabase = createClient()
+  // Local cast so .from('table_name') returns typed Row shapes. Same
+  // bounded-fix rationale as app/community/page.tsx — we don't
+  // re-parameterise the global lib/supabase/client.ts factory because
+  // scratchpad #51's destructure-broadening risk would ripple across
+  // every component that calls auth.getUser().
+  const supabase = createClient() as SupabaseClient<Database>
   const router = useRouter()
   const { showError } = useToast()
   const { allowed: profileComplete, missing: profileMissing } = useProfileGate()
@@ -68,9 +89,9 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
   const [posting, setPosting] = useState(false)
   const [likedSet, setLikedSet] = useState(new Set(initialLiked))
   const [likeCounts, setLikeCounts] = useState(likeCountMap)
-  const [pollVotesLocal, setPollVotesLocal] = useState<Record<string, any>>({})
+  const [pollVotesLocal, setPollVotesLocal] = useState<Record<string, PollVotes>>({})
   const [imageUrls, setImageUrls] = useState<string[]>([])
-  const [repostTarget, setRepostTarget] = useState<any | null>(null)
+  const [repostTarget, setRepostTarget] = useState<CommunityPost | null>(null)
   const [repostCaption, setRepostCaption] = useState('')
   const [reposting, setReposting] = useState(false)
 
@@ -88,11 +109,11 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
     setPosting(true)
 
     // Check daily post limit
-    const limitRes = await (supabase as any).from('settings').select('value').eq('key', 'community_daily_limit').maybeSingle()
-    const dailyLimit = parseInt(limitRes.data?.value ?? '10', 10) || 10
+    const limitRes = await supabase.from('settings').select('value').eq('key', 'community_daily_limit').maybeSingle()
+    const dailyLimit = parseInt((limitRes.data?.value as string | undefined) ?? '10', 10) || 10
     const todayStart = new Date()
     todayStart.setHours(0, 0, 0, 0)
-    const { count: todayCount } = await (supabase as any)
+    const { count: todayCount } = await supabase
       .from('community_posts')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', currentUserId)
@@ -103,7 +124,7 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
       return
     }
 
-    const payload: any = {
+    const payload: CommunityPostInsert = {
       user_id: currentUserId,
       post_type: postType,
       content: content.trim(),
@@ -125,7 +146,7 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
       }
     }
 
-    const { error } = await (supabase as any).from('community_posts').insert(payload)
+    const { error } = await supabase.from('community_posts').insert(payload)
     setPosting(false)
 
     if (error) {
@@ -181,13 +202,13 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
     const originalId = repostTarget.reposted_from || repostTarget.id
 
     setReposting(true)
-    const payload: any = {
+    const payload: CommunityPostInsert = {
       user_id: currentUserId,
       post_type: repostTarget.post_type || 'discussion',
       content: repostCaption.trim(),
       reposted_from: originalId,
     }
-    const { error } = await (supabase as any).from('community_posts').insert(payload)
+    const { error } = await supabase.from('community_posts').insert(payload)
     setReposting(false)
 
     if (error) { showError(error.message || 'Failed to repost. Please try again.'); return }
@@ -228,7 +249,13 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
     router.refresh()
   }
 
-  function timeAgo(date: string): string {
+  function timeAgo(date: string | null): string {
+    if (!date) return ''
+    // Date.now() in this relative-time helper called during render is intentional.
+    // Refactor planned (H3 backlog) to pass a memoised "now" snapshot down so
+    // renders stay pure; deferred because the visible bug is invisible (relative
+    // times stabilise in the next render anyway).
+    // eslint-disable-next-line react-hooks/purity
     const seconds = Math.floor((Date.now() - new Date(date).getTime()) / 1000)
     if (seconds < 60) return 'just now'
     const minutes = Math.floor(seconds / 60)
@@ -406,8 +433,8 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
             const parentInitials = parentName.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()
             const parentHref = parentProfile?.username ? `/u/${parentProfile.username}` : parent ? `/directory/${parent.user_id}` : '#'
             const votes = pollVotesLocal[post.id] || post.poll_votes || {}
-            const totalVotes = Object.values(votes).reduce((sum: number, arr: any) => sum + (Array.isArray(arr) ? arr.length : 0), 0) as number
-            const hasVoted = Object.values(votes).some((arr: any) => Array.isArray(arr) && arr.includes(currentUserId))
+            const totalVotes = Object.values(votes).reduce<number>((sum, arr) => sum + (Array.isArray(arr) ? arr.length : 0), 0)
+            const hasVoted = Object.values(votes).some((arr) => Array.isArray(arr) && arr.includes(currentUserId))
             const pollClosed = post.poll_closes_at ? new Date(post.poll_closes_at) <= new Date() : false
 
             return (
@@ -502,7 +529,7 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
                 {safeHref(post.link_url) && (
                   <a href={safeHref(post.link_url)} target="_blank" rel="noopener noreferrer"
                     className="inline-block text-sm text-green-600 hover:underline mb-3 break-all">
-                    🔗 {post.link_url.replace(/^https?:\/\//, '').slice(0, 60)}...
+                    🔗 {(post.link_url ?? '').replace(/^https?:\/\//, '').slice(0, 60)}...
                   </a>
                 )}
 

@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 
 /**
  * Dismissible amber banner that surfaces a deferred warning from the
@@ -23,6 +24,9 @@ export default function RecurringCreateWarning() {
     try {
       const stored = sessionStorage.getItem('recurring_create_warning')
       if (stored) {
+        // setMessage from a synchronous read of sessionStorage is the
+        // canonical "hydrate from external store" pattern for this banner.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setMessage(stored)
         sessionStorage.removeItem('recurring_create_warning')
       }
@@ -40,9 +44,9 @@ export default function RecurringCreateWarning() {
         {message}
         <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">
           Your invoice is saved. You can retry the recurring schedule from{' '}
-          <a href="/business/invoices/recurring" className="underline font-medium">
+          <Link href="/business/invoices/recurring" className="underline font-medium">
             Recurring Invoices
-          </a>
+          </Link>
           .
         </p>
       </div>

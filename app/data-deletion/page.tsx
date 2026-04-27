@@ -2,6 +2,7 @@
 import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import ThemeToggle from '@/app/components/ThemeToggle'
 
 function DataDeletionContent() {
@@ -29,13 +30,13 @@ function DataDeletionContent() {
 
       {/* NAV */}
       <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 40px', borderBottom: '1px solid var(--nav-border)' }}>
-        <a href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
           <Image src="/logo-horizontal-colored.png" alt="AgroYield Network" className="auth-logo-colored" width={110} height={58} />
           <Image src="/logo-horizontal-white.png"   alt="AgroYield Network" className="auth-logo-white"   width={110} height={58} />
-        </a>
+        </Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <ThemeToggle />
-          <a href="/" style={{ fontSize: 13, color: 'var(--text-secondary)', textDecoration: 'none' }}>← Back to home</a>
+          <Link href="/" style={{ fontSize: 13, color: 'var(--text-secondary)', textDecoration: 'none' }}>← Back to home</Link>
         </div>
       </nav>
 
@@ -71,7 +72,7 @@ function DataDeletionContent() {
               <div>
                 <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 10 }}>How to request data deletion</h2>
                 <p style={{ fontSize: 15, color: 'var(--text-secondary)', lineHeight: 1.8, margin: 0 }}>
-                  Send an email to <a href="mailto:hello@agroyield.africa" style={{ color: 'var(--text-accent)', textDecoration: 'none', fontWeight: 600 }}>hello@agroyield.africa</a> with the subject line <strong style={{ color: 'var(--text-primary)' }}>"Data Deletion Request"</strong> and include the email address associated with your account. We will process your request within 30 days.
+                  Send an email to <a href="mailto:hello@agroyield.africa" style={{ color: 'var(--text-accent)', textDecoration: 'none', fontWeight: 600 }}>hello@agroyield.africa</a> with the subject line <strong style={{ color: 'var(--text-primary)' }}>&quot;Data Deletion Request&quot;</strong> and include the email address associated with your account. We will process your request within 30 days.
                 </p>
               </div>
 
@@ -85,7 +86,7 @@ function DataDeletionContent() {
               <div>
                 <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 10 }}>Revoking third-party permissions</h2>
                 <p style={{ fontSize: 15, color: 'var(--text-secondary)', lineHeight: 1.8, margin: 0 }}>
-                  You can also revoke AgroYield Network's access to your third-party account data at any time:
+                  You can also revoke AgroYield Network&apos;s access to your third-party account data at any time:
                 </p>
                 <p style={{ fontSize: 15, color: 'var(--text-secondary)', lineHeight: 2.2, margin: '12px 0 0 0' }}>
                   <strong style={{ color: 'var(--text-primary)' }}>Facebook:</strong> Settings → Apps and Websites → find AgroYield Networks → Remove<br />
@@ -96,7 +97,7 @@ function DataDeletionContent() {
 
               <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: 24 }}>
                 <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.7, margin: 0 }}>
-                  If you have any questions about our data practices, please refer to our <a href="/privacy" style={{ color: 'var(--text-accent)', textDecoration: 'none', fontWeight: 600 }}>Privacy Policy</a> or contact us at <a href="mailto:hello@agroyield.africa" style={{ color: 'var(--text-accent)', textDecoration: 'none', fontWeight: 600 }}>hello@agroyield.africa</a>.
+                  If you have any questions about our data practices, please refer to our <Link href="/privacy" style={{ color: 'var(--text-accent)', textDecoration: 'none', fontWeight: 600 }}>Privacy Policy</Link> or contact us at <a href="mailto:hello@agroyield.africa" style={{ color: 'var(--text-accent)', textDecoration: 'none', fontWeight: 600 }}>hello@agroyield.africa</a>.
                 </p>
               </div>
             </div>

@@ -4,6 +4,8 @@ import { getSetting } from '@/lib/settings'
 import { notifyFollowers } from '@/lib/notify-followers'
 import { sanitiseText } from '@/lib/sanitise'
 import { requireVerifiedInstitution } from '@/lib/auth/require-verified-institution'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/database.types'
 
 export async function GET() {
   return NextResponse.json({ status: 'ok' })
@@ -11,7 +13,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient()
+    const supabase = (await createClient()) as SupabaseClient<Database>
 
     const {
       data: { user },
@@ -39,7 +41,7 @@ export async function POST(request: NextRequest) {
     const rateLimit = parseInt(limitStr ?? '5', 10) || 5
     const since = new Date()
     since.setHours(0, 0, 0, 0)
-    const { count } = await (supabase as any)
+    const { count } = await supabase
       .from('research_posts')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', user.id)
@@ -51,22 +53,23 @@ export async function POST(request: NextRequest) {
       )
     }
 
+      const insertPayload: Database['public']['Tables']['research_posts']['Insert'] = {
+        user_id:   user.id,
+        title:     sanitiseText(body.title) ?? '',
+        type:      body.type,
+        content:   sanitiseText(body.content) ?? '',
+        tags:            body.tags?.length ? body.tags.map((t: string) => sanitiseText(t)).filter((s: string | null): s is string => !!s) : null,
+        is_locked:       body.is_locked ?? false,
+        cover_image_url: body.cover_image_url || null,
+        attachment_url:  body.attachment_url  || null,
+        attachment_name: sanitiseText(body.attachment_name),
+        is_active: true,
+      }
       const { data, error } = await supabase
         .from('research_posts')
-        .insert({
-          user_id:   user.id,
-          title:     sanitiseText(body.title),
-          type:      body.type,
-          content:   sanitiseText(body.content),
-          tags:            body.tags?.length ? body.tags.map((t: string) => sanitiseText(t)).filter(Boolean) : null,
-          is_locked:       body.is_locked ?? false,
-          cover_image_url: body.cover_image_url || null,
-          attachment_url:  body.attachment_url  || null,
-          attachment_name: sanitiseText(body.attachment_name),
-          is_active: true,
-      })
-      .select('id')
-      .single()
+        .insert(insertPayload)
+        .select('id')
+        .single()
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
@@ -74,7 +77,7 @@ export async function POST(request: NextRequest) {
 
     // Notify followers (fire-and-forget)
     if (data?.id) {
-      const { data: profile } = await (supabase as any)
+      const { data: profile } = await supabase
         .from('profiles').select('first_name, last_name').eq('id', user.id).single()
       const name = [profile?.first_name, profile?.last_name].filter(Boolean).join(' ') || 'Someone'
       notifyFollowers({

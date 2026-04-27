@@ -101,6 +101,9 @@ export default function ExpensesPage() {
     setLoading(false)
   }
 
+  // load() chains setState calls; the rule flags it but the effect is the
+  // canonical pattern for "fetch on mount + on filter change" in this app.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { load() }, [])
 
   async function handleSave(e: React.FormEvent) {

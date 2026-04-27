@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
+import Link from 'next/link'
 import AppNav from '@/app/components/AppNav'
 import ResearchActions from './ResearchActions'
 import CommentsSection from '@/app/components/CommentsSection'
@@ -51,7 +52,7 @@ export default async function ResearchPostPage({
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <AppNav />
       <main className="max-w-2xl mx-auto px-4 py-10">
-        <a href="/research" className="text-sm text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 mb-6 inline-block">{'← Back to Research'}</a>
+        <Link href="/research" className="text-sm text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 mb-6 inline-block">{'← Back to Research'}</Link>
 
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-8">
           <div className="flex flex-wrap gap-2 mb-4">
@@ -100,7 +101,7 @@ export default async function ResearchPostPage({
                 <span className="text-3xl">🔒</span>
                 <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">This post is for members only</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">Sign in to read the full content and join the discussion.</p>
-                <a href="/login" className="mt-1 bg-green-600 text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors">Sign in to read full post</a>
+                <Link href="/login" className="mt-1 bg-green-600 text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors">Sign in to read full post</Link>
               </div>
             </div>
           )}

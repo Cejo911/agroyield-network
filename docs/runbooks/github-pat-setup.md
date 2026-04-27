@@ -103,6 +103,17 @@ Classic PATs grant scopes (e.g. `repo`, `read:org`) that span every repo the use
 
 ---
 
+## ⚠️ Sandbox limitation: helper is local-machine only
+
+Important constraint discovered 27 Apr 2026 during end-to-end verification: the Cowork sandbox firewall blocks outbound HTTPS to non-allowlisted hosts, including `api.github.com`. This means:
+
+- ✅ **Works:** running `./scripts/gh-api.sh <subcommand>` from your local terminal (Mac/Linux/WSL).
+- ❌ **Does NOT work:** running the helper from inside a Cowork conversation. The token reads correctly and the script logic is fine, but the network call to GitHub never completes.
+
+This is the same architectural pattern that lets Cowork-managed MCPs (Sentry, Supabase, Slack, Vercel) reach their backends while sandbox shells cannot — egress is allowlisted at the connector layer, not the shell layer.
+
+**Practical implication:** the future `agroyield-pr-pulse` skill (companion to `agroyield-daily-health`, surfacing PR-queue + CI status) is parked until an official GitHub MCP ships in the Cowork registry. Until then, run the helper from your terminal as part of weekly review, or wire it into a local pre-push hook.
+
 ## When the official GitHub MCP ships
 
 When Cowork adds GitHub to its first-party connector registry:

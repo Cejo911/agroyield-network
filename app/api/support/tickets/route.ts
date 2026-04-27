@@ -7,12 +7,14 @@ import { createNotificationBatch } from '@/lib/notifications'
 import { slackAlert } from '@/lib/slack'
 import { getResend } from '@/lib/email/client'
 import { SENDERS } from '@/lib/email/senders'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/database.types'
 
 const VALID_CATEGORIES = ['general', 'account', 'billing', 'technical', 'content', 'other']
 const VALID_PRIORITIES = ['low', 'medium', 'high', 'urgent']
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const PRIORITY_COLORS: Record<string, any> = {
+type SlackLevel = 'info' | 'warning' | 'error'
+const PRIORITY_COLORS: Record<string, SlackLevel> = {
   low: 'info',
   medium: 'info',
   high: 'warning',
@@ -32,7 +34,7 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const admin = getSupabaseAdmin()
+    const admin = getSupabaseAdmin() as SupabaseClient<Database>
 
     // Fetch tickets for this user
     const { data: tickets, error: ticketsError } = await admin
@@ -48,26 +50,26 @@ export async function GET() {
 
     // Build map of profile names for assigned_to IDs
     const assignedToIds = Array.from(
-      new Set(tickets?.map((t: any) => t.assigned_to).filter(Boolean) || [])
+      new Set(tickets?.map((t) => t.assigned_to).filter(Boolean) as string[] || [])
     )
 
-    let profilesMap: Record<string, any> = {}
+    let profilesMap: Record<string, string> = {}
     if (assignedToIds.length > 0) {
       const { data: profiles, error: profilesError } = await admin
         .from('profiles')
         .select('id, first_name, last_name')
-        .in('id', assignedToIds as string[])
+        .in('id', assignedToIds)
 
       if (!profilesError && profiles) {
-        profilesMap = profiles.reduce((acc: Record<string, any>, p: any) => {
-          acc[p.id] = `${p.first_name} ${p.last_name}`.trim()
+        profilesMap = profiles.reduce<Record<string, string>>((acc, p) => {
+          acc[p.id] = `${p.first_name ?? ''} ${p.last_name ?? ''}`.trim()
           return acc
         }, {})
       }
     }
 
     // Add assignedName to each ticket
-    const enrichedTickets = (tickets || []).map((ticket: any) => ({
+    const enrichedTickets = (tickets || []).map((ticket) => ({
       ...ticket,
       assignedName: ticket.assigned_to ? profilesMap[ticket.assigned_to] : null,
     }))
@@ -93,7 +95,7 @@ export async function POST(request: Request) {
     }
 
     // Check token verification
-    const admin = getSupabaseAdmin()
+    const admin = getSupabaseAdmin() as SupabaseClient<Database>
     const thirtyMinutesAgo = new Date(Date.now() - 30 * 60000).toISOString()
     const { data: tokens, error: tokenError } = await admin
       .from('support_tokens')
@@ -180,7 +182,7 @@ export async function POST(request: Request) {
       .eq('is_admin', true)
 
     if (!adminsError && admins && admins.length > 0) {
-      const adminIds = admins.map((a: any) => a.id)
+      const adminIds = admins.map((a) => a.id)
       await createNotificationBatch(admin, adminIds, {
         type: 'support_ticket',
         title: 'New support ticket',

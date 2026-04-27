@@ -1,12 +1,17 @@
 'use client'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { getBusinessAccess } from '@/lib/business-access'
 import { getActiveBusinessId } from '@/lib/business-cookie'
+import type { Database } from '@/lib/database.types'
 
 export default function ReportExport({ period }: { period: string }) {
   const [loading, setLoading] = useState<'excel' | null>(null)
-  const supabase = createClient()
+  // Local cast so the four Promise.all queries return typed Row arrays —
+  // eliminates the (i: any), (e: any), (c: any) callback annotations
+  // throughout the export logic.
+  const supabase = createClient() as SupabaseClient<Database>
 
     async function fetchData() {
     const { data: { user } } = await supabase.auth.getUser()
@@ -37,13 +42,13 @@ export default function ReportExport({ period }: { period: string }) {
 
     const ExcelJS = (await import('exceljs')).default
     const { invoices, expenses, customers, business } = data
-    const customerMap = Object.fromEntries(customers.map((c: any) => [c.id, c.name]))
+    const customerMap = Object.fromEntries(customers.map((c) => [c.id, c.name]))
     const wb = new ExcelJS.Workbook()
 
     // ── Sheet 1: P&L Summary ──────────────────────────────────
-    const paidInvoices  = invoices.filter((i: any) => i.status === 'paid')
-    const totalRevenue  = paidInvoices.reduce((s: number, i: any) => s + Number(i.total_amount || 0), 0)
-    const totalExpenses = expenses.reduce((s: number, e: any) => s + Number(e.amount || 0), 0)
+    const paidInvoices  = invoices.filter((i) => i.status === 'paid')
+    const totalRevenue  = paidInvoices.reduce((s, i) => s + Number(i.total || 0), 0)
+    const totalExpenses = expenses.reduce((s, e) => s + Number(e.amount || 0), 0)
     const netProfit     = totalRevenue - totalExpenses
     const margin        = totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) : '0.0'
 
@@ -59,23 +64,23 @@ export default function ReportExport({ period }: { period: string }) {
     s1.addRow(['Profit Margin',                 `${margin}%`])
     s1.addRow([])
     s1.addRow(['INVOICE STATUS', ''])
-    s1.addRow(['Draft',   invoices.filter((i: any) => i.status === 'draft').length])
-    s1.addRow(['Sent',    invoices.filter((i: any) => i.status === 'sent').length])
-    s1.addRow(['Paid',    invoices.filter((i: any) => i.status === 'paid').length])
-    s1.addRow(['Overdue', invoices.filter((i: any) => i.status === 'overdue').length])
+    s1.addRow(['Draft',   invoices.filter((i) => i.status === 'draft').length])
+    s1.addRow(['Sent',    invoices.filter((i) => i.status === 'sent').length])
+    s1.addRow(['Paid',    invoices.filter((i) => i.status === 'paid').length])
+    s1.addRow(['Overdue', invoices.filter((i) => i.status === 'overdue').length])
     s1.addRow(['Total',   invoices.length])
 
     // ── Sheet 2: All Invoices ─────────────────────────────────
     const s2 = wb.addWorksheet('Invoices')
     s2.columns = [{ width: 14 }, { width: 14 }, { width: 26 }, { width: 12 }, { width: 18 }]
     s2.addRow(['Invoice #', 'Issue Date', 'Customer', 'Status', 'Amount (₦)'])
-    invoices.forEach((inv: any) => {
+    invoices.forEach((inv) => {
       s2.addRow([
         inv.invoice_number,
         inv.issue_date,
-        customerMap[inv.customer_id] || 'Unknown',
+        (inv.customer_id ? customerMap[inv.customer_id] : null) || 'Unknown',
         inv.status?.toUpperCase(),
-        Number(inv.total_amount || 0),
+        Number(inv.total || 0),
       ])
     })
     s2.addRow([])
@@ -85,7 +90,7 @@ export default function ReportExport({ period }: { period: string }) {
     const s3 = wb.addWorksheet('Expenses')
     s3.columns = [{ width: 14 }, { width: 32 }, { width: 26 }, { width: 18 }, { width: 15 }]
     s3.addRow(['Date', 'Description', 'Category', 'Payment Method', 'Amount (₦)'])
-    expenses.forEach((exp: any) => {
+    expenses.forEach((exp) => {
       s3.addRow([
         exp.date,
         exp.description,
@@ -107,8 +112,8 @@ export default function ReportExport({ period }: { period: string }) {
     s4.columns = [{ width: 12 }, { width: 18 }, { width: 18 }, { width: 18 }, { width: 12 }]
     s4.addRow(['Month', 'Revenue (₦)', 'Expenses (₦)', 'Net Profit (₦)', 'Margin %'])
     months.forEach(m => {
-      const rev  = paidInvoices.filter((i: any) => i.issue_date?.slice(0, 7) === m).reduce((s: number, i: any) => s + Number(i.total_amount || 0), 0)
-      const exp  = expenses.filter((e: any) => e.date?.slice(0, 7) === m).reduce((s: number, e: any) => s + Number(e.amount || 0), 0)
+      const rev  = paidInvoices.filter((i) => i.issue_date?.slice(0, 7) === m).reduce((s, i) => s + Number(i.total || 0), 0)
+      const exp  = expenses.filter((e) => e.date?.slice(0, 7) === m).reduce((s, e) => s + Number(e.amount || 0), 0)
       const prof = rev - exp
       s4.addRow([m, rev, exp, prof, rev > 0 ? `${((prof / rev) * 100).toFixed(1)}%` : '0.0%'])
     })

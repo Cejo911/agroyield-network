@@ -7,6 +7,8 @@ import { useRouter } from 'next/navigation'
 import AppNav from '@/app/components/AppNav'
 import { useToast } from '@/app/components/Toast'
 import { getEffectiveTier } from '@/lib/tiers'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/database.types'
 
 const EXPERTISE_TAGS = [
   'Crop Farming', 'Poultry', 'Aquaculture', 'Livestock', 'Agribusiness',
@@ -22,7 +24,7 @@ const SESSION_FORMATS = [
 ]
 
 export default function BecomeMentorPage() {
-  const supabase = createClient()
+  const supabase = createClient() as SupabaseClient<Database>
   const router = useRouter()
   const { showError } = useToast()
   const [loading, setLoading] = useState(true)
@@ -51,7 +53,7 @@ export default function BecomeMentorPage() {
       if (!user) { router.push('/login'); return }
 
       // Check mentorship settings
-      const { data: settingsRows } = await (supabase as any)
+      const { data: settingsRows } = await supabase
         .from('settings').select('key, value').in('key', ['mentorship_enabled', 'mentorship_requires_verification'])
       const settingsMap: Record<string, string> = {}
       for (const s of (settingsRows ?? [])) settingsMap[s.key] = s.value
@@ -64,7 +66,7 @@ export default function BecomeMentorPage() {
 
       // Check subscription requirement
       if (settingsMap.mentorship_requires_verification === 'true') {
-        const { data: userProfile } = await (supabase as any)
+        const { data: userProfile } = await supabase
           .from('profiles').select('subscription_tier, subscription_expires_at').eq('id', user.id).single()
         const effectiveTier = getEffectiveTier(userProfile ?? {})
         if (effectiveTier === 'free') {
@@ -140,7 +142,7 @@ export default function BecomeMentorPage() {
       bio: form.bio.trim() || null,
       years_experience: parseInt(form.years_experience) || 0,
       max_mentees: parseInt(form.max_mentees) || 5,
-      availability: form.availability,
+      availability: form.availability as Database['public']['Enums']['mentor_availability'],
       session_format: form.session_format,
       languages: form.languages.split(',').map(l => l.trim()).filter(Boolean),
       location: form.location.trim() || null,

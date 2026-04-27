@@ -6,7 +6,9 @@ export default function ThemeToggle() {
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
 
-  // Must wait for mount to avoid hydration mismatch
+  // Must wait for mount to avoid hydration mismatch — the setMounted(true)
+  // is the canonical pattern; suppress the rule.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setMounted(true), [])
   if (!mounted) return <div className="w-9 h-9" />
 

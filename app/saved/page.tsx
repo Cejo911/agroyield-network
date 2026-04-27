@@ -127,7 +127,7 @@ export default async function SavedPage() {
       {totalCount === 0 ? (
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-12 text-center">
           <p className="text-4xl mb-3">🔖</p>
-          <p className="font-semibold text-gray-900 dark:text-white">You haven't saved anything yet</p>
+          <p className="font-semibold text-gray-900 dark:text-white">You haven&apos;t saved anything yet</p>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 max-w-md mx-auto">
             Tap the bookmark on any opportunity, grant, or marketplace listing to collect it here for later.
           </p>

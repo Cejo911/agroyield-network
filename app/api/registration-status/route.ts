@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase/admin'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/database.types'
 
 export async function GET() {
   try {
-    const { data } = await (getSupabaseAdmin() as any)
+    const admin = getSupabaseAdmin() as SupabaseClient<Database>
+    const { data } = await admin
       .from('settings')
       .select('value')
       .eq('key', 'registration_enabled')

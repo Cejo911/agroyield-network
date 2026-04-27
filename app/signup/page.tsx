@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import ThemeToggle from '@/app/components/ThemeToggle'
@@ -181,9 +182,9 @@ export default function SignUp() {
             <p style={{ fontSize: 16, color: 'var(--text-secondary)', lineHeight: 1.75, marginBottom: 32 }}>
               AgroYield Network is not accepting new members at this time. Check back soon or sign in if you already have an account.
             </p>
-            <a href="/login" style={{ display: 'inline-block', padding: '14px 28px', fontSize: 14, fontWeight: 700, color: '#030a05', background: 'linear-gradient(135deg, #22c55e, #16a34a)', borderRadius: 12, textDecoration: 'none' }}>
+            <Link href="/login" style={{ display: 'inline-block', padding: '14px 28px', fontSize: 14, fontWeight: 700, color: '#030a05', background: 'linear-gradient(135deg, #22c55e, #16a34a)', borderRadius: 12, textDecoration: 'none' }}>
               Sign In →
-            </a>
+            </Link>
           </div>
         </main>
       </>
@@ -213,9 +214,9 @@ export default function SignUp() {
             <p style={{ fontSize: 16, color: 'var(--text-secondary)', lineHeight: 1.75, marginBottom: 32 }}>
               We&apos;ve sent a confirmation link to <strong style={{ color: 'var(--text-primary)' }}>{form.email}</strong>. Click the link to activate your account and access AgroYield.
             </p>
-            <a href="/login" style={{ display: 'inline-block', padding: '14px 28px', fontSize: 14, fontWeight: 700, color: '#030a05', background: 'linear-gradient(135deg, #22c55e, #16a34a)', borderRadius: 12, textDecoration: 'none' }}>
+            <Link href="/login" style={{ display: 'inline-block', padding: '14px 28px', fontSize: 14, fontWeight: 700, color: '#030a05', background: 'linear-gradient(135deg, #22c55e, #16a34a)', borderRadius: 12, textDecoration: 'none' }}>
               Go to Sign In →
-            </a>
+            </Link>
           </div>
         </main>
       </>
@@ -268,15 +269,15 @@ export default function SignUp() {
 
         {/* NAV */}
         <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 40px', borderBottom: '1px solid var(--nav-border)' }}>
-          <a href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+          <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
             <Image src="/logo-horizontal-colored.png" alt="AgroYield Network" width={200} height={58} className="auth-logo-colored" style={{ height: 58, width: 'auto' }} />
             <Image src="/logo-horizontal-white.png" alt="AgroYield Network" width={200} height={58} className="auth-logo-white" style={{ height: 58, width: 'auto' }} />
-          </a>
+          </Link>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <ThemeToggle />
-            <a href="/login" style={{ fontSize: 13, color: 'var(--text-secondary)', textDecoration: 'none' }}>
+            <Link href="/login" style={{ fontSize: 13, color: 'var(--text-secondary)', textDecoration: 'none' }}>
               Already have an account? <span style={{ color: 'var(--text-accent)', fontWeight: 600 }}>Sign in</span>
-            </a>
+            </Link>
           </div>
         </nav>
 
@@ -513,15 +514,15 @@ export default function SignUp() {
 
               <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>
                 Already have an account?{' '}
-                <a href="/login" style={{ color: 'var(--text-accent)', textDecoration: 'none', fontWeight: 600 }}>Sign in</a>
+                <Link href="/login" style={{ color: 'var(--text-accent)', textDecoration: 'none', fontWeight: 600 }}>Sign in</Link>
               </p>
             </div>
 
             <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--text-muted)', marginTop: 24 }}>
               By creating an account you agree to our{' '}
-              <a href="/terms" style={{ color: 'var(--text-muted)', textDecoration: 'underline' }}>Terms of Service</a>
+              <Link href="/terms" style={{ color: 'var(--text-muted)', textDecoration: 'underline' }}>Terms of Service</Link>
               {' '}and{' '}
-              <a href="/privacy" style={{ color: 'var(--text-muted)', textDecoration: 'underline' }}>Privacy Policy</a>
+              <Link href="/privacy" style={{ color: 'var(--text-muted)', textDecoration: 'underline' }}>Privacy Policy</Link>
             </p>
           </div>
         </div>

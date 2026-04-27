@@ -121,12 +121,12 @@ export default async function PublicProfilePage(
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       {user ? <AppNav /> : (
         <nav className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between">
-          <a href="/" className="flex items-center gap-2 no-underline">
+          <Link href="/" className="flex items-center gap-2 no-underline">
             <Image src="/logo-horizontal-colored.png" alt="AgroYield Network" width={200} height={58} className="h-[58px] w-auto" />
-          </a>
+          </Link>
           <div className="flex items-center gap-3">
-            <a href="/login" className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium">Log in</a>
-            <a href="/signup" className="text-sm bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700">Sign up</a>
+            <Link href="/login" className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium">Log in</Link>
+            <Link href="/signup" className="text-sm bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700">Sign up</Link>
           </div>
         </nav>
       )}
@@ -179,10 +179,10 @@ export default async function PublicProfilePage(
                   </div>
                 )}
                 {isOwnProfile && (
-                  <a href="/profile"
+                  <Link href="/profile"
                     className="text-sm text-gray-500 dark:text-gray-400 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-1.5 hover:border-green-400 dark:hover:border-green-600 transition-colors">
                     Edit profile
-                  </a>
+                  </Link>
                 )}
               </div>
 
@@ -268,14 +268,14 @@ export default async function PublicProfilePage(
               Join Nigeria&apos;s agricultural professional network to follow and collaborate.
             </p>
             <div className="flex justify-center gap-3">
-              <a href="/signup"
+              <Link href="/signup"
                 className="bg-green-600 text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors">
                 Create free account
-              </a>
-              <a href="/login"
+              </Link>
+              <Link href="/login"
                 className="border border-green-300 dark:border-green-800 text-green-700 dark:text-green-400 px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-100 dark:hover:bg-green-900/40 transition-colors">
                 Sign in
-              </a>
+              </Link>
             </div>
           </div>
         )}

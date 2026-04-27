@@ -1,5 +1,7 @@
 'use client'
 
+import Link from 'next/link'
+
 /**
  * Banner shown when an unverified institution tries to post.
  * Explains that admin verification is required before they can create content.
@@ -15,12 +17,12 @@ export default function InstitutionGateBanner() {
         Your institution is awaiting admin verification. Once approved, you&apos;ll be able to post
         opportunities, grants, marketplace listings, and research content.
       </p>
-      <a
+      <Link
         href="/profile"
         className="inline-block bg-gray-600 text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-gray-700 transition-colors"
       >
         View My Profile
-      </a>
+      </Link>
     </div>
   )
 }

@@ -102,7 +102,7 @@ export default function ProfileViewStatsPanel({
             🔒 See who viewed your profile
           </p>
           <p className="text-xs text-gray-600 dark:text-gray-400 mb-3 max-w-sm mx-auto">
-            Pro members can see the names, roles, and institutions of everyone who's checked them out.
+            Pro members can see the names, roles, and institutions of everyone who&apos;s checked them out.
           </p>
           <Link
             href="/pricing"

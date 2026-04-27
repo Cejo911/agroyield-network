@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { createClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/database.types'
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request })
@@ -39,16 +40,16 @@ export async function middleware(request: NextRequest) {
   // Skip for admin page so admins can still access the dashboard to toggle it off
   if (!request.nextUrl.pathname.startsWith('/admin')) {
     try {
-      const adminDb = createClient(
+      const adminDb = createClient<Database>(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.SUPABASE_SERVICE_ROLE_KEY!
       )
-      const { data: maintenanceSetting } = await (adminDb as any)
+      const { data: maintenanceSetting } = await adminDb
         .from('settings').select('value').eq('key', 'maintenance_enabled').maybeSingle()
 
       if (maintenanceSetting?.value === 'true') {
         // Check if user is admin — admins bypass maintenance
-        const { data: profile } = await (adminDb as any)
+        const { data: profile } = await adminDb
           .from('profiles').select('is_admin').eq('id', user.id).single()
         if (!profile?.is_admin) {
           return NextResponse.redirect(new URL('/maintenance', request.url))

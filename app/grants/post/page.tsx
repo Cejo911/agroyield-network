@@ -10,11 +10,13 @@ import InstitutionGateBanner from '@/app/components/InstitutionGateBanner'
 import Link from 'next/link'
 import ImageUploader from '@/app/components/ImageUploader'
 import { useToast } from '@/app/components/Toast'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/database.types'
 
 const CATEGORIES = ['Research', 'Startup', 'Student', 'Women', 'Innovation', 'Farmer', 'Policy']
 
 export default function PostGrantPage() {
-  const supabase = createClient()
+  const supabase = createClient() as SupabaseClient<Database>
   const router = useRouter()
   const { showError } = useToast()
   const [saving, setSaving] = useState(false)
@@ -81,7 +83,7 @@ export default function PostGrantPage() {
       posted_by: user.id,
     }
 
-    const { error } = await (supabase as any).from('grants').insert(payload)
+    const { error } = await supabase.from('grants').insert(payload as Database['public']['Tables']['grants']['Insert'])
 
     setSaving(false)
     if (error) {

@@ -14,6 +14,8 @@ import { getSupabaseAdmin } from '@/lib/supabase/admin'
 import { createNotification } from '@/lib/notifications'
 import { getResend } from '@/lib/email/client'
 import { SENDERS } from '@/lib/email/senders'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/database.types'
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://agroyield.africa'
 
@@ -32,10 +34,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'businessId and businessName are required' }, { status: 400 })
     }
 
-    const admin = getSupabaseAdmin()
+    const admin = getSupabaseAdmin() as SupabaseClient<Database>
 
     // Fetch user profile for personalisation
-    const { data: profile } = await (admin as any)
+    const { data: profile } = await admin
       .from('profiles')
       .select('first_name, email')
       .eq('id', user.id)

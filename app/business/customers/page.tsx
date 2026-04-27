@@ -23,6 +23,9 @@ export default function CustomersPage() {
   const [search, setSearch] = useState('')
   const [form, setForm] = useState({ name: '', email: '', phone: '', address: '' })
 
+  // load() is declared below; the rule complains about TDZ but the effect
+  // runs after mount, by which point load is bound.
+  // eslint-disable-next-line react-hooks/immutability
   useEffect(() => { load() }, [])
 
   const load = async () => {

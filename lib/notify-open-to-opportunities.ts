@@ -19,6 +19,8 @@
 
 import { getSupabaseAdmin } from '@/lib/supabase/admin'
 import { createNotificationBatch } from '@/lib/notifications'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/database.types'
 
 interface NotifyOpenToOppsParams {
   actorId:     string
@@ -30,12 +32,12 @@ interface NotifyOpenToOppsParams {
 
 export async function notifyOpenToOpportunities(params: NotifyOpenToOppsParams) {
   try {
-    const admin = getSupabaseAdmin()
+    const admin = getSupabaseAdmin() as SupabaseClient<Database>
 
     // Pull the candidate audience: everyone who's actively open. The RLS on
     // profiles allows the service-role client to read all rows, so no extra
     // auth plumbing is needed.
-    const { data: candidates } = await (admin as any)
+    const { data: candidates } = await admin
       .from('profiles')
       .select('id, open_to_opportunities, open_to_opportunities_until')
       .eq('open_to_opportunities', true)
@@ -45,23 +47,25 @@ export async function notifyOpenToOpportunities(params: NotifyOpenToOppsParams) 
 
     const now = Date.now()
     const activeIds: string[] = candidates
-      .filter((p: { open_to_opportunities_until: string | null }) => {
+      .filter((p) => {
         // Null expiry = indefinite
         if (!p.open_to_opportunities_until) return true
         return new Date(p.open_to_opportunities_until).getTime() >= now
       })
-      .map((p: { id: string }) => p.id)
+      .map((p) => p.id)
 
     if (activeIds.length === 0) return
 
     // Exclude followers (they already get `new_opportunity` from notify-followers).
-    const { data: followerRows } = await (admin as any)
+    const { data: followerRows } = await admin
       .from('follows')
       .select('follower_id')
       .eq('following_id', params.actorId)
 
     const followerSet = new Set<string>(
-      (followerRows ?? []).map((r: { follower_id: string }) => r.follower_id)
+      (followerRows ?? [])
+        .map((r) => r.follower_id)
+        .filter((id): id is string => id !== null)
     )
 
     const recipientIds = activeIds.filter(id => !followerSet.has(id))

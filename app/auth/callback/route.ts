@@ -4,6 +4,9 @@ import { recordLoginAndNotify } from '@/lib/auth/login-notification'
 import { SENDERS } from '@/lib/email/senders'
 import { getResend } from '@/lib/email/client'
 import { slackAlert } from '@/lib/slack'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/database.types'
+import type { EmailOtpType } from '@supabase/supabase-js'
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
@@ -15,9 +18,9 @@ export async function GET(request: Request) {
   const type = searchParams.get('type')
 
   if (token_hash && type) {
-    const supabase = await createClient()
+    const supabase = (await createClient()) as SupabaseClient<Database>
     const { error } = await supabase.auth.verifyOtp({
-      type: type as any,
+      type: type as EmailOtpType,
       token_hash,
     })
     if (!error) {
@@ -28,7 +31,7 @@ export async function GET(request: Request) {
   // ── END NEW SECTION ──
 
   if (code) {
-    const supabase = await createClient()
+    const supabase = (await createClient()) as SupabaseClient<Database>
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error) {
       // Password recovery flow — skip welcome email, go straight to reset page
@@ -45,7 +48,7 @@ export async function GET(request: Request) {
         const userAgent = request.headers.get('user-agent') ?? 'unknown'
         recordLoginAndNotify({ userId: user.id, userEmail: user.email, ip, userAgent }).catch(() => {})
 
-        const { data: profile } = await (supabase as any)
+        const { data: profile } = await supabase
           .from('profiles')
           .select('id, first_name, account_type, institution_display_name, institution_type')
           .eq('id', user.id)
@@ -84,11 +87,9 @@ export async function GET(request: Request) {
         }
 
         if (Object.keys(profileUpdates).length > 0) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const supabaseAny = supabase as any
-          await supabaseAny
+          await supabase
             .from('profiles')
-            .update(profileUpdates)
+            .update(profileUpdates as Database['public']['Tables']['profiles']['Update'])
             .eq('id', user.id)
           // Merge back so the slack alert below sees the right account_type
           Object.assign(profile ?? {}, profileUpdates)

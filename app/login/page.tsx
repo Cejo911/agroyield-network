@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import Link from 'next/link'
 import ThemeToggle from '@/app/components/ThemeToggle'
 
 export default function Login() {
@@ -108,13 +109,13 @@ export default function Login() {
 
       {/* NAV */}
       <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 40px', borderBottom: '1px solid var(--nav-border)' }}>
-        <a href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
           <Image src="/logo-horizontal-colored.png" alt="AgroYield Network" className="auth-logo-colored" width={200} height={58} style={{ height: 58, width: 'auto' }} />
           <Image src="/logo-horizontal-white.png"   alt="AgroYield Network" className="auth-logo-white"   width={200} height={58} style={{ height: 58, width: 'auto' }} />
-        </a>
+        </Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <ThemeToggle />
-          <a href="/" style={{ fontSize: 13, color: 'var(--text-secondary)', textDecoration: 'none' }}>← Back to home</a>
+          <Link href="/" style={{ fontSize: 13, color: 'var(--text-secondary)', textDecoration: 'none' }}>← Back to home</Link>
         </div>
       </nav>
 
@@ -218,7 +219,7 @@ export default function Login() {
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                   <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-label)' }}>Password</label>
-                  <a href="/forgot-password" style={{ fontSize: 12, color: 'var(--text-accent)', textDecoration: 'none' }}>Forgot password?</a>
+                  <Link href="/forgot-password" style={{ fontSize: 12, color: 'var(--text-accent)', textDecoration: 'none' }}>Forgot password?</Link>
                 </div>
                 <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Enter your password" required autoComplete="current-password" style={inputStyle} />
               </div>
@@ -244,15 +245,15 @@ export default function Login() {
 
             <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>
               Don&apos;t have an account?{' '}
-              <a href="/signup" style={{ color: 'var(--text-accent)', textDecoration: 'none', fontWeight: 600 }}>Sign up</a>
+              <Link href="/signup" style={{ color: 'var(--text-accent)', textDecoration: 'none', fontWeight: 600 }}>Sign up</Link>
             </p>
           </div>
 
           <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--text-muted)', marginTop: 24 }}>
             By signing in you agree to our{' '}
-            <a href="/terms" style={{ color: 'var(--text-muted)', textDecoration: 'underline' }}>Terms of Service</a>
+            <Link href="/terms" style={{ color: 'var(--text-muted)', textDecoration: 'underline' }}>Terms of Service</Link>
             {' '}and{' '}
-            <a href="/privacy" style={{ color: 'var(--text-muted)', textDecoration: 'underline' }}>Privacy Policy</a>
+            <Link href="/privacy" style={{ color: 'var(--text-muted)', textDecoration: 'underline' }}>Privacy Policy</Link>
           </p>
         </div>
       </div>

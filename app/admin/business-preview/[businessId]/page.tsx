@@ -5,6 +5,7 @@ import Link from 'next/link'
 import AppNav from '@/app/components/AppNav'
 import SlugManager from './SlugManager'
 import type { Metadata } from 'next'
+import type { Database } from '@/lib/database.types'
 
 export const metadata: Metadata = {
   title: 'Business Preview — Admin — AgroYield Network',
@@ -26,18 +27,17 @@ export default async function BusinessPreviewPage({ params }: { params: Promise<
   // Auth + admin check
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
-  const { data: adminProfile } = await (supabase as any)
+  const { data: adminProfile } = await supabase
     .from('profiles').select('is_admin, admin_role').eq('id', user.id).single()
   if (!adminProfile?.is_admin) redirect('/dashboard')
   const isSuperAdmin = adminProfile?.admin_role === 'super'
 
-  // Service-role client to bypass RLS — admin has already been verified above
-  const admin = createAdminClient(
+  // Service-role client to bypass RLS — admin has already been verified above.
+  // Typed with <Database> so all .from() calls below return Row shapes.
+  const admin = createAdminClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const adminAny = admin as any
 
   // Fetch business
   const { data: business } = await admin
@@ -45,7 +45,7 @@ export default async function BusinessPreviewPage({ params }: { params: Promise<
   if (!business) notFound()
 
   // Fetch business owner profile
-  const { data: owner } = await adminAny
+  const { data: owner } = await admin
     .from('profiles')
     .select('id, first_name, last_name, email, subscription_tier, subscription_expires_at')
     .eq('id', business.user_id)
@@ -59,9 +59,12 @@ export default async function BusinessPreviewPage({ params }: { params: Promise<
     .order('created_at', { ascending: false })
     .limit(20)
 
-  // Fetch expenses summary
+  // Fetch expenses summary — table name is `business_expenses`, NOT `expenses`.
+  // Pre-typing this file the wrong table name silently returned 0 rows; users
+  // saw "No expenses recorded" even when there were real entries. Fixed in
+  // the same pass that introduced the typed admin client.
   const { data: expenses } = await admin
-    .from('expenses')
+    .from('business_expenses')
     .select('id, description, amount, category, date')
     .eq('business_id', businessId)
     .order('date', { ascending: false })
@@ -75,7 +78,7 @@ export default async function BusinessPreviewPage({ params }: { params: Promise<
     .order('name')
 
   // Fetch team members
-  const { data: teamRaw } = await adminAny
+  const { data: teamRaw } = await admin
     .from('business_team')
     .select('id, role, user_id, profiles(first_name, last_name, email)')
     .eq('business_id', businessId)
@@ -90,27 +93,30 @@ export default async function BusinessPreviewPage({ params }: { params: Promise<
     .limit(30)
 
   // Fetch historical slug aliases (for SlugManager history display)
-  const { data: aliasRows } = await adminAny
+  const { data: aliasRows } = await admin
     .from('business_slug_aliases')
     .select('old_slug, created_at')
     .eq('business_id', businessId)
     .order('created_at', { ascending: false })
     .limit(20)
-  const aliases = (aliasRows ?? []) as { old_slug: string; created_at: string }[]
+  const aliases = (aliasRows ?? []).map((r) => ({
+    old_slug: r.old_slug,
+    created_at: r.created_at ?? '',
+  }))
 
-  // Compute summary stats
-  const invoiceList = (invoices ?? []) as any[]
-  const expenseList = (expenses ?? []) as any[]
-  const productList = (products ?? []) as any[]
-  const teamList = (teamRaw ?? []) as any[]
-  const customerList = (customers ?? []) as any[]
+  // Compute summary stats — typed lists derived from the queries above.
+  const invoiceList = invoices ?? []
+  const expenseList = expenses ?? []
+  const productList = products ?? []
+  const teamList = teamRaw ?? []
+  const customerList = customers ?? []
 
   const totalRevenue = invoiceList
-    .filter((inv: any) => inv.status === 'paid')
-    .reduce((sum: number, inv: any) => sum + (Number(inv.total) || 0), 0)
-  const totalExpenses = expenseList.reduce((sum: number, exp: any) => sum + (Number(exp.amount) || 0), 0)
-  const overdueCount = invoiceList.filter((inv: any) => inv.status === 'overdue').length
-  const activeProducts = productList.filter((p: any) => p.is_active).length
+    .filter((inv) => inv.status === 'paid')
+    .reduce((sum, inv) => sum + (Number(inv.total) || 0), 0)
+  const totalExpenses = expenseList.reduce((sum, exp) => sum + (Number(exp.amount) || 0), 0)
+  const overdueCount = invoiceList.filter((inv) => inv.status === 'overdue').length
+  const activeProducts = productList.filter((p) => p.is_active).length
 
   const ownerName = [owner?.first_name, owner?.last_name].filter(Boolean).join(' ') || 'Unknown'
   const ownerTier = owner?.subscription_tier || 'free'
@@ -151,8 +157,8 @@ export default async function BusinessPreviewPage({ params }: { params: Promise<
         {isSuperAdmin && (
           <SlugManager
             businessId={businessId}
-            initialSlug={(business as any).slug ?? ''}
-            initialIsPublic={(business as any).is_public ?? true}
+            initialSlug={business.slug ?? ''}
+            initialIsPublic={business.is_public ?? true}
             aliases={aliases}
           />
         )}
@@ -209,20 +215,28 @@ export default async function BusinessPreviewPage({ params }: { params: Promise<
               <p className="text-sm text-gray-400 italic">No invoices yet</p>
             ) : (
               <div className="space-y-2 max-h-80 overflow-y-auto">
-                {invoiceList.map((inv: any) => (
-                  <div key={inv.id} className="flex items-center justify-between py-2 border-b border-gray-50 dark:border-gray-800 last:border-0">
-                    <div>
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">{inv.invoice_number}</p>
-                      <p className="text-xs text-gray-400">{inv.customers?.name || '—'} · {inv.issue_date}</p>
+                {invoiceList.map((inv) => {
+                  // The customers(name) embed returns a single related row or null;
+                  // typed as `customers: { name: string } | { name: string }[] | null`
+                  // depending on the relationship cardinality. Narrow defensively.
+                  const customerName = Array.isArray(inv.customers)
+                    ? inv.customers[0]?.name
+                    : inv.customers?.name
+                  return (
+                    <div key={inv.id} className="flex items-center justify-between py-2 border-b border-gray-50 dark:border-gray-800 last:border-0">
+                      <div>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">{inv.invoice_number}</p>
+                        <p className="text-xs text-gray-400">{customerName || '—'} · {inv.issue_date}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">{fmt(Number(inv.total) || 0)}</p>
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-medium capitalize ${STATUS_BADGE[inv.status ?? 'draft'] || STATUS_BADGE.draft}`}>
+                          {inv.status}
+                        </span>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white">{fmt(Number(inv.total) || 0)}</p>
-                      <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-medium capitalize ${STATUS_BADGE[inv.status] || STATUS_BADGE.draft}`}>
-                        {inv.status}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </section>
@@ -236,7 +250,7 @@ export default async function BusinessPreviewPage({ params }: { params: Promise<
               <p className="text-sm text-gray-400 italic">No expenses recorded</p>
             ) : (
               <div className="space-y-2 max-h-80 overflow-y-auto">
-                {expenseList.map((exp: any) => (
+                {expenseList.map((exp) => (
                   <div key={exp.id} className="flex items-center justify-between py-2 border-b border-gray-50 dark:border-gray-800 last:border-0">
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">{exp.description}</p>
@@ -262,7 +276,7 @@ export default async function BusinessPreviewPage({ params }: { params: Promise<
               <p className="text-sm text-gray-400 italic">No products listed</p>
             ) : (
               <div className="space-y-2 max-h-80 overflow-y-auto">
-                {productList.map((p: any) => (
+                {productList.map((p) => (
                   <div key={p.id} className="flex items-center justify-between py-2 border-b border-gray-50 dark:border-gray-800 last:border-0">
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">
@@ -289,9 +303,11 @@ export default async function BusinessPreviewPage({ params }: { params: Promise<
                 <p className="text-sm text-gray-400 italic">No team members</p>
               ) : (
                 <div className="space-y-2">
-                  {teamList.map((tm: any) => {
-                    const p = tm.profiles
-                    const name = [p?.first_name, p?.last_name].filter(Boolean).join(' ') || p?.email || '—'
+                  {teamList.map((tm) => {
+                    // Same array-vs-object shape consideration as the invoice
+                    // customer embed above — narrow defensively.
+                    const profile = Array.isArray(tm.profiles) ? tm.profiles[0] : tm.profiles
+                    const name = [profile?.first_name, profile?.last_name].filter(Boolean).join(' ') || profile?.email || '—'
                     return (
                       <div key={tm.id} className="flex items-center justify-between py-1.5 border-b border-gray-50 dark:border-gray-800 last:border-0">
                         <p className="text-sm text-gray-900 dark:text-white">{name}</p>
@@ -312,7 +328,7 @@ export default async function BusinessPreviewPage({ params }: { params: Promise<
                 <p className="text-sm text-gray-400 italic">No customers yet</p>
               ) : (
                 <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {customerList.map((c: any) => (
+                  {customerList.map((c) => (
                     <div key={c.id} className="flex items-center justify-between py-1.5 border-b border-gray-50 dark:border-gray-800 last:border-0">
                       <div>
                         <p className="text-sm text-gray-900 dark:text-white">{c.name}</p>

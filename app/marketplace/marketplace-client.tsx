@@ -117,7 +117,11 @@ export default function MarketplaceClient({
     return matchesSearch && matchesCategory && matchesCondition && matchesType && matchesState && matchesStatus && matchesMin && matchesMax
   })
 
-  // Sort filtered results — featured listings float to top within their category
+  // Sort filtered results — featured listings float to top within their category.
+  // Date.now() during render is intentional — `now` is captured once and used to
+  // bucket featured-still-active listings. Refactor planned (H3 backlog) to pass
+  // in a memoised snapshot.
+  // eslint-disable-next-line react-hooks/purity
   const now = Date.now()
   const isFeaturedActive = (l: Listing) =>
     l.is_featured && l.featured_until && new Date(l.featured_until).getTime() > now
