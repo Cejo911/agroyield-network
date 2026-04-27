@@ -1,0 +1,15 @@
+# AgroYield Network — code owners
+#
+# Format: <pattern> <reviewer>
+# Reviewers listed here are auto-requested when matching paths change in a PR.
+# See: https://docs.github.com/en/repositories/managing-your-repositories-settings-and-features/customizing-your-repository/about-code-owners
+#
+# Until we hire engineer #2, Okoli owns everything.
+# When the team grows, split out:
+#   /supabase/migrations/    → DB owner
+#   /lib/cron/               → ops owner
+#   /docs/runbooks/          → operator + reviewer
+#   /marketing/              → marketing owner
+#   /docs/ux-ui-audit-*.md   → design owner
+
+*                           @Cejo911

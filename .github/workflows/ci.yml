@@ -1,0 +1,71 @@
+# AgroYield Network — CI
+#
+# Belt-and-suspenders for the local husky pre-commit hooks (which can be bypassed
+# with --no-verify). CI cannot be bypassed and shows status in PR review UI.
+#
+# Runs on:
+#   - PRs targeting main (gates merge)
+#   - Pushes to main (catches direct-to-main bypass cases)
+#
+# Currently: type-check + lint. No test runner is installed yet (see H3.4 in
+# UNICORN_SPRINT.md — Playwright + Vitest pending). Add a `test` job when that lands.
+
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+# Cancel in-progress runs when a PR is updated to save Actions minutes.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Default permissions: read-only. CI doesn't need to write anything to the repo.
+permissions:
+  contents: read
+
+jobs:
+  type-check:
+    name: TypeScript type-check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Type-check
+        run: npm run type-check
+
+  lint:
+    name: ESLint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Lint
+        run: npm run lint

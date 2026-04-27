@@ -1,0 +1,84 @@
+# Dependabot config — keep dependencies fresh without drowning in PRs.
+# Weekly cadence (Monday) so Dependabot PRs land alongside the daily-health
+# review cycle. Major version bumps grouped to keep review costs low.
+#
+# Docs: https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  # npm dependencies (Next.js 16, Supabase, Sentry, Tailwind, etc.)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Africa/Lagos"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "Cejo911"
+    labels:
+      - "dependencies"
+      - "npm"
+    groups:
+      # Group all minor/patch updates into one PR per ecosystem family so
+      # weekly review is one PR, not ten.
+      next-and-react:
+        patterns:
+          - "next"
+          - "next-*"
+          - "@next/*"
+          - "react"
+          - "react-*"
+          - "@types/react*"
+        update-types:
+          - "minor"
+          - "patch"
+      supabase:
+        patterns:
+          - "@supabase/*"
+        update-types:
+          - "minor"
+          - "patch"
+      sentry:
+        patterns:
+          - "@sentry/*"
+        update-types:
+          - "minor"
+          - "patch"
+      tailwind:
+        patterns:
+          - "tailwindcss"
+          - "@tailwindcss/*"
+          - "postcss"
+          - "postcss-*"
+        update-types:
+          - "minor"
+          - "patch"
+      dev-tooling:
+        patterns:
+          - "eslint"
+          - "eslint-*"
+          - "@typescript-eslint/*"
+          - "typescript"
+          - "husky"
+          - "@commitlint/*"
+        update-types:
+          - "minor"
+          - "patch"
+    # Major bumps stay as individual PRs so review can be deliberate.
+
+  # GitHub Actions used by .github/workflows/
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Africa/Lagos"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "Cejo911"
+    labels:
+      - "dependencies"
+      - "github-actions"

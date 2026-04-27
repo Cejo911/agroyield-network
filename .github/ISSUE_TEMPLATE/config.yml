@@ -1,0 +1,13 @@
+# Disable blank issues — every issue must use a template so triage stays cheap.
+blank_issues_enabled: false
+
+contact_links:
+  - name: Beta cohort feedback
+    url: https://agroyield.africa/contact
+    about: Beta users — share product feedback through the contact form (auto-routes to support).
+  - name: Operational alerts
+    url: https://agroyieldalerts.slack.com/archives/C0AT4E7J8P7
+    about: Internal — uptime / cron / Sentry alerts land in #all-agroyield-alerts.
+  - name: Documentation
+    url: https://github.com/Cejo911/agroyield-network/blob/main/PROJECT_STATUS.md
+    about: Project status, roadmap, and the unicorn-sprint plan live in the repo's top-level docs.
