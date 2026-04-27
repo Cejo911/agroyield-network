@@ -84,6 +84,42 @@ Sentry.init({
     /Failed to read the 'localStorage' property/,
     /The user denied permission to use Service Worker/,
   ],
+
+  // 5. Bare "Error: Rejected" from next-pwa Service Worker registration
+  //    The ignoreErrors filter above catches the explicit NotSupportedError
+  //    shape (4) — but a different code path also exists: when
+  //    `navigator.serviceWorker.register()` rejects with no typed error,
+  //    the unhandled-rejection handler surfaces it as just `Error: Rejected`
+  //    with no further detail. Most events in this class are bot crawlers:
+  //    Googlebot's smartphone crawler advertises a Chrome Mobile / Nexus 5X
+  //    / Android 6.0.1 user-agent (verified via 3 attached replays from
+  //    66.249.66.x — Google's published crawler IP block), and Google's
+  //    docs confirm Googlebot doesn't support Service Workers in JS.
+  //    A small minority of events come from real Chrome users on Windows
+  //    where strict privacy settings block the SW registration —
+  //    same root cause class, no UI impact (just no offline cache for
+  //    that session).
+  //
+  //    A regex on the bare "Rejected" message would be too broad
+  //    (catches any other code path that rejects a Promise with that
+  //    string), so we filter via beforeSend with a stack-frame check:
+  //    drop only events whose top-of-stack contains `ServiceWorkerContainer`
+  //    AND whose message is exactly "Rejected". Real app errors of any
+  //    other shape pass through untouched.
+  //
+  //    See JAVASCRIPT-NEXTJS-A — 28 events, 12 users, 8 days, ~70% bots.
+  beforeSend(event) {
+    const exc = event.exception?.values?.[0]
+    if (
+      exc?.value === 'Rejected' &&
+      exc.stacktrace?.frames?.some(
+        (f) => typeof f.function === 'string' && f.function.includes('ServiceWorkerContainer'),
+      )
+    ) {
+      return null // drop the event — bot crawler or restricted-browser SW rejection
+    }
+    return event
+  },
 });
 
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
