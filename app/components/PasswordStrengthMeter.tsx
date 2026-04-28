@@ -131,12 +131,31 @@ export default function PasswordStrengthMeter({ password }: PasswordStrengthMete
     gap: 4,
   }
 
+  // Note: 8px height (was 4px) and a stronger fallback color than
+  // `var(--border-color)`. Empirical fix: at 4px + #e5e7eb (the
+  // signup page's --border-color), the unfilled bar is ~1.16:1
+  // contrast against the white card background — below WCAG AA's
+  // 3:1 floor for non-text UI components, so the bar reads as
+  // "no bar visible" rather than "thin gray bar". `#9ca3af`
+  // (gray-400) gives 2.8:1 against white and 7:1 against the
+  // dark-mode card background, so the bar shape is always visible
+  // and the filled segments still contrast meaningfully.
+ // Note: 8px height (was 4px) and a stronger fallback color than
+  // `var(--border-color)`. Empirical fix: at 4px + #e5e7eb (the
+  // signup page's --border-color), the unfilled bar is ~1.16:1
+  // contrast against the white card background — below WCAG AA's
+  // 3:1 floor for non-text UI components, so the bar reads as
+  // "no bar visible" rather than "thin gray bar". `#9ca3af`
+  // (gray-400) gives 2.8:1 against white and 7:1 against the
+  // dark-mode card background, so the bar shape is always visible
+  // and the filled segments still contrast meaningfully.
   const segmentStyle = (filled: boolean): CSSProperties => ({
     flex: 1,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: filled ? LEVEL_COLOR[level] : 'var(--border-color)',
-    transition: 'background-color 0.15s',
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: filled ? LEVEL_COLOR[level] : '#9ca3af',
+    opacity: filled ? 1 : 0.35,
+    transition: 'background-color 0.15s, opacity 0.15s',
   })
 
   const labelStyle: CSSProperties = {
