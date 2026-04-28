@@ -201,7 +201,14 @@ export default function AppNav() {
             "More" trigger is rendered as the eighth slot and uses the
             same shape/colours as the inline links so a glance can't
             tell the rail is split. */}
-        <nav className="hidden lg:flex items-center gap-1 flex-1 justify-center overflow-hidden">
+        {/* `overflow-visible` (the default) is required so the absolute-
+            positioned "More" dropdown can render BELOW the nav without
+            being clipped by the nav's bottom edge. The earlier
+            `overflow-hidden` was inherited from when the nav held
+            10 inline links and could awkward-wrap; with 7+More that's
+            no longer a risk, and clipping the dropdown made it look
+            like nothing happened on click. */}
+        <nav className="hidden lg:flex items-center gap-1 flex-1 justify-center">
           {PRIMARY_NAV_LINKS.map(link => (
             <Link
               key={link.href}

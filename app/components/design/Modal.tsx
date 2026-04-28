@@ -220,7 +220,14 @@ export default function Modal({
         aria-labelledby={title ? titleId : undefined}
         tabIndex={-1}
         onClick={e => e.stopPropagation()}
-        className={`bg-white dark:bg-gray-900 rounded-xl shadow-xl w-full ${SIZE_CLASS[size]} outline-none`}
+        // `max-h-[90vh] overflow-y-auto` so dialogs taller than the
+        // viewport (e.g. the AppNav mobile menu with 10 nav links +
+        // tier badge + sign-out, or any future long-form content)
+        // become internally scrollable instead of overflowing past
+        // the viewport with no scroll affordance. Body-scroll lock
+        // above continues to prevent the *page* from scrolling
+        // underneath the modal.
+        className={`bg-white dark:bg-gray-900 rounded-xl shadow-xl w-full ${SIZE_CLASS[size]} outline-none max-h-[90vh] overflow-y-auto`}
       >
         {title && (
           <h2
