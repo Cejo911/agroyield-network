@@ -4,16 +4,33 @@ import { useState, useEffect } from 'react'
 
 type Props = {
   postId:   string
-  postType: 'opportunity' | 'listing' | 'research'
+  // post_type values mirror the likes_post_type_check DB constraint —
+  // see supabase/migrations/20260428170000_widen_likes_post_type_check.sql.
+  // Keep this union aligned with the constraint and with /api/like.
+  postType: 'opportunity' | 'listing' | 'research' | 'community'
+  /**
+   * Optional SSR-computed seed values. When BOTH are provided the
+   * component skips the mount-time GET to /api/like and uses these as
+   * initial state — saves a round trip on pages that already SELECT the
+   * like row server-side (e.g. /community/[id]). Subsequent toggles
+   * still hit the API normally.
+   */
+  initialLiked?: boolean
+  initialCount?: number
 }
 
-export default function LikeButton({ postId, postType }: Props) {
-  const [liked,       setLiked]       = useState(false)
-  const [count,       setCount]       = useState(0)
+export default function LikeButton({ postId, postType, initialLiked, initialCount }: Props) {
+  // If the caller seeded both values, treat them as authoritative for
+  // first paint; the useEffect below stays a no-op so we don't waste a
+  // request on data we already have.
+  const seeded = initialLiked !== undefined && initialCount !== undefined
+  const [liked,       setLiked]       = useState(initialLiked ?? false)
+  const [count,       setCount]       = useState(initialCount ?? 0)
   const [loading,     setLoading]     = useState(false)
-  const [initialized, setInitialized] = useState(false)
+  const [initialized, setInitialized] = useState(seeded)
 
   useEffect(() => {
+    if (seeded) return
     const init = async () => {
       try {
         const res  = await fetch(`/api/like?postId=${postId}&postType=${postType}`)
@@ -25,7 +42,7 @@ export default function LikeButton({ postId, postType }: Props) {
       }
     }
     init()
-  }, [postId, postType])
+  }, [postId, postType, seeded])
 
   const toggle = async () => {
     if (loading || !initialized) return

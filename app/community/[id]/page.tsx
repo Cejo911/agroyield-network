@@ -7,6 +7,7 @@ import type { Metadata } from 'next'
 import AppNav from '@/app/components/AppNav'
 import BackButton from '@/app/components/BackButton'
 import CommentsSection from '@/app/components/CommentsSection'
+import LikeButton from '@/app/components/LikeButton'
 import ReportButton from '@/app/components/ReportButton'
 import { safeHref } from '@/lib/safe-href'
 import { formatRelativeTime } from '@/lib/format-time'
@@ -220,11 +221,27 @@ export default async function CommunityPostPage({ params }: { params: Promise<{ 
             </div>
           )}
 
-          {/* Like count + Report button (only shown to signed-in viewers
-              who aren't the post author — matches the feed card). */}
-          <div className="flex items-center gap-2 text-sm text-gray-400 dark:text-gray-500 pt-3 border-t border-gray-100 dark:border-gray-800">
-            <span>{liked ? '\u2665' : '\u2661'}</span>
-            <span>{likeCount} like{likeCount !== 1 ? 's' : ''}</span>
+          {/* Like + Report row.
+              Logged-in viewers get an interactive LikeButton (seeded with
+              the SSR-computed `liked` / `likeCount` so it skips the
+              mount-time refetch). Anonymous viewers see the read-only
+              count only — clicking ♡ would 401 anyway, and the empty-
+              state CTA at the bottom of the page is the conversion path
+              we want them on instead. */}
+          <div className="flex items-center gap-3 text-sm text-gray-400 dark:text-gray-500 pt-3 border-t border-gray-100 dark:border-gray-800">
+            {user ? (
+              <LikeButton
+                postId={id}
+                postType="community"
+                initialLiked={liked}
+                initialCount={likeCount}
+              />
+            ) : (
+              <div className="flex items-center gap-1.5">
+                <span>{'\u2661'}</span>
+                <span>{likeCount} like{likeCount !== 1 ? 's' : ''}</span>
+              </div>
+            )}
             {user && post.user_id !== user.id && (
               <div className="ml-auto">
                 <ReportButton postId={id} postType="community_post" />
