@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import ThemeToggle from '@/app/components/ThemeToggle'
+import PasswordStrengthMeter from '@/app/components/PasswordStrengthMeter'
 
 const INSTITUTION_TYPES = [
   { value: 'university',   label: 'University / Research Institute' },
@@ -487,6 +488,7 @@ export default function SignUp() {
                 <div>
                   <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text-label)', marginBottom: 8 }}>Password</label>
                   <input name="password" type="password" value={form.password} onChange={handleChange} placeholder="At least 8 characters" required autoComplete="new-password" style={inputStyle} />
+                  <PasswordStrengthMeter password={form.password} />
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text-label)', marginBottom: 8 }}>Confirm password</label>

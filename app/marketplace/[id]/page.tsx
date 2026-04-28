@@ -1,12 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
 import { getSupabaseAdmin } from '@/lib/supabase/admin'
 import { redirect, notFound } from 'next/navigation'
-import Link from 'next/link'
 import ListingActions from './ListingActions'
 import CommentsSection from '@/app/components/CommentsSection'
 import MessageButton from '@/app/components/MessageButton'
 import PageShell from '@/app/components/design/PageShell'
 import BookmarkButton from '@/app/components/design/BookmarkButton'
+import BackButton from '@/app/components/BackButton'
 import ListingGallery from './ListingGallery'
 import BuyNowButton from './BuyNowButton'
 import FeatureListingButton from './FeatureListingButton'
@@ -84,9 +84,7 @@ export default async function ListingPage({
 
   return (
     <PageShell maxWidth="2xl">
-      <Link href="/marketplace" className="inline-flex items-center text-sm text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 mb-4 transition-colors">
-        ← Back to Marketplace
-      </Link>
+      <BackButton fallbackHref="/marketplace" label="Back to Marketplace" />
         <div className="relative bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-8">
           <div className="absolute top-5 right-5 z-10">
             <BookmarkButton

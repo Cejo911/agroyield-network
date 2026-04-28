@@ -12,22 +12,48 @@ import Image from 'next/image'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/lib/database.types'
 
-const NAV_LINKS = [
+// AppNav top-level links — split between two surfaces:
+//
+//   • PRIMARY_NAV_LINKS — the seven highest-traffic destinations rendered
+//     inline on desktop. Calibrated to AgroYield's own usage (Dashboard
+//     is the home shell; Community / Opportunities / Marketplace / Price
+//     Tracker are the four highest-traffic content modules; Directory is
+//     the people-finder; Business is the SME suite). Lower-frequency
+//     surfaces (Grants, Research, Mentorship) are collapsed under the
+//     "More" dropdown so the inline rail doesn't wrap on a 13" laptop.
+//
+//   • OVERFLOW_NAV_LINKS — the three links inside the "More" dropdown.
+//
+//   • NAV_LINKS — the union, used for the mobile menu (which renders all
+//     ten as a vertical list — phones don't have the wrap problem the
+//     overflow split exists to solve).
+//
+// Touching either constant requires a corresponding update to the active-
+// route handling for "More" — `isOverflowActive` recomputes from the
+// current pathname against the OVERFLOW_NAV_LINKS hrefs, so adding /
+// removing items there is sufficient.
+const PRIMARY_NAV_LINKS = [
   { href: '/dashboard',     label: 'Dashboard' },
   { href: '/community',     label: 'Community' },
   { href: '/opportunities', label: 'Opportunities' },
-  { href: '/grants',        label: 'Grants' },
   { href: '/marketplace',   label: 'Marketplace' },
   { href: '/prices',        label: 'Price Tracker' },
   { href: '/directory',     label: 'Directory' },
-  { href: '/research',      label: 'Research' },
-  { href: '/mentorship',    label: 'Mentorship' },
   { href: '/business',      label: 'Business' },
 ]
+
+const OVERFLOW_NAV_LINKS = [
+  { href: '/grants',     label: 'Grants' },
+  { href: '/research',   label: 'Research' },
+  { href: '/mentorship', label: 'Mentorship' },
+]
+
+const NAV_LINKS = [...PRIMARY_NAV_LINKS, ...OVERFLOW_NAV_LINKS]
 
 export default function AppNav() {
   const [menuOpen,    setMenuOpen]    = useState(false)
   const [userOpen,    setUserOpen]    = useState(false)
+  const [moreOpen,    setMoreOpen]    = useState(false)
   const [isAdmin,     setIsAdmin]     = useState<boolean | null>(null)
   const [userInitial, setUserInitial] = useState('?')
   const [userAvatar,  setUserAvatar]  = useState<string | null>(null)
@@ -37,6 +63,7 @@ export default function AppNav() {
   const pathname = usePathname()
   const router   = useRouter()
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const moreRef     = useRef<HTMLDivElement>(null)
   const cleanupRef = useRef<(() => void) | null>(null)
 
   useEffect(() => {
@@ -103,11 +130,18 @@ export default function AppNav() {
     return () => cleanupRef.current?.()
   }, [])
 
-  // Close dropdown when clicking outside
+  // Close dropdowns when clicking outside. Two independent triggers
+  // (the user-avatar disc and the "More" overflow trigger) share one
+  // mousedown listener — each runs its own contains-check so a click
+  // inside one doesn't close the other.
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+      const target = e.target as Node
+      if (dropdownRef.current && !dropdownRef.current.contains(target)) {
         setUserOpen(false)
+      }
+      if (moreRef.current && !moreRef.current.contains(target)) {
+        setMoreOpen(false)
       }
     }
     document.addEventListener('mousedown', handleClick)
@@ -123,9 +157,15 @@ export default function AppNav() {
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + '/')
 
+  // Active-route detection for the "More" trigger — flips on whenever
+  // the current pathname matches any of the overflow links so the
+  // collapsed parent reflects deep-link state (otherwise a user reading
+  // /research/abc123 would see no nav highlight at all).
+  const isOverflowActive = OVERFLOW_NAV_LINKS.some(link => isActive(link.href))
+
   return (
     <header className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 sticky top-0 z-50">
-      <div className="w-full px-4 xl:px-8 py-3 flex items-center justify-between gap-3">
+      <div className="w-full px-4 lg:px-8 py-3 flex items-center justify-between gap-3">
 
         {/* Logo */}
 <Link href="/dashboard" className="flex items-center shrink-0">
@@ -154,9 +194,15 @@ export default function AppNav() {
   />
 </Link>
 
-        {/* Desktop nav links */}
-        <nav className="hidden xl:flex items-center gap-1 flex-1 justify-center overflow-hidden">
-          {NAV_LINKS.map(link => (
+        {/* Desktop nav links — seven inline + a "More" dropdown for the
+            three lower-frequency surfaces. Breakpoint is `lg` (1024px),
+            not the previous `xl` (1280px), because B2B users on
+            13"-class laptops expect the desktop rail at 1024+. The
+            "More" trigger is rendered as the eighth slot and uses the
+            same shape/colours as the inline links so a glance can't
+            tell the rail is split. */}
+        <nav className="hidden lg:flex items-center gap-1 flex-1 justify-center overflow-hidden">
+          {PRIMARY_NAV_LINKS.map(link => (
             <Link
               key={link.href}
               href={link.href}
@@ -169,10 +215,66 @@ export default function AppNav() {
               {link.label}
             </Link>
           ))}
+
+          {/* "More" overflow dropdown — collapses Grants / Research /
+              Mentorship under one trigger. Click-outside is wired in
+              the shared mousedown effect; aria-expanded /
+              aria-haspopup announce dropdown semantics; the menu uses
+              role="menu" with role="menuitem" children so screen
+              readers don't treat it as a generic group. */}
+          <div className="relative" ref={moreRef}>
+            <button
+              type="button"
+              onClick={() => setMoreOpen(!moreOpen)}
+              aria-expanded={moreOpen}
+              aria-haspopup="menu"
+              className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+                isOverflowActive
+                  ? 'bg-green-50 dark:bg-green-900/40 text-green-700 dark:text-green-400'
+                  : 'text-gray-600 dark:text-gray-300 hover:text-green-700 dark:hover:text-green-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+              }`}
+            >
+              More
+              <svg
+                aria-hidden="true"
+                className={`w-3.5 h-3.5 transition-transform ${moreOpen ? 'rotate-180' : ''}`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2.5}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {moreOpen && (
+              <div
+                role="menu"
+                aria-label="More navigation"
+                className="absolute left-1/2 -translate-x-1/2 mt-2 w-44 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl shadow-lg py-1.5 z-50"
+              >
+                {OVERFLOW_NAV_LINKS.map(link => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    role="menuitem"
+                    onClick={() => setMoreOpen(false)}
+                    className={`block px-4 py-2 text-sm transition-colors ${
+                      isActive(link.href)
+                        ? 'text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/30'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+                    }`}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
         </nav>
 
         {/* Desktop right side — ThemeToggle + User avatar dropdown */}
-        <div className="hidden xl:flex items-center gap-2 shrink-0">
+        <div className="hidden lg:flex items-center gap-2 shrink-0">
           <GlobalSearchBar variant="icon" />
 
           <ThemeToggle />
@@ -369,7 +471,7 @@ export default function AppNav() {
             announce "Open/Close navigation menu" + the expanded state to
             screen readers; aria-controls points at the panel below. */}
         <button
-          className="xl:hidden inline-flex items-center justify-center w-11 h-11 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+          className="lg:hidden inline-flex items-center justify-center w-11 h-11 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
           onClick={() => setMenuOpen(!menuOpen)}
           aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'}
           aria-expanded={menuOpen}
@@ -390,12 +492,16 @@ export default function AppNav() {
 
       {/* Mobile menu — uses the <Modal> primitive for focus trap, Escape
           to close, body-scroll lock, focus restore and aria-modal /
-          aria-labelledby wiring. Only the trigger is `xl:hidden` so the
-          modal can never open on desktop; we still gate the body
-          rendering on `menuOpen` because Modal short-circuits on
-          `open={false}`. The size="lg" + the inner div's max-w-full +
-          custom layout reproduce the existing "panel" feel without
-          breaking the mobile design. */}
+          aria-labelledby wiring. Only the trigger is `lg:hidden` so the
+          modal can never open on desktop (the breakpoint dropped from
+          `xl` to `lg` so 1024-1280px laptops get the desktop rail).
+          We still gate the body rendering on `menuOpen` because Modal
+          short-circuits on `open={false}`. The size="lg" + the inner
+          div's max-w-full + custom layout reproduce the existing
+          "panel" feel without breaking the mobile design. The mobile
+          list intentionally renders the full ten-link `NAV_LINKS` —
+          phones don't have the wrap problem the desktop overflow split
+          exists to solve. */}
       <Modal
         open={menuOpen}
         onClose={() => setMenuOpen(false)}

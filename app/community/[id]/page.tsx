@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import type { Metadata } from 'next'
 import AppNav from '@/app/components/AppNav'
+import BackButton from '@/app/components/BackButton'
 import CommentsSection from '@/app/components/CommentsSection'
 import ReportButton from '@/app/components/ReportButton'
 import { safeHref } from '@/lib/safe-href'
@@ -126,9 +127,7 @@ export default async function CommunityPostPage({ params }: { params: Promise<{ 
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <AppNav />
       <main className="max-w-3xl mx-auto px-4 py-10">
-        <Link href="/community" className="text-sm text-green-600 hover:underline mb-6 inline-block">
-          &larr; Back to Community
-        </Link>
+        <BackButton fallbackHref="/community" label="Back to Community" />
 
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
           {/* Author header */}

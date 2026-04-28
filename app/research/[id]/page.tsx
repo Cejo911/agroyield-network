@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import AppNav from '@/app/components/AppNav'
+import BackButton from '@/app/components/BackButton'
 import ResearchActions from './ResearchActions'
 import CommentsSection from '@/app/components/CommentsSection'
 import LikeButton from '@/app/components/LikeButton'
@@ -52,7 +53,7 @@ export default async function ResearchPostPage({
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <AppNav />
       <main className="max-w-2xl mx-auto px-4 py-10">
-        <Link href="/research" className="text-sm text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 mb-6 inline-block">{'← Back to Research'}</Link>
+        <BackButton fallbackHref="/research" label="Back to Research" />
 
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-8">
           <div className="flex flex-wrap gap-2 mb-4">
