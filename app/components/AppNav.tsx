@@ -7,6 +7,7 @@ import { getEffectiveTier } from '@/lib/tiers'
 import ThemeToggle from './ThemeToggle'
 import NotificationBell from './NotificationBell'
 import GlobalSearchBar from './GlobalSearchBar'
+import Modal from './design/Modal'
 import Image from 'next/image'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/lib/database.types'
@@ -386,9 +387,21 @@ export default function AppNav() {
         </button>
       </div>
 
-      {/* Mobile menu */}
-      {menuOpen && (
-        <div id="mobile-nav" className="xl:hidden border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 py-3 space-y-1">
+      {/* Mobile menu — uses the <Modal> primitive for focus trap, Escape
+          to close, body-scroll lock, focus restore and aria-modal /
+          aria-labelledby wiring. Only the trigger is `xl:hidden` so the
+          modal can never open on desktop; we still gate the body
+          rendering on `menuOpen` because Modal short-circuits on
+          `open={false}`. The size="lg" + the inner div's max-w-full +
+          custom layout reproduce the existing "panel" feel without
+          breaking the mobile design. */}
+      <Modal
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        title="Navigation"
+        size="lg"
+      >
+        <div id="mobile-nav" className="space-y-1">
           <div className="pb-2 mb-2 border-b border-gray-100 dark:border-gray-800">
             <GlobalSearchBar variant="full" />
           </div>
@@ -555,7 +568,7 @@ export default function AppNav() {
             </button>
           </div>
         </div>
-      )}
+      </Modal>
     </header>
   )
 }

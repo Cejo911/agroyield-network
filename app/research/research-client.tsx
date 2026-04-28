@@ -7,6 +7,9 @@ import { createClient } from '@/lib/supabase/client'
 import { useSearchLog } from '@/lib/useSearchLog'
 import LikeButton from '@/app/components/LikeButton'
 import ReportButton from '@/app/components/ReportButton'
+import UserAvatar from '@/app/components/design/UserAvatar'
+import EmptyState from '@/app/components/design/EmptyState'
+import { PrimaryLink } from '@/app/components/design/Button'
 
 const TYPES = ['All', 'Finding', 'Question', 'Dataset', 'Review', 'Collaboration', 'Guide', 'Resource']
 const TYPE_COLOURS: Record<string, string> = {
@@ -131,11 +134,36 @@ export default function ResearchClient({
       </div>
 
       {sorted.length === 0 ? (
-        <div className="text-center py-16 text-gray-400 dark:text-gray-500">
-          <p className="text-4xl mb-3">🔬</p>
-          <p className="font-medium">No research posts match your filters</p>
-          <p className="text-sm mt-1">Try adjusting your search or topic</p>
-        </div>
+        (() => {
+          const hasFilters = !!search || typeFilter !== 'All' || !!tagFilter
+          return (
+            <EmptyState
+              icon={
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                </svg>
+              }
+              title={hasFilters ? 'No research posts match your filters' : 'No research posts shared yet'}
+              body={hasFilters
+                ? 'Try a different topic or search term, or clear filters to see every paper, dataset and finding.'
+                : 'Share your finding, dataset, question or guide — research posts kickstart conversations across the network.'}
+              action={
+                <PrimaryLink href="/research/new">Share the first paper</PrimaryLink>
+              }
+              secondaryAction={
+                hasFilters ? (
+                  <button
+                    type="button"
+                    onClick={() => { setSearch(''); setTypeFilter('All'); setTagFilter('') }}
+                    className="inline-flex items-center justify-center border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-semibold hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors px-4 py-2.5"
+                  >
+                    Clear filters
+                  </button>
+                ) : undefined
+              }
+            />
+          )
+        })()
       ) : (
         <div className="space-y-4">
           {sorted.map(post => {
@@ -170,13 +198,7 @@ export default function ResearchClient({
                       const href = profile.username ? `/u/${profile.username}` : `/directory/${post.user_id}`
                       return (
                         <Link href={href} className="flex items-center gap-1.5 group" onClick={e => e.stopPropagation()}>
-                          {profile.avatar_url ? (
-                            <Image src={profile.avatar_url} alt="" width={20} height={20} className="w-5 h-5 rounded-full object-cover shrink-0" />
-                          ) : (
-                            <span className="w-5 h-5 rounded-full bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 text-[10px] font-bold flex items-center justify-center shrink-0">
-                              {(profile.first_name?.[0] || '?').toUpperCase()}
-                            </span>
-                          )}
+                          <UserAvatar src={profile.avatar_url} name={name} size="md" alt={name} />
                           <span className="text-xs text-gray-500 dark:text-gray-400 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">
                             {name}
                           </span>

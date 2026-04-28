@@ -11,6 +11,8 @@ import ProfileGateBanner from '@/app/components/ProfileGateBanner'
 import ImageUploader from '@/app/components/ImageUploader'
 import OnlineIndicator from '@/app/components/OnlineIndicator'
 import ReportButton from '@/app/components/ReportButton'
+import UserAvatar from '@/app/components/design/UserAvatar'
+import Modal from '@/app/components/design/Modal'
 import { useToast } from '@/app/components/Toast'
 import { safeHref } from '@/lib/safe-href'
 import type { Database } from '@/lib/database.types'
@@ -422,7 +424,6 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
           {filtered.map(post => {
             const profile = profileMap[post.user_id]
             const name = profile ? `${profile.first_name ?? ''} ${profile.last_name ?? ''}`.trim() : 'Anonymous'
-            const initials = name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()
             const profileHref = profile?.username ? `/u/${profile.username}` : `/directory/${post.user_id}`
             const liked = likedSet.has(post.id)
             const likeCount = likeCounts[post.id] || 0
@@ -430,8 +431,6 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
             const parent = post.reposted_from ? parentMap[post.reposted_from] : null
             const parentProfile = parent ? profileMap[parent.user_id] : null
             const parentName = parentProfile ? `${parentProfile.first_name ?? ''} ${parentProfile.last_name ?? ''}`.trim() : 'Anonymous'
-            const parentInitials = parentName.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()
-            const parentHref = parentProfile?.username ? `/u/${parentProfile.username}` : parent ? `/directory/${parent.user_id}` : '#'
             const votes = pollVotesLocal[post.id] || post.poll_votes || {}
             const totalVotes = Object.values(votes).reduce<number>((sum, arr) => sum + (Array.isArray(arr) ? arr.length : 0), 0)
             const hasVoted = Object.values(votes).some((arr) => Array.isArray(arr) && arr.includes(currentUserId))
@@ -448,13 +447,7 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
                 {/* Header */}
                 <div className="flex items-start gap-3 mb-3">
                   <Link href={profileHref} className="shrink-0">
-                    {profile?.avatar_url ? (
-                      <Image src={profile.avatar_url} alt={name} width={40} height={40} className="w-10 h-10 rounded-full object-cover" />
-                    ) : (
-                      <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-700 dark:text-green-400 font-bold text-sm">
-                        {initials}
-                      </div>
-                    )}
+                    <UserAvatar src={profile?.avatar_url} name={name} size="md" alt={name} />
                   </Link>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -493,13 +486,7 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
                   parent ? (
                     <Link href={`/community/${parent.id}`} className="block rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/40 p-3 mb-3 hover:border-green-300 dark:hover:border-green-700 transition-colors">
                       <div className="flex items-center gap-2 mb-2">
-                        {parentProfile?.avatar_url ? (
-                          <Image src={parentProfile.avatar_url} alt={parentName} width={28} height={28} className="w-7 h-7 rounded-full object-cover" />
-                        ) : (
-                          <div className="w-7 h-7 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-700 dark:text-green-400 font-bold text-[11px]">
-                            {parentInitials}
-                          </div>
-                        )}
+                        <UserAvatar src={parentProfile?.avatar_url} name={parentName} size="sm" alt={parentName} />
                         <span className="font-semibold text-gray-800 dark:text-gray-200 text-xs">{parentName}</span>
                         {parentProfile?.role && (
                           <span className="text-[10px] text-gray-400 dark:text-gray-500 capitalize">· {parentProfile.role}</span>
@@ -626,11 +613,19 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
         </div>
       )}
 
-      {/* Repost modal */}
-      {repostTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => !reposting && setRepostTarget(null)}>
-          <div className="bg-white dark:bg-gray-900 rounded-xl max-w-lg w-full p-5 shadow-xl" onClick={e => e.stopPropagation()}>
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">Repost this?</h3>
+      {/* Repost modal — uses the <Modal> primitive for focus trap, Escape
+          to close, body-scroll lock, focus restore, and aria-modal /
+          aria-labelledby wiring. While `reposting` is true the backdrop
+          and Escape are guarded by the parent's `onClose` callback. */}
+      <Modal
+        open={!!repostTarget}
+        onClose={() => { if (!reposting) setRepostTarget(null) }}
+        title="Repost this?"
+        size="lg"
+        closeOnBackdropClick={!reposting}
+      >
+        {repostTarget && (
+          <>
             <textarea
               value={repostCaption}
               onChange={e => setRepostCaption(e.target.value)}
@@ -668,9 +663,9 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
                 {reposting ? 'Reposting…' : 'Repost'}
               </button>
             </div>
-          </div>
-        </div>
-      )}
+          </>
+        )}
+      </Modal>
     </div>
   )
 }

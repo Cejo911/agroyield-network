@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import OnlineIndicator from '@/app/components/OnlineIndicator'
+import UserAvatar from '@/app/components/design/UserAvatar'
 import { createClient } from '@/lib/supabase/client'
 
 interface Message {
@@ -268,8 +269,6 @@ export default function MessageThread({ conversationId, currentUserId, otherUser
     return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
   }
 
-  const initial = (otherUser.name[0] || '?').toUpperCase()
-
   let lastDateLabel = ''
   const canSend = !sending && !uploading && (input.trim().length > 0 || !!attachment)
 
@@ -281,13 +280,7 @@ export default function MessageThread({ conversationId, currentUserId, otherUser
           ←
         </Link>
         <Link href={otherUser.profileHref} className="shrink-0">
-          {otherUser.avatarUrl ? (
-            <Image src={otherUser.avatarUrl} alt={otherUser.name} width={36} height={36} className="w-9 h-9 rounded-full object-cover" />
-          ) : (
-            <div className="w-9 h-9 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-700 dark:text-green-400 font-bold text-sm">
-              {initial}
-            </div>
-          )}
+          <UserAvatar src={otherUser.avatarUrl} name={otherUser.name} size="sm" alt={otherUser.name} />
         </Link>
         <div className="min-w-0">
           <Link href={otherUser.profileHref} className="font-semibold text-gray-900 dark:text-white text-sm hover:underline truncate flex items-center gap-1.5">

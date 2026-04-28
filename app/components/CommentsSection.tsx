@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import UserAvatar from '@/app/components/design/UserAvatar'
 
 type Comment = {
   id: string
@@ -258,9 +259,6 @@ export default function CommentsSection({ postId, postType }: Props) {
     setComments(prev => prev.filter(c => c.id !== id && c.parent_id !== id))
   }
 
-  const initial = (name: string | null) =>
-    (name ?? 'U').charAt(0).toUpperCase()
-
   // Separate top-level comments from replies
   const topLevel = comments.filter(c => !c.parent_id)
   const repliesMap: Record<string, Comment[]> = {}
@@ -281,11 +279,7 @@ export default function CommentsSection({ postId, postType }: Props) {
 
   const renderComment = (comment: Comment, isReply: boolean = false) => (
     <div key={comment.id} className={`flex gap-3 ${isReply ? '' : ''}`}>
-      <div className={`${isReply ? 'w-6 h-6' : 'w-8 h-8'} rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center shrink-0`}>
-        <span className={`${isReply ? 'text-[10px]' : 'text-xs'} font-semibold text-green-700 dark:text-green-400`}>
-          {initial(comment.user_name)}
-        </span>
-      </div>
+      <UserAvatar name={comment.user_name} size="sm" />
       <div className="flex-1 min-w-0">
         <div className="flex items-baseline gap-2 mb-0.5">
           <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
@@ -384,11 +378,7 @@ export default function CommentsSection({ postId, postType }: Props) {
                 {replyingTo === comment.id && userId && (
                   <div className="ml-10 mt-2 pl-4">
                     <form onSubmit={(e) => handleSubmit(e, comment.id)} className="flex gap-2">
-                      <div className="w-6 h-6 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center shrink-0 mt-1">
-                        <span className="text-[10px] font-semibold text-green-700 dark:text-green-400">
-                          {initial(userName)}
-                        </span>
-                      </div>
+                      <UserAvatar name={userName} size="sm" className="mt-1" />
                       <div className="flex-1 flex gap-2">
                         <textarea
                           ref={replyInputRef}
@@ -454,11 +444,7 @@ export default function CommentsSection({ postId, postType }: Props) {
       {/* Top-level comment input */}
       {userId ? (
         <form onSubmit={(e) => handleSubmit(e, null)} className="flex gap-3 mt-4">
-          <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center shrink-0">
-            <span className="text-xs font-semibold text-green-700 dark:text-green-400">
-              {initial(userName)}
-            </span>
-          </div>
+          <UserAvatar name={userName} size="sm" />
           <div className="flex-1 flex gap-2">
             <textarea
               rows={2}

@@ -1,9 +1,11 @@
 'use client'
 import { useState } from 'react'
-import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import ReportButton from '@/app/components/ReportButton'
+import UserAvatar from '@/app/components/design/UserAvatar'
+import EmptyState from '@/app/components/design/EmptyState'
+import { PrimaryLink } from '@/app/components/design/Button'
 import { useToast } from '@/app/components/Toast'
 import { useSearchLog } from '@/lib/useSearchLog'
 import { createClient } from '@/lib/supabase/client'
@@ -186,11 +188,36 @@ export default function PricesClient({
 
       {/* Empty state */}
       {sorted.length === 0 ? (
-        <div className="text-center py-16 text-gray-400 dark:text-gray-500">
-          <p className="text-4xl mb-3">📊</p>
-          <p className="font-medium">No prices reported yet</p>
-          <p className="text-sm mt-1">Be the first to report a market price</p>
-        </div>
+        (() => {
+          const hasFilters = !!search || categoryFilter !== 'All'
+          return (
+            <EmptyState
+              icon={
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4" />
+                </svg>
+              }
+              title={hasFilters ? 'No prices match your filters' : 'No prices reported yet'}
+              body={hasFilters
+                ? 'Try a different commodity, market or category — or clear the filters to see everything reported.'
+                : 'Help fellow farmers and traders by submitting the first market price for your area.'}
+              action={
+                <PrimaryLink href="/prices/submit">Submit the first price</PrimaryLink>
+              }
+              secondaryAction={
+                hasFilters ? (
+                  <button
+                    type="button"
+                    onClick={() => { setSearch(''); setCategoryFilter('All') }}
+                    className="inline-flex items-center justify-center border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-semibold hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors px-4 py-2.5"
+                  >
+                    Clear filters
+                  </button>
+                ) : undefined
+              }
+            />
+          )
+        })()
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {sorted.map(report => {
@@ -231,13 +258,12 @@ export default function PricesClient({
                         href={report.profiles.username ? `/u/${report.profiles.username}` : `/directory/${report.user_id}`}
                         className="flex items-center gap-1.5 group min-w-0"
                       >
-                        {report.profiles.avatar_url ? (
-                          <Image src={report.profiles.avatar_url} alt="" width={20} height={20} className="w-5 h-5 rounded-full object-cover shrink-0" />
-                        ) : (
-                          <span className="w-5 h-5 rounded-full bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 text-[10px] font-bold flex items-center justify-center shrink-0">
-                            {(report.profiles.first_name?.[0] || '?').toUpperCase()}
-                          </span>
-                        )}
+                        <UserAvatar
+                          src={report.profiles.avatar_url}
+                          name={[report.profiles.first_name, report.profiles.last_name].filter(Boolean).join(' ') || 'Anonymous'}
+                          size="md"
+                          alt={[report.profiles.first_name, report.profiles.last_name].filter(Boolean).join(' ') || 'Anonymous'}
+                        />
                         <span className="text-xs text-gray-500 dark:text-gray-400 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors truncate">
                           {[report.profiles.first_name, report.profiles.last_name].filter(Boolean).join(' ') || 'Anonymous'}
                         </span>

@@ -9,6 +9,7 @@ import MessageButton from '@/app/components/MessageButton'
 import BackButton from '@/app/components/BackButton'
 import VerifiedBadge from '@/app/components/VerifiedBadge'
 import EliteBadge from '@/app/components/EliteBadge'
+import UserAvatar from '@/app/components/design/UserAvatar'
 import { safeHref } from '@/lib/safe-href'
 import { getEffectiveTier } from '@/lib/tiers'
 import { isOpenNow } from '@/lib/open-to-opportunities'
@@ -112,9 +113,6 @@ export default async function PublicProfilePage(
     open_to_opportunities_until: typeof raw.open_to_opportunities_until === 'string'  ? raw.open_to_opportunities_until : null,
   })
 
-  const initials = [firstName, lastName]
-    .filter(Boolean).map(n => n.charAt(0).toUpperCase()).join('') || '?'
-
   const isOwnProfile = user?.id === profileId
 
   return (
@@ -138,20 +136,15 @@ export default async function PublicProfilePage(
           <div className="flex flex-col sm:flex-row sm:items-start gap-6">
 
             {/* Avatar */}
-            <div className="shrink-0">
-              {avatarUrl ? (
-                <div
-                  style={{ backgroundImage: `url(${avatarUrl})` }}
-                  className="w-24 h-24 rounded-full bg-cover bg-center border-4 border-white dark:border-gray-800 shadow-md"
-                  role="img"
-                  aria-label={`${firstName} ${lastName}`}
-                />
-              ) : (
-                <div className="w-24 h-24 rounded-full bg-green-600 flex items-center justify-center text-white text-2xl font-bold border-4 border-white dark:border-gray-800 shadow-md">
-                  {initials}
-                </div>
-              )}
-            </div>
+            <UserAvatar
+              src={avatarUrl}
+              name={`${firstName} ${lastName}`.trim()}
+              size="xl"
+              fallbackTone="strong"
+              alt={`${firstName} ${lastName}`.trim() || 'Profile photo'}
+              className="border-4 border-white dark:border-gray-800 shadow-md"
+              priority
+            />
 
             {/* Info */}
             <div className="flex-1 min-w-0">

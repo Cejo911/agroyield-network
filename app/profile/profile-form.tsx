@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import UserAvatar from '@/app/components/design/UserAvatar'
 
 const ROLES = [
   { value: 'student',     label: 'Student' },
@@ -401,18 +402,19 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
         {/* ── Avatar ── */}
         <div className="flex flex-col items-center gap-3">
           <div className="relative group">
-            {form.avatar_url ? (
-              <div
-                style={{ backgroundImage: `url(${form.avatar_url})` }}
-                className="w-24 h-24 rounded-full bg-cover bg-center border-4 border-white dark:border-gray-800 shadow-md"
-                role="img"
-                aria-label="Profile photo"
-              />
-            ) : (
-              <div className="w-24 h-24 rounded-full bg-green-600 flex items-center justify-center text-white text-2xl font-bold border-4 border-white dark:border-gray-800 shadow-md">
-                {initials}
-              </div>
-            )}
+            <UserAvatar
+              src={form.avatar_url}
+              name={`${form.first_name} ${form.last_name}`.trim()}
+              size="xl"
+              fallbackTone="strong"
+              alt="Profile photo"
+              className="border-4 border-white dark:border-gray-800 shadow-md"
+              fallback={
+                <div className="w-full h-full bg-green-600 flex items-center justify-center text-white text-2xl font-bold">
+                  {initials}
+                </div>
+              }
+            />
             <label htmlFor="avatar-upload"
               className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
               <span className="text-white text-xs font-medium text-center px-1">

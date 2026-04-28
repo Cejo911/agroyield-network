@@ -7,6 +7,9 @@ import { createClient } from '@/lib/supabase/client'
 import LikeButton from '@/app/components/LikeButton'
 import ReportButton from '@/app/components/ReportButton'
 import BookmarkButton from '@/app/components/design/BookmarkButton'
+import UserAvatar from '@/app/components/design/UserAvatar'
+import EmptyState from '@/app/components/design/EmptyState'
+import { PrimaryLink } from '@/app/components/design/Button'
 import { useSearchLog } from '@/lib/useSearchLog'
 
 const CATEGORIES = ['All', 'Produce', 'Inputs', 'Equipment', 'Livestock', 'Oil', 'Services', 'Other']
@@ -226,11 +229,31 @@ export default function MarketplaceClient({
       </div>
 
       {sorted.length === 0 ? (
-        <div className="text-center py-16 text-gray-400 dark:text-gray-500">
-          <p className="text-4xl mb-3">🤝</p>
-          <p className="font-medium">No listings match your filters</p>
-          <p className="text-sm mt-1">Try adjusting your search or price range</p>
-        </div>
+        <EmptyState
+          icon={
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+            </svg>
+          }
+          title={hasActiveFilters ? 'No listings match your filters' : 'No marketplace listings yet'}
+          body={hasActiveFilters
+            ? 'Try adjusting your search or price range, or clear the filters to see everything available.'
+            : 'Be the first to list a product, equipment item or service on the marketplace.'}
+          action={
+            <PrimaryLink href="/marketplace/new">Post the first listing</PrimaryLink>
+          }
+          secondaryAction={
+            hasActiveFilters ? (
+              <button
+                type="button"
+                onClick={() => { setSearch(''); setCategoryFilter('All'); setConditionFilter('All'); setTypeFilter('All'); setStateFilter('All'); setStatusFilter('All'); setMinPrice(''); setMaxPrice('') }}
+                className="inline-flex items-center justify-center border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-semibold hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors px-4 py-2.5"
+              >
+                Clear filters
+              </button>
+            ) : undefined
+          }
+        />
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {sorted.map(listing => {
@@ -291,13 +314,7 @@ export default function MarketplaceClient({
                       const href = profile.username ? `/u/${profile.username}` : `/directory/${listing.user_id}`
                       return (
                         <Link href={href} className="flex items-center gap-1.5 group" onClick={e => e.stopPropagation()}>
-                          {profile.avatar_url ? (
-                            <Image src={profile.avatar_url} alt="" width={20} height={20} className="w-5 h-5 rounded-full object-cover shrink-0" />
-                          ) : (
-                            <span className="w-5 h-5 rounded-full bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 text-[10px] font-bold flex items-center justify-center shrink-0">
-                              {(profile.first_name?.[0] || '?').toUpperCase()}
-                            </span>
-                          )}
+                          <UserAvatar src={profile.avatar_url} name={name} size="md" alt={name} />
                           <span className="text-xs text-gray-500 dark:text-gray-400 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">
                             {name}
                           </span>

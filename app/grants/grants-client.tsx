@@ -5,6 +5,8 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useSearchLog } from '@/lib/useSearchLog'
 import BookmarkButton from '@/app/components/design/BookmarkButton'
+import EmptyState from '@/app/components/design/EmptyState'
+import { PrimaryLink } from '@/app/components/design/Button'
 
 const CATEGORIES = ['All', 'Research', 'Startup', 'Student', 'Women', 'Innovation', 'Farmer', 'Policy']
 const STATUSES = ['All', 'open', 'upcoming', 'closed']
@@ -176,11 +178,36 @@ export default function GrantsClient({ grants, applicationMap, savedIds = [] }: 
 
       {/* Grant cards */}
       {sorted.length === 0 ? (
-        <div className="text-center py-16 text-gray-400 dark:text-gray-500">
-          <Image src="/logo-icon-colored.png" alt="AgroYield Network" width={44} height={44} className="mx-auto mb-3" />
-          <p className="font-medium">No grants match your filters</p>
-          <p className="text-sm mt-1">Try adjusting your search or check back later for new opportunities</p>
-        </div>
+        (() => {
+          const hasFilters = !!search || categoryFilter !== 'All' || statusFilter !== 'All'
+          return (
+            <EmptyState
+              icon={
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4" />
+                </svg>
+              }
+              title={hasFilters ? 'No grants match your filters' : 'No grants available right now'}
+              body={hasFilters
+                ? 'Try a different category, status or search term — funders publish new programmes weekly.'
+                : 'New grant programmes are added weekly. Browse all open calls or check back soon.'}
+              action={
+                <PrimaryLink href="/grants">Browse all grants</PrimaryLink>
+              }
+              secondaryAction={
+                hasFilters ? (
+                  <button
+                    type="button"
+                    onClick={() => { setSearch(''); setCategoryFilter('All'); setStatusFilter('All') }}
+                    className="inline-flex items-center justify-center border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-semibold hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors px-4 py-2.5"
+                  >
+                    Clear filters
+                  </button>
+                ) : undefined
+              }
+            />
+          )
+        })()
       ) : (
         <div className="space-y-4">
           {sorted.map(grant => {
