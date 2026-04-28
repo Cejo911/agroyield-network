@@ -291,11 +291,23 @@ function BusinessSetup() {
   }
   if (loading) return <div className="text-center py-10 text-gray-400">Loading...</div>
 
-  const field = (label: string, key: keyof typeof form, type = 'text', placeholder = '', required = false) => (
+  // `inputMode` triggers the right virtual keyboard on mobile (Stripe Checkout
+  // pattern). 'numeric' for whole-number IDs (CAC, account, phone), 'decimal'
+  // for currency-shaped fields. Set explicitly per call site so the touch
+  // keyboard matches the field's expected content.
+  const field = (
+    label: string,
+    key: keyof typeof form,
+    type = 'text',
+    placeholder = '',
+    required = false,
+    inputMode?: 'text' | 'numeric' | 'decimal' | 'tel' | 'email' | 'url',
+  ) => (
     <div>
       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{label}</label>
       <input
         type={type}
+        inputMode={inputMode}
         value={form[key]}
         onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
         placeholder={placeholder}
@@ -361,10 +373,10 @@ function BusinessSetup() {
           <h2 className="font-semibold text-gray-800 dark:text-white">Business Details</h2>
           {field('Business Name *', 'name', 'text', 'e.g. Chidi Farms Ltd', true)}
           {field('Address *', 'address', 'text', 'Street, City, State', true)}
-          {field('Phone *', 'phone', 'tel', '+234...', true)}
-          {field('Alternative Phone', 'alt_phone', 'tel', '+234...')}
-          {field('WhatsApp Number', 'whatsapp', 'tel', '+234...')}
-          {field('Email', 'email', 'email', 'info@yourbusiness.com')}
+          {field('Phone *', 'phone', 'tel', '+234...', true, 'tel')}
+          {field('Alternative Phone', 'alt_phone', 'tel', '+234...', false, 'tel')}
+          {field('WhatsApp Number', 'whatsapp', 'tel', '+234...', false, 'tel')}
+          {field('Email', 'email', 'email', 'info@yourbusiness.com', false, 'email')}
         </div>
 
         {/* Sector & Classification — powers peer benchmarking */}
@@ -498,8 +510,8 @@ function BusinessSetup() {
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm p-5 space-y-4">
           <h2 className="font-semibold text-gray-800 dark:text-white">Registration & Tax</h2>
           <p className="text-xs text-gray-400">Optional — these appear on your invoices and receipts when provided.</p>
-          {field('CAC Registration Number', 'cac_number', 'text', 'e.g. RC-1234567')}
-          {field('VAT / TIN Number', 'vat_tin', 'text', 'e.g. 12345678-0001')}
+          {field('CAC Registration Number', 'cac_number', 'text', 'e.g. RC-1234567', false, 'numeric')}
+          {field('VAT / TIN Number', 'vat_tin', 'text', 'e.g. 12345678-0001', false, 'numeric')}
         </div>
 
         {/* Bank Details */}
@@ -546,7 +558,7 @@ function BusinessSetup() {
             )}
           </div>
           {field('Account Name', 'account_name', 'text', 'Name on account')}
-          {field('Account Number', 'account_number', 'text', '0123456789')}
+          {field('Account Number', 'account_number', 'text', '0123456789', false, 'numeric')}
         </div>
 
         {/* Invoice Settings */}

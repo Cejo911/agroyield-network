@@ -11,6 +11,7 @@ import UserAvatar from '@/app/components/design/UserAvatar'
 import EmptyState from '@/app/components/design/EmptyState'
 import { PrimaryLink } from '@/app/components/design/Button'
 import { useSearchLog } from '@/lib/useSearchLog'
+import { formatRelativeTime } from '@/lib/format-time'
 
 const CATEGORIES = ['All', 'Produce', 'Inputs', 'Equipment', 'Livestock', 'Oil', 'Services', 'Other']
 const TYPES      = ['All', 'Sell', 'Buy', 'Trade']
@@ -59,16 +60,6 @@ type Listing = {
   is_featured: boolean | null
   featured_until: string | null
   created_at: string
-}
-
-const timeAgo = (dateStr: string) => {
-  const diff  = Date.now() - new Date(dateStr).getTime()
-  const hours = Math.floor(diff / 3600000)
-  const days  = Math.floor(diff / 86400000)
-  if (hours < 1)  return 'Just now'
-  if (hours < 24) return `${hours}h ago`
-  if (days < 7)   return `${days}d ago`
-  return new Date(dateStr).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
 }
 
 const formatPrice = (price: number) =>
@@ -231,7 +222,7 @@ export default function MarketplaceClient({
       {sorted.length === 0 ? (
         <EmptyState
           icon={
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <svg aria-hidden="true" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
             </svg>
           }
@@ -322,7 +313,7 @@ export default function MarketplaceClient({
                       )
                     })()}
                     <span className="text-gray-300 dark:text-gray-700">·</span>
-                    <span className="text-xs text-gray-400 dark:text-gray-500">{timeAgo(listing.created_at)}</span>
+                    <span className="text-xs text-gray-400 dark:text-gray-500">{formatRelativeTime(listing.created_at)}</span>
                   </div>
                   </div>
                 </Link>

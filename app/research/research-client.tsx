@@ -10,6 +10,7 @@ import ReportButton from '@/app/components/ReportButton'
 import UserAvatar from '@/app/components/design/UserAvatar'
 import EmptyState from '@/app/components/design/EmptyState'
 import { PrimaryLink } from '@/app/components/design/Button'
+import { formatRelativeTime } from '@/lib/format-time'
 
 const TYPES = ['All', 'Finding', 'Question', 'Dataset', 'Review', 'Collaboration', 'Guide', 'Resource']
 const TYPE_COLOURS: Record<string, string> = {
@@ -41,16 +42,6 @@ export type ResearchPost = {
 
 const getTypeColour = (type: string | null) =>
   type ? (TYPE_COLOURS[type.toLowerCase()] ?? 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400') : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
-
-const timeAgo = (dateStr: string) => {
-  const diff  = Date.now() - new Date(dateStr).getTime()
-  const hours = Math.floor(diff / 3600000)
-  const days  = Math.floor(diff / 86400000)
-  if (hours < 1)  return 'Just now'
-  if (hours < 24) return `${hours}h ago`
-  if (days < 7)   return `${days}d ago`
-  return new Date(dateStr).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
-}
 
 export default function ResearchClient({
   posts: initial,
@@ -139,7 +130,7 @@ export default function ResearchClient({
           return (
             <EmptyState
               icon={
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <svg aria-hidden="true" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
                 </svg>
               }
@@ -206,7 +197,7 @@ export default function ResearchClient({
                       )
                     })()}
                     <span className="text-gray-300 dark:text-gray-700">·</span>
-                    <span className="text-xs text-gray-400 dark:text-gray-500">{timeAgo(post.created_at)}</span>
+                    <span className="text-xs text-gray-400 dark:text-gray-500">{formatRelativeTime(post.created_at)}</span>
                   </div>
                   </div>
                 </Link>

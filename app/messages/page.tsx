@@ -4,6 +4,7 @@ import AppNav from '@/app/components/AppNav'
 import MessagesInbox from './messages-inbox'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/lib/database.types'
+import { formatRelativeTime } from '@/lib/format-time'
 
 type ConvoRow = Pick<
   Database['public']['Tables']['conversations']['Row'],
@@ -86,22 +87,6 @@ export default async function MessagesPage() {
     unreadMap[m.conversation_id] = (unreadMap[m.conversation_id] || 0) + 1
   }
 
-  const timeAgo = (dateStr: string) => {
-    // Date.now() in this server-side relative-time helper is fine — runs once
-    // per request render, not part of a React render path. The lint rule
-    // flags it anyway because it can't tell server from client; suppress.
-    // eslint-disable-next-line react-hooks/purity
-    const diff = Date.now() - new Date(dateStr).getTime()
-    const mins = Math.floor(diff / 60000)
-    const hours = Math.floor(diff / 3600000)
-    const days = Math.floor(diff / 86400000)
-    if (mins < 1) return 'now'
-    if (mins < 60) return `${mins}m`
-    if (hours < 24) return `${hours}h`
-    if (days < 7) return `${days}d`
-    return new Date(dateStr).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
-  }
-
   // Prepare conversations for client component
   const conversations = allConvos.map(convo => {
     const otherId = convo.participant_a === user.id ? convo.participant_b : convo.participant_a
@@ -113,7 +98,7 @@ export default async function MessagesPage() {
     const preview = lastMsg
       ? (lastMsg.sender_id === user.id ? 'You: ' : '') + body.slice(0, 60) + (body.length > 60 ? '…' : '')
       : 'No messages yet'
-    const time = lastMsg ? timeAgo(lastMsg.created_at) : ''
+    const time = lastMsg ? formatRelativeTime(lastMsg.created_at) : ''
 
     return {
       id: convo.id,

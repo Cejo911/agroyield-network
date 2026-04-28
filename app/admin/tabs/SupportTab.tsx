@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { formatRelativeTime } from '@/lib/format-time'
 
 interface SupportTicket {
   id: string
@@ -60,16 +61,6 @@ export default function SupportTab({ tickets, profilesMap, getDisplayName, curre
     (t.status === 'open' || t.status === 'in_progress') &&
     t.sla_deadline && new Date(t.sla_deadline) < new Date()
   ).length
-
-  const timeAgo = (dateStr: string) => {
-    const diff = Date.now() - new Date(dateStr).getTime()
-    const hours = Math.floor(diff / 3600000)
-    const days = Math.floor(diff / 86400000)
-    if (hours < 1) return 'Just now'
-    if (hours < 24) return `${hours}h ago`
-    if (days < 7) return `${days}d ago`
-    return new Date(dateStr).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
-  }
 
   const isSlaBreached = (t: SupportTicket) =>
     (t.status === 'open' || t.status === 'in_progress') &&
@@ -164,7 +155,7 @@ export default function SupportTab({ tickets, profilesMap, getDisplayName, curre
                   )}
                 </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  By {getDisplayName(t.user_id)} · {timeAgo(t.created_at)}
+                  By {getDisplayName(t.user_id)} · {formatRelativeTime(t.created_at)}
                   {t.assigned_to && ` · Assigned to ${getDisplayName(t.assigned_to)}`}
                 </p>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">{t.description}</p>

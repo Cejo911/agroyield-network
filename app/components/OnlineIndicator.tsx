@@ -1,5 +1,7 @@
 'use client'
 
+import { formatRelativeTime } from '@/lib/format-time'
+
 /**
  * Online presence indicator — green pulsing dot if active within 5 mins,
  * gray dot otherwise. Hover shows "Active now" or "Last seen X ago".
@@ -13,19 +15,6 @@
  */
 
 const ONLINE_THRESHOLD_MS = 5 * 60 * 1000 // 5 minutes
-
-function timeAgoShort(date: Date): string {
-  const seconds = Math.floor((Date.now() - date.getTime()) / 1000)
-  if (seconds < 60) return 'just now'
-  const mins = Math.floor(seconds / 60)
-  if (mins < 60) return `${mins}m ago`
-  const hours = Math.floor(mins / 60)
-  if (hours < 24) return `${hours}h ago`
-  const days = Math.floor(hours / 24)
-  if (days < 7) return `${days}d ago`
-  if (days < 30) return `${Math.floor(days / 7)}w ago`
-  return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
-}
 
 type Size = 'sm' | 'md' | 'lg'
 
@@ -52,7 +41,7 @@ export default function OnlineIndicator({
   // (H3 backlog) to feed in a memoised "now" snapshot.
   // eslint-disable-next-line react-hooks/purity
   const isOnline = Date.now() - lastSeen.getTime() < ONLINE_THRESHOLD_MS
-  const tooltip = isOnline ? 'Active now' : `Last seen ${timeAgoShort(lastSeen)}`
+  const tooltip = isOnline ? 'Active now' : `Last seen ${formatRelativeTime(lastSeen)}`
   const sizeClass = SIZE_CLASSES[size]
 
   return (

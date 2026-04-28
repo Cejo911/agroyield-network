@@ -149,6 +149,7 @@ export default function SubmitPricePage() {
               </label>
               <input
                 type="number"
+                inputMode="decimal"
                 name="price_per_unit"
                 value={form.price_per_unit}
                 onChange={handleChange}

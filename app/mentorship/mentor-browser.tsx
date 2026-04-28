@@ -72,7 +72,7 @@ export default function MentorBrowser({ mentors, userId }: { mentors: Mentor[]; 
       <div className="mb-6 space-y-3">
         <div className="relative">
           <span className="absolute inset-y-0 left-3 flex items-center text-gray-400 pointer-events-none">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg aria-hidden="true" className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
             </svg>
           </span>

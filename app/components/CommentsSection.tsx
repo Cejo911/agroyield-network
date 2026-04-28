@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import UserAvatar from '@/app/components/design/UserAvatar'
+import { formatRelativeTime } from '@/lib/format-time'
 
 type Comment = {
   id: string
@@ -18,16 +19,6 @@ type Comment = {
 type Props = {
   postId: string
   postType: 'research' | 'opportunity' | 'listing' | 'price_report' | 'community'
-}
-
-const timeAgo = (dateStr: string) => {
-  const diff  = Date.now() - new Date(dateStr).getTime()
-  const hours = Math.floor(diff / 3600000)
-  const days  = Math.floor(diff / 86400000)
-  if (hours < 1)  return 'Just now'
-  if (hours < 24) return `${hours}h ago`
-  if (days < 7)   return `${days}d ago`
-  return new Date(dateStr).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
 export default function CommentsSection({ postId, postType }: Props) {
@@ -285,7 +276,7 @@ export default function CommentsSection({ postId, postType }: Props) {
           <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
             {comment.user_id === userId ? 'You' : (comment.user_name ?? 'User')}
           </span>
-          <span className="text-xs text-gray-500 dark:text-gray-400">{timeAgo(comment.created_at)}</span>
+          <span className="text-xs text-gray-500 dark:text-gray-400">{formatRelativeTime(comment.created_at)}</span>
         </div>
         <p className="text-sm text-gray-600 dark:text-gray-400">{comment.content}</p>
         <div className="flex items-center gap-3 mt-1">

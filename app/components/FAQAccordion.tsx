@@ -51,6 +51,7 @@ export default function FAQAccordion({ items, title, subtitle, compact = false }
                   {item.q}
                 </span>
                 <svg
+                  aria-hidden="true"
                   className={`w-5 h-5 text-gray-400 dark:text-gray-500 flex-shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
                   fill="none"
                   viewBox="0 0 24 24"

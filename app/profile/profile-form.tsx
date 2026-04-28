@@ -700,14 +700,14 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Phone Number</label>
-              <input type="tel" value={form.phone}
+              <input type="tel" inputMode="tel" value={form.phone}
                 onChange={e => setForm(prev => ({ ...prev, phone: e.target.value }))}
                 placeholder="+234 800 000 0000"
                 className={inputCls} />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">WhatsApp Number</label>
-              <input type="tel" value={form.whatsapp}
+              <input type="tel" inputMode="tel" value={form.whatsapp}
                 onChange={e => setForm(prev => ({ ...prev, whatsapp: e.target.value }))}
                 placeholder="+234 800 000 0000"
                 className={inputCls} />

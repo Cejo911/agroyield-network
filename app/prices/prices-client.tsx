@@ -9,6 +9,7 @@ import { PrimaryLink } from '@/app/components/design/Button'
 import { useToast } from '@/app/components/Toast'
 import { useSearchLog } from '@/lib/useSearchLog'
 import { createClient } from '@/lib/supabase/client'
+import { formatRelativeTime } from '@/lib/format-time'
 
 const FALLBACK_CATEGORIES = ['Grains', 'Tubers', 'Legumes', 'Vegetables', 'Fruits', 'Livestock', 'Oil', 'Cash Crops']
 const CATEGORY_COLOURS: Record<string, string> = {
@@ -91,21 +92,6 @@ export default function PricesClient({
     new Intl.NumberFormat('en-NG', {
       style: 'currency', currency: 'NGN', maximumFractionDigits: 0,
     }).format(price)
-
-  const timeAgo = (dateStr: string) => {
-    // Date.now() in this relative-time helper called during render is intentional.
-    // Refactor planned (H3 backlog) to pass a memoised "now" snapshot down so
-    // renders stay pure; deferred — the visible bug is invisible (relative times
-    // stabilise on the next render anyway).
-    // eslint-disable-next-line react-hooks/purity
-    const diff = Date.now() - new Date(dateStr).getTime()
-    const hours = Math.floor(diff / 3600000)
-    const days = Math.floor(diff / 86400000)
-    if (hours < 1) return 'Just now'
-    if (hours < 24) return `${hours}h ago`
-    if (days < 7) return `${days}d ago`
-    return new Date(dateStr).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
-  }
 
   const getCategoryColour = (category: string | null): string => {
     if (!category) return 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
@@ -193,7 +179,7 @@ export default function PricesClient({
           return (
             <EmptyState
               icon={
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <svg aria-hidden="true" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4" />
                 </svg>
               }
@@ -273,7 +259,7 @@ export default function PricesClient({
                     )}
                     <span className="text-gray-300 dark:text-gray-700">·</span>
                     <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0">
-                      {timeAgo(report.reported_at)}
+                      {formatRelativeTime(report.reported_at)}
                     </span>
                   </div>
 

@@ -95,7 +95,7 @@ export default function BusinessSwitcher() {
           </p>
           <p className="text-[10px] text-gray-400 capitalize">{activeBiz.role}</p>
         </div>
-        <svg className={`w-3.5 h-3.5 text-gray-400 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`}
+        <svg aria-hidden="true" className={`w-3.5 h-3.5 text-gray-400 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`}
           fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
         </svg>

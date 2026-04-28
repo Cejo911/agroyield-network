@@ -95,7 +95,7 @@ export default function BusinessSetupGuide({ form }: { form: FormState }) {
           className="flex items-center gap-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-lg rounded-full px-4 py-2.5 hover:shadow-xl transition-all group"
         >
           <div className="relative w-9 h-9 shrink-0">
-            <svg className="w-9 h-9 -rotate-90" viewBox="0 0 36 36">
+            <svg aria-hidden="true" className="w-9 h-9 -rotate-90" viewBox="0 0 36 36">
               <circle cx="18" cy="18" r="15" fill="none" stroke="currentColor" className="text-gray-200 dark:text-gray-700" strokeWidth="3" />
               <circle cx="18" cy="18" r="15" fill="none" stroke="currentColor" className="text-green-500" strokeWidth="3"
                 strokeDasharray={`${pct * 0.9425} 94.25`} strokeLinecap="round" />
@@ -122,8 +122,9 @@ export default function BusinessSetupGuide({ form }: { form: FormState }) {
                   onClick={() => setOpen(false)}
                   className="text-white/70 hover:text-white text-xs px-1.5 py-0.5 rounded transition-colors"
                   title="Minimise"
+                  aria-label="Minimise setup guide"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <line x1="5" y1="12" x2="19" y2="12" />
                   </svg>
                 </button>
@@ -131,8 +132,9 @@ export default function BusinessSetupGuide({ form }: { form: FormState }) {
                   onClick={() => setDismissed(true)}
                   className="text-white/70 hover:text-white text-xs px-1.5 py-0.5 rounded transition-colors"
                   title="Dismiss"
+                  aria-label="Dismiss setup guide"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
                   </svg>
                 </button>
@@ -190,7 +192,7 @@ export default function BusinessSetupGuide({ form }: { form: FormState }) {
                           : 'border-2 border-gray-300 dark:border-gray-600'
                     }`}>
                       {done && (
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                           <polyline points="20 6 9 17 4 12" />
                         </svg>
                       )}

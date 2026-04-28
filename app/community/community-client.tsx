@@ -15,6 +15,7 @@ import UserAvatar from '@/app/components/design/UserAvatar'
 import Modal from '@/app/components/design/Modal'
 import { useToast } from '@/app/components/Toast'
 import { safeHref } from '@/lib/safe-href'
+import { formatRelativeTime } from '@/lib/format-time'
 import type { Database } from '@/lib/database.types'
 
 // Row aliases derived from the auto-generated Database type — replace
@@ -251,24 +252,6 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
     router.refresh()
   }
 
-  function timeAgo(date: string | null): string {
-    if (!date) return ''
-    // Date.now() in this relative-time helper called during render is intentional.
-    // Refactor planned (H3 backlog) to pass a memoised "now" snapshot down so
-    // renders stay pure; deferred because the visible bug is invisible (relative
-    // times stabilise in the next render anyway).
-    // eslint-disable-next-line react-hooks/purity
-    const seconds = Math.floor((Date.now() - new Date(date).getTime()) / 1000)
-    if (seconds < 60) return 'just now'
-    const minutes = Math.floor(seconds / 60)
-    if (minutes < 60) return `${minutes}m ago`
-    const hours = Math.floor(minutes / 60)
-    if (hours < 24) return `${hours}h ago`
-    const days = Math.floor(hours / 24)
-    if (days < 7) return `${days}d ago`
-    return new Date(date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })
-  }
-
   return (
     <div>
       {/* New post button */}
@@ -464,7 +447,7 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
                         {typeIcons[post.post_type]} {post.post_type.charAt(0).toUpperCase() + post.post_type.slice(1)}
                       </span>
                     </div>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{timeAgo(post.created_at)}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{formatRelativeTime(post.created_at)}</p>
                   </div>
                   {post.is_pinned && (
                     <span className="text-xs text-yellow-600 dark:text-yellow-400 font-semibold">📌 Pinned</span>
@@ -491,7 +474,7 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
                         {parentProfile?.role && (
                           <span className="text-[10px] text-gray-400 dark:text-gray-500 capitalize">· {parentProfile.role}</span>
                         )}
-                        <span className="text-[10px] text-gray-400 dark:text-gray-500">· {timeAgo(parent.created_at)}</span>
+                        <span className="text-[10px] text-gray-400 dark:text-gray-500">· {formatRelativeTime(parent.created_at)}</span>
                       </div>
                       <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line line-clamp-4">{parent.content}</p>
                       {parent.link_url && (

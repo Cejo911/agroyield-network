@@ -8,6 +8,7 @@ import AppNav from '@/app/components/AppNav'
 import CommentsSection from '@/app/components/CommentsSection'
 import ReportButton from '@/app/components/ReportButton'
 import { safeHref } from '@/lib/safe-href'
+import { formatRelativeTime } from '@/lib/format-time'
 
 // ── SEO: generate metadata for public indexing ──
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -115,21 +116,6 @@ export default async function CommunityPostPage({ params }: { params: Promise<{ 
     discussion: '\u{1F4AC}', question: '\u{2753}', poll: '\u{1F4CA}', news: '\u{1F4F0}', milestone: '\u{1F3C6}',
   }
 
-  const timeAgo = (dateStr: string) => {
-    // Date.now() in this relative-time helper called during render is intentional.
-    // Refactor planned (H3 backlog) to pass a memoised "now" snapshot down so
-    // renders stay pure; deferred — the visible bug is invisible (relative times
-    // stabilise on the next render anyway).
-    // eslint-disable-next-line react-hooks/purity
-    const diff = Date.now() - new Date(dateStr).getTime()
-    const hours = Math.floor(diff / 3600000)
-    const days = Math.floor(diff / 86400000)
-    if (hours < 1) return 'Just now'
-    if (hours < 24) return `${hours}h ago`
-    if (days < 7) return `${days}d ago`
-    return new Date(dateStr).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
-  }
-
   // Poll data
   const votes = post.poll_votes || {}
   const totalVotes = Object.values(votes).reduce((sum: number, arr: unknown) => sum + (Array.isArray(arr) ? arr.length : 0), 0) as number
@@ -170,7 +156,7 @@ export default async function CommunityPostPage({ params }: { params: Promise<{ 
                   {typeIcons[post.post_type]} {post.post_type.charAt(0).toUpperCase() + post.post_type.slice(1)}
                 </span>
               </div>
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{timeAgo(post.created_at)}</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{formatRelativeTime(post.created_at)}</p>
             </div>
             {post.is_pinned && (
               <span className="text-xs text-yellow-600 dark:text-yellow-400 font-semibold">Pinned</span>

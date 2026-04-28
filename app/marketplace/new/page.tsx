@@ -204,6 +204,7 @@ export default function NewListingPage() {
               <div className="flex gap-3 items-center">
                 <input
                   type="number"
+                  inputMode="decimal"
                   min="0"
                   step="0.01"
                   value={form.price}

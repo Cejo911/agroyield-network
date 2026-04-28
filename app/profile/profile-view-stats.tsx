@@ -1,21 +1,12 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import type { ProfileViewStats, ProfileViewer } from '@/lib/profile-views'
+import { formatRelativeTime } from '@/lib/format-time'
 
 // Server component — purely presentational. The parent /profile page does the
 // data fetch and tier check, then hands us the result. Keeping this
 // presentation-only means future surfaces (e.g. a homepage widget) can reuse
 // the same panel without re-fetching.
-
-const timeAgo = (dateStr: string): string => {
-  const diff  = Date.now() - new Date(dateStr).getTime()
-  const hours = Math.floor(diff / 3600000)
-  const days  = Math.floor(diff / 86400000)
-  if (hours < 1)  return 'Just now'
-  if (hours < 24) return `${hours}h ago`
-  if (days < 7)   return `${days}d ago`
-  return new Date(dateStr).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
-}
 
 export default function ProfileViewStatsPanel({
   stats,
@@ -89,7 +80,7 @@ export default function ProfileViewStatsPanel({
                         {[v.role, v.institution].filter(Boolean).join(' · ') || 'Member'}
                       </p>
                     </div>
-                    <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0">{timeAgo(v.created_at)}</span>
+                    <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0">{formatRelativeTime(v.created_at)}</span>
                   </Link>
                 </li>
               )

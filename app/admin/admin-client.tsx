@@ -936,7 +936,7 @@ export default function AdminClient({
                     : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                 }`}>
                 {isSuperAdminTab(activeTab) ? superAdminTabs.find(t => t.id === activeTab)?.label : 'Admin'}
-                <svg className={`w-3.5 h-3.5 transition-transform ${adminMenuOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                <svg aria-hidden="true" className={`w-3.5 h-3.5 transition-transform ${adminMenuOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
               </button>
               {adminMenuOpen && (
                 <>
@@ -1817,7 +1817,7 @@ export default function AdminClient({
               <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">{title}</span>
               {!openSections[sectionKey] && badges}
             </div>
-            <svg className={`w-4 h-4 text-gray-400 transition-transform flex-shrink-0 ${openSections[sectionKey] ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+            <svg aria-hidden="true" className={`w-4 h-4 text-gray-400 transition-transform flex-shrink-0 ${openSections[sectionKey] ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
           </button>
         )
         // Access section badges

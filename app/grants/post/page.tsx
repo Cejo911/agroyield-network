@@ -171,14 +171,14 @@ export default function PostGrantPage() {
           <div className="grid grid-cols-3 gap-4">
             <div>
               <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Min Amount</label>
-              <input type="number" value={form.amount_min}
+              <input type="number" inputMode="decimal" value={form.amount_min}
                 onChange={e => setForm({ ...form, amount_min: e.target.value })}
                 placeholder="e.g. 500000"
                 className={inputCls} />
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Max Amount</label>
-              <input type="number" value={form.amount_max}
+              <input type="number" inputMode="decimal" value={form.amount_max}
                 onChange={e => setForm({ ...form, amount_max: e.target.value })}
                 placeholder="e.g. 2000000"
                 className={inputCls} />

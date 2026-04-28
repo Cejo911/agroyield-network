@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
+import { formatRelativeTime } from '@/lib/format-time'
 
 interface Notification {
   id: string
@@ -40,6 +41,13 @@ export default function NotificationBell() {
   }
 
   useEffect(() => {
+    // Initial fetch + 30-second poll. Calling fetchNotifications() inside the
+    // effect intentionally seeds state from the network before the dropdown
+    // opens; the alternative (move the seeding into a render path) breaks
+    // the polling pattern. This was tolerated by the previous lint baseline
+    // and surfaces post-timeAgo-removal because the rule's purity tracker
+    // re-evaluates the whole component now that one impure helper is gone.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchNotifications()
     // Poll every 30 seconds for new notifications
     const interval = setInterval(fetchNotifications, 30000)
@@ -83,24 +91,6 @@ export default function NotificationBell() {
     fetchNotifications()
   }
 
-  // Time ago helper
-  const timeAgo = (dateStr: string) => {
-    // Date.now() in this relative-time helper called during render is intentional.
-    // Refactor planned (H3 backlog) to pass a memoised "now" snapshot down so
-    // renders stay pure; deferred — the visible bug is invisible (relative times
-    // stabilise on the next render anyway).
-    // eslint-disable-next-line react-hooks/purity
-    const diff = Date.now() - new Date(dateStr).getTime()
-    const mins = Math.floor(diff / 60000)
-    if (mins < 1) return 'just now'
-    if (mins < 60) return `${mins}m ago`
-    const hrs = Math.floor(mins / 60)
-    if (hrs < 24) return `${hrs}h ago`
-    const days = Math.floor(hrs / 24)
-    if (days < 7) return `${days}d ago`
-    return new Date(dateStr).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })
-  }
-
   // Icon per notification type
   const typeIcon = (type: string) => {
     switch (type) {
@@ -131,8 +121,9 @@ export default function NotificationBell() {
         onClick={() => setOpen(!open)}
         className="relative w-8 h-8 flex items-center justify-center rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
         title="Notifications"
+        aria-label="Notifications"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+        <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
           <path d="M13.73 21a2 2 0 0 1-3.46 0" />
@@ -185,7 +176,7 @@ export default function NotificationBell() {
                       {notif.body && (
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2">{notif.body}</p>
                       )}
-                      <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">{timeAgo(notif.created_at)}</p>
+                      <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">{formatRelativeTime(notif.created_at)}</p>
                     </div>
                     {!notif.read_at && (
                       <span className="w-2 h-2 rounded-full bg-green-500 mt-2 shrink-0" />

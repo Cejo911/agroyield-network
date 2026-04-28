@@ -65,6 +65,7 @@ export default function LikeButton({ postId, postType }: Props) {
         liked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'
       }`}>
       <svg
+        aria-hidden="true"
         className="w-4 h-4 transition-all"
         viewBox="0 0 24 24"
         fill={liked ? 'currentColor' : 'none'}

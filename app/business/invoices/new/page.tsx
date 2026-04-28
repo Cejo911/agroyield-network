@@ -554,7 +554,7 @@ export default function NewInvoicePage() {
                   )}
 
                   <div className="col-span-1">
-                    <input type="number" min="1" value={item.quantity}
+                    <input type="number" inputMode="numeric" min="1" value={item.quantity}
                       onChange={e => updateItem(idx, 'quantity', e.target.value)}
                       className={`${inputClass} ${stockWarnings.some(w => w.idx === idx) ? 'ring-2 ring-amber-400' : ''}`} required />
                     {item.product_id && item.product_id !== '__manual__' && (() => {
@@ -563,7 +563,7 @@ export default function NewInvoicePage() {
                     })()}
                   </div>
                   <div className="col-span-2">
-                    <input type="number" min="0" step="0.01" placeholder="0.00"
+                    <input type="number" inputMode="decimal" min="0" step="0.01" placeholder="0.00"
                       value={item.unit_price}
                       onChange={e => updateItem(idx, 'unit_price', e.target.value)}
                       className={inputClass} required />
@@ -620,7 +620,7 @@ export default function NewInvoicePage() {
                   <div className="grid grid-cols-2 gap-2">
                     <div>
                       <label className="text-[10px] text-gray-500 dark:text-gray-400 uppercase">Qty</label>
-                      <input type="number" min="1" value={item.quantity}
+                      <input type="number" inputMode="numeric" min="1" value={item.quantity}
                         onChange={e => updateItem(idx, 'quantity', e.target.value)}
                         className={`${inputClass} ${stockWarnings.some(w => w.idx === idx) ? 'ring-2 ring-amber-400' : ''}`} required />
                       {item.product_id && item.product_id !== '__manual__' && (() => {
@@ -630,7 +630,7 @@ export default function NewInvoicePage() {
                     </div>
                     <div>
                       <label className="text-[10px] text-gray-500 uppercase">Price (₦)</label>
-                      <input type="number" min="0" step="0.01" placeholder="0.00"
+                      <input type="number" inputMode="decimal" min="0" step="0.01" placeholder="0.00"
                         value={item.unit_price}
                         onChange={e => updateItem(idx, 'unit_price', e.target.value)}
                         className={inputClass} required />
@@ -685,6 +685,7 @@ export default function NewInvoicePage() {
                   <div className="flex items-center gap-2">
                     <input
                       type="number"
+                      inputMode="decimal"
                       min="0"
                       max="100"
                       step="0.1"
@@ -772,6 +773,7 @@ export default function NewInvoicePage() {
                 <input
                   id="delivery"
                   type="number"
+                  inputMode="decimal"
                   min="0"
                   step="0.01"
                   placeholder="0.00"

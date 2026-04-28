@@ -89,7 +89,7 @@ export default function ReportButton({ postId, postType, initialReported }: Prop
   if (reported && !open) {
     return (
       <span className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400" title="You reported this post">
-        <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+        <svg aria-hidden="true" className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
           <path fillRule="evenodd" d="M3 2.25a.75.75 0 01.75.75v.54l1.838-.46a9.75 9.75 0 016.317.175l.41.131a8.25 8.25 0 005.37.148l2.929-.863A.75.75 0 0121 3v13.5a.75.75 0 01-.513.707l-3.337.985a9.75 9.75 0 01-6.338-.175l-.41-.131a8.25 8.25 0 00-5.37-.148L3 18.88V21a.75.75 0 01-1.5 0V3A.75.75 0 013 2.25z" clipRule="evenodd" />
         </svg>
         Reported
@@ -103,7 +103,7 @@ export default function ReportButton({ postId, postType, initialReported }: Prop
         onClick={() => { setOpen(!open); setError(null) }}
         className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-orange-500 transition-colors"
         aria-label="Report post">
-        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <svg aria-hidden="true" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round"
             d="M3 3v1.5M3 21v-6m0 0l2.77-.693a9 9 0 016.208.682l.108.054a9 9 0 006.086.71l3.114-.732a48.524 48.524 0 01-.005-10.499l-3.11.732a9 9 0 01-6.085-.711l-.108-.054a9 9 0 00-6.208-.682L3 4.5M3 15V4.5" />
         </svg>
