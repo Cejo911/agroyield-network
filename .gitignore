@@ -49,3 +49,4 @@ public/swe-worker-*.js
 # Sentry Config File
 .env.sentry-build-plugin
 .env*.local
+public/swe-worker-*.js.map
