@@ -55,9 +55,12 @@ export async function POST(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+    // post_type values mirror the likes_post_type_check DB constraint —
+    // see supabase/migrations/20260428170000_widen_likes_post_type_check.sql.
+    // Keep this union in lockstep with the constraint when adding new types.
     const { postId, postType } = await request.json() as {
       postId: string
-      postType: 'opportunity' | 'listing'
+      postType: 'opportunity' | 'listing' | 'research' | 'community' | 'comment'
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

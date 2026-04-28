@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import UserAvatar from '@/app/components/design/UserAvatar'
 import { formatRelativeTime } from '@/lib/format-time'
@@ -25,6 +26,13 @@ export default function CommentsSection({ postId, postType }: Props) {
   const [comments,    setComments]    = useState<Comment[]>([])
   const [userId,      setUserId]      = useState<string | null>(null)
   const [userName,    setUserName]    = useState('')
+  // username (profile slug) keyed by user_id. Populated from a single
+  // batch fetch alongside the comment list (and again per-insert for the
+  // current user). Used to wrap commenter avatar + name in a /u/[slug]
+  // link. Profiles without a username render as plain text — graceful
+  // degradation so a missing slug doesn't strip the comment of its
+  // attribution.
+  const [slugByUserId, setSlugByUserId] = useState<Record<string, string>>({})
   const [content,     setContent]     = useState('')
   const [replyingTo,  setReplyingTo]  = useState<string | null>(null)
   const [replyContent, setReplyContent] = useState('')
@@ -62,16 +70,36 @@ export default function CommentsSection({ postId, postType }: Props) {
               setLoading(false)
               return
             }
-            // Batch fetch likes for all comments
+            // Batch fetch likes + profile slugs for all distinct commenters
+            // in a single round trip — same shape as the existing likes
+            // batch (cf. Checkpoint 40 / userReportedSet pattern). The
+            // self-id is appended so the current user's slug is cached
+            // for any comments they post during this session.
             const commentIds = commentList.map(c => c.id)
-            const [{ data: allLikes }, { data: userLikes }] = await Promise.all([
+            const userIds = Array.from(
+              new Set([...commentList.map(c => c.user_id), user.id]),
+            )
+            const [
+              { data: allLikes },
+              { data: userLikes },
+              { data: profileRows },
+            ] = await Promise.all([
               supabase.from('likes').select('post_id').eq('post_type', 'comment').in('post_id', commentIds),
               supabase.from('likes').select('post_id').eq('post_type', 'comment').eq('user_id', user.id).in('post_id', commentIds),
+              supabase.from('profiles').select('id, username').in('id', userIds),
             ])
             // Count likes per comment
             const countMap: Record<string, number> = {}
             for (const l of (allLikes ?? [])) countMap[l.post_id] = (countMap[l.post_id] || 0) + 1
             const likedSet = new Set((userLikes ?? []).map(l => l.post_id))
+
+            // Build the user_id -> username map. Skip rows without a slug
+            // (those will render as plain text in renderComment).
+            const slugMap: Record<string, string> = {}
+            for (const p of (profileRows ?? [])) {
+              if (p.username) slugMap[p.id] = p.username
+            }
+            setSlugByUserId(slugMap)
 
             setComments(commentList.map(c => ({
               ...c,
@@ -81,7 +109,10 @@ export default function CommentsSection({ postId, postType }: Props) {
             setLoading(false)
           })
       } else {
-        // Not logged in — fetch comments without like data
+        // Not logged in — fetch comments without like data, but still
+        // batch-fetch profile slugs so commenter names link to /u/[slug]
+        // for unauthenticated visitors too (consistent with the public
+        // post view).
         supabase
           .from('comments')
           .select('id, user_id, content, user_name, parent_id, created_at')
@@ -89,8 +120,21 @@ export default function CommentsSection({ postId, postType }: Props) {
           .eq('post_type', postType)
           .eq('is_active', true)
           .order('created_at', { ascending: true })
-          .then(({ data }) => {
-            setComments((data ?? []).map(c => ({ ...c, likeCount: 0, liked: false })))
+          .then(async ({ data }) => {
+            const commentList = data ?? []
+            if (commentList.length > 0) {
+              const userIds = Array.from(new Set(commentList.map(c => c.user_id)))
+              const { data: profileRows } = await supabase
+                .from('profiles')
+                .select('id, username')
+                .in('id', userIds)
+              const slugMap: Record<string, string> = {}
+              for (const p of (profileRows ?? [])) {
+                if (p.username) slugMap[p.id] = p.username
+              }
+              setSlugByUserId(slugMap)
+            }
+            setComments(commentList.map(c => ({ ...c, likeCount: 0, liked: false })))
             setLoading(false)
           })
       }
@@ -268,14 +312,50 @@ export default function CommentsSection({ postId, postType }: Props) {
 
   const totalCount = comments.length
 
-  const renderComment = (comment: Comment, isReply: boolean = false) => (
+  const renderComment = (comment: Comment, isReply: boolean = false) => {
+    // Only commenters who have a `profiles.username` set get a link;
+    // accounts without a slug render as plain text. The "You" label on
+    // the current user's own comments stays plain — clicking your own
+    // name to navigate to your own profile is a known footgun (people
+    // assume the link goes to the post author's page); leaving it
+    // unlinked matches the surrounding design system.
+    const slug = slugByUserId[comment.user_id]
+    const isSelf = comment.user_id === userId
+    const displayName = isSelf ? 'You' : (comment.user_name ?? 'User')
+    const linkable = !isSelf && slug
+
+    const avatar = <UserAvatar name={comment.user_name} size="sm" />
+    const nameNode = (
+      <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+        {displayName}
+      </span>
+    )
+
+    return (
     <div key={comment.id} className={`flex gap-3 ${isReply ? '' : ''}`}>
-      <UserAvatar name={comment.user_name} size="sm" />
+      {linkable ? (
+        <Link
+          href={`/u/${slug}`}
+          aria-label={`View ${comment.user_name ?? 'commenter'}'s profile`}
+          className="shrink-0"
+        >
+          {avatar}
+        </Link>
+      ) : (
+        avatar
+      )}
       <div className="flex-1 min-w-0">
         <div className="flex items-baseline gap-2 mb-0.5">
-          <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-            {comment.user_id === userId ? 'You' : (comment.user_name ?? 'User')}
-          </span>
+          {linkable ? (
+            <Link
+              href={`/u/${slug}`}
+              className="hover:underline text-gray-700 dark:text-gray-300"
+            >
+              {nameNode}
+            </Link>
+          ) : (
+            nameNode
+          )}
           <span className="text-xs text-gray-500 dark:text-gray-400">{formatRelativeTime(comment.created_at)}</span>
         </div>
         <p className="text-sm text-gray-600 dark:text-gray-400">{comment.content}</p>
@@ -316,7 +396,8 @@ export default function CommentsSection({ postId, postType }: Props) {
         </div>
       </div>
     </div>
-  )
+    )
+  }
 
   return (
     <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800 comments-section">
