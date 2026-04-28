@@ -89,10 +89,12 @@ export default function AssetsPage() {
   // Detail view
   const [viewAsset, setViewAsset] = useState<Asset | null>(null)
 
-  // load() is hoisted via const declaration below; the lint rule doesn't
-  // see the closure it captures and complains about TDZ. Pattern is safe
-  // here because effect runs after mount, by which time load is bound.
-  // eslint-disable-next-line react-hooks/immutability
+  // Mount-once effect: load() reads from supabase + cookie state and is
+  // recreated each render, but we deliberately want it called exactly once
+  // on mount. Adding `load` to deps would loop; wrapping in useCallback
+  // would just push the same problem into another dep list. The intent
+  // is "fire once after mount" — the canonical escape hatch.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { load() }, [])
 
   const load = async () => {

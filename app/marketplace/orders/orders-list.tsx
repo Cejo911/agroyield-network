@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 
 interface Order {
@@ -104,10 +105,16 @@ export default function OrdersList({ userId }: { userId: string }) {
               className="block bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl p-4 hover:border-green-300 dark:hover:border-green-700 transition-colors"
             >
               <div className="flex items-center gap-4">
-                {/* Thumbnail */}
-                <div className="w-14 h-14 rounded-lg bg-gray-100 dark:bg-gray-800 overflow-hidden flex-shrink-0">
+                {/* Thumbnail — `relative` required for Next/Image fill-mode. */}
+                <div className="relative w-14 h-14 rounded-lg bg-gray-100 dark:bg-gray-800 overflow-hidden flex-shrink-0">
                   {thumb ? (
-                    <img src={thumb} alt="" className="w-full h-full object-cover" />
+                    <Image
+                      src={thumb}
+                      alt=""
+                      fill
+                      sizes="56px"
+                      className="object-cover"
+                    />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-400 text-lg">
                       📦

@@ -38,7 +38,7 @@ const PRIORITY_COLORS: Record<string, string> = {
   urgent: 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400',
 }
 
-export default function SupportTab({ tickets, profilesMap, getDisplayName, currentUserId }: SupportTabProps) {
+export default function SupportTab({ tickets, getDisplayName, currentUserId }: SupportTabProps) {
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [priorityFilter, setPriorityFilter] = useState<string>('all')
   const [search, setSearch] = useState('')

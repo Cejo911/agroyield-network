@@ -8,7 +8,6 @@ import EmptyState from '@/app/components/design/EmptyState'
 import { PrimaryLink } from '@/app/components/design/Button'
 import { useToast } from '@/app/components/Toast'
 import { useSearchLog } from '@/lib/useSearchLog'
-import { createClient } from '@/lib/supabase/client'
 import { formatRelativeTime } from '@/lib/format-time'
 
 const FALLBACK_CATEGORIES = ['Grains', 'Tubers', 'Legumes', 'Vegetables', 'Fruits', 'Livestock', 'Oil', 'Cash Crops']

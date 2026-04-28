@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
 import ThemeToggle from '@/app/components/ThemeToggle'
 import PasswordStrengthMeter from '@/app/components/PasswordStrengthMeter'
 
@@ -15,7 +14,6 @@ const INSTITUTION_TYPES = [
 ] as const
 
 export default function SignUp() {
-  const router = useRouter()
   const [form, setForm] = useState({
     firstName: '',
     lastName: '',

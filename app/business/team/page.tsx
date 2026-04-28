@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { getBusinessAccess, canManageTeam } from '@/lib/business-access'
+import { getBusinessAccess } from '@/lib/business-access'
 import { getActiveBusinessId } from '@/lib/business-cookie'
 
 interface TeamMember {
@@ -32,7 +32,6 @@ export default function TeamPage() {
   const [members, setMembers] = useState<TeamMember[]>([])
   const [loading, setLoading] = useState(true)
   const [businessId, setBusinessId] = useState<string | null>(null)
-  const [userId, setUserId] = useState<string | null>(null)
 
   // Invite form
   const [showInvite, setShowInvite] = useState(false)
@@ -54,7 +53,6 @@ export default function TeamPage() {
     setLoading(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-    setUserId(user.id)
 
     const access = await getBusinessAccess(supabase, user.id, getActiveBusinessId())
     if (!access) { setLoading(false); return }

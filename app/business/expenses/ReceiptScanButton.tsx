@@ -290,6 +290,10 @@ export default function ReceiptScanButton({ businessId, onSaved }: Props) {
                     className="w-full border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-green-600 dark:hover:border-green-500 rounded-xl p-8 flex flex-col items-center justify-center gap-2 transition-colors"
                   >
                     {previewUrl ? (
+                      // previewUrl is a blob: URL from URL.createObjectURL —
+                      // Next/Image's loader can't fetch blob: schemes, so the
+                      // native element is required here.
+                      // eslint-disable-next-line @next/next/no-img-element
                       <img src={previewUrl} alt="Receipt preview" className="max-h-48 rounded-lg shadow-sm" />
                     ) : (
                       <>
@@ -343,6 +347,8 @@ export default function ReceiptScanButton({ businessId, onSaved }: Props) {
               <form onSubmit={handleCommit} className="p-5 space-y-4">
                 {previewUrl && (
                   <div className="flex justify-center">
+                    {/* blob: URL from URL.createObjectURL — Next/Image not supported. */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={previewUrl} alt="Receipt" className="max-h-32 rounded-lg shadow-sm" />
                   </div>
                 )}

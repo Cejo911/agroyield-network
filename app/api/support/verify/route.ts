@@ -11,7 +11,7 @@ import { escapeHtml } from '@/lib/sanitise'
  * Send a one-time verification code (OTP) to the user's email.
  * Requires authentication.
  */
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()

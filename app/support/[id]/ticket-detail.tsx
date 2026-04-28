@@ -126,7 +126,7 @@ function getEventDescription(event: Event): string {
 
 export default function TicketDetail({
   ticketId,
-  currentUserId,
+  currentUserId: _currentUserId,
 }: {
   ticketId: string
   currentUserId: string
@@ -142,6 +142,10 @@ export default function TicketDetail({
 
   useEffect(() => {
     fetchTicketDetail()
+    // Re-fetch when ticketId changes; fetchTicketDetail is recreated each
+    // render but the only meaningful trigger is ticketId. Canonical escape
+    // hatch.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticketId])
 
   useEffect(() => {
@@ -283,7 +287,7 @@ export default function TicketDetail({
           {combined.length === 0 ? (
             <p className="text-gray-500 dark:text-gray-400 text-center py-8">No messages yet</p>
           ) : (
-            combined.map((item, idx) => {
+            combined.map((item, _idx) => {
               if (item.type === 'message') {
                 const msg = item.data as Message
                 const isUser = msg.sender_type === 'user'

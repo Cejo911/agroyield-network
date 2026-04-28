@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 
 interface Order {
@@ -95,6 +96,9 @@ export default function OrderDetail({ orderId, userId }: { orderId: string; user
       .finally(() => setLoading(false))
   }
 
+  // Re-fetch when the orderId changes; fetchOrder is recreated each render
+  // but the only meaningful dependency is orderId. Canonical escape hatch.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchOrder() }, [orderId])
 
   const doAction = async (action: string) => {
@@ -169,8 +173,15 @@ export default function OrderDetail({ orderId, userId }: { orderId: string; user
             </span>
           </div>
           {listing?.image_urls?.[0] && (
-            <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-gray-800">
-              <img src={listing.image_urls[0]} alt="" className="w-full h-full object-cover" />
+            // `relative` required for Next/Image fill-mode positioning.
+            <div className="relative w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-gray-800">
+              <Image
+                src={listing.image_urls[0]}
+                alt=""
+                fill
+                sizes="80px"
+                className="object-cover"
+              />
             </div>
           )}
         </div>

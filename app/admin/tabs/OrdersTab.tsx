@@ -43,7 +43,7 @@ const STATUS_COLOURS: Record<string, string> = {
 const formatPrice = (p: number) =>
   new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 }).format(p)
 
-export default function OrdersTab({ profilesMap, getDisplayName }: OrdersTabProps) {
+export default function OrdersTab({ getDisplayName }: OrdersTabProps) {
   const [orders, setOrders] = useState<Order[]>([])
   const [disputes, setDisputes] = useState<Dispute[]>([])
   const [loading, setLoading] = useState(true)

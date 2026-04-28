@@ -2,7 +2,7 @@
 import { Suspense, useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { getBusinessAccess } from '@/lib/business-access'
 import { getActiveBusinessId, setActiveBusinessId } from '@/lib/business-cookie'
 import BusinessSetupGuide from './BusinessSetupGuide'
@@ -85,7 +85,6 @@ const BUSINESS_SIZES = [
 
 function BusinessSetup() {
   const supabase = createClient()
-  const router = useRouter()
   const { showError } = useToast()
   const searchParams = useSearchParams()
   const isNewMode = searchParams.get('new') === 'true'

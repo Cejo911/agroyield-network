@@ -121,6 +121,12 @@ export default async function ReportsPrintPage({
           <div style={{ background: `linear-gradient(135deg, ${DG}, ${G})`, padding: '20px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               {business?.logo_url ? (
+                // Print page — native <img> renders predictably across browser
+                // print engines. Next/Image's lazy loading + srcset selection
+                // are unreliable at print-render time; we keep <img> here on
+                // purpose. Print views run with a fixed report layout, so the
+                // LCP/bandwidth concerns the rule flags don't apply.
+                // eslint-disable-next-line @next/next/no-img-element
                 <img src={business.logo_url} alt="logo" style={{ width: '46px', height: '46px', borderRadius: '8px', objectFit: 'contain', background: '#fff', padding: '3px' }} />
               ) : (
                 <div style={{ width: '46px', height: '46px', borderRadius: '8px', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', fontWeight: 800, color: '#fff' }}>

@@ -176,7 +176,8 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
     const data = await res.json()
     setLikedSet(prev => {
       const next = new Set(prev)
-      data.liked ? next.add(postId) : next.delete(postId)
+      if (data.liked) next.add(postId)
+      else next.delete(postId)
       return next
     })
     setLikeCounts(prev => ({ ...prev, [postId]: data.count }))

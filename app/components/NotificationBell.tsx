@@ -41,17 +41,18 @@ export default function NotificationBell() {
   }
 
   useEffect(() => {
-    // Initial fetch + 30-second poll. Calling fetchNotifications() inside the
-    // effect intentionally seeds state from the network before the dropdown
-    // opens; the alternative (move the seeding into a render path) breaks
-    // the polling pattern. This was tolerated by the previous lint baseline
-    // and surfaces post-timeAgo-removal because the rule's purity tracker
-    // re-evaluates the whole component now that one impure helper is gone.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    // Initial fetch + 30-second poll. Calling fetchNotifications() inside
+    // the effect intentionally seeds state from the network before the
+    // dropdown opens; moving the seeding into a render path would break
+    // the polling pattern.
     fetchNotifications()
     // Poll every 30 seconds for new notifications
     const interval = setInterval(fetchNotifications, 30000)
     return () => clearInterval(interval)
+    // fetchNotifications is recreated each render but the effect should
+    // only set up the polling interval once on mount. Adding it to deps
+    // would tear down + re-create the interval on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Close dropdown when clicking outside

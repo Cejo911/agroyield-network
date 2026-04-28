@@ -61,9 +61,8 @@ export default function ProductsPage() {
   const [movements, setMovements] = useState<StockMovement[]>([])
   const [historyLoading, setHistoryLoading] = useState(false)
 
-  // load() is declared below; the rule complains about TDZ but the effect
-  // runs after mount, by which point load is bound.
-  // eslint-disable-next-line react-hooks/immutability
+  // Mount-once load — same canonical pattern as business/assets/page.tsx.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { load() }, [])
 
   const load = async () => {

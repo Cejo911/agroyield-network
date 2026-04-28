@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import MessageButton from '@/app/components/MessageButton'
 import type { SupabaseClient } from '@supabase/supabase-js'
@@ -42,7 +41,6 @@ function pickProfile<T>(p: T | T[] | null | undefined): T | null {
 
 export default function MentorDetail({ mentor, reviews, avgRating, sessionCount, existingSession, userId }: Props) {
   const supabase = createClient() as SupabaseClient<Database>
-  const router = useRouter()
   const [showRequest, setShowRequest] = useState(false)
   const [topic, setTopic] = useState('')
   const [message, setMessage] = useState('')

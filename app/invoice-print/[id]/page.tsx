@@ -158,6 +158,11 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                 {business?.logo_url ? (
+                  // Print page — see business/reports/print/page.tsx for the
+                  // full rationale. Native <img> renders predictably across
+                  // print engines; Next/Image's lazy loading is unreliable
+                  // at print-render time.
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={business.logo_url}
                     alt="logo"

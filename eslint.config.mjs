@@ -5,6 +5,23 @@ import nextTs from "eslint-config-next/typescript";
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
+  // Recognise the `_`-prefix convention for intentionally-unused identifiers.
+  // The Next preset's @typescript-eslint/no-unused-vars defaults flag
+  // anything unused, including catch-clause errors and interface-pinned
+  // function parameters. We adopt the standard underscore-prefix opt-out so
+  // patterns like `catch (_err) {}` and stub-provider signatures
+  // (`async sendTemplate(_params: {...})`) lint cleanly without per-line
+  // disables. Applied repo-wide; affects no runtime behaviour.
+  {
+    rules: {
+      '@typescript-eslint/no-unused-vars': ['warn', {
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+        caughtErrorsIgnorePattern: '^_',
+        destructuredArrayIgnorePattern: '^_',
+      }],
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:

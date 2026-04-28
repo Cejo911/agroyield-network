@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import BookmarkButton from '@/app/components/design/BookmarkButton'
 import { useToast } from '@/app/components/Toast'
@@ -49,7 +48,6 @@ interface Props {
 
 export default function GrantDetail({ grant, application, userProfile, userId, initiallySaved = false }: Props) {
   const supabase = createClient() as SupabaseClient<Database>
-  const router = useRouter()
   const { showError } = useToast()
   const [app, setApp] = useState<GrantApplication | null>(application)
   const [newDocName, setNewDocName] = useState('')

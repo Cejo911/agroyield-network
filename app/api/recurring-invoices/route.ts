@@ -44,22 +44,6 @@ interface LineItemInput {
 // dashboard without a redeploy). Read at request time via
 // getRecurringTemplateCap() from lib/recurring-limits.
 
-function computeNextRun(from: Date, cadence: Cadence): Date {
-  const d = new Date(from)
-  switch (cadence) {
-    case 'weekly':
-      d.setUTCDate(d.getUTCDate() + 7)
-      break
-    case 'monthly':
-      d.setUTCMonth(d.getUTCMonth() + 1)
-      break
-    case 'quarterly':
-      d.setUTCMonth(d.getUTCMonth() + 3)
-      break
-  }
-  return d
-}
-
 function toDateOnly(d: Date): string {
   // YYYY-MM-DD (UTC). Postgres `date` handles the rest.
   return d.toISOString().slice(0, 10)

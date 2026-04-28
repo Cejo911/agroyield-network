@@ -2,7 +2,6 @@
 
 import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 
 type InviteState = 'loading' | 'login_required' | 'accepting' | 'accepted' | 'error'
@@ -29,7 +28,6 @@ export default function AcceptInvitePage() {
 function AcceptInviteContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const supabase = createClient()
   const token = searchParams.get('token')
 
   const [state, setState] = useState<InviteState>('loading')

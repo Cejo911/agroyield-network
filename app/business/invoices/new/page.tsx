@@ -150,6 +150,11 @@ export default function NewInvoicePage() {
       setCustomers(custs || [])
     }
     load()
+    // Mount-once fetch. supabase is the singleton browser client (per
+    // Checkpoint 51 — singleton supabase) so its identity is stable, but
+    // including it in deps would still trip the no-mount-loop pattern;
+    // canonical escape hatch.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   function addItem() {

@@ -30,11 +30,6 @@ interface Alert {
   created_at: string
 }
 
-const STATE_COLOURS = [
-  '#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6',
-  '#06b6d4', '#f97316', '#ec4899', '#14b8a6', '#6366f1',
-]
-
 export default function PriceIntelligence({
   reports,
   alerts: initialAlerts,

@@ -109,6 +109,11 @@ export default function BecomeMentorPage() {
       setLoading(false)
     }
     load()
+    // Mount-once gate check + profile prefill. router and supabase
+    // identities are stable at runtime (router is the next/navigation
+    // hook output; supabase is the singleton browser client per
+    // Checkpoint 51) so omitting them is safe.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   function toggleTag(tag: string) {

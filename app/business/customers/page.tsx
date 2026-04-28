@@ -23,9 +23,10 @@ export default function CustomersPage() {
   const [search, setSearch] = useState('')
   const [form, setForm] = useState({ name: '', email: '', phone: '', address: '' })
 
-  // load() is declared below; the rule complains about TDZ but the effect
-  // runs after mount, by which point load is bound.
-  // eslint-disable-next-line react-hooks/immutability
+  // Mount-once load — load() is declared below and recreated each render,
+  // but we deliberately fire it exactly once on mount. Same pattern as
+  // business/assets/page.tsx; canonical escape hatch.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { load() }, [])
 
   const load = async () => {

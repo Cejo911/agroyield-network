@@ -101,9 +101,10 @@ export default function ExpensesPage() {
     setLoading(false)
   }
 
-  // load() chains setState calls; the rule flags it but the effect is the
-  // canonical pattern for "fetch on mount + on filter change" in this app.
-  // eslint-disable-next-line react-hooks/set-state-in-effect
+  // Mount-once fetch. load() chains setState calls and is recreated each
+  // render; we want it called exactly once on mount. Canonical escape
+  // hatch — same pattern as business/assets/page.tsx.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { load() }, [])
 
   async function handleSave(e: React.FormEvent) {

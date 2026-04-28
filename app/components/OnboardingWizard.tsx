@@ -27,7 +27,7 @@ interface Props {
   email: string
 }
 
-export default function OnboardingWizard({ userId, firstName, lastName, email }: Props) {
+export default function OnboardingWizard({ userId, firstName, lastName }: Props) {
   const [step, setStep] = useState(1)
   const [role, setRole] = useState('')
   const [selectedModules, setSelectedModules] = useState<string[]>([])

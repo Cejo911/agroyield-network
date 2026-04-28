@@ -1,4 +1,4 @@
-import { getSetting, getSettings } from '@/lib/settings'
+import { getSettings } from '@/lib/settings'
 import { redirect } from 'next/navigation'
 
 export const dynamic = 'force-dynamic'
