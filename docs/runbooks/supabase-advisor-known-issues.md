@@ -112,6 +112,21 @@ SELECT schemaname, tablename, policyname, qual, with_check
 
 After applying, the Supabase advisor should show 0 warnings of the SECURITY DEFINER family. Update this doc to reflect the new baseline.
 
+## INFO-level findings — also accepted
+
+Two `rls_enabled_no_policy` (lint code `0008`) findings against `public.cron_runs` and `public.reports`. Both have RLS enabled with deliberately-narrow policies:
+
+| Table | RLS enabled | Policies | Why |
+|---|---|---|---|
+| `public.cron_runs` | ✅ | None — intentional. | Cron audit table. Only the cron harness writes (service-role); admin reads happen via service-role too. No legitimate `authenticated`-role read pathway. The advisor's "no policy" reading is correct in shape but the disclosure boundary is intentional — `authenticated` should see zero rows here. |
+| `public.reports` | ✅ | `reports_select_own` (added 2026-04-28 — see migration `add_reports_select_own_policy`). | Moderation table. INSERT/UPDATE/DELETE require service-role (the `/api/report` POST and admin moderation endpoints both use the service-role admin client). SELECT is restricted to the authenticated user's own report rows so the N+1 fix in `app/community/page.tsx` (`userReportedSet` batch query) works — without this policy the query silently returned empty for every user, undoing Checkpoint 40's perf fix. |
+
+The advisor will continue to surface the `reports` finding as INFO because the linter only checks "any policy exists" vs. "tightly-scoped policy"; it can't tell the new `reports_select_own` is intentionally narrow. Treat both as accepted-known.
+
+## Migration-tracking gap
+
+`schema_migrations` does not currently reflect the three security-definer migrations or the `add_reports_select_own_policy` migration — they were applied via SQL editor / MCP `apply_migration` rather than the Supabase CLI. **No functional impact today.** When the H2.6 GitHub Action lands and tries to apply pending migrations on merge, the REVOKE-pattern migrations are idempotent (re-running a revoke that's already in effect is a no-op), and `CREATE POLICY` uses `DROP POLICY IF EXISTS` first so re-application is also a no-op. The Action can safely run them; the tracking table will catch up after first run.
+
 ## Related
 
 - Sentry noise filter regression on `JAVASCRIPT-NEXTJS-A` — separate work, tracked in the Sentry triage section of the morning health check.
