@@ -441,7 +441,7 @@ export default function CommentsSection({ postId, postType }: Props) {
 
                 {/* Replies */}
                 {replies.length > 0 && (
-                  <div className="ml-10 mt-2 space-y-3 border-l-2 border-gray-100 dark:border-gray-800 pl-4">
+                  <div className="ml-3 sm:ml-10 mt-2 space-y-3 border-l-2 border-gray-100 dark:border-gray-800 pl-4">
                     {replies.map(reply => renderComment(reply, true))}
                   </div>
                 )}

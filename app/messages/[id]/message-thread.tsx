@@ -276,8 +276,27 @@ export default function MessageThread({ conversationId, currentUserId, otherUser
     <div className="flex-1 flex flex-col max-w-2xl mx-auto w-full">
       {/* Header */}
       <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-4 py-3 flex items-center gap-3">
-        <Link href="/messages" className="text-gray-400 hover:text-green-600 transition-colors mr-1">
-          ←
+        {/* Back link — wrapped in a 44 × 44 hit area to clear WCAG
+            2.5.5 minimum tap-target. Inner SVG arrow gives a clearer
+            interactive affordance than the bare `←` glyph (which on
+            small screens read as decorative text); aria-label pulls
+            the destination forward for screen-reader users. */}
+        <Link
+          href="/messages"
+          aria-label="Back to messages"
+          className="-ml-2 w-11 h-11 flex items-center justify-center rounded-full text-gray-500 dark:text-gray-400 hover:text-green-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+        >
+          <svg
+            aria-hidden="true"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            className="w-5 h-5"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+          </svg>
         </Link>
         <Link href={otherUser.profileHref} className="shrink-0">
           <UserAvatar src={otherUser.avatarUrl} name={otherUser.name} size="sm" alt={otherUser.name} />

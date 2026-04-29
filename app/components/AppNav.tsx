@@ -8,6 +8,7 @@ import ThemeToggle from './ThemeToggle'
 import NotificationBell from './NotificationBell'
 import GlobalSearchBar from './GlobalSearchBar'
 import Modal from './design/Modal'
+import BottomTabNav from './BottomTabNav'
 import Image from 'next/image'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/lib/database.types'
@@ -58,6 +59,11 @@ export default function AppNav() {
   const [userInitial, setUserInitial] = useState('?')
   const [userAvatar,  setUserAvatar]  = useState<string | null>(null)
   const [userEmail,   setUserEmail]   = useState('')
+  // Explicit auth signal so BottomTabNav and any other "authed-only"
+  // surface can short-circuit cleanly without inferring from
+  // `userEmail !== ''` (which has a momentary false-negative window
+  // between auth.getUser() and the profiles SELECT resolving).
+  const [isAuthed,    setIsAuthed]    = useState(false)
   const [unreadMsgCount, setUnreadMsgCount] = useState(0)
   const [userTier, setUserTier] = useState<string>('free')
   const pathname = usePathname()
@@ -70,6 +76,7 @@ export default function AppNav() {
     const supabase = createClient() as SupabaseClient<Database>
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return
+      setIsAuthed(true)
       setUserEmail(user.email || '')
       supabase
         .from('profiles')
@@ -164,6 +171,7 @@ export default function AppNav() {
   const isOverflowActive = OVERFLOW_NAV_LINKS.some(link => isActive(link.href))
 
   return (
+    <>
     <header className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 sticky top-0 z-50">
       <div className="w-full px-4 lg:px-8 py-3 flex items-center justify-between gap-3">
 
@@ -313,7 +321,12 @@ export default function AppNav() {
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setUserOpen(!userOpen)}
-              className={`w-8 h-8 rounded-full bg-green-600 dark:bg-green-700 text-white text-sm font-bold flex items-center justify-center hover:bg-green-700 dark:hover:bg-green-600 transition-colors overflow-hidden ${
+              // 44 × 44 satisfies WCAG 2.5.5 / Apple HIG 44pt minimum
+              // tap target. Was 32px (`w-8 h-8`) — uncomfortably small
+              // on touch devices, particularly relevant here because
+              // the avatar disc is one of the few persistent controls
+              // on every authenticated page.
+              className={`w-11 h-11 rounded-full bg-green-600 dark:bg-green-700 text-white text-sm font-bold flex items-center justify-center hover:bg-green-700 dark:hover:bg-green-600 transition-colors overflow-hidden ${
                 userTier === 'pro'
                   ? 'ring-2 ring-green-400 ring-offset-2 ring-offset-white dark:ring-offset-gray-900'
                   : userTier === 'growth'
@@ -684,5 +697,17 @@ export default function AppNav() {
         </div>
       </Modal>
     </header>
+
+    {/* Mobile bottom-tab nav. Self-hides on `md+` and on logged-out
+        sessions; ships unread-count + avatar from the existing AppNav
+        state so we don't duplicate the supabase calls. See
+        BottomTabNav.tsx for the full design rationale. */}
+    <BottomTabNav
+      isAuthed={isAuthed}
+      userInitial={userInitial}
+      userAvatar={userAvatar}
+      unreadMsgCount={unreadMsgCount}
+    />
+    </>
   )
 }
