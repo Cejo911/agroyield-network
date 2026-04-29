@@ -312,7 +312,7 @@ export default function GrantDetail({ grant, application, userProfile, userId, i
                           ? `${meta.bg} text-white border-transparent`
                           : isPast
                             ? 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700'
-                            : 'bg-white dark:bg-gray-900 text-gray-400 dark:text-gray-500 border-gray-200 dark:border-gray-700 hover:border-gray-400'
+                            : 'bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-500 border-gray-200 dark:border-gray-700 hover:border-gray-400'
                       }`}
                     >
                       {meta.label}
@@ -350,7 +350,7 @@ export default function GrantDetail({ grant, application, userProfile, userId, i
                     </div>
                   )}
                 </div>
-                <p className="text-xs text-gray-400 mt-2">This info is pulled from your profile. <Link href="/profile" className="text-green-600 hover:underline">Edit profile →</Link></p>
+                <p className="text-xs text-gray-500 mt-2">This info is pulled from your profile. <Link href="/profile" className="text-green-600 hover:underline">Edit profile →</Link></p>
               </div>
             )}
 
@@ -409,7 +409,7 @@ export default function GrantDetail({ grant, application, userProfile, userId, i
                     >
                       {doc.completed && <span className="text-xs">✓</span>}
                     </button>
-                    <span className={`text-sm flex-1 ${doc.completed ? 'line-through text-gray-400 dark:text-gray-500' : 'text-gray-700 dark:text-gray-300'}`}>
+                    <span className={`text-sm flex-1 ${doc.completed ? 'line-through text-gray-500 dark:text-gray-500' : 'text-gray-700 dark:text-gray-300'}`}>
                       {doc.name}
                     </span>
                     <button

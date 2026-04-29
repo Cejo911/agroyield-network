@@ -79,7 +79,7 @@ export default function LikeButton({ postId, postType, initialLiked, initialCoun
       disabled={loading || !initialized}
       aria-label={liked ? 'Unlike' : 'Like'}
       className={`flex items-center gap-1.5 text-sm font-medium transition-colors disabled:opacity-40 ${
-        liked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'
+        liked ? 'text-red-500' : 'text-gray-500 hover:text-red-400'
       }`}>
       <svg
         aria-hidden="true"

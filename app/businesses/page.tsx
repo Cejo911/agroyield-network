@@ -322,7 +322,7 @@ export default async function BusinessesIndex({
       </header>
 
       {/* Results */}
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
+      <main id="main" className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
         {businesses.length === 0 ? (
           <EmptyState hasActiveFilter={hasActiveFilter} />
         ) : (
@@ -357,7 +357,7 @@ export default async function BusinessesIndex({
                   ) : (
                     <span
                       aria-disabled="true"
-                      className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-200 dark:border-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed"
+                      className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-200 dark:border-gray-800 text-gray-500 dark:text-gray-600 cursor-not-allowed"
                     >
                       ← Previous
                     </span>
@@ -373,7 +373,7 @@ export default async function BusinessesIndex({
                   ) : (
                     <span
                       aria-disabled="true"
-                      className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-200 dark:border-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed"
+                      className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-200 dark:border-gray-800 text-gray-500 dark:text-gray-600 cursor-not-allowed"
                     >
                       Next →
                     </span>

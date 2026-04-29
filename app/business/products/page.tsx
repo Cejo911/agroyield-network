@@ -229,7 +229,7 @@ export default function ProductsPage() {
   const IN_REASONS = ['purchase', 'production', 'return', 'adjustment', 'other']
   const OUT_REASONS = ['sale', 'damaged', 'expired', 'adjustment', 'other']
 
-  if (loading) return <div className="text-center py-10 text-gray-400">Loading...</div>
+  if (loading) return <div className="text-center py-10 text-gray-500">Loading...</div>
 
   if (!businessId) return (
     <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-8 text-center">
@@ -366,7 +366,7 @@ export default function ProductsPage() {
                   className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-green-500"
                   placeholder="5"
                 />
-                <p className="text-xs text-gray-400 mt-1">You&apos;ll be alerted when stock falls to or below this quantity</p>
+                <p className="text-xs text-gray-500 mt-1">You&apos;ll be alerted when stock falls to or below this quantity</p>
               </div>
               <div className="flex gap-3 pt-1">
                 <button
@@ -481,12 +481,12 @@ export default function ProductsPage() {
                 <h2 className="text-lg font-semibold text-gray-800 dark:text-white">Stock History</h2>
                 <p className="text-sm text-gray-500 dark:text-gray-400">{historyProduct.name} · Current: {historyProduct.stock_quantity} {historyProduct.unit}</p>
               </div>
-              <button onClick={() => setShowHistory(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xl">✕</button>
+              <button onClick={() => setShowHistory(false)} className="text-gray-500 hover:text-gray-600 dark:hover:text-gray-200 text-xl">✕</button>
             </div>
             {historyLoading ? (
-              <p className="text-center text-gray-400 py-8">Loading…</p>
+              <p className="text-center text-gray-500 py-8">Loading…</p>
             ) : movements.length === 0 ? (
-              <p className="text-center text-gray-400 py-8">No stock movements recorded yet.</p>
+              <p className="text-center text-gray-500 py-8">No stock movements recorded yet.</p>
             ) : (
               <div className="space-y-2">
                 {movements.map(m => (
@@ -497,12 +497,12 @@ export default function ProductsPage() {
                       </span>
                       <div>
                         <p className="text-sm font-medium text-gray-800 dark:text-white capitalize">{m.reason}</p>
-                        {m.note && <p className="text-xs text-gray-400">{m.note}</p>}
+                        {m.note && <p className="text-xs text-gray-500">{m.note}</p>}
                       </div>
                     </div>
                     <div className="text-right">
                       {m.cost_price !== null && m.cost_price > 0 && <p className="text-xs text-gray-500">{fmt(m.cost_price)}/{historyProduct.unit}</p>}
-                      {m.created_at && <p className="text-xs text-gray-400">{new Date(m.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p>}
+                      {m.created_at && <p className="text-xs text-gray-500">{new Date(m.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p>}
                     </div>
                   </div>
                 ))}
@@ -541,14 +541,14 @@ export default function ProductsPage() {
                   <tr key={p.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                     <td className="px-4 py-3">
                       <p className="font-medium text-gray-800 dark:text-white">{p.name}</p>
-                      {p.description && <p className="text-xs text-gray-400 mt-0.5">{p.description}</p>}
+                      {p.description && <p className="text-xs text-gray-500 mt-0.5">{p.description}</p>}
                     </td>
                     <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{p.unit}</td>
                     <td className="px-4 py-3 text-right text-gray-500 dark:text-gray-400">{p.cost_price ? fmt(p.cost_price) : '—'}</td>
                     <td className="px-4 py-3 text-right font-medium text-gray-800 dark:text-white">{fmt(p.unit_price)}</td>
                     <td className="px-4 py-3 text-center">
                       {p.unit === 'service' ? (
-                        <span className="text-xs text-gray-400">N/A</span>
+                        <span className="text-xs text-gray-500">N/A</span>
                       ) : (
                         <div className="flex items-center justify-center gap-2">
                           <span className={`font-semibold ${isOut ? 'text-red-600' : isLow ? 'text-amber-600' : 'text-gray-800 dark:text-white'}`}>
@@ -586,14 +586,14 @@ export default function ProductsPage() {
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-gray-800 dark:text-white truncate">{p.name}</p>
-                      {p.description && <p className="text-xs text-gray-400 mt-0.5 truncate">{p.description}</p>}
+                      {p.description && <p className="text-xs text-gray-500 mt-0.5 truncate">{p.description}</p>}
                     </div>
                     {p.unit !== 'service' && (
                       <div className="flex items-center gap-1.5 ml-3">
                         <span className={`text-sm font-bold ${isOut ? 'text-red-600' : isLow ? 'text-amber-600' : 'text-gray-800 dark:text-white'}`}>
                           {p.stock_quantity}
                         </span>
-                        <span className="text-xs text-gray-400">{p.unit}</span>
+                        <span className="text-xs text-gray-500">{p.unit}</span>
                         {isOut && <span className="text-[10px] font-bold bg-red-100 dark:bg-red-900/30 text-red-600 px-1.5 py-0.5 rounded-full">OUT</span>}
                         {isLow && !isOut && <span className="text-[10px] font-bold bg-amber-100 dark:bg-amber-900/30 text-amber-600 px-1.5 py-0.5 rounded-full">LOW</span>}
                       </div>
@@ -603,16 +603,16 @@ export default function ProductsPage() {
                   <div className="flex items-center gap-4 text-xs">
                     {p.cost_price > 0 && (
                       <div>
-                        <span className="text-gray-400">Cost:</span>{' '}
+                        <span className="text-gray-500">Cost:</span>{' '}
                         <span className="text-gray-600 dark:text-gray-300">{fmt(p.cost_price)}</span>
                       </div>
                     )}
                     <div>
-                      <span className="text-gray-400">Price:</span>{' '}
+                      <span className="text-gray-500">Price:</span>{' '}
                       <span className="font-medium text-gray-800 dark:text-white">{fmt(p.unit_price)}</span>
                     </div>
                     {p.unit === 'service' && (
-                      <span className="text-gray-400">Service</span>
+                      <span className="text-gray-500">Service</span>
                     )}
                   </div>
 

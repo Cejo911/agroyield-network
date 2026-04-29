@@ -159,7 +159,7 @@ export default function InvoiceActions({ id, status }: { id: string; status: str
         <div className="flex items-center gap-1">
           <span className="text-xs text-gray-500">Sure?</span>
           <button onClick={handleDelete} disabled={loading} className="text-xs text-red-600 font-medium hover:underline">Yes</button>
-          <button onClick={() => setShowDelete(false)} className="text-xs text-gray-400 hover:underline">No</button>
+          <button onClick={() => setShowDelete(false)} className="text-xs text-gray-500 hover:underline">No</button>
         </div>
       )}
     </div>

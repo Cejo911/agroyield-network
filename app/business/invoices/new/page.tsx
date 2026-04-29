@@ -479,7 +479,7 @@ export default function NewInvoicePage() {
               />
             </div>
             <div>
-              <label className={labelClass}>Due Date <span className="text-gray-400 font-normal">(optional)</span></label>
+              <label className={labelClass}>Due Date <span className="text-gray-500 font-normal">(optional)</span></label>
               <input
                 type="date"
                 value={dueDate}
@@ -526,7 +526,7 @@ export default function NewInvoicePage() {
                         onClick={() => setItems(items.map((it, i) =>
                           i === idx ? { ...it, product_id: '', description: '', unit_price: '' } : it
                         ))}
-                        className="text-gray-400 hover:text-gray-600 text-xs px-1 whitespace-nowrap"
+                        className="text-gray-500 hover:text-gray-600 text-xs px-1 whitespace-nowrap"
                       >↩</button>
                     </div>
                   ) : (
@@ -564,7 +564,7 @@ export default function NewInvoicePage() {
                       className={`${inputClass} ${stockWarnings.some(w => w.idx === idx) ? 'ring-2 ring-amber-400' : ''}`} required />
                     {item.product_id && item.product_id !== '__manual__' && (() => {
                       const p = products.find(pr => pr.id === item.product_id)
-                      return p ? <span className={`text-[10px] ${(parseFloat(item.quantity) || 0) > p.stock_quantity ? 'text-amber-600 dark:text-amber-400 font-semibold' : 'text-gray-400'}`}>{p.stock_quantity} avail</span> : null
+                      return p ? <span className={`text-[10px] ${(parseFloat(item.quantity) || 0) > p.stock_quantity ? 'text-amber-600 dark:text-amber-400 font-semibold' : 'text-gray-500'}`}>{p.stock_quantity} avail</span> : null
                     })()}
                   </div>
                   <div className="col-span-2">
@@ -579,7 +579,7 @@ export default function NewInvoicePage() {
                   <div className="col-span-1 flex justify-center">
                     {items.length > 1 && (
                       <button type="button" onClick={() => removeItem(idx)}
-                        className="text-gray-400 hover:text-red-500 text-xl leading-none">×</button>
+                        className="text-gray-500 hover:text-red-500 text-xl leading-none">×</button>
                     )}
                   </div>
                 </div>
@@ -603,7 +603,7 @@ export default function NewInvoicePage() {
                         onClick={() => setItems(items.map((it, i) =>
                           i === idx ? { ...it, product_id: '', description: '', unit_price: '' } : it
                         ))}
-                        className="text-gray-400 hover:text-gray-600 text-xs px-1">↩</button>
+                        className="text-gray-500 hover:text-gray-600 text-xs px-1">↩</button>
                     </div>
                   ) : (
                     <>
@@ -630,7 +630,7 @@ export default function NewInvoicePage() {
                         className={`${inputClass} ${stockWarnings.some(w => w.idx === idx) ? 'ring-2 ring-amber-400' : ''}`} required />
                       {item.product_id && item.product_id !== '__manual__' && (() => {
                         const p = products.find(pr => pr.id === item.product_id)
-                        return p ? <span className={`text-[10px] ${(parseFloat(item.quantity) || 0) > p.stock_quantity ? 'text-amber-600 dark:text-amber-400 font-semibold' : 'text-gray-400'}`}>{p.stock_quantity} avail</span> : null
+                        return p ? <span className={`text-[10px] ${(parseFloat(item.quantity) || 0) > p.stock_quantity ? 'text-amber-600 dark:text-amber-400 font-semibold' : 'text-gray-500'}`}>{p.stock_quantity} avail</span> : null
                       })()}
                     </div>
                     <div>
@@ -796,7 +796,7 @@ export default function NewInvoicePage() {
               )}
               {!vatEnabled && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-400 italic">No VAT applied</span>
+                  <span className="text-gray-500 italic">No VAT applied</span>
                 </div>
               )}
               <div className="border-t border-gray-200 dark:border-gray-700 pt-3 flex justify-between items-center">

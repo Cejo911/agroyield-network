@@ -132,7 +132,7 @@ export default async function CustomerStatementPage({
           <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Transaction History</h2>
         </div>
         {invoices.length === 0 ? (
-          <div className="p-10 text-center text-gray-400 text-sm">
+          <div className="p-10 text-center text-gray-500 text-sm">
             No invoices found for this period.
           </div>
         ) : (

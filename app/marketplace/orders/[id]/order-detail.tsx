@@ -142,7 +142,7 @@ export default function OrderDetail({ orderId, userId }: { orderId: string; user
     }
   }
 
-  if (loading) return <div className="py-8 text-center text-sm text-gray-400">Loading...</div>
+  if (loading) return <div className="py-8 text-center text-sm text-gray-500">Loading...</div>
   if (!order) return <div className="py-8 text-center text-sm text-red-500">Order not found</div>
 
   const isBuyer = order.buyer_id === userId
@@ -196,7 +196,7 @@ export default function OrderDetail({ orderId, userId }: { orderId: string; user
             <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-4">
               <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Your Payout</p>
               <p className="text-lg font-bold text-green-700 dark:text-green-400">{formatPrice(order.seller_amount)}</p>
-              <p className="text-[10px] text-gray-400 mt-0.5">{formatPrice(order.commission)} platform fee (3%)</p>
+              <p className="text-[10px] text-gray-500 mt-0.5">{formatPrice(order.commission)} platform fee (3%)</p>
             </div>
           )}
           {isBuyer && (
@@ -350,7 +350,7 @@ export default function OrderDetail({ orderId, userId }: { orderId: string; user
                 <strong>Resolution:</strong> {dispute.resolution}
               </p>
             )}
-            <p className="text-xs text-gray-400 mt-2">Raised {formatDate(dispute.created_at)}</p>
+            <p className="text-xs text-gray-500 mt-2">Raised {formatDate(dispute.created_at)}</p>
           </div>
         )}
 

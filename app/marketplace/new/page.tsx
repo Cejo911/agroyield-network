@@ -198,7 +198,7 @@ export default function NewListingPage() {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Price (NGN){' '}
                 {form.type === 'trade' && (
-                  <span className="text-gray-400 dark:text-gray-500 font-normal">— optional for trades</span>
+                  <span className="text-gray-500 dark:text-gray-500 font-normal">— optional for trades</span>
                 )}
               </label>
               <div className="flex gap-3 items-center">

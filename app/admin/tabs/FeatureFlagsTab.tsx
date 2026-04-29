@@ -355,7 +355,7 @@ export default function FeatureFlagsTab({
 
                   {/* Footer: save + last-updated */}
                   <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-800">
-                    <span className="text-xs text-gray-400 dark:text-gray-500">
+                    <span className="text-xs text-gray-500 dark:text-gray-500">
                       Last updated {fmtUpdated(flag.updated_at)}
                     </span>
                     <div className="flex items-center gap-2">
@@ -376,7 +376,7 @@ export default function FeatureFlagsTab({
                         className={`text-xs font-medium px-3 py-1.5 rounded-md transition-colors ${
                           changed && !busy
                             ? 'bg-green-600 text-white hover:bg-green-700'
-                            : 'bg-gray-200 dark:bg-gray-800 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                            : 'bg-gray-200 dark:bg-gray-800 text-gray-500 dark:text-gray-500 cursor-not-allowed'
                         }`}>
                         {busy ? 'Saving…' : 'Save changes'}
                       </button>

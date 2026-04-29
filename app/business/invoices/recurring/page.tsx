@@ -120,7 +120,7 @@ export default async function RecurringInvoicesPage() {
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-10 text-center">
           <div className="text-4xl mb-3">🔁</div>
           <p className="text-gray-500 dark:text-gray-400 mb-4">No recurring invoices yet.</p>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mb-4 max-w-md mx-auto">
+          <p className="text-xs text-gray-500 dark:text-gray-500 mb-4 max-w-md mx-auto">
             Tick &quot;Make this recurring&quot; on any new invoice to have it
             regenerate weekly, monthly, or quarterly.
           </p>

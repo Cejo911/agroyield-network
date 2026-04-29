@@ -69,7 +69,7 @@ export default function CommentsTab({
                 {c.is_hidden && <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400">Hidden</span>}
               </div>
               <p className="text-sm text-gray-700 dark:text-gray-300 mt-1 line-clamp-2">{c.content}</p>
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+              <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
                 by {c.user_name || getDisplayName(c.user_id)} · {fmt(c.created_at)}
               </p>
             </div>

@@ -156,7 +156,7 @@ export default function NotificationBell() {
           {/* Notification list */}
           <div className="max-h-80 overflow-y-auto">
             {notifications.length === 0 ? (
-              <div className="px-4 py-8 text-center text-sm text-gray-400 dark:text-gray-500">
+              <div className="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-500">
                 No notifications yet
               </div>
             ) : (
@@ -177,7 +177,7 @@ export default function NotificationBell() {
                       {notif.body && (
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2">{notif.body}</p>
                       )}
-                      <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">{formatRelativeTime(notif.created_at)}</p>
+                      <p className="text-[11px] text-gray-500 dark:text-gray-500 mt-1">{formatRelativeTime(notif.created_at)}</p>
                     </div>
                     {!notif.read_at && (
                       <span className="w-2 h-2 rounded-full bg-green-500 mt-2 shrink-0" />

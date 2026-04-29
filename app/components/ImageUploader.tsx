@@ -93,7 +93,7 @@ export default function ImageUploader({
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-        Photos <span className="text-gray-400 dark:text-gray-500 font-normal">({value.length}/{maxImages})</span>
+        Photos <span className="text-gray-500 dark:text-gray-500 font-normal">({value.length}/{maxImages})</span>
       </label>
 
       <div className="flex flex-wrap gap-3">
@@ -117,7 +117,7 @@ export default function ImageUploader({
             type="button"
             onClick={() => fileRef.current?.click()}
             disabled={uploading}
-            className="w-24 h-24 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-green-400 dark:hover:border-green-600 transition-colors flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 disabled:opacity-50"
+            className="w-24 h-24 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-green-400 dark:hover:border-green-600 transition-colors flex flex-col items-center justify-center text-gray-500 dark:text-gray-500 disabled:opacity-50"
           >
             {uploading ? (
               <span className="text-xs">Uploading...</span>
@@ -144,7 +144,7 @@ export default function ImageUploader({
         <p className="text-xs text-red-600 dark:text-red-400 mt-1">{error}</p>
       )}
 
-      <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">
+      <p className="text-[11px] text-gray-500 dark:text-gray-500 mt-1">
         JPG, PNG or WebP. Max {maxSizeMB}MB per image.
       </p>
     </div>

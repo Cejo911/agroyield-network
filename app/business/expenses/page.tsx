@@ -201,7 +201,7 @@ export default function ExpensesPage() {
     return new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
   }
 
-  if (loading) return <div className="text-gray-400 text-sm p-8">Loading expenses…</div>
+  if (loading) return <div className="text-gray-500 text-sm p-8">Loading expenses…</div>
 
   return (
     <div>
@@ -245,7 +245,7 @@ export default function ExpensesPage() {
             {/* Search + Filter bar */}
             <div className="px-4 pt-3 pb-1">
               <div className="relative">
-                <span className="absolute inset-y-0 left-3 flex items-center text-gray-400 pointer-events-none">
+                <span className="absolute inset-y-0 left-3 flex items-center text-gray-500 pointer-events-none">
                   <svg aria-hidden="true" className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
                   </svg>
@@ -276,7 +276,7 @@ export default function ExpensesPage() {
             </div>
 
             {filtered.length === 0 ? (
-              <div className="text-center py-12 text-gray-400 text-sm">
+              <div className="text-center py-12 text-gray-500 text-sm">
                 {search.trim() || filterCat !== 'All'
                   ? 'No expenses match your search.'
                   : <>No expenses yet. Click <strong>+ Add Expense</strong> to record one.</>
@@ -316,7 +316,7 @@ export default function ExpensesPage() {
                             </span>
                           )}
                         </div>
-                        {exp.notes && <div className="text-xs text-gray-400 mt-0.5">{exp.notes}</div>}
+                        {exp.notes && <div className="text-xs text-gray-500 mt-0.5">{exp.notes}</div>}
                       </td>
                       <td className="px-4 py-3">
                         <span className="text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-2 py-0.5 rounded-full">
@@ -335,7 +335,7 @@ export default function ExpensesPage() {
 
               {/* Mobile Sort + Cards */}
               <div className="md:hidden px-4 py-2 flex items-center gap-2 border-b border-gray-100 dark:border-gray-800">
-                <span className="text-[10px] text-gray-400 uppercase tracking-wide font-semibold">Sort:</span>
+                <span className="text-[10px] text-gray-500 uppercase tracking-wide font-semibold">Sort:</span>
                 {(['date', 'amount'] as const).map(col => (
                   <button key={col} onClick={() => toggleSort(col)}
                     className={`text-xs px-2.5 py-1 rounded-full transition-colors ${
@@ -359,13 +359,13 @@ export default function ExpensesPage() {
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-2 mt-1 text-xs text-gray-400">
+                      <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
                         <span>{fmtDate(exp.date)}</span>
                         <span className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded-full font-medium">
                           {exp.category}
                         </span>
                       </div>
-                      {exp.notes && <p className="text-xs text-gray-400 mt-0.5">{exp.notes}</p>}
+                      {exp.notes && <p className="text-xs text-gray-500 mt-0.5">{exp.notes}</p>}
                     </div>
                     <div className="flex items-center gap-2 ml-3">
                       <span className="text-sm font-bold text-red-600">{fmt(Number(exp.amount))}</span>
@@ -385,7 +385,7 @@ export default function ExpensesPage() {
           <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
             <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 uppercase tracking-wide">By Category</h3>
             {byCategory.length === 0 ? (
-              <p className="text-xs text-gray-400">No data yet.</p>
+              <p className="text-xs text-gray-500">No data yet.</p>
             ) : (
               <div className="space-y-3">
                 {byCategory.map(({ cat, total }) => (
@@ -414,7 +414,7 @@ export default function ExpensesPage() {
           <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-md">
             <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-gray-800">
               <h2 className="text-base font-bold text-gray-900 dark:text-white">Add Expense</h2>
-              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
+              <button onClick={() => setShowModal(false)} className="text-gray-500 hover:text-gray-600 text-xl">×</button>
             </div>
           <form onSubmit={handleSave} className="p-5 space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -451,7 +451,7 @@ export default function ExpensesPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Notes <span className="text-gray-400 font-normal">(optional)</span></label>
+                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Notes <span className="text-gray-500 font-normal">(optional)</span></label>
                 <input type="text" placeholder="Any additional details" value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })}
                   className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-green-500" />
               </div>
@@ -460,7 +460,7 @@ export default function ExpensesPage() {
               <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Spread over multiple months?</label>
-                  <span className="text-[10px] text-gray-400 dark:text-gray-500">e.g. annual rent</span>
+                  <span className="text-[10px] text-gray-500 dark:text-gray-500">e.g. annual rent</span>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {SPREAD_PRESETS.map(p => (

@@ -73,7 +73,7 @@ export default function PricesTab({
                 {r.is_active === false && <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400">Hidden</span>}
               </div>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{r.market_name}, {r.state}</p>
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">by {getDisplayName(r.user_id)} · {fmt(r.reported_at)}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-500 mt-0.5">by {getDisplayName(r.user_id)} · {fmt(r.reported_at)}</p>
             </div>
             <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
               {r.is_active === false ? (

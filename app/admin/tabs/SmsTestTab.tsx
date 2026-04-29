@@ -312,7 +312,7 @@ export default function SmsTestTab() {
                 ? 'text-red-600 font-medium'
                 : candidates.length > 0
                   ? 'text-green-600 dark:text-green-400 font-medium'
-                  : 'text-gray-400'
+                  : 'text-gray-500'
             }`}>
               {candidates.length === 0
                 ? 'No numbers'
@@ -366,7 +366,7 @@ export default function SmsTestTab() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Sender ID override <span className="text-gray-400 font-normal">(optional)</span>
+              Sender ID override <span className="text-gray-500 font-normal">(optional)</span>
             </label>
             <input
               type="text"
@@ -381,7 +381,7 @@ export default function SmsTestTab() {
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Channel <span className="text-gray-400 font-normal">(optional)</span>
+              Channel <span className="text-gray-500 font-normal">(optional)</span>
             </label>
             <select
               value={channelOverride}

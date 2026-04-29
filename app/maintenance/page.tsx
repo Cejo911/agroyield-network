@@ -29,7 +29,7 @@ export default async function MaintenancePage() {
           </span>
           Our team is working on it
         </div>
-        <p className="mt-8 text-xs text-gray-400 dark:text-gray-500">
+        <p className="mt-8 text-xs text-gray-500 dark:text-gray-500">
           AgroYield Network &middot; Nigeria&apos;s Agricultural Professional Network
         </p>
         <p className="mt-1 text-[10px] text-gray-300 dark:text-gray-600">

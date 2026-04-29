@@ -92,7 +92,7 @@ export default function BankAccountForm() {
   }
 
   if (loading) {
-    return <div className="py-8 text-center text-sm text-gray-400">Loading...</div>
+    return <div className="py-8 text-center text-sm text-gray-500">Loading...</div>
   }
 
   return (
@@ -155,7 +155,7 @@ export default function BankAccountForm() {
           {saving ? 'Verifying...' : existing ? 'Update Payout Account' : 'Verify & Save Account'}
         </button>
 
-        <p className="text-xs text-gray-400 dark:text-gray-500 text-center">
+        <p className="text-xs text-gray-500 dark:text-gray-500 text-center">
           We verify your account name with Paystack to ensure payouts reach the right person.
         </p>
       </form>

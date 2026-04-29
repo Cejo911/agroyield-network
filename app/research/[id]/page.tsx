@@ -75,7 +75,7 @@ export default async function ResearchPostPage({
           </div>
 
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">{post.title}</h1>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mb-6">
+          <p className="text-xs text-gray-500 dark:text-gray-500 mb-6">
             {new Date(post.created_at).toLocaleDateString('en-GB', {
               day: 'numeric', month: 'long', year: 'numeric',
             })}

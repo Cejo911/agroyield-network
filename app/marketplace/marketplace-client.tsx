@@ -190,10 +190,10 @@ export default function MarketplaceClient({
           <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Price range (₦)</p>
           <div className="flex items-center gap-3">
             <input type="number" placeholder="Min" value={minPrice} onChange={e => setMinPrice(e.target.value)} min={0} className="w-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
-            <span className="text-gray-400 text-sm shrink-0">to</span>
+            <span className="text-gray-500 text-sm shrink-0">to</span>
             <input type="number" placeholder="Max" value={maxPrice} onChange={e => setMaxPrice(e.target.value)} min={0} className="w-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
             {(minPrice || maxPrice) && (
-              <button onClick={() => { setMinPrice(''); setMaxPrice('') }} className="text-xs text-gray-400 hover:text-red-500 dark:hover:text-red-400 shrink-0 transition-colors">Clear</button>
+              <button onClick={() => { setMinPrice(''); setMaxPrice('') }} className="text-xs text-gray-500 hover:text-red-500 dark:hover:text-red-400 shrink-0 transition-colors">Clear</button>
             )}
           </div>
         </div>
@@ -292,15 +292,15 @@ export default function MarketplaceClient({
                   {listing.price !== null && (
                     <p className="text-lg font-bold text-green-700 dark:text-green-400 mb-1">
                       {formatPrice(listing.price)}
-                      {listing.price_negotiable && <span className="text-xs font-normal text-gray-400 dark:text-gray-500 ml-1">(negotiable)</span>}
+                      {listing.price_negotiable && <span className="text-xs font-normal text-gray-500 dark:text-gray-500 ml-1">(negotiable)</span>}
                     </p>
                   )}
-                  {listing.description && <p className="text-sm text-gray-400 dark:text-gray-500 line-clamp-2 mb-3">{listing.description}</p>}
-                  {listing.state && <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">📍 {listing.state}</p>}
+                  {listing.description && <p className="text-sm text-gray-500 dark:text-gray-500 line-clamp-2 mb-3">{listing.description}</p>}
+                  {listing.state && <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">📍 {listing.state}</p>}
                   <div className="flex items-center gap-2 mt-2">
                     {(() => {
                       const profile = profileMap[listing.user_id]
-                      if (!profile) return <span className="text-xs text-gray-400 dark:text-gray-500">Anonymous</span>
+                      if (!profile) return <span className="text-xs text-gray-500 dark:text-gray-500">Anonymous</span>
                       const name = [profile.first_name, profile.last_name].filter(Boolean).join(' ') || 'Anonymous'
                       const href = profile.username ? `/u/${profile.username}` : `/directory/${listing.user_id}`
                       return (
@@ -313,7 +313,7 @@ export default function MarketplaceClient({
                       )
                     })()}
                     <span className="text-gray-300 dark:text-gray-700">·</span>
-                    <span className="text-xs text-gray-400 dark:text-gray-500">{formatRelativeTime(listing.created_at)}</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-500">{formatRelativeTime(listing.created_at)}</span>
                   </div>
                   </div>
                 </Link>

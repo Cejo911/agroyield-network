@@ -52,7 +52,7 @@ export default function ProfileViewStatsPanel({
       </div>
 
       {stats.last30 === 0 ? (
-        <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-6">
+        <p className="text-sm text-gray-500 dark:text-gray-500 text-center py-6">
           No views yet. Share your profile or post in the community to get noticed.
         </p>
       ) : isPro && viewers && viewers.length > 0 ? (
@@ -80,7 +80,7 @@ export default function ProfileViewStatsPanel({
                         {[v.role, v.institution].filter(Boolean).join(' · ') || 'Member'}
                       </p>
                     </div>
-                    <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0">{formatRelativeTime(v.created_at)}</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-500 shrink-0">{formatRelativeTime(v.created_at)}</span>
                   </Link>
                 </li>
               )

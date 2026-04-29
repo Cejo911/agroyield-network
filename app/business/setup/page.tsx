@@ -12,7 +12,7 @@ import { useToast } from '@/app/components/Toast'
 /** Wrapper with Suspense boundary — required by Next.js for useSearchParams */
 export default function BusinessSetupPage() {
   return (
-    <Suspense fallback={<div className="text-center py-10 text-gray-400">Loading...</div>}>
+    <Suspense fallback={<div className="text-center py-10 text-gray-500">Loading...</div>}>
       <BusinessSetup />
     </Suspense>
   )
@@ -288,7 +288,7 @@ function BusinessSetup() {
       window.location.href = nextSlug ? `/business/setup/complete?slug=${encodeURIComponent(nextSlug)}` : '/business'
     }
   }
-  if (loading) return <div className="text-center py-10 text-gray-400">Loading...</div>
+  if (loading) return <div className="text-center py-10 text-gray-500">Loading...</div>
 
   // `inputMode` triggers the right virtual keyboard on mobile (Stripe Checkout
   // pattern). 'numeric' for whole-number IDs (CAC, account, phone), 'decimal'
@@ -362,7 +362,7 @@ function BusinessSetup() {
                   Remove logo
                 </button>
               )}
-              <p className="text-xs text-gray-400">PNG, JPG or SVG. Appears on invoices.</p>
+              <p className="text-xs text-gray-500">PNG, JPG or SVG. Appears on invoices.</p>
             </div>
           </div>
         </div>
@@ -381,7 +381,7 @@ function BusinessSetup() {
         {/* Sector & Classification — powers peer benchmarking */}
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm p-5 space-y-4">
           <h2 className="font-semibold text-gray-800 dark:text-white">Sector & Classification</h2>
-          <p className="text-xs text-gray-400">Used for anonymous peer benchmarking — see how your business compares to others in your sector and region.</p>
+          <p className="text-xs text-gray-500">Used for anonymous peer benchmarking — see how your business compares to others in your sector and region.</p>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sector</label>
             <select
@@ -420,7 +420,7 @@ function BusinessSetup() {
        {/* Business Showcase — drives the public /b/{slug} marketing page */}
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm p-5 space-y-4">
           <h2 className="font-semibold text-gray-800 dark:text-white">Business Showcase</h2>
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-gray-500">
             These fields power your public marketing page at <span className="font-mono">/b/your-slug</span>.
           </p>
 
@@ -448,7 +448,7 @@ function BusinessSetup() {
                     Remove cover
                   </button>
                 )}
-                <p className="text-xs text-gray-400">Wide banner shown at the top of your public page. 1600×400 recommended.</p>
+                <p className="text-xs text-gray-500">Wide banner shown at the top of your public page. 1600×400 recommended.</p>
               </div>
             </div>
           </div>
@@ -483,7 +483,7 @@ function BusinessSetup() {
         {/* Website & Socials */}
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm p-5 space-y-4">
           <h2 className="font-semibold text-gray-800 dark:text-white">Website & Socials</h2>
-          <p className="text-xs text-gray-400">At least one lets customers verify and follow your business.</p>
+          <p className="text-xs text-gray-500">At least one lets customers verify and follow your business.</p>
           {field('Website', 'website', 'url', 'https://yourbusiness.com')}
           {field('Instagram', 'instagram', 'text', '@yourhandle or full URL')}
           {field('Facebook', 'facebook', 'text', 'page handle or full URL')}
@@ -508,7 +508,7 @@ function BusinessSetup() {
         {/* Registration & Tax (optional — shown on invoices when provided) */}
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm p-5 space-y-4">
           <h2 className="font-semibold text-gray-800 dark:text-white">Registration & Tax</h2>
-          <p className="text-xs text-gray-400">Optional — these appear on your invoices and receipts when provided.</p>
+          <p className="text-xs text-gray-500">Optional — these appear on your invoices and receipts when provided.</p>
           {field('CAC Registration Number', 'cac_number', 'text', 'e.g. RC-1234567', false, 'numeric')}
           {field('VAT / TIN Number', 'vat_tin', 'text', 'e.g. 12345678-0001', false, 'numeric')}
         </div>
@@ -564,7 +564,7 @@ function BusinessSetup() {
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm p-5 space-y-4">
           <h2 className="font-semibold text-gray-800 dark:text-white">Invoice Settings</h2>
           {field('Invoice Prefix', 'invoice_prefix', 'text', 'e.g. INV, AGY, CF')}
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-gray-500">
             Invoices will be numbered: {form.invoice_prefix || 'INV'}-0001, {form.invoice_prefix || 'INV'}-0002...
           </p>
         </div>

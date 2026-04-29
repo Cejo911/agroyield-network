@@ -50,3 +50,5 @@ public/swe-worker-*.js
 .env.sentry-build-plugin
 .env*.local
 public/swe-worker-*.js.map
+
+.fuse_hidden*

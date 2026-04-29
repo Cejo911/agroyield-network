@@ -164,7 +164,7 @@ export default function GlobalSearchBar({ variant = 'icon' }: { variant?: 'icon'
           >
             {/* Input row */}
             <form onSubmit={submit} className="relative border-b border-gray-100 dark:border-gray-800">
-              <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none">
+              <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 dark:text-gray-500 pointer-events-none">
                 <circle cx="11" cy="11" r="8" />
                 <path d="m21 21-4.3-4.3" />
               </svg>
@@ -261,7 +261,7 @@ export default function GlobalSearchBar({ variant = 'icon' }: { variant?: 'icon'
 
 function EmptyState({ message }: { message: string }) {
   return (
-    <div className="px-6 py-10 text-center text-sm text-gray-400 dark:text-gray-500">
+    <div className="px-6 py-10 text-center text-sm text-gray-500 dark:text-gray-500">
       {message}
     </div>
   )

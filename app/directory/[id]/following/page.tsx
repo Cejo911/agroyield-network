@@ -45,11 +45,11 @@ export default async function FollowingPage({ params }: { params: Promise<{ id: 
         </Link>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
           {user.id === id ? "People You're Following" : `${ownerName} is Following`}
-          <span className="text-gray-400 font-normal text-lg ml-2">({followingIds.length})</span>
+          <span className="text-gray-500 font-normal text-lg ml-2">({followingIds.length})</span>
         </h1>
 
         {(following ?? []).length === 0 ? (
-          <p className="text-gray-400 text-sm">Not following anyone yet.</p>
+          <p className="text-gray-500 text-sm">Not following anyone yet.</p>
         ) : (
           <div className="space-y-3">
             {(following ?? []).map((p) => {

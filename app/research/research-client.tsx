@@ -180,11 +180,11 @@ export default function ResearchClient({
                     ))}
                   </div>
                   <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-green-700 dark:group-hover:text-green-400 transition-colors text-lg mb-2">{post.title}</h3>
-                  <p className="text-sm text-gray-400 dark:text-gray-500 line-clamp-2">{post.content}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-500 line-clamp-2">{post.content}</p>
                   <div className="flex items-center gap-2 mt-3">
                     {(() => {
                       const profile = profileMap[post.user_id]
-                      if (!profile) return <span className="text-xs text-gray-400 dark:text-gray-500">Anonymous</span>
+                      if (!profile) return <span className="text-xs text-gray-500 dark:text-gray-500">Anonymous</span>
                       const name = [profile.first_name, profile.last_name].filter(Boolean).join(' ') || 'Anonymous'
                       const href = profile.username ? `/u/${profile.username}` : `/directory/${post.user_id}`
                       return (
@@ -197,7 +197,7 @@ export default function ResearchClient({
                       )
                     })()}
                     <span className="text-gray-300 dark:text-gray-700">·</span>
-                    <span className="text-xs text-gray-400 dark:text-gray-500">{formatRelativeTime(post.created_at)}</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-500">{formatRelativeTime(post.created_at)}</span>
                   </div>
                   </div>
                 </Link>

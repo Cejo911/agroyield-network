@@ -38,14 +38,14 @@ export default async function BusinessLayout({ children }: { children: React.Rea
               {/* Back to main dashboard */}
               <Link
                 href="/dashboard"
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-500 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
               >
                 ← All Modules
               </Link>
 
               <div className="border-t border-gray-100 dark:border-gray-800 my-1" />
 
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-3 pb-1 pt-1">Business</p>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 pb-1 pt-1">Business</p>
               <Link href="/business" className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/20 hover:text-green-700 transition-colors">🏠 Dashboard</Link>
               <Link href="/business/setup" className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/20 hover:text-green-700 transition-colors">⚙️ Setup</Link>
               <Link href="/business/products" className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/20 hover:text-green-700 transition-colors">📦 Products</Link>

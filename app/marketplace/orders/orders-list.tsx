@@ -77,7 +77,7 @@ export default function OrdersList({ userId }: { userId: string }) {
       </div>
 
       {loading && (
-        <div className="py-8 text-center text-sm text-gray-400">Loading orders...</div>
+        <div className="py-8 text-center text-sm text-gray-500">Loading orders...</div>
       )}
 
       {!loading && orders.length === 0 && (
@@ -116,7 +116,7 @@ export default function OrdersList({ userId }: { userId: string }) {
                       className="object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-400 text-lg">
+                    <div className="w-full h-full flex items-center justify-center text-gray-500 text-lg">
                       📦
                     </div>
                   )}
@@ -144,7 +144,7 @@ export default function OrdersList({ userId }: { userId: string }) {
                     {formatPrice(isBuyer ? order.amount : order.seller_amount)}
                   </p>
                   {!isBuyer && order.commission > 0 && (
-                    <p className="text-[10px] text-gray-400">-{formatPrice(order.commission)} fee</p>
+                    <p className="text-[10px] text-gray-500">-{formatPrice(order.commission)} fee</p>
                   )}
                 </div>
               </div>

@@ -32,7 +32,7 @@ export default function MessagesInbox({ conversations }: { conversations: Conver
       {conversations.length > 0 && (
         <div className="mb-4">
           <div className="relative">
-            <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500">
+            <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-500">
               <path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clipRule="evenodd" />
             </svg>
             <input
@@ -45,7 +45,7 @@ export default function MessagesInbox({ conversations }: { conversations: Conver
             {search && (
               <button
                 onClick={() => setSearch('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-sm"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 text-sm"
               >
                 ✕
               </button>
@@ -55,13 +55,13 @@ export default function MessagesInbox({ conversations }: { conversations: Conver
       )}
 
       {conversations.length === 0 ? (
-        <div className="text-center py-16 text-gray-400 dark:text-gray-500">
+        <div className="text-center py-16 text-gray-500 dark:text-gray-500">
           <p className="text-4xl mb-3">✉️</p>
           <p className="font-medium">No messages yet</p>
           <p className="text-sm mt-1">Start a conversation from someone&apos;s profile in the Directory.</p>
         </div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-12 text-gray-400 dark:text-gray-500">
+        <div className="text-center py-12 text-gray-500 dark:text-gray-500">
           <p className="text-sm">No conversations matching &ldquo;{search}&rdquo;</p>
         </div>
       ) : (
@@ -82,7 +82,7 @@ export default function MessagesInbox({ conversations }: { conversations: Conver
                     <OnlineIndicator lastSeenAt={convo.lastSeenAt} size="sm" />
                     {convo.name}
                   </span>
-                  <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0">{convo.time}</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-500 shrink-0">{convo.time}</span>
                 </div>
                 <div className="flex items-center justify-between gap-2 mt-0.5">
                   <p className={`text-xs truncate ${convo.unread > 0 ? 'font-medium text-gray-700 dark:text-gray-300' : 'text-gray-500 dark:text-gray-400'}`}>

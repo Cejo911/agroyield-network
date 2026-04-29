@@ -140,7 +140,7 @@ export default async function ListingPage({
             <p className="text-2xl font-bold text-green-700 dark:text-green-400 mb-1">
               {formatPrice(listing.price)}
               {listing.price_negotiable && (
-                <span className="text-sm font-normal text-gray-400 dark:text-gray-500 ml-2">(negotiable)</span>
+                <span className="text-sm font-normal text-gray-500 dark:text-gray-500 ml-2">(negotiable)</span>
               )}
             </p>
           )}

@@ -45,7 +45,11 @@ export default function PageShell({
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       {nav ?? <AppNav />}
       {beforeMain}
-      <main className={`${MAX_WIDTH_CLASS[maxWidth]} mx-auto px-4 py-10`}>
+      {/* `id="main"` is the anchor target for the sitewide skip-to-content
+          link in app/layout.tsx. Every PageShell-wrapped page (~9 module
+          indexes) gets keyboard skip-to-content for free; pages that mount
+          their own <main> outside PageShell add the id themselves. */}
+      <main id="main" className={`${MAX_WIDTH_CLASS[maxWidth]} mx-auto px-4 py-10`}>
         {children}
       </main>
     </div>

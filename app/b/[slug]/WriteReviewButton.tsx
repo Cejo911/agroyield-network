@@ -115,7 +115,7 @@ export default function WriteReviewButton({ businessId, businessName }: Props) {
             </div>
 
             <label className="block text-xs font-semibold text-gray-600 mb-1">
-              Headline <span className="text-gray-400 font-normal">(optional)</span>
+              Headline <span className="text-gray-500 font-normal">(optional)</span>
             </label>
             <input
               type="text"
@@ -127,7 +127,7 @@ export default function WriteReviewButton({ businessId, businessName }: Props) {
             />
 
             <label className="block text-xs font-semibold text-gray-600 mb-1">
-              Review <span className="text-gray-400 font-normal">(optional)</span>
+              Review <span className="text-gray-500 font-normal">(optional)</span>
             </label>
             <textarea
               value={body}
@@ -137,7 +137,7 @@ export default function WriteReviewButton({ businessId, businessName }: Props) {
               placeholder={`Share your experience with ${businessName}…`}
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-1 focus:outline-none focus:ring-2 focus:ring-green-500"
             />
-            <p className="text-[11px] text-gray-400 text-right mb-3">
+            <p className="text-[11px] text-gray-500 text-right mb-3">
               {body.length}/{MAX_BODY}
             </p>
 

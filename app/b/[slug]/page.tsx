@@ -386,7 +386,7 @@ export default async function PublicBusinessPage(
         />
       )}
 
-      <main className="max-w-3xl mx-auto px-4 py-10">
+      <main id="main" className="max-w-3xl mx-auto px-4 py-10">
         {/* Header card */}
         <section
           className={`bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-8 mb-6 ${
@@ -427,7 +427,7 @@ export default async function PublicBusinessPage(
               {b.address && (
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">📍 {b.address}</p>
               )}
-              <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 text-xs text-gray-400 dark:text-gray-500">
+              <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 text-xs text-gray-500 dark:text-gray-500">
                 {b.cac_number && <span>CAC: {b.cac_number}</span>}
                 {b.founded_year && <span>· Founded {b.founded_year}</span>}
               </div>
@@ -538,7 +538,7 @@ export default async function PublicBusinessPage(
                 >
                   <div>
                     <p className="text-sm font-medium text-gray-900 dark:text-white">{p.name}</p>
-                    {p.unit && <p className="text-xs text-gray-400 dark:text-gray-500">per {p.unit}</p>}
+                    {p.unit && <p className="text-xs text-gray-500 dark:text-gray-500">per {p.unit}</p>}
                   </div>
                   <p className="text-sm font-semibold text-gray-900 dark:text-white">{fmt(p.unit_price)}</p>
                 </div>
@@ -590,12 +590,12 @@ export default async function PublicBusinessPage(
               <WriteReviewButton businessId={b.id} businessName={b.name} />
             )}
             {viewerIsOwner && (
-              <span className="text-xs text-gray-400 dark:text-gray-500 italic">
+              <span className="text-xs text-gray-500 dark:text-gray-500 italic">
                 You can&rsquo;t review your own business.
               </span>
             )}
             {viewerAlreadyReviewed && (
-              <span className="text-xs text-gray-400 dark:text-gray-500 italic">
+              <span className="text-xs text-gray-500 dark:text-gray-500 italic">
                 You&rsquo;ve already reviewed this business.
               </span>
             )}
@@ -637,7 +637,7 @@ export default async function PublicBusinessPage(
                           <span className="text-amber-500 dark:text-amber-400 text-xs" aria-label={`${r.rating} out of 5 stars`}>
                             {'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}
                           </span>
-                          <span className="text-xs text-gray-400 dark:text-gray-500">{reviewDateFmt(r.created_at)}</span>
+                          <span className="text-xs text-gray-500 dark:text-gray-500">{reviewDateFmt(r.created_at)}</span>
                         </div>
                         {r.headline && (
                           <p className="text-sm font-medium text-gray-900 dark:text-white mt-1">{r.headline}</p>
@@ -651,7 +651,7 @@ export default async function PublicBusinessPage(
                             <p className="text-xs font-semibold text-green-800 dark:text-green-300">
                               Reply from {b.name}
                               {r.replied_at && (
-                                <span className="ml-2 text-gray-400 dark:text-gray-500 font-normal">
+                                <span className="ml-2 text-gray-500 dark:text-gray-500 font-normal">
                                   · {reviewDateFmt(r.replied_at)}
                                 </span>
                               )}

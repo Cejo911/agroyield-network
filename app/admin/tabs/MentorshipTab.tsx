@@ -228,13 +228,13 @@ export default function MentorshipTab({
                       )}
                     </div>
                     {m.headline && <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{m.headline}</p>}
-                    {m.expertise && <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Expertise: {m.expertise}</p>}
+                    {m.expertise && <p className="text-xs text-gray-500 dark:text-gray-500 mt-0.5">Expertise: {m.expertise}</p>}
                     {status === 'rejected' && m.rejection_reason && (
                       <p className="text-xs text-red-600 dark:text-red-400 mt-1 italic">
                         Reason: {m.rejection_reason}
                       </p>
                     )}
-                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                    <p className="text-xs text-gray-500 dark:text-gray-500 mt-0.5">
                       {status === 'pending' ? 'Submitted' : 'Updated'} {fmt(m.updated_at)}
                     </p>
                   </div>
@@ -310,10 +310,10 @@ export default function MentorshipTab({
                     }`}>{r.status}</span>
                   </div>
                   {r.topic && <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">{r.topic}</p>}
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
                     Mentor: {getDisplayName(r.mentor_id)} · Mentee: {getDisplayName(r.mentee_id)}
                   </p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{fmt(r.created_at)}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-0.5">{fmt(r.created_at)}</p>
                 </div>
                 {r.status !== 'cancelled' && (
                   <div className="flex items-center gap-2 flex-shrink-0">

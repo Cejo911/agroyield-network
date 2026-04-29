@@ -317,7 +317,7 @@ export default function TeamPage() {
                       </span>
                       <button
                         onClick={() => { setEditingId(m.id); setEditRole(m.role as 'accountant' | 'staff') }}
-                        className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                        className="text-xs text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
                         title="Change role"
                       >
                         ✏️
@@ -391,7 +391,7 @@ export default function TeamPage() {
               <div key={m.id} className="px-5 py-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">{m.email}</p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500">Revoked</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-500">Revoked</p>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <span className={`px-2 py-0.5 rounded text-xs font-medium ${STATUS_STYLES.revoked}`}>Revoked</span>

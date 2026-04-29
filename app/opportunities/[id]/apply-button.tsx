@@ -31,7 +31,7 @@ export default function ApplyButton({
 
   if (isExpired) {
     return (
-      <span className="inline-block px-6 py-3 rounded-lg font-semibold text-sm bg-gray-100 text-gray-400 cursor-not-allowed">
+      <span className="inline-block px-6 py-3 rounded-lg font-semibold text-sm bg-gray-100 text-gray-500 cursor-not-allowed">
         Application closed
       </span>
     )

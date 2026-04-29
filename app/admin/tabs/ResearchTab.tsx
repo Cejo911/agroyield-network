@@ -71,7 +71,7 @@ export default function ResearchTab({
                 {p.is_locked && <span className="text-xs px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400">Locked</span>}
                 {!p.is_active && <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400">Hidden</span>}
               </div>
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">by {getDisplayName(p.user_id)} · {fmt(p.created_at)}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">by {getDisplayName(p.user_id)} · {fmt(p.created_at)}</p>
             </div>
             <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
               {p.is_locked ? (

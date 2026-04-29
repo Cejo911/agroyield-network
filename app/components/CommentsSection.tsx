@@ -403,14 +403,26 @@ export default function CommentsSection({ postId, postType }: Props) {
     <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800 comments-section">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-          {'Comments'}{totalCount > 0 && <span className="text-gray-400 dark:text-gray-500 font-normal ml-1">({totalCount})</span>}
+          {'Comments'}{totalCount > 0 && <span className="text-gray-500 dark:text-gray-500 font-normal ml-1">({totalCount})</span>}
         </h2>
         {topLevel.length > 1 && (
+          // Toggle pattern with aria-pressed + word labels. Previous
+          // version used unicode arrow glyphs (↓/↑) as the only direction
+          // signal, which a colour-blind user reading the muted-grey
+          // chevron couldn't distinguish, and which screen readers
+          // announced as "down arrow" / "up arrow" rather than the
+          // sort state. aria-pressed lets assistive tech announce
+          // "Sort by newest, pressed/not pressed" — semantically
+          // equivalent to a toggle button. Word labels make the
+          // current sort visually unambiguous regardless of the glyph.
           <button
+            type="button"
             onClick={() => setSortNewest(prev => !prev)}
+            aria-pressed={sortNewest}
+            aria-label={sortNewest ? 'Sort: Newest first' : 'Sort: Oldest first'}
             className="text-xs text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors font-medium"
           >
-            {sortNewest ? '↓ Newest first' : '↑ Oldest first'}
+            Sort: {sortNewest ? 'Newest first' : 'Oldest first'}
           </button>
         )}
       </div>
@@ -428,7 +440,7 @@ export default function CommentsSection({ postId, postType }: Props) {
           ))}
         </div>
       ) : totalCount === 0 ? (
-        <p className="text-sm text-gray-400 dark:text-gray-500 mb-4">No comments yet. Be the first to comment.</p>
+        <p className="text-sm text-gray-500 dark:text-gray-500 mb-4">No comments yet. Be the first to comment.</p>
       ) : (
         <div className="space-y-5 mb-6">
           {sortedTopLevel.map(comment => {
@@ -481,7 +493,7 @@ export default function CommentsSection({ postId, postType }: Props) {
                       <button
                         type="button"
                         onClick={() => { setReplyingTo(null); setReplyContent('') }}
-                        className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors self-center"
+                        className="text-xs text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors self-center"
                       >
                         Cancel
                       </button>
@@ -544,7 +556,7 @@ export default function CommentsSection({ postId, postType }: Props) {
           </div>
         </form>
       ) : (
-        <p className="text-sm text-gray-400 dark:text-gray-500 mt-4">
+        <p className="text-sm text-gray-500 dark:text-gray-500 mt-4">
           <a href="/login" className="text-green-600 hover:underline">Sign in</a> to leave a comment.
         </p>
       )}

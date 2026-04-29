@@ -118,7 +118,7 @@ export default function MentorDetail({ mentor, reviews, avgRating, sessionCount,
               {avgRating !== null && (
                 <div className="text-sm">
                   <span className="font-bold text-yellow-600 dark:text-yellow-500">★ {avgRating}</span>
-                  <span className="text-gray-400 ml-1">({reviews.length} review{reviews.length !== 1 ? 's' : ''})</span>
+                  <span className="text-gray-500 ml-1">({reviews.length} review{reviews.length !== 1 ? 's' : ''})</span>
                 </div>
               )}
               <div className="text-sm text-gray-500">
@@ -281,10 +281,10 @@ export default function MentorDetail({ mentor, reviews, avgRating, sessionCount,
       {/* Reviews */}
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
         <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
-          Reviews {reviews.length > 0 && <span className="text-gray-400 font-normal text-sm">({reviews.length})</span>}
+          Reviews {reviews.length > 0 && <span className="text-gray-500 font-normal text-sm">({reviews.length})</span>}
         </h2>
         {reviews.length === 0 ? (
-          <p className="text-sm text-gray-400">No reviews yet.</p>
+          <p className="text-sm text-gray-500">No reviews yet.</p>
         ) : (
           <div className="space-y-4">
             {reviews.map((r) => {
@@ -305,7 +305,7 @@ export default function MentorDetail({ mentor, reviews, avgRating, sessionCount,
                       <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{rName}</span>
                       <span className="text-yellow-500 ml-2 text-sm">{'★'.repeat(rating)}{'☆'.repeat(5 - rating)}</span>
                     </div>
-                    <span className="text-xs text-gray-400 ml-auto">
+                    <span className="text-xs text-gray-500 ml-auto">
                       {r.created_at ? new Date(r.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : ''}
                     </span>
                   </div>

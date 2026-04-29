@@ -97,7 +97,7 @@ export default function BenchmarkCard({ businessId, period }: { businessId: stri
           <div>
             <p className="text-sm font-bold text-gray-800 dark:text-white">Peer Benchmarks</p>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{data.message}</p>
-            <p className="text-xs text-gray-400 mt-2">Your sector: {peerGroup} · {peerCount} peer{peerCount !== 1 ? 's' : ''} so far</p>
+            <p className="text-xs text-gray-500 mt-2">Your sector: {peerGroup} · {peerCount} peer{peerCount !== 1 ? 's' : ''} so far</p>
           </div>
         </div>
       </div>
@@ -134,7 +134,7 @@ export default function BenchmarkCard({ businessId, period }: { businessId: stri
       <div className="flex items-center justify-between mb-4">
         <div>
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Peer Comparison</p>
-          <p className="text-xs text-gray-400 mt-0.5">{peerGroup} · {peerCount} peers</p>
+          <p className="text-xs text-gray-500 mt-0.5">{peerGroup} · {peerCount} peers</p>
         </div>
         <span className="text-lg">📊</span>
       </div>
@@ -155,7 +155,7 @@ export default function BenchmarkCard({ businessId, period }: { businessId: stri
                   {arrow} {diffAbs}{m.unit}
                 </span>
               </div>
-              <p className="text-[10px] text-gray-400 mt-1">Peer median: {m.peer}{m.unit}</p>
+              <p className="text-[10px] text-gray-500 mt-1">Peer median: {m.peer}{m.unit}</p>
             </div>
           )
         })}
@@ -168,7 +168,7 @@ export default function BenchmarkCard({ businessId, period }: { businessId: stri
           <p className="text-sm font-bold text-gray-900 dark:text-white mt-0.5">{fmt(you.revenue)}</p>
         </div>
         <div className="text-right">
-          <p className="text-[10px] text-gray-400">Peer median</p>
+          <p className="text-[10px] text-gray-500">Peer median</p>
           <p className="text-sm font-bold text-gray-500 dark:text-gray-400 mt-0.5">{fmt(peers.revenue)}</p>
         </div>
       </div>

@@ -143,7 +143,7 @@ export default function PriceIntelligence({
 
   if (commodities.length === 0) {
     return (
-      <div className="text-center py-16 text-gray-400">
+      <div className="text-center py-16 text-gray-500">
         <p className="text-lg mb-2">No price data yet</p>
         <p className="text-sm">Report some prices first to see trends and comparisons.</p>
       </div>
@@ -176,7 +176,7 @@ export default function PriceIntelligence({
         </div>
 
         {trendData.length < 2 ? (
-          <p className="text-sm text-gray-400 py-8 text-center">Need at least 2 data points to show a trend. More reports = better charts.</p>
+          <p className="text-sm text-gray-500 py-8 text-center">Need at least 2 data points to show a trend. More reports = better charts.</p>
         ) : (
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={trendData}>
@@ -212,7 +212,7 @@ export default function PriceIntelligence({
         </div>
 
         {compareData.length === 0 ? (
-          <p className="text-sm text-gray-400 py-8 text-center">No state-level data for {compareCommodity}.</p>
+          <p className="text-sm text-gray-500 py-8 text-center">No state-level data for {compareCommodity}.</p>
         ) : (
           <>
             <ResponsiveContainer width="100%" height={Math.max(200, compareData.length * 45)}>
@@ -323,7 +323,7 @@ export default function PriceIntelligence({
 
         {/* Active alerts */}
         {alerts.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-6">
+          <p className="text-sm text-gray-500 text-center py-6">
             No alerts set. Create one to get notified when prices hit your target.
           </p>
         ) : (
@@ -336,7 +336,7 @@ export default function PriceIntelligence({
                     <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
                       {a.commodity} {a.condition === 'below' ? 'drops below' : 'rises above'} {fmt(a.target_price)}/{a.unit}
                     </p>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-gray-500">
                       {a.state || 'Any state'} · Created {new Date(a.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
                     </p>
                   </div>

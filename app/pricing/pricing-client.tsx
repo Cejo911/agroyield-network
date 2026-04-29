@@ -208,7 +208,7 @@ export default function PricingClient({ proMonthly, proAnnual, growthMonthly, gr
             {t.tier === 'free' ? (
               <button
                 disabled
-                className="w-full py-3 rounded-xl text-sm font-semibold border border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-800 cursor-default mb-6"
+                className="w-full py-3 rounded-xl text-sm font-semibold border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-500 bg-gray-50 dark:bg-gray-800 cursor-default mb-6"
               >
                 {t.cta}
               </button>
@@ -234,7 +234,7 @@ export default function PricingClient({ proMonthly, proAnnual, growthMonthly, gr
                 return (
                   <li key={f.label} className="flex items-start gap-2.5 text-sm">
                     {isIncluded ? <Check /> : <Cross />}
-                    <span className={isIncluded ? 'text-gray-700 dark:text-gray-300' : 'text-gray-400 dark:text-gray-500'}>
+                    <span className={isIncluded ? 'text-gray-700 dark:text-gray-300' : 'text-gray-500 dark:text-gray-500'}>
                       {typeof val === 'string' ? `${f.label}: ${val}` : f.label}
                     </span>
                   </li>
@@ -296,7 +296,7 @@ export default function PricingClient({ proMonthly, proAnnual, growthMonthly, gr
         </div>
       </div>
 
-      <p className="text-center text-sm text-gray-400 dark:text-gray-500 mt-10">
+      <p className="text-center text-sm text-gray-500 dark:text-gray-500 mt-10">
         Already subscribed?{' '}
         <a href="/dashboard" className="text-green-600 dark:text-green-400 hover:underline">
           Go to your dashboard

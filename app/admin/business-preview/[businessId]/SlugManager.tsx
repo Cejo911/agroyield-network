@@ -139,7 +139,7 @@ export default function SlugManager({
             className={`truncate flex-1 ${
               isPublic
                 ? 'text-green-700 dark:text-green-400 hover:underline'
-                : 'text-gray-400 line-through'
+                : 'text-gray-500 line-through'
             }`}
           >
             {publicUrl}
@@ -166,7 +166,7 @@ export default function SlugManager({
         </label>
         <div className="flex gap-2">
           <div className="flex-1 flex items-center bg-white dark:bg-gray-950 border border-gray-300 dark:border-gray-700 rounded-lg overflow-hidden">
-            <span className="px-3 py-2 text-xs text-gray-400 bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 select-none">
+            <span className="px-3 py-2 text-xs text-gray-500 bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 select-none">
               /b/
             </span>
             <input
@@ -188,7 +188,7 @@ export default function SlugManager({
             {isPending ? 'Saving…' : 'Rename'}
           </button>
         </div>
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-gray-500">
           Lowercase letters, numbers, and hyphens (2–40 chars). Old URL will 301-redirect.
         </p>
       </form>
@@ -218,7 +218,7 @@ export default function SlugManager({
                 className="flex items-center justify-between text-xs font-mono text-gray-500 dark:text-gray-400"
               >
                 <span>/b/{a.old_slug}</span>
-                <span className="text-gray-400">
+                <span className="text-gray-500">
                   retired {new Date(a.created_at).toLocaleDateString()}
                 </span>
               </li>

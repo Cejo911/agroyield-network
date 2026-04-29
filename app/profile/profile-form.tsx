@@ -452,7 +452,7 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
               onChange={handleAvatarUpload}
             />
           </div>
-          <p className="text-xs text-gray-400 dark:text-gray-500">
+          <p className="text-xs text-gray-500 dark:text-gray-500">
             {avatarUploading ? 'Uploading your photo…' : 'Click photo to upload · Max 2MB'}
           </p>
         </div>
@@ -570,7 +570,7 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
                     onChange={e => setForm(prev => ({ ...prev, institution_cac: e.target.value }))}
                     placeholder="e.g. RC-1234567"
                     className={inputCls} />
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Helps speed up verification</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">Helps speed up verification</p>
                 </div>
               </div>
             </div>
@@ -716,7 +716,7 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
         {/* ── Contact Details ── */}
         <div>
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">
-            Contact Details <span className="text-sm font-normal text-gray-400 dark:text-gray-500">(Optional)</span>
+            Contact Details <span className="text-sm font-normal text-gray-500 dark:text-gray-500">(Optional)</span>
           </h2>
           <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">Only visible to logged-in members — not shown to guests.</p>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -733,7 +733,7 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
                 onChange={e => setForm(prev => ({ ...prev, whatsapp: e.target.value }))}
                 placeholder="+234 800 000 0000"
                 className={inputCls} />
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Leave blank if same as phone number</p>
+              <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">Leave blank if same as phone number</p>
             </div>
           </div>
         </div>
@@ -741,7 +741,7 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
         {/* ── Links ── */}
         <div>
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-            Links <span className="text-sm font-normal text-gray-400 dark:text-gray-500">(Optional)</span>
+            Links <span className="text-sm font-normal text-gray-500 dark:text-gray-500">(Optional)</span>
           </h2>
           <div className="space-y-3">
             <div>
@@ -811,7 +811,7 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
           {form.open_to_opportunities && (
             <div className="mt-4 ml-7">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Show until <span className="text-gray-400 dark:text-gray-500 font-normal">(Optional)</span>
+                Show until <span className="text-gray-500 dark:text-gray-500 font-normal">(Optional)</span>
               </label>
               <input
                 type="date"
@@ -819,7 +819,7 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
                 onChange={e => setForm(prev => ({ ...prev, open_to_opportunities_until: e.target.value }))}
                 className={`${inputCls} sm:max-w-xs`}
               />
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+              <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
                 The badge will hide after this date. Leave blank to keep it on indefinitely.
               </p>
             </div>

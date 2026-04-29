@@ -307,7 +307,7 @@ export default function MessageThread({ conversationId, currentUserId, otherUser
             {otherUser.name}
           </Link>
           {otherUser.role && (
-            <span className="text-[10px] text-gray-400 dark:text-gray-500 capitalize">{otherUser.role}</span>
+            <span className="text-[10px] text-gray-500 dark:text-gray-500 capitalize">{otherUser.role}</span>
           )}
         </div>
       </div>
@@ -315,7 +315,7 @@ export default function MessageThread({ conversationId, currentUserId, otherUser
       {/* Messages area */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1">
         {messages.length === 0 && (
-          <div className="text-center py-16 text-gray-400 dark:text-gray-500">
+          <div className="text-center py-16 text-gray-500 dark:text-gray-500">
             <p className="text-sm">Send a message to start the conversation.</p>
           </div>
         )}
@@ -342,7 +342,7 @@ export default function MessageThread({ conversationId, currentUserId, otherUser
               {showDate && (
                 <div className="flex items-center gap-3 my-4">
                   <div className="flex-1 h-px bg-gray-200 dark:bg-gray-800" />
-                  <span className="text-[10px] font-medium text-gray-400 dark:text-gray-500">{dateLabel}</span>
+                  <span className="text-[10px] font-medium text-gray-500 dark:text-gray-500">{dateLabel}</span>
                   <div className="flex-1 h-px bg-gray-200 dark:bg-gray-800" />
                 </div>
               )}
@@ -408,7 +408,7 @@ export default function MessageThread({ conversationId, currentUserId, otherUser
                     {msg.body && (
                       <p className="whitespace-pre-line break-words">{msg.body}</p>
                     )}
-                    <p className={`text-[10px] ${msg.body ? 'mt-1' : ''} ${isMe ? 'text-green-200' : 'text-gray-400 dark:text-gray-500'}`}>
+                    <p className={`text-[10px] ${msg.body ? 'mt-1' : ''} ${isMe ? 'text-green-200' : 'text-gray-500 dark:text-gray-500'}`}>
                       {formatTime(msg.createdAt)}
                       {isMe && msg.status === 'read' && ' ✓✓'}
                       {isMe && msg.status === 'delivered' && ' ✓'}
@@ -517,7 +517,7 @@ export default function MessageThread({ conversationId, currentUserId, otherUser
           </button>
         </form>
 
-        <p className="mt-2 text-[10px] text-gray-400 dark:text-gray-500">
+        <p className="mt-2 text-[10px] text-gray-500 dark:text-gray-500">
           Images up to {MAX_IMAGE_MB}MB · PDF, DOC, DOCX, XLS, XLSX, CSV up to {MAX_FILE_MB}MB
         </p>
       </div>

@@ -16,7 +16,7 @@ export default function BuyNowButton({ listingId, price, sellerHasBank }: BuyNow
 
   if (!sellerHasBank) {
     return (
-      <p className="text-sm text-gray-400 dark:text-gray-500 italic">
+      <p className="text-sm text-gray-500 dark:text-gray-500 italic">
         Seller hasn&apos;t set up their payout account yet. Contact them directly.
       </p>
     )
@@ -58,7 +58,7 @@ export default function BuyNowButton({ listingId, price, sellerHasBank }: BuyNow
       >
         {loading ? 'Processing...' : `Buy Now — ${formatPrice(price)}`}
       </button>
-      <p className="text-[11px] text-gray-400 dark:text-gray-500 text-center mt-2">
+      <p className="text-[11px] text-gray-500 dark:text-gray-500 text-center mt-2">
         Payment held in escrow until you confirm delivery
       </p>
       {error && (

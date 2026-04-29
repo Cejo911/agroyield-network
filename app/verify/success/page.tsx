@@ -19,7 +19,7 @@ export default function VerifySuccessPage() {
         <p className="text-gray-500 dark:text-gray-400 mb-2">
           Your verified badge is being activated. It may take up to a minute to appear on your profile.
         </p>
-        <p className="text-gray-400 dark:text-gray-500 text-sm mb-8">
+        <p className="text-gray-500 dark:text-gray-500 text-sm mb-8">
           If your badge does not appear after a few minutes, please contact support.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">

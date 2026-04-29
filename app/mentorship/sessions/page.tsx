@@ -377,7 +377,7 @@ export default function RequestsPage() {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
         <AppNav />
-        <div className="text-gray-400 text-sm p-8 text-center">Loading requests…</div>
+        <div className="text-gray-500 text-sm p-8 text-center">Loading requests…</div>
       </div>
     )
   }
@@ -409,7 +409,7 @@ export default function RequestsPage() {
               }`}
             >
               As {t === 'mentee' ? 'Mentee' : 'Mentor'}
-              <span className="ml-1.5 text-xs text-gray-400">
+              <span className="ml-1.5 text-xs text-gray-500">
                 ({requests.filter(r => t === 'mentee' ? r.mentee_id === userId : r.mentor_id === userId).length})
               </span>
             </button>
@@ -418,7 +418,7 @@ export default function RequestsPage() {
 
         {/* Requests list */}
         {displayed.length === 0 ? (
-          <div className="text-center py-16 text-gray-400 text-sm">
+          <div className="text-center py-16 text-gray-500 text-sm">
             {tab === 'mentee'
               ? <>No requests yet. <Link href="/mentorship" className="text-green-600 hover:underline">Find a mentor</Link> to get started.</>
               : <>No incoming requests yet. Make sure your <Link href="/mentorship/become-mentor" className="text-green-600 hover:underline">mentor profile</Link> is active.</>
@@ -452,7 +452,7 @@ export default function RequestsPage() {
                         </Link>
                         {r.topic && <p className="text-sm text-gray-700 dark:text-gray-300 mt-0.5 font-medium">{r.topic}</p>}
                         {r.message && <p className="text-xs text-gray-500 mt-1 line-clamp-3">{r.message}</p>}
-                        <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
+                        <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
                           {preferredFormat && <span className="capitalize">Preferred format: {preferredFormat.replace('_', ' ')}</span>}
                           <span>
                             {new Date(r.created_at).toLocaleDateString('en-GB', {
@@ -562,7 +562,7 @@ export default function RequestsPage() {
                   {/* Accepted request on the mentee side without a scheduled session */}
                   {tab === 'mentee' && r.status === 'accepted' && !r.session && (
                     <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800">
-                      <p className="text-[11px] text-gray-400">
+                      <p className="text-[11px] text-gray-500">
                         Waiting for {otherName} to schedule a session. You can coordinate via Messages.
                       </p>
                     </div>
@@ -613,7 +613,7 @@ export default function RequestsPage() {
                           ★ Leave Review
                         </button>
                       ) : (
-                        <p className="text-[11px] text-gray-400">Completed without a scheduled session — no review possible.</p>
+                        <p className="text-[11px] text-gray-500">Completed without a scheduled session — no review possible.</p>
                       )}
 
                       {/* Their review of me */}
@@ -735,7 +735,7 @@ export default function RequestsPage() {
                     placeholder="https://meet.google.com/..., https://zoom.us/j/..."
                     className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-green-500"
                   />
-                  <p className="text-[11px] text-gray-400 mt-1">You can add this later and the mentee will see it automatically.</p>
+                  <p className="text-[11px] text-gray-500 mt-1">You can add this later and the mentee will see it automatically.</p>
                 </div>
               </div>
 
@@ -802,7 +802,7 @@ export default function RequestsPage() {
                     maxLength={500}
                     className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
                   />
-                  <p className="text-[11px] text-gray-400 mt-1">{reviewComment.length}/500</p>
+                  <p className="text-[11px] text-gray-500 mt-1">{reviewComment.length}/500</p>
                 </div>
               </div>
 

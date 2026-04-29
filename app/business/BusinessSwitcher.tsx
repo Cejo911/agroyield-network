@@ -64,11 +64,11 @@ export default function BusinessSwitcher() {
   if (businesses.length === 1) {
     return (
       <div className="px-3 py-2">
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-0.5">Business</p>
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-0.5">Business</p>
         <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate" title={activeBiz.businessName}>
           {activeBiz.businessName || 'My Business'}
         </p>
-        <p className="text-[10px] text-gray-400 capitalize">{activeBiz.role}</p>
+        <p className="text-[10px] text-gray-500 capitalize">{activeBiz.role}</p>
         {multiEnabled && (
           <button
             onClick={() => router.push('/business/setup?new=true')}
@@ -84,7 +84,7 @@ export default function BusinessSwitcher() {
   // Multiple businesses — show switcher dropdown
   return (
     <div className="px-3 py-2 relative">
-      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-0.5">Business</p>
+      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-0.5">Business</p>
       <button
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between gap-1 text-left"
@@ -93,9 +93,9 @@ export default function BusinessSwitcher() {
           <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
             {activeBiz.businessName || 'My Business'}
           </p>
-          <p className="text-[10px] text-gray-400 capitalize">{activeBiz.role}</p>
+          <p className="text-[10px] text-gray-500 capitalize">{activeBiz.role}</p>
         </div>
-        <svg aria-hidden="true" className={`w-3.5 h-3.5 text-gray-400 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`}
+        <svg aria-hidden="true" className={`w-3.5 h-3.5 text-gray-500 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`}
           fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
         </svg>
@@ -114,7 +114,7 @@ export default function BusinessSwitcher() {
               }`}
             >
               <p className="truncate">{b.businessName || 'Unnamed'}</p>
-              <p className="text-[10px] text-gray-400 capitalize">{b.role}</p>
+              <p className="text-[10px] text-gray-500 capitalize">{b.role}</p>
             </button>
           ))}
           {multiEnabled && (

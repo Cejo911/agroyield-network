@@ -224,7 +224,7 @@ export default function OpportunitiesClient({
               <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-3">
                 {opportunity.description}
               </p>
-              <div className="flex flex-wrap gap-3 text-xs text-gray-400 dark:text-gray-500">
+              <div className="flex flex-wrap gap-3 text-xs text-gray-500 dark:text-gray-500">
                 {opportunity.location && <span>📍 {opportunity.location}</span>}
                 {deadline && <span>⏰ {deadline}</span>}
               </div>

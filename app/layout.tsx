@@ -179,6 +179,21 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: websiteJsonLdScript }}
         />
+        {/* Skip-to-content link for keyboard users.
+            Hidden until focused so it doesn't disturb the visual
+            layout, then jumps to the main content area on tab —
+            saving keyboard users from tabbing through the AppNav's
+            ~12 chrome elements before they reach the page content.
+            Each page is responsible for putting `id="main"` on its
+            primary <main> landmark; pages that haven't been migrated
+            yet still benefit because the link gracefully no-ops when
+            the anchor target doesn't exist. */}
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:bg-green-600 focus:text-white focus:px-4 focus:py-2 focus:rounded-lg focus:font-semibold focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2"
+        >
+          Skip to main content
+        </a>
         <PostHogProvider>
           <ThemeProvider>
             <ToastProvider>

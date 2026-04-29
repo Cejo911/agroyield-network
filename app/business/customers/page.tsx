@@ -86,7 +86,7 @@ export default function CustomersPage() {
   )
   
   
-  if (loading) return <div className="text-center py-10 text-gray-400">Loading...</div>
+  if (loading) return <div className="text-center py-10 text-gray-500">Loading...</div>
 
   if (!businessId) return (
     <div className="bg-white rounded-xl border border-gray-100 p-8 text-center">

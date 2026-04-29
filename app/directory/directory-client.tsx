@@ -196,7 +196,7 @@ export default function DirectoryClient({ profiles, currentUserId, followingIds,
 
       {/* Member cards */}
       {filtered.length === 0 ? (
-        <div className="text-center py-16 text-gray-400 dark:text-gray-500">
+        <div className="text-center py-16 text-gray-500 dark:text-gray-500">
           <Image src="/logo-icon-colored.png" alt="AgroYield Network" width={44} height={44} className="mx-auto mb-3" />
           <p className="font-medium">No members match your filters</p>
           <p className="text-sm mt-1">Try adjusting your search or filters</p>
@@ -262,7 +262,7 @@ export default function DirectoryClient({ profiles, currentUserId, followingIds,
 
                 {/* Follower count */}
                 {(followerCountMap[profile.id] || 0) > 0 && (
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
                     {followerCountMap[profile.id]} follower{followerCountMap[profile.id] !== 1 ? 's' : ''}
                   </p>
                 )}
@@ -304,7 +304,7 @@ export default function DirectoryClient({ profiles, currentUserId, followingIds,
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">📍 {profile.location}</p>
                 )}
                 {profile.bio && (
-                  <p className="text-sm text-gray-400 dark:text-gray-500 mt-3 line-clamp-2">{profile.bio}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-500 mt-3 line-clamp-2">{profile.bio}</p>
                 )}
                 {profile.interests && profile.interests.length > 0 && (
                   <div className="flex flex-wrap gap-1 mt-3">
@@ -317,7 +317,7 @@ export default function DirectoryClient({ profiles, currentUserId, followingIds,
                       </span>
                     ))}
                     {profile.interests.length > 3 && (
-                      <span className="text-xs text-gray-400 dark:text-gray-500 px-1">
+                      <span className="text-xs text-gray-500 dark:text-gray-500 px-1">
                         +{profile.interests.length - 3} more
                       </span>
                     )}

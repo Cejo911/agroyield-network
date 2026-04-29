@@ -215,7 +215,7 @@ export default function AssetsPage() {
   const labelClass = "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
   const selectClass = "w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-green-500"
 
-  if (loading) return <div className="text-center py-10 text-gray-400">Loading...</div>
+  if (loading) return <div className="text-center py-10 text-gray-500">Loading...</div>
 
   if (!businessId) return (
     <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-8 text-center">
@@ -369,7 +369,7 @@ export default function AssetsPage() {
                 <input type="number" min="0" step="0.01" value={form.current_value}
                   onChange={e => setForm(f => ({ ...f, current_value: e.target.value }))}
                   className={inputClass} placeholder="Leave blank to use purchase price" />
-                <p className="text-xs text-gray-400 mt-1">Estimated current market or book value</p>
+                <p className="text-xs text-gray-500 mt-1">Estimated current market or book value</p>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -420,7 +420,7 @@ export default function AssetsPage() {
                   </span>
                 </div>
               </div>
-              <button onClick={() => setViewAsset(null)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xl">✕</button>
+              <button onClick={() => setViewAsset(null)} className="text-gray-500 hover:text-gray-600 dark:hover:text-gray-200 text-xl">✕</button>
             </div>
 
             {viewAsset.description && (
@@ -430,47 +430,47 @@ export default function AssetsPage() {
             <div className="grid grid-cols-2 gap-3 mb-4">
               {viewAsset.serial_number && (
                 <div>
-                  <p className="text-xs text-gray-400 uppercase tracking-wide">Serial No.</p>
+                  <p className="text-xs text-gray-500 uppercase tracking-wide">Serial No.</p>
                   <p className="text-sm font-medium text-gray-800 dark:text-white">{viewAsset.serial_number}</p>
                 </div>
               )}
               {viewAsset.tag_number && (
                 <div>
-                  <p className="text-xs text-gray-400 uppercase tracking-wide">Tag / ID</p>
+                  <p className="text-xs text-gray-500 uppercase tracking-wide">Tag / ID</p>
                   <p className="text-sm font-medium text-gray-800 dark:text-white">{viewAsset.tag_number}</p>
                 </div>
               )}
               {viewAsset.purchase_date && (
                 <div>
-                  <p className="text-xs text-gray-400 uppercase tracking-wide">Purchased</p>
+                  <p className="text-xs text-gray-500 uppercase tracking-wide">Purchased</p>
                   <p className="text-sm font-medium text-gray-800 dark:text-white">{fmtDate(viewAsset.purchase_date)}</p>
                 </div>
               )}
               <div>
-                <p className="text-xs text-gray-400 uppercase tracking-wide">Purchase Price</p>
+                <p className="text-xs text-gray-500 uppercase tracking-wide">Purchase Price</p>
                 <p className="text-sm font-medium text-gray-800 dark:text-white">{fmt(viewAsset.purchase_price)}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-400 uppercase tracking-wide">Current Value</p>
+                <p className="text-xs text-gray-500 uppercase tracking-wide">Current Value</p>
                 <p className={`text-sm font-bold ${viewAsset.current_value < viewAsset.purchase_price ? 'text-amber-600' : 'text-green-600'}`}>
                   {fmt(viewAsset.current_value)}
                 </p>
               </div>
               <div>
-                <p className="text-xs text-gray-400 uppercase tracking-wide">Condition</p>
+                <p className="text-xs text-gray-500 uppercase tracking-wide">Condition</p>
                 <p className={`text-sm font-semibold ${CONDITION_STYLES[viewAsset.condition] || 'text-gray-800 dark:text-white'}`}>
                   {viewAsset.condition}
                 </p>
               </div>
               {viewAsset.location && (
                 <div>
-                  <p className="text-xs text-gray-400 uppercase tracking-wide">Location</p>
+                  <p className="text-xs text-gray-500 uppercase tracking-wide">Location</p>
                   <p className="text-sm font-medium text-gray-800 dark:text-white">{viewAsset.location}</p>
                 </div>
               )}
               {viewAsset.assigned_to && (
                 <div>
-                  <p className="text-xs text-gray-400 uppercase tracking-wide">Assigned To</p>
+                  <p className="text-xs text-gray-500 uppercase tracking-wide">Assigned To</p>
                   <p className="text-sm font-medium text-gray-800 dark:text-white">{viewAsset.assigned_to}</p>
                 </div>
               )}
@@ -478,7 +478,7 @@ export default function AssetsPage() {
 
             {viewAsset.notes && (
               <div className="border-t border-gray-100 dark:border-gray-800 pt-3 mb-4">
-                <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Notes</p>
+                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Notes</p>
                 <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-line">{viewAsset.notes}</p>
               </div>
             )}
@@ -554,9 +554,9 @@ export default function AssetsPage() {
                   <td className="px-4 py-3">
                     <p className="font-medium text-gray-800 dark:text-white">{a.name}</p>
                     <div className="flex items-center gap-2 mt-0.5">
-                      {a.tag_number && <span className="text-xs text-gray-400">{a.tag_number}</span>}
-                      {a.location && <span className="text-xs text-gray-400">· {a.location}</span>}
-                      {a.assigned_to && <span className="text-xs text-gray-400">· {a.assigned_to}</span>}
+                      {a.tag_number && <span className="text-xs text-gray-500">{a.tag_number}</span>}
+                      {a.location && <span className="text-xs text-gray-500">· {a.location}</span>}
+                      {a.assigned_to && <span className="text-xs text-gray-500">· {a.assigned_to}</span>}
                     </div>
                   </td>
                   <td className="px-4 py-3 text-gray-500 dark:text-gray-400">
@@ -588,7 +588,7 @@ export default function AssetsPage() {
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-gray-800 dark:text-white truncate">{a.name}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">{CATEGORY_ICONS[a.category]} {a.category}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{CATEGORY_ICONS[a.category]} {a.category}</p>
                   </div>
                   <span className={`text-xs font-semibold px-2 py-0.5 rounded-full capitalize ml-2 ${STATUS_STYLES[a.status] || STATUS_STYLES.active}`}>
                     {a.status === 'written_off' ? 'W/O' : a.status}
@@ -597,15 +597,15 @@ export default function AssetsPage() {
 
                 <div className="flex items-center gap-4 text-xs">
                   <div>
-                    <span className="text-gray-400">Value:</span>{' '}
+                    <span className="text-gray-500">Value:</span>{' '}
                     <span className="font-medium text-gray-800 dark:text-white">{fmt(a.current_value)}</span>
                   </div>
                   <span className={`font-semibold ${CONDITION_STYLES[a.condition] || ''}`}>{a.condition}</span>
-                  {a.location && <span className="text-gray-400 truncate">{a.location}</span>}
+                  {a.location && <span className="text-gray-500 truncate">{a.location}</span>}
                 </div>
 
                 {(a.tag_number || a.assigned_to) && (
-                  <div className="flex items-center gap-3 text-xs text-gray-400">
+                  <div className="flex items-center gap-3 text-xs text-gray-500">
                     {a.tag_number && <span>{a.tag_number}</span>}
                     {a.assigned_to && <span>→ {a.assigned_to}</span>}
                   </div>

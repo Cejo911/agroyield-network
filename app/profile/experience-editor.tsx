@@ -197,7 +197,7 @@ export default function ExperienceEditor({ initialRows }: { initialRows: Experie
       )}
 
       {rows.length === 0 && !adding ? (
-        <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-6">
+        <p className="text-sm text-gray-500 dark:text-gray-500 text-center py-6">
           No experience yet. Add your first role above.
         </p>
       ) : (
@@ -339,7 +339,7 @@ function ExperienceForm({
 
       <div>
         <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-          Description <span className="text-gray-400 dark:text-gray-500">(optional)</span>
+          Description <span className="text-gray-500 dark:text-gray-500">(optional)</span>
         </label>
         <textarea
           value={form.description}
@@ -349,7 +349,7 @@ function ExperienceForm({
           placeholder="What you did, what you grew, what you built…"
           className="w-full text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
         />
-        <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1 text-right">
+        <p className="text-[11px] text-gray-500 dark:text-gray-500 mt-1 text-right">
           {form.description.length} / 2000
         </p>
       </div>

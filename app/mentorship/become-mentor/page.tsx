@@ -191,7 +191,7 @@ export default function BecomeMentorPage() {
   if (loading) return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <AppNav />
-      <div className="text-gray-400 text-sm p-8 text-center">Loading...</div>
+      <div className="text-gray-500 text-sm p-8 text-center">Loading...</div>
     </div>
   )
 
@@ -327,7 +327,7 @@ export default function BecomeMentorPage() {
               ))}
             </div>
             {form.expertise.length === 0 && (
-              <p className="text-xs text-gray-400 mt-1">Select at least one area</p>
+              <p className="text-xs text-gray-500 mt-1">Select at least one area</p>
             )}
           </div>
 
@@ -431,7 +431,7 @@ export default function BecomeMentorPage() {
 
           {/* LinkedIn */}
           <div>
-            <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">LinkedIn Profile <span className="text-gray-400 font-normal">(optional)</span></label>
+            <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">LinkedIn Profile <span className="text-gray-500 font-normal">(optional)</span></label>
             <input
               type="url"
               placeholder="https://linkedin.com/in/yourname"

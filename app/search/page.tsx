@@ -237,7 +237,7 @@ function OpportunityRow({ opportunity: o }: { opportunity: SearchOpportunity }) 
       <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{o.title}</p>
       {subtitle && <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">{subtitle}</p>}
       {o.deadline && (
-        <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">
+        <p className="text-[11px] text-gray-500 dark:text-gray-500 mt-0.5">
           Deadline: {new Date(o.deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
         </p>
       )}
@@ -252,7 +252,7 @@ function GrantRow({ grant: g }: { grant: SearchGrant }) {
       <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{g.title}</p>
       {subtitle && <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">{subtitle}</p>}
       {g.deadline && (
-        <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">
+        <p className="text-[11px] text-gray-500 dark:text-gray-500 mt-0.5">
           Deadline: {new Date(g.deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
         </p>
       )}
@@ -293,7 +293,7 @@ function BusinessRow({ business: b }: { business: SearchBusiness }) {
         )}
       </div>
       {b.tagline && <p className="text-xs text-gray-600 dark:text-gray-300 truncate mt-0.5">{b.tagline}</p>}
-      {subtitle && <p className="text-[11px] text-gray-400 dark:text-gray-500 truncate mt-0.5">{subtitle}</p>}
+      {subtitle && <p className="text-[11px] text-gray-500 dark:text-gray-500 truncate mt-0.5">{subtitle}</p>}
     </Link>
   )
 }

@@ -47,11 +47,11 @@ export default async function FollowersPage({ params }: { params: Promise<{ id: 
         </Link>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
           {user.id === id ? 'Your' : `${ownerName}'s`} Followers
-          <span className="text-gray-400 font-normal text-lg ml-2">({followerIds.length})</span>
+          <span className="text-gray-500 font-normal text-lg ml-2">({followerIds.length})</span>
         </h1>
 
         {(followers ?? []).length === 0 ? (
-          <p className="text-gray-400 text-sm">No followers yet.</p>
+          <p className="text-gray-500 text-sm">No followers yet.</p>
         ) : (
           <div className="space-y-3">
             {(followers ?? []).map((p) => {

@@ -87,7 +87,7 @@ function StatCard({ label, value, sub, accent }: { label: string; value: string 
     <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 min-w-0 overflow-hidden">
       <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 truncate">{label}</p>
       <p className={`text-lg sm:text-xl font-bold truncate ${accent || 'text-gray-900 dark:text-white'}`}>{value}</p>
-      {sub && <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1 truncate">{sub}</p>}
+      {sub && <p className="text-[10px] text-gray-500 dark:text-gray-500 mt-1 truncate">{sub}</p>}
     </div>
   )
 }
@@ -98,7 +98,7 @@ function Section({ title, subtitle, children }: { title: string; subtitle?: stri
     <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-4">
       <div>
         <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{title}</h3>
-        {subtitle && <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{subtitle}</p>}
+        {subtitle && <p className="text-xs text-gray-500 dark:text-gray-500 mt-0.5">{subtitle}</p>}
       </div>
       {children}
     </div>
@@ -1135,7 +1135,7 @@ export default function AnalyticsTab(props: AnalyticsProps) {
                     <span className="text-xs font-semibold text-gray-900 dark:text-white whitespace-nowrap">₦{cat.value.toLocaleString()}</span>
                   </div>
                 ))}
-                {businessHealth.topCategories.length === 0 && <p className="text-xs text-gray-400">No expenses recorded</p>}
+                {businessHealth.topCategories.length === 0 && <p className="text-xs text-gray-500">No expenses recorded</p>}
               </div>
             </div>
           </div>
@@ -1161,16 +1161,16 @@ export default function AnalyticsTab(props: AnalyticsProps) {
         {/* Top Businesses by Revenue */}
         <Section title="Top Businesses — Revenue" subtitle="Highest-earning businesses on the platform">
           {businessIntel.topByRevenue.length === 0 ? (
-            <p className="text-xs text-gray-400">No revenue data yet</p>
+            <p className="text-xs text-gray-500">No revenue data yet</p>
           ) : (
             <div className="space-y-2">
               {businessIntel.topByRevenue.map((b, i) => (
                 <div key={b.id} className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
-                    <span className={`text-xs font-bold w-5 text-center shrink-0 ${i < 3 ? 'text-green-600' : 'text-gray-400'}`}>{i + 1}</span>
+                    <span className={`text-xs font-bold w-5 text-center shrink-0 ${i < 3 ? 'text-green-600' : 'text-gray-500'}`}>{i + 1}</span>
                     <div className="min-w-0">
                       <p className="text-xs font-medium text-gray-900 dark:text-white truncate">{b.name}</p>
-                      <p className="text-[10px] text-gray-400 truncate">{b.ownerName}</p>
+                      <p className="text-[10px] text-gray-500 truncate">{b.ownerName}</p>
                     </div>
                   </div>
                   <span className="text-xs font-semibold text-green-600 whitespace-nowrap">{fmtNaira(b.revenue)}</span>
@@ -1183,16 +1183,16 @@ export default function AnalyticsTab(props: AnalyticsProps) {
         {/* Top Users of Business Module */}
         <Section title="Top Users — Business Module" subtitle="Most active business owners by revenue">
           {businessIntel.topUsers.length === 0 ? (
-            <p className="text-xs text-gray-400">No business users yet</p>
+            <p className="text-xs text-gray-500">No business users yet</p>
           ) : (
             <div className="space-y-2">
               {businessIntel.topUsers.map((u, i) => (
                 <div key={u.id} className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
-                    <span className={`text-xs font-bold w-5 text-center shrink-0 ${i < 3 ? 'text-green-600' : 'text-gray-400'}`}>{i + 1}</span>
+                    <span className={`text-xs font-bold w-5 text-center shrink-0 ${i < 3 ? 'text-green-600' : 'text-gray-500'}`}>{i + 1}</span>
                     <div className="min-w-0">
                       <p className="text-xs font-medium text-gray-900 dark:text-white truncate">{u.name}</p>
-                      <p className="text-[10px] text-gray-400">{u.businesses} biz · {u.invoices} invoices</p>
+                      <p className="text-[10px] text-gray-500">{u.businesses} biz · {u.invoices} invoices</p>
                     </div>
                   </div>
                   <span className="text-xs font-semibold text-green-600 whitespace-nowrap">{fmtNaira(u.revenue)}</span>
@@ -1207,7 +1207,7 @@ export default function AnalyticsTab(props: AnalyticsProps) {
           <div className="space-y-4">
             <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3 space-y-3">
               <div>
-                <p className="text-[10px] uppercase tracking-wide text-gray-400 mb-0.5">Revenue Concentration</p>
+                <p className="text-[10px] uppercase tracking-wide text-gray-500 mb-0.5">Revenue Concentration</p>
                 <p className="text-sm font-semibold text-gray-900 dark:text-white">
                   {businessIntel.top80Count} of {businessIntel.totalBizCount} businesses
                 </p>
@@ -1221,11 +1221,11 @@ export default function AnalyticsTab(props: AnalyticsProps) {
                 )}
               </div>
               <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
-                <p className="text-[10px] uppercase tracking-wide text-gray-400 mb-0.5">Average Invoice Value</p>
+                <p className="text-[10px] uppercase tracking-wide text-gray-500 mb-0.5">Average Invoice Value</p>
                 <p className="text-lg font-bold text-gray-900 dark:text-white">{fmtNaira(businessIntel.avgInvoice)}</p>
               </div>
               <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
-                <p className="text-[10px] uppercase tracking-wide text-gray-400 mb-0.5">Businesses by Volume</p>
+                <p className="text-[10px] uppercase tracking-wide text-gray-500 mb-0.5">Businesses by Volume</p>
                 <div className="space-y-1 mt-1">
                   {businessIntel.topByVolume.slice(0, 5).map((b, i) => (
                     <div key={b.id} className="flex items-center justify-between">
@@ -1262,7 +1262,7 @@ export default function AnalyticsTab(props: AnalyticsProps) {
               <div className="flex justify-between text-xs"><span className="text-gray-500 dark:text-gray-400">Pending</span><span className="font-semibold text-amber-500">{mentorshipHealth.pending}</span></div>
               <div className="flex justify-between text-xs"><span className="text-gray-500 dark:text-gray-400">Declined</span><span className="font-semibold text-red-500">{mentorshipHealth.declined}</span></div>
               {mentorshipHealth.mentors > 0 && (
-                <p className="text-[10px] text-gray-400 pt-1">
+                <p className="text-[10px] text-gray-500 pt-1">
                   Avg {(mentorshipHealth.total / mentorshipHealth.mentors).toFixed(1)} requests per mentor
                 </p>
               )}
@@ -1306,7 +1306,7 @@ export default function AnalyticsTab(props: AnalyticsProps) {
               <div key={m.module}>
                 <div className="flex items-center justify-between mb-0.5">
                   <span className="text-xs text-gray-600 dark:text-gray-400">{m.module}</span>
-                  <span className="text-xs font-semibold text-gray-900 dark:text-white">{m.female} / {m.total} <span className="text-gray-400 font-normal">({m.pct}%)</span></span>
+                  <span className="text-xs font-semibold text-gray-900 dark:text-white">{m.female} / {m.total} <span className="text-gray-500 font-normal">({m.pct}%)</span></span>
                 </div>
                 <div className="w-full h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
                   <div className="h-full rounded-full bg-pink-500" style={{ width: `${m.pct}%` }} />
@@ -1350,7 +1350,7 @@ export default function AnalyticsTab(props: AnalyticsProps) {
               </BarChart>
             </ResponsiveContainer>
             <div className="pt-2 space-y-1.5">
-              <p className="text-[10px] uppercase tracking-wide text-gray-400">Searches by Module</p>
+              <p className="text-[10px] uppercase tracking-wide text-gray-500">Searches by Module</p>
               {searchInsights.byModule.map(m => (
                 <div key={m.module} className="flex items-center justify-between">
                   <span className="text-xs text-gray-600 dark:text-gray-400">{m.module}</span>
@@ -1366,13 +1366,13 @@ export default function AnalyticsTab(props: AnalyticsProps) {
               {searchInsights.topTerms.map((t, i) => (
                 <div key={t.term} className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
-                    <span className={`text-xs font-bold w-5 text-center shrink-0 ${i < 3 ? 'text-green-600' : 'text-gray-400'}`}>{i + 1}</span>
+                    <span className={`text-xs font-bold w-5 text-center shrink-0 ${i < 3 ? 'text-green-600' : 'text-gray-500'}`}>{i + 1}</span>
                     <span className="text-xs text-gray-700 dark:text-gray-300 truncate">{t.term}</span>
                   </div>
                   <span className="text-xs font-medium text-gray-500 whitespace-nowrap">{t.count}x</span>
                 </div>
               ))}
-              {searchInsights.topTerms.length === 0 && <p className="text-xs text-gray-400">No searches recorded yet</p>}
+              {searchInsights.topTerms.length === 0 && <p className="text-xs text-gray-500">No searches recorded yet</p>}
             </div>
           </Section>
 
@@ -1381,7 +1381,7 @@ export default function AnalyticsTab(props: AnalyticsProps) {
             {searchInsights.zeroResultTerms.length === 0 ? (
               <div className="text-center py-6">
                 <p className="text-2xl mb-1">✅</p>
-                <p className="text-xs text-gray-400">All searches returned results</p>
+                <p className="text-xs text-gray-500">All searches returned results</p>
               </div>
             ) : (
               <div className="space-y-1.5">

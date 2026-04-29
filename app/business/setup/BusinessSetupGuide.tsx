@@ -200,7 +200,7 @@ export default function BusinessSetupGuide({ form }: { form: FormState }) {
                     <div className="min-w-0">
                       <p className={`text-sm font-medium ${
                         done
-                          ? 'text-gray-400 dark:text-gray-500 line-through'
+                          ? 'text-gray-500 dark:text-gray-500 line-through'
                           : 'text-gray-800 dark:text-gray-200'
                       }`}>
                         {step.label}
@@ -220,7 +220,7 @@ export default function BusinessSetupGuide({ form }: { form: FormState }) {
           {/* Footer hint */}
           {!allDone && (
             <div className="px-5 py-2.5 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50">
-              <p className="text-[11px] text-gray-400 dark:text-gray-500 text-center">
+              <p className="text-[11px] text-gray-500 dark:text-gray-500 text-center">
                 Complete all steps for professional invoices ✨
               </p>
             </div>

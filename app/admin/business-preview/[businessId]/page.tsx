@@ -209,10 +209,10 @@ export default async function BusinessPreviewPage({ params }: { params: Promise<
           {/* Recent Invoices */}
           <section className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5">
             <h2 className="font-semibold text-gray-800 dark:text-white mb-3">
-              Recent Invoices <span className="text-xs font-normal text-gray-400">({invoiceList.length})</span>
+              Recent Invoices <span className="text-xs font-normal text-gray-500">({invoiceList.length})</span>
             </h2>
             {invoiceList.length === 0 ? (
-              <p className="text-sm text-gray-400 italic">No invoices yet</p>
+              <p className="text-sm text-gray-500 italic">No invoices yet</p>
             ) : (
               <div className="space-y-2 max-h-80 overflow-y-auto">
                 {invoiceList.map((inv) => {
@@ -226,7 +226,7 @@ export default async function BusinessPreviewPage({ params }: { params: Promise<
                     <div key={inv.id} className="flex items-center justify-between py-2 border-b border-gray-50 dark:border-gray-800 last:border-0">
                       <div>
                         <p className="text-sm font-medium text-gray-900 dark:text-white">{inv.invoice_number}</p>
-                        <p className="text-xs text-gray-400">{customerName || '—'} · {inv.issue_date}</p>
+                        <p className="text-xs text-gray-500">{customerName || '—'} · {inv.issue_date}</p>
                       </div>
                       <div className="text-right">
                         <p className="text-sm font-semibold text-gray-900 dark:text-white">{fmt(Number(inv.total) || 0)}</p>
@@ -244,17 +244,17 @@ export default async function BusinessPreviewPage({ params }: { params: Promise<
           {/* Recent Expenses */}
           <section className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5">
             <h2 className="font-semibold text-gray-800 dark:text-white mb-3">
-              Recent Expenses <span className="text-xs font-normal text-gray-400">({expenseList.length})</span>
+              Recent Expenses <span className="text-xs font-normal text-gray-500">({expenseList.length})</span>
             </h2>
             {expenseList.length === 0 ? (
-              <p className="text-sm text-gray-400 italic">No expenses recorded</p>
+              <p className="text-sm text-gray-500 italic">No expenses recorded</p>
             ) : (
               <div className="space-y-2 max-h-80 overflow-y-auto">
                 {expenseList.map((exp) => (
                   <div key={exp.id} className="flex items-center justify-between py-2 border-b border-gray-50 dark:border-gray-800 last:border-0">
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">{exp.description}</p>
-                      <p className="text-xs text-gray-400">{exp.category || '—'} · {exp.date}</p>
+                      <p className="text-xs text-gray-500">{exp.category || '—'} · {exp.date}</p>
                     </div>
                     <p className="text-sm font-semibold text-red-600 dark:text-red-400">{fmt(Number(exp.amount) || 0)}</p>
                   </div>
@@ -270,10 +270,10 @@ export default async function BusinessPreviewPage({ params }: { params: Promise<
           {/* Products / Inventory */}
           <section className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5">
             <h2 className="font-semibold text-gray-800 dark:text-white mb-3">
-              Products / Inventory <span className="text-xs font-normal text-gray-400">({productList.length})</span>
+              Products / Inventory <span className="text-xs font-normal text-gray-500">({productList.length})</span>
             </h2>
             {productList.length === 0 ? (
-              <p className="text-sm text-gray-400 italic">No products listed</p>
+              <p className="text-sm text-gray-500 italic">No products listed</p>
             ) : (
               <div className="space-y-2 max-h-80 overflow-y-auto">
                 {productList.map((p) => (
@@ -281,9 +281,9 @@ export default async function BusinessPreviewPage({ params }: { params: Promise<
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">
                         {p.name}
-                        {!p.is_active && <span className="ml-1.5 text-[10px] text-gray-400">(inactive)</span>}
+                        {!p.is_active && <span className="ml-1.5 text-[10px] text-gray-500">(inactive)</span>}
                       </p>
-                      <p className="text-xs text-gray-400">{p.unit} · Stock: {p.stock_quantity}</p>
+                      <p className="text-xs text-gray-500">{p.unit} · Stock: {p.stock_quantity}</p>
                     </div>
                     <p className="text-sm font-semibold text-gray-900 dark:text-white">{fmt(Number(p.unit_price) || 0)}</p>
                   </div>
@@ -297,10 +297,10 @@ export default async function BusinessPreviewPage({ params }: { params: Promise<
             {/* Team Members */}
             <section className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5">
               <h2 className="font-semibold text-gray-800 dark:text-white mb-3">
-                Team Members <span className="text-xs font-normal text-gray-400">({teamList.length})</span>
+                Team Members <span className="text-xs font-normal text-gray-500">({teamList.length})</span>
               </h2>
               {teamList.length === 0 ? (
-                <p className="text-sm text-gray-400 italic">No team members</p>
+                <p className="text-sm text-gray-500 italic">No team members</p>
               ) : (
                 <div className="space-y-2">
                   {teamList.map((tm) => {
@@ -311,7 +311,7 @@ export default async function BusinessPreviewPage({ params }: { params: Promise<
                     return (
                       <div key={tm.id} className="flex items-center justify-between py-1.5 border-b border-gray-50 dark:border-gray-800 last:border-0">
                         <p className="text-sm text-gray-900 dark:text-white">{name}</p>
-                        <span className="text-xs text-gray-400 capitalize">{tm.role || 'member'}</span>
+                        <span className="text-xs text-gray-500 capitalize">{tm.role || 'member'}</span>
                       </div>
                     )
                   })}
@@ -322,19 +322,19 @@ export default async function BusinessPreviewPage({ params }: { params: Promise<
             {/* Customers */}
             <section className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5">
               <h2 className="font-semibold text-gray-800 dark:text-white mb-3">
-                Customers <span className="text-xs font-normal text-gray-400">({customerList.length})</span>
+                Customers <span className="text-xs font-normal text-gray-500">({customerList.length})</span>
               </h2>
               {customerList.length === 0 ? (
-                <p className="text-sm text-gray-400 italic">No customers yet</p>
+                <p className="text-sm text-gray-500 italic">No customers yet</p>
               ) : (
                 <div className="space-y-2 max-h-60 overflow-y-auto">
                   {customerList.map((c) => (
                     <div key={c.id} className="flex items-center justify-between py-1.5 border-b border-gray-50 dark:border-gray-800 last:border-0">
                       <div>
                         <p className="text-sm text-gray-900 dark:text-white">{c.name}</p>
-                        {c.email && <p className="text-xs text-gray-400">{c.email}</p>}
+                        {c.email && <p className="text-xs text-gray-500">{c.email}</p>}
                       </div>
-                      {c.phone && <p className="text-xs text-gray-400">{c.phone}</p>}
+                      {c.phone && <p className="text-xs text-gray-500">{c.phone}</p>}
                     </div>
                   ))}
                 </div>

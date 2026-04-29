@@ -121,7 +121,7 @@ export default function RecordPaymentButton({ invoice }: { invoice: InvoiceProp 
                   {invoice.invoice_number} &middot; ₦{Number(invoice.total ?? 0).toLocaleString('en-NG', { minimumFractionDigits: 2 })}
                 </p>
               </div>
-              <button onClick={() => setOpen(false)} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+              <button onClick={() => setOpen(false)} className="text-gray-500 hover:text-gray-600 text-2xl leading-none">&times;</button>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -152,7 +152,7 @@ export default function RecordPaymentButton({ invoice }: { invoice: InvoiceProp 
               {/* Reference */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                  Reference / Transaction ID <span className="font-normal text-gray-400">(optional)</span>
+                  Reference / Transaction ID <span className="font-normal text-gray-500">(optional)</span>
                 </label>
                 <input
                   type="text"
@@ -166,7 +166,7 @@ export default function RecordPaymentButton({ invoice }: { invoice: InvoiceProp 
               {/* Notes */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                  Notes <span className="font-normal text-gray-400">(optional)</span>
+                  Notes <span className="font-normal text-gray-500">(optional)</span>
                 </label>
                 <textarea
                   placeholder="Any additional payment notes..."

@@ -192,7 +192,7 @@ export default async function BusinessDashboard({
           <BusinessLogo src={business.logo_url} name={business.name} size="sm" />
           <div>
             <h1 className="text-xl font-bold text-gray-900 dark:text-white leading-tight">{business.name}</h1>
-            <p className="text-xs text-gray-400">Business Overview</p>
+            <p className="text-xs text-gray-500">Business Overview</p>
           </div>
         </div>
         <PeriodToggle current={period} />
@@ -211,7 +211,7 @@ export default async function BusinessDashboard({
           <div className="flex items-center justify-between mb-3">
             <div>
               <p className="text-sm font-bold text-gray-800 dark:text-white">Get started — {completedSteps}/4 steps complete</p>
-              <p className="text-xs text-gray-400 mt-0.5">Complete these steps to unlock the full dashboard</p>
+              <p className="text-xs text-gray-500 mt-0.5">Complete these steps to unlock the full dashboard</p>
             </div>
             <span className="text-xs font-bold text-green-700 bg-green-50 dark:bg-green-900/30 px-2 py-1 rounded-full">
               {Math.round((completedSteps / 4) * 100)}%
@@ -372,7 +372,7 @@ export default async function BusinessDashboard({
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
           <div className="flex items-center justify-between mb-3">
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Invoice Status</p>
-            <span className="text-xs text-gray-400">{totalCount} total</span>
+            <span className="text-xs text-gray-500">{totalCount} total</span>
           </div>
           <div className="flex flex-wrap gap-2">
             {[
@@ -461,7 +461,7 @@ export default async function BusinessDashboard({
           </div>
           {recentInvoices.length === 0 ? (
             <div className="px-4 py-6 text-center">
-              <p className="text-xs text-gray-400 mb-2">No invoices yet</p>
+              <p className="text-xs text-gray-500 mb-2">No invoices yet</p>
               <Link href="/business/invoices/new"
                 className="text-xs font-semibold text-green-700 hover:text-green-800">Create your first invoice →</Link>
             </div>
@@ -474,7 +474,7 @@ export default async function BusinessDashboard({
                     <p className="text-xs font-semibold text-gray-800 dark:text-gray-200 group-hover:text-green-700 transition-colors">
                       {inv.invoice_number}
                     </p>
-                    <p className="text-xs text-gray-400">{customerMap[inv.customer_id] || 'Unknown'} · {fmtDate(inv.issue_date)}</p>
+                    <p className="text-xs text-gray-500">{customerMap[inv.customer_id] || 'Unknown'} · {fmtDate(inv.issue_date)}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-xs font-bold text-gray-800 dark:text-white">{fmt(Number(inv.total || 0))}</p>
@@ -488,7 +488,7 @@ export default async function BusinessDashboard({
           )}
           {recentInvoices.length > 0 && (
             <div className="px-4 py-2 border-t border-gray-50 dark:border-gray-800">
-              <Link href="/business/invoices" className="text-xs font-semibold text-gray-400 hover:text-green-700 transition-colors">
+              <Link href="/business/invoices" className="text-xs font-semibold text-gray-500 hover:text-green-700 transition-colors">
                 View all →
               </Link>
             </div>
@@ -504,7 +504,7 @@ export default async function BusinessDashboard({
           </div>
           {recentExpenses.length === 0 ? (
             <div className="px-4 py-6 text-center">
-              <p className="text-xs text-gray-400 mb-2">No expenses recorded</p>
+              <p className="text-xs text-gray-500 mb-2">No expenses recorded</p>
               <Link href="/business/expenses"
                 className="text-xs font-semibold text-green-700 hover:text-green-800">Record your first expense →</Link>
             </div>
@@ -514,7 +514,7 @@ export default async function BusinessDashboard({
                 <div key={exp.id} className="flex items-center justify-between px-4 py-2.5">
                   <div>
                     <p className="text-xs font-semibold text-gray-800 dark:text-gray-200">{exp.description}</p>
-                    <p className="text-xs text-gray-400">{exp.category} · {fmtDate(exp.date)}</p>
+                    <p className="text-xs text-gray-500">{exp.category} · {fmtDate(exp.date)}</p>
                   </div>
                   <p className="text-xs font-bold text-red-500">{fmt(Number(exp.amount))}</p>
                 </div>
@@ -523,7 +523,7 @@ export default async function BusinessDashboard({
           )}
           {recentExpenses.length > 0 && (
             <div className="px-4 py-2 border-t border-gray-50 dark:border-gray-800">
-              <Link href="/business/expenses" className="text-xs font-semibold text-gray-400 hover:text-green-700 transition-colors">
+              <Link href="/business/expenses" className="text-xs font-semibold text-gray-500 hover:text-green-700 transition-colors">
                 View all →
               </Link>
             </div>
@@ -544,7 +544,7 @@ export default async function BusinessDashboard({
             <p className="text-sm font-semibold text-gray-800 dark:text-white group-hover:text-green-700 dark:group-hover:text-green-400 transition-colors">
               {q.label}
             </p>
-            <p className="text-xs text-gray-400 mt-0.5">{q.desc}</p>
+            <p className="text-xs text-gray-500 mt-0.5">{q.desc}</p>
           </Link>
         ))}
       </div>

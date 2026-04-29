@@ -215,7 +215,7 @@ export default function AuditLogTab({
                   {/* Human-readable description */}
                   <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 break-words">{description}</p>
                 </div>
-                <span className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap flex-shrink-0 pt-0.5">
+                <span className="text-xs text-gray-500 dark:text-gray-500 whitespace-nowrap flex-shrink-0 pt-0.5">
                   {fmtTimestamp(e.created_at)}
                 </span>
               </div>
@@ -223,7 +223,7 @@ export default function AuditLogTab({
               {/* Expanded raw details — only if clicked and details exist */}
               {isExpanded && hasDetails && (
                 <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-800 overflow-x-auto">
-                  <p className="text-xs font-medium text-gray-400 dark:text-gray-500 mb-1">Raw details</p>
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-500 mb-1">Raw details</p>
                   <pre className="text-xs text-gray-500 dark:text-gray-400 whitespace-pre-wrap break-all">
                     {JSON.stringify(e.details, null, 2)}
                   </pre>
@@ -234,7 +234,7 @@ export default function AuditLogTab({
         })}
       </div>
       {entries.length >= 100 && (
-        <p className="text-xs text-gray-400 dark:text-gray-500 mt-4 text-center">Showing the most recent 100 entries.</p>
+        <p className="text-xs text-gray-500 dark:text-gray-500 mt-4 text-center">Showing the most recent 100 entries.</p>
       )}
     </div>
   )

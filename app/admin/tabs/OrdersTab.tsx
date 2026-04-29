@@ -106,7 +106,7 @@ export default function OrdersTab({ getDisplayName }: OrdersTabProps) {
     }
   }
 
-  if (loading) return <div className="py-8 text-center text-sm text-gray-400">Loading orders...</div>
+  if (loading) return <div className="py-8 text-center text-sm text-gray-500">Loading orders...</div>
 
   return (
     <div>

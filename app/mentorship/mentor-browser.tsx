@@ -71,7 +71,7 @@ export default function MentorBrowser({ mentors, userId }: { mentors: Mentor[]; 
       {/* Search + Filters */}
       <div className="mb-6 space-y-3">
         <div className="relative">
-          <span className="absolute inset-y-0 left-3 flex items-center text-gray-400 pointer-events-none">
+          <span className="absolute inset-y-0 left-3 flex items-center text-gray-500 pointer-events-none">
             <svg aria-hidden="true" className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
             </svg>
@@ -117,7 +117,7 @@ export default function MentorBrowser({ mentors, userId }: { mentors: Mentor[]; 
 
       {/* Results */}
       {sorted.length === 0 ? (
-        <div className="text-center py-16 text-gray-400">
+        <div className="text-center py-16 text-gray-500">
           <p className="text-lg mb-2">No mentors found</p>
           <p className="text-sm">Try adjusting your filters or be the first to <Link href="/mentorship/become-mentor" className="text-green-600 hover:underline">become a mentor</Link>.</p>
         </div>
@@ -171,13 +171,13 @@ export default function MentorBrowser({ mentors, userId }: { mentors: Mentor[]; 
                       </span>
                     ))}
                     {m.expertise.length > 3 && (
-                      <span className="text-[11px] text-gray-400">+{m.expertise.length - 3}</span>
+                      <span className="text-[11px] text-gray-500">+{m.expertise.length - 3}</span>
                     )}
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     {m.avgRating !== null && (
                       <span className="text-sm font-semibold text-yellow-600 dark:text-yellow-500">
-                        ★ {m.avgRating} <span className="text-xs text-gray-400 font-normal">({m.reviewCount})</span>
+                        ★ {m.avgRating} <span className="text-xs text-gray-500 font-normal">({m.reviewCount})</span>
                       </span>
                     )}
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${

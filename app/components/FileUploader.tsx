@@ -97,7 +97,7 @@ export default function FileUploader({
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-        Attachment <span className="text-gray-400 dark:text-gray-500 font-normal">(optional)</span>
+        Attachment <span className="text-gray-500 dark:text-gray-500 font-normal">(optional)</span>
       </label>
 
       {value ? (
@@ -146,7 +146,7 @@ export default function FileUploader({
         <p className="text-xs text-red-600 dark:text-red-400 mt-1">{error}</p>
       )}
 
-      <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">
+      <p className="text-[11px] text-gray-500 dark:text-gray-500 mt-1">
         PDF, DOC, DOCX, XLS, XLSX or CSV. Max {maxSizeMB}MB.
       </p>
     </div>

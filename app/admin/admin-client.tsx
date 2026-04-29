@@ -1002,7 +1002,7 @@ export default function AdminClient({
                   )}
                 </div>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{opp.type} · {opp.location} · by {getDisplayName(opp.user_id)}</p>
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{fmt(opp.created_at)}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-500 mt-0.5">{fmt(opp.created_at)}</p>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
                 {opp.is_pending_review ? (
@@ -1069,7 +1069,7 @@ export default function AdminClient({
                   )}
                 </div>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{listing.category} · ₦{listing.price?.toLocaleString()} · by {getDisplayName(listing.user_id)}</p>
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{fmt(listing.created_at)}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-500 mt-0.5">{fmt(listing.created_at)}</p>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
                 {listing.is_pending_review ? (
@@ -1136,9 +1136,9 @@ export default function AdminClient({
                   <div key={w.id} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg px-4 py-3 flex items-center justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{w.email}</p>
-                      {w.source && <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Source: {w.source}</p>}
+                      {w.source && <p className="text-xs text-gray-500 dark:text-gray-500 mt-0.5">Source: {w.source}</p>}
                     </div>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">{new Date(w.created_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Lagos' })}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-500 whitespace-nowrap">{new Date(w.created_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Lagos' })}</p>
                   </div>
                 ))}
               </div>
@@ -1172,9 +1172,9 @@ export default function AdminClient({
                                       {(inst.institution_type && INST_TYPE_LABELS[inst.institution_type]) || inst.institution_type || 'Type not set'}
                                       {inst.contact_person_name ? ` · Contact: ${inst.contact_person_name}` : ''}
                                     </p>
-                                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{inst.email || 'No email'}</p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-500 mt-0.5">{inst.email || 'No email'}</p>
                                     {inst.institution_website && <p className="text-xs text-blue-500 mt-0.5">{inst.institution_website}</p>}
-                                    {inst.institution_cac && <p className="text-xs text-gray-400 mt-0.5">CAC: {inst.institution_cac}</p>}
+                                    {inst.institution_cac && <p className="text-xs text-gray-500 mt-0.5">CAC: {inst.institution_cac}</p>}
                                   </div>
                                   <div className="flex gap-2">
                                     <button
@@ -1220,7 +1220,7 @@ export default function AdminClient({
                                       {(inst.institution_type && INST_TYPE_LABELS[inst.institution_type]) || inst.institution_type || ''}
                                       {inst.contact_person_name ? ` · ${inst.contact_person_name}` : ''}
                                     </p>
-                                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{inst.email || ''}</p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-500 mt-0.5">{inst.email || ''}</p>
                                   </div>
                                   <a href={`/directory/${inst.id}`} target="_blank" rel="noopener noreferrer"
                                     className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-3 py-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700">
@@ -1356,7 +1356,7 @@ export default function AdminClient({
                       {member.is_suspended && (
                         <span className="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-xs px-2 py-0.5 rounded-full">Suspended</span>
                       )}
-                      {isSelf && <span className="text-xs text-gray-400 dark:text-gray-500 italic">You</span>}
+                      {isSelf && <span className="text-xs text-gray-500 dark:text-gray-500 italic">You</span>}
                     </div>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{member.email || 'No email'}</p>
                     {/* UUID — for feature flag allowlists, digest debugging, audit log lookups */}
@@ -1364,7 +1364,7 @@ export default function AdminClient({
                       <CopyUUID value={member.id} label="UUID" />
                     </div>
                     {member.subscription_tier && member.subscription_tier !== 'free' && (
-                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 capitalize">
+                      <p className="text-xs text-gray-500 dark:text-gray-500 mt-0.5 capitalize">
                         Tier: {member.subscription_tier}
                         {member.subscription_plan ? ` · ${member.subscription_plan}` : ''}
                         {member.subscription_expires_at ? ` · Expires ${fmt(member.subscription_expires_at)}` : ' · No expiry'}
@@ -1480,7 +1480,7 @@ export default function AdminClient({
                         )
                       })}
                     </div>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">Changes are saved immediately. Toggling a permission controls which admin tabs this moderator can access.</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">Changes are saved immediately. Toggling a permission controls which admin tabs this moderator can access.</p>
                   </div>
                 )}
               </div>
@@ -1541,7 +1541,7 @@ export default function AdminClient({
                   {grant.funder || 'No funder'} · {grant.category || 'Uncategorized'}
                   {grant.posted_by ? ` · by ${getDisplayName(grant.posted_by)}` : ''}
                 </p>
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                <p className="text-xs text-gray-500 dark:text-gray-500 mt-0.5">
                   {fmt(grant.created_at)}
                   {grant.deadline && ` · Deadline: ${fmt(grant.deadline)}`}
                 </p>
@@ -1571,7 +1571,7 @@ export default function AdminClient({
       )}
 
       {/* ── Lazy-loaded tabs — wrapped in Suspense for code-split loading ── */}
-      <Suspense fallback={<div className="py-8 text-center text-sm text-gray-400 dark:text-gray-500">Loading…</div>}>
+      <Suspense fallback={<div className="py-8 text-center text-sm text-gray-500 dark:text-gray-500">Loading…</div>}>
       {activeTab === 'community' && (
         <CommunityTab posts={communityPosts} getDisplayName={getDisplayName} fmt={fmt} />
       )}
@@ -1610,7 +1610,7 @@ export default function AdminClient({
                       <span className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-xs px-2 py-0.5 rounded-full">Hidden</span>
                     )}
                   </div>
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Last reported: {fmt(rg.latestAt)}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-0.5">Last reported: {fmt(rg.latestAt)}</p>
                   <div className="mt-2 space-y-0.5">
                     {Object.entries(rg.reasons).map(([reason, count]) => (
                       <p key={reason} className="text-xs text-gray-500 dark:text-gray-400">· {reason} {count > 1 ? `(×${count})` : ''}</p>
@@ -1817,7 +1817,7 @@ export default function AdminClient({
               <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">{title}</span>
               {!openSections[sectionKey] && badges}
             </div>
-            <svg aria-hidden="true" className={`w-4 h-4 text-gray-400 transition-transform flex-shrink-0 ${openSections[sectionKey] ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+            <svg aria-hidden="true" className={`w-4 h-4 text-gray-500 transition-transform flex-shrink-0 ${openSections[sectionKey] ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
           </button>
         )
         // Access section badges
@@ -2019,7 +2019,7 @@ export default function AdminClient({
                       {opportunityTypes.map((type) => (
                         <span key={type} className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs px-2 py-0.5 rounded-full">
                           {type}
-                          <button onClick={() => removeOpportunityType(type)} className="text-gray-400 hover:text-red-500 ml-0.5 leading-none text-base">×</button>
+                          <button onClick={() => removeOpportunityType(type)} className="text-gray-500 hover:text-red-500 ml-0.5 leading-none text-base">×</button>
                         </span>
                       ))}
                     </div>
@@ -2036,7 +2036,7 @@ export default function AdminClient({
                       {marketplaceCategories.map((cat) => (
                         <span key={cat} className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs px-2 py-0.5 rounded-full">
                           {cat}
-                          <button onClick={() => removeMarketplaceCategory(cat)} className="text-gray-400 hover:text-red-500 ml-0.5 leading-none text-base">×</button>
+                          <button onClick={() => removeMarketplaceCategory(cat)} className="text-gray-500 hover:text-red-500 ml-0.5 leading-none text-base">×</button>
                         </span>
                       ))}
                     </div>
@@ -2053,7 +2053,7 @@ export default function AdminClient({
                       {commodityCategories.map((cat) => (
                         <span key={cat} className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs px-2 py-0.5 rounded-full">
                           {cat}
-                          <button onClick={() => removeCommodityCategory(cat)} className="text-gray-400 hover:text-red-500 ml-0.5 leading-none text-base">×</button>
+                          <button onClick={() => removeCommodityCategory(cat)} className="text-gray-500 hover:text-red-500 ml-0.5 leading-none text-base">×</button>
                         </span>
                       ))}
                     </div>
@@ -2067,12 +2067,12 @@ export default function AdminClient({
                   {/* Expense Categories (Receipt OCR + Business Expenses page) */}
                   <div className="mb-4">
                     <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Expense Categories (Receipt OCR + Expenses Page)</p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">Used in the &ldquo;Scan Receipt&rdquo; Vision prompt and the expenses picker. Order matters — first item is the default. 1–32 chars per entry, max 30 entries.</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-500 mb-2">Used in the &ldquo;Scan Receipt&rdquo; Vision prompt and the expenses picker. Order matters — first item is the default. 1–32 chars per entry, max 30 entries.</p>
                     <div className="flex flex-wrap gap-1.5 mb-2">
                       {expenseCategories.map((cat) => (
                         <span key={cat} className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs px-2 py-0.5 rounded-full">
                           {cat}
-                          <button onClick={() => removeExpenseCategory(cat)} className="text-gray-400 hover:text-red-500 ml-0.5 leading-none text-base">&times;</button>
+                          <button onClick={() => removeExpenseCategory(cat)} className="text-gray-500 hover:text-red-500 ml-0.5 leading-none text-base">&times;</button>
                         </span>
                       ))}
                     </div>
@@ -2086,7 +2086,7 @@ export default function AdminClient({
                   {/* Commodity Items per Category */}
                   <div>
                     <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Commodities per Category (Price Tracker)</p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 mb-3">Manage the commodity options available under each category when submitting price reports.</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-500 mb-3">Manage the commodity options available under each category when submitting price reports.</p>
                     <div className="space-y-3">
                       {commodityCategories.map(cat => {
                         const key = cat.toLowerCase().replace(/\s+/g, '_')
@@ -2098,10 +2098,10 @@ export default function AdminClient({
                               {items.map(item => (
                                 <span key={item} className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs px-2 py-0.5 rounded-full">
                                   {item}
-                                  <button onClick={() => removeCommodityItem(cat, item)} className="text-gray-400 hover:text-red-500 ml-0.5 leading-none text-base">&times;</button>
+                                  <button onClick={() => removeCommodityItem(cat, item)} className="text-gray-500 hover:text-red-500 ml-0.5 leading-none text-base">&times;</button>
                                 </span>
                               ))}
-                              {items.length === 0 && <span className="text-xs text-gray-400 italic">No commodities yet</span>}
+                              {items.length === 0 && <span className="text-xs text-gray-500 italic">No commodities yet</span>}
                             </div>
                             <div className="flex gap-2">
                               <input

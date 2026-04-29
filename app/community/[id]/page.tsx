@@ -156,7 +156,7 @@ export default async function CommunityPostPage({ params }: { params: Promise<{ 
                   {typeIcons[post.post_type]} {post.post_type.charAt(0).toUpperCase() + post.post_type.slice(1)}
                 </span>
               </div>
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{formatRelativeTime(post.created_at)}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-500 mt-0.5">{formatRelativeTime(post.created_at)}</p>
             </div>
             {post.is_pinned && (
               <span className="text-xs text-yellow-600 dark:text-yellow-400 font-semibold">Pinned</span>
@@ -210,7 +210,7 @@ export default async function CommunityPostPage({ params }: { params: Promise<{ 
                   </div>
                 )
               })}
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-gray-500">
                 {totalVotes} vote{totalVotes !== 1 ? 's' : ''}
                 {hasVoted ? ' · You voted' : ''}
                 {pollClosed && <span className="ml-1 text-red-500 font-medium">· Poll closed</span>}
@@ -228,7 +228,7 @@ export default async function CommunityPostPage({ params }: { params: Promise<{ 
               count only — clicking ♡ would 401 anyway, and the empty-
               state CTA at the bottom of the page is the conversion path
               we want them on instead. */}
-          <div className="flex items-center gap-3 text-sm text-gray-400 dark:text-gray-500 pt-3 border-t border-gray-100 dark:border-gray-800">
+          <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-500 pt-3 border-t border-gray-100 dark:border-gray-800">
             {user ? (
               <LikeButton
                 postId={id}

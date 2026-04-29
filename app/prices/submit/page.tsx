@@ -205,7 +205,7 @@ export default function SubmitPricePage() {
           {/* Notes */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Notes <span className="text-gray-400 dark:text-gray-500">(optional)</span>
+              Notes <span className="text-gray-500 dark:text-gray-500">(optional)</span>
             </label>
             <textarea
               name="notes"

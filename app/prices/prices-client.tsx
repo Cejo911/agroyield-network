@@ -227,7 +227,7 @@ export default function PricesClient({
                     <p className="text-xl font-bold text-green-700 dark:text-green-400">
                       {formatPrice(report.price)}
                     </p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500">per {report.unit}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-500">per {report.unit}</p>
                   </div>
                 </div>
 
@@ -254,10 +254,10 @@ export default function PricesClient({
                         </span>
                       </Link>
                     ) : (
-                      <span className="text-xs text-gray-400 dark:text-gray-500">Anonymous</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-500">Anonymous</span>
                     )}
                     <span className="text-gray-300 dark:text-gray-700">·</span>
-                    <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0">
+                    <span className="text-xs text-gray-500 dark:text-gray-500 shrink-0">
                       {formatRelativeTime(report.reported_at)}
                     </span>
                   </div>

@@ -259,7 +259,7 @@ export default function ReceiptScanButton({ businessId, onSaved }: Props) {
                   </p>
                 )}
               </div>
-              <button onClick={closeModal} className="text-gray-400 hover:text-gray-600 text-xl leading-none" aria-label="Close">×</button>
+              <button onClick={closeModal} className="text-gray-500 hover:text-gray-600 text-xl leading-none" aria-label="Close">×</button>
             </div>
 
             {error && (
@@ -297,12 +297,12 @@ export default function ReceiptScanButton({ businessId, onSaved }: Props) {
                       <img src={previewUrl} alt="Receipt preview" className="max-h-48 rounded-lg shadow-sm" />
                     ) : (
                       <>
-                        <svg aria-hidden="true" className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg aria-hidden="true" className="w-10 h-10 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                             d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Tap to choose or take a photo</span>
-                        <span className="text-xs text-gray-400">JPEG, PNG, or WebP · max 5 MB</span>
+                        <span className="text-xs text-gray-500">JPEG, PNG, or WebP · max 5 MB</span>
                       </>
                     )}
                   </button>
@@ -338,7 +338,7 @@ export default function ReceiptScanButton({ businessId, onSaved }: Props) {
               <div className="p-10 flex flex-col items-center justify-center gap-3">
                 <div className="animate-spin rounded-full h-10 w-10 border-2 border-green-700 border-t-transparent"></div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">Reading your receipt…</p>
-                <p className="text-xs text-gray-400">This usually takes 3–5 seconds.</p>
+                <p className="text-xs text-gray-500">This usually takes 3–5 seconds.</p>
               </div>
             )}
 
@@ -403,7 +403,7 @@ export default function ReceiptScanButton({ businessId, onSaved }: Props) {
 
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                    Notes <span className="text-gray-400 font-normal">(optional)</span>
+                    Notes <span className="text-gray-500 font-normal">(optional)</span>
                   </label>
                   <input type="text" value={notes} onChange={(e) => setNotes(e.target.value)}
                     placeholder="Any additional details"

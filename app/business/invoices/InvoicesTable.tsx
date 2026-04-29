@@ -155,7 +155,7 @@ export default function InvoicesTable({ invoices }: { invoices: InvoiceListRow[]
                     </span>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
+                <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
                   <span>{(inv.document_type && DOC_LABELS[inv.document_type]) ?? inv.document_type ?? ''}</span>
                   <span>·</span>
                   <span>{inv.issue_date}</span>

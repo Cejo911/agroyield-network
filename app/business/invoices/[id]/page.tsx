@@ -83,13 +83,13 @@ export default async function InvoiceViewPage({ params }: { params: Promise<{ id
             {business?.email && <p className="text-sm text-gray-500 dark:text-gray-400">{business.email}</p>}
             {(business?.cac_number || business?.vat_tin) && (
               <div className="flex flex-wrap gap-x-4 mt-1">
-                {business.cac_number && <p className="text-xs text-gray-400">CAC: {business.cac_number}</p>}
-                {business.vat_tin && <p className="text-xs text-gray-400">TIN: {business.vat_tin}</p>}
+                {business.cac_number && <p className="text-xs text-gray-500">CAC: {business.cac_number}</p>}
+                {business.vat_tin && <p className="text-xs text-gray-500">TIN: {business.vat_tin}</p>}
               </div>
             )}
           </div>
           <div className="sm:text-right">
-            <div className="text-2xl font-bold text-gray-400 dark:text-gray-500">{(inv.document_type && DOC_LABELS[inv.document_type]) ?? inv.document_type}</div>
+            <div className="text-2xl font-bold text-gray-500 dark:text-gray-500">{(inv.document_type && DOC_LABELS[inv.document_type]) ?? inv.document_type}</div>
             <div className="text-lg font-bold text-gray-900 dark:text-white mt-1">{inv.invoice_number}</div>
             <span className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-medium capitalize ${(inv.status && STATUS_COLORS[inv.status]) ?? 'bg-gray-100 text-gray-600'}`}>
               {inv.status}
@@ -100,7 +100,7 @@ export default async function InvoiceViewPage({ params }: { params: Promise<{ id
         {/* Bill to + dates */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 mb-8">
           <div>
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Bill To</p>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Bill To</p>
             {customer ? (
               <div className="text-sm text-gray-700 dark:text-gray-300 space-y-0.5">
                 <p className="font-semibold">{customer.name}</p>
@@ -108,7 +108,7 @@ export default async function InvoiceViewPage({ params }: { params: Promise<{ id
                 {customer.phone && <p className="text-gray-500 dark:text-gray-400">{customer.phone}</p>}
                 {customer.address && <p className="text-gray-500 dark:text-gray-400">{customer.address}</p>}
               </div>
-            ) : <p className="text-sm text-gray-400 italic">No customer assigned</p>}
+            ) : <p className="text-sm text-gray-500 italic">No customer assigned</p>}
           </div>
           <div className="text-sm space-y-2">
             <div className="flex justify-between">
@@ -155,7 +155,7 @@ export default async function InvoiceViewPage({ params }: { params: Promise<{ id
             <div key={item.id} className="flex items-start justify-between py-2 border-b border-gray-50 dark:border-gray-800">
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-gray-700 dark:text-gray-300">{item.description}</p>
-                <p className="text-xs text-gray-400">{item.quantity} × {fmt(item.unit_price ?? 0)}</p>
+                <p className="text-xs text-gray-500">{item.quantity} × {fmt(item.unit_price ?? 0)}</p>
               </div>
               <p className="text-sm font-medium text-gray-800 dark:text-white ml-3">{fmt(item.line_total ?? 0)}</p>
             </div>
@@ -187,7 +187,7 @@ export default async function InvoiceViewPage({ params }: { params: Promise<{ id
         {/* Notes */}
         {inv.notes && (
           <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-800">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Notes</p>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Notes</p>
             <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-line">{inv.notes}</p>
           </div>
         )}
@@ -195,11 +195,11 @@ export default async function InvoiceViewPage({ params }: { params: Promise<{ id
         {/* Bank details */}
         {business?.account_number && (inv.document_type === 'invoice' || inv.document_type === 'proforma') && (
           <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-800">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Payment Details</p>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Payment Details</p>
             <div className="text-sm text-gray-600 dark:text-gray-300 space-y-0.5">
-              {business.bank_name && <p><span className="text-gray-400">Bank:</span> {business.bank_name}</p>}
-              {business.account_name && <p><span className="text-gray-400">Account Name:</span> {business.account_name}</p>}
-              {business.account_number && <p><span className="text-gray-400">Account Number:</span> {business.account_number}</p>}
+              {business.bank_name && <p><span className="text-gray-500">Bank:</span> {business.bank_name}</p>}
+              {business.account_name && <p><span className="text-gray-500">Account Name:</span> {business.account_name}</p>}
+              {business.account_number && <p><span className="text-gray-500">Account Number:</span> {business.account_number}</p>}
             </div>
           </div>
         )}

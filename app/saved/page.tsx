@@ -146,7 +146,7 @@ export default async function SavedPage() {
             <section>
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  Opportunities <span className="text-sm font-normal text-gray-400 dark:text-gray-500">({savedOpps.length})</span>
+                  Opportunities <span className="text-sm font-normal text-gray-500 dark:text-gray-500">({savedOpps.length})</span>
                 </h2>
                 <Link href="/opportunities" className="text-xs text-green-600 dark:text-green-400 hover:underline">Browse all</Link>
               </div>
@@ -186,7 +186,7 @@ export default async function SavedPage() {
                             {opp.organisation && (
                               <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{opp.organisation}</p>
                             )}
-                            <div className="flex flex-wrap gap-3 text-xs text-gray-400 dark:text-gray-500 mt-2">
+                            <div className="flex flex-wrap gap-3 text-xs text-gray-500 dark:text-gray-500 mt-2">
                               {opp.location && <span>📍 {opp.location}</span>}
                               {deadline && <span>⏰ {deadline}</span>}
                             </div>
@@ -205,7 +205,7 @@ export default async function SavedPage() {
             <section>
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  Grants <span className="text-sm font-normal text-gray-400 dark:text-gray-500">({savedGrants.length})</span>
+                  Grants <span className="text-sm font-normal text-gray-500 dark:text-gray-500">({savedGrants.length})</span>
                 </h2>
                 <Link href="/grants" className="text-xs text-green-600 dark:text-green-400 hover:underline">Browse all</Link>
               </div>
@@ -245,7 +245,7 @@ export default async function SavedPage() {
                             <h3 className="font-semibold text-gray-900 dark:text-white">{g.title}</h3>
                             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{g.funder}</p>
                             {deadline && (
-                              <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">⏰ {deadline}</p>
+                              <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">⏰ {deadline}</p>
                             )}
                           </div>
                         </div>
@@ -262,7 +262,7 @@ export default async function SavedPage() {
             <section>
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  Marketplace <span className="text-sm font-normal text-gray-400 dark:text-gray-500">({savedListings.length})</span>
+                  Marketplace <span className="text-sm font-normal text-gray-500 dark:text-gray-500">({savedListings.length})</span>
                 </h2>
                 <Link href="/marketplace" className="text-xs text-green-600 dark:text-green-400 hover:underline">Browse all</Link>
               </div>
@@ -309,7 +309,7 @@ export default async function SavedPage() {
                             <p className="text-sm font-bold text-green-700 dark:text-green-400 mt-1.5">{formatPrice(l.price)}</p>
                           )}
                           {l.state && (
-                            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">📍 {l.state}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">📍 {l.state}</p>
                           )}
                         </div>
                       </Link>

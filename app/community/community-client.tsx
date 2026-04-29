@@ -331,7 +331,7 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
                   />
                   {pollOptions.length > 2 && (
                     <button type="button" onClick={() => setPollOptions(prev => prev.filter((_, j) => j !== i))}
-                      className="text-gray-400 hover:text-red-500 text-sm px-2">✕</button>
+                      className="text-gray-500 hover:text-red-500 text-sm px-2">✕</button>
                   )}
                 </div>
               ))}
@@ -350,7 +350,7 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
                   min={new Date().toISOString().slice(0, 16)}
                   className="w-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                 />
-                <p className="text-[10px] text-gray-400 mt-1">Leave empty for no deadline</p>
+                <p className="text-[10px] text-gray-500 mt-1">Leave empty for no deadline</p>
               </div>
             </div>
           )}
@@ -398,7 +398,7 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
 
       {/* Posts */}
       {filtered.length === 0 ? (
-        <div className="text-center py-16 text-gray-400 dark:text-gray-500">
+        <div className="text-center py-16 text-gray-500 dark:text-gray-500">
           <Image src="/logo-icon-colored.png" alt="AgroYield Network" width={44} height={44} className="mx-auto mb-3" />
           <p className="font-medium">No posts yet</p>
           <p className="text-sm mt-1">Be the first to share something with the community!</p>
@@ -448,7 +448,7 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
                         {typeIcons[post.post_type]} {post.post_type.charAt(0).toUpperCase() + post.post_type.slice(1)}
                       </span>
                     </div>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{formatRelativeTime(post.created_at)}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-500 mt-0.5">{formatRelativeTime(post.created_at)}</p>
                   </div>
                   {post.is_pinned && (
                     <span className="text-xs text-yellow-600 dark:text-yellow-400 font-semibold">📌 Pinned</span>
@@ -473,9 +473,9 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
                         <UserAvatar src={parentProfile?.avatar_url} name={parentName} size="sm" alt={parentName} />
                         <span className="font-semibold text-gray-800 dark:text-gray-200 text-xs">{parentName}</span>
                         {parentProfile?.role && (
-                          <span className="text-[10px] text-gray-400 dark:text-gray-500 capitalize">· {parentProfile.role}</span>
+                          <span className="text-[10px] text-gray-500 dark:text-gray-500 capitalize">· {parentProfile.role}</span>
                         )}
-                        <span className="text-[10px] text-gray-400 dark:text-gray-500">· {formatRelativeTime(parent.created_at)}</span>
+                        <span className="text-[10px] text-gray-500 dark:text-gray-500">· {formatRelativeTime(parent.created_at)}</span>
                       </div>
                       <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line line-clamp-4">{parent.content}</p>
                       {parent.link_url && (
@@ -483,7 +483,7 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
                       )}
                     </Link>
                   ) : (
-                    <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/40 p-3 mb-3 text-xs text-gray-400 dark:text-gray-500 italic">
+                    <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/40 p-3 mb-3 text-xs text-gray-500 dark:text-gray-500 italic">
                       Original post unavailable
                     </div>
                   )
@@ -552,7 +552,7 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
                   <button
                     onClick={() => toggleLike(post.id)}
                     className={`flex items-center gap-1.5 text-sm transition-colors ${
-                      liked ? 'text-red-500' : 'text-gray-400 dark:text-gray-500 hover:text-red-500'
+                      liked ? 'text-red-500' : 'text-gray-500 dark:text-gray-500 hover:text-red-500'
                     }`}
                   >
                     <span>{liked ? '♥' : '♡'}</span>
@@ -560,7 +560,7 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
                   </button>
                   <Link
                     href={`/community/${post.id}`}
-                    className="flex items-center gap-1.5 text-sm text-gray-400 dark:text-gray-500 hover:text-green-600 transition-colors"
+                    className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-500 hover:text-green-600 transition-colors"
                   >
                     <span>💬</span>
                     <span>{commentCount > 0 ? commentCount : ''}</span>
@@ -569,7 +569,7 @@ export default function CommunityClient({ posts, parentMap = {}, profileMap, lik
                   {post.user_id !== currentUserId && (
                     <button
                       onClick={() => { setRepostTarget(post); setRepostCaption('') }}
-                      className="flex items-center gap-1.5 text-sm text-gray-400 dark:text-gray-500 hover:text-green-600 transition-colors"
+                      className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-500 hover:text-green-600 transition-colors"
                       title="Repost"
                     >
                       <span>🔁</span>

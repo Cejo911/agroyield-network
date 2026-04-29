@@ -222,7 +222,7 @@ export default async function ReportsPage() {
               </div>
             ))}
             {lowStockProducts.length > 5 && (
-              <p className="text-xs text-gray-400 mt-1">+{lowStockProducts.length - 5} more</p>
+              <p className="text-xs text-gray-500 mt-1">+{lowStockProducts.length - 5} more</p>
             )}
           </div>
         )}
@@ -253,7 +253,7 @@ export default async function ReportsPage() {
         <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6">
           <h2 className="text-base font-bold text-gray-900 dark:text-white mb-4">Top Products / Services</h2>
           {topProducts.length === 0 ? (
-            <p className="text-sm text-gray-400">No data yet</p>
+            <p className="text-sm text-gray-500">No data yet</p>
           ) : topProducts.map(([name, total]) => (
             <div key={name} className="mb-3">
               <div className="flex justify-between mb-1">
@@ -270,7 +270,7 @@ export default async function ReportsPage() {
         <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6">
           <h2 className="text-base font-bold text-gray-900 dark:text-white mb-4">Top Customers</h2>
           {topCustomers.length === 0 ? (
-            <p className="text-sm text-gray-400">No data yet</p>
+            <p className="text-sm text-gray-500">No data yet</p>
           ) : topCustomers.map(c => (
             <div key={c.name} className="mb-3">
               <div className="flex justify-between mb-1">
@@ -290,7 +290,7 @@ export default async function ReportsPage() {
         <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6">
           <h2 className="text-base font-bold text-gray-900 dark:text-white mb-4">Expense Breakdown</h2>
           {topExpenseCategories.length === 0 ? (
-            <p className="text-sm text-gray-400">No expenses recorded</p>
+            <p className="text-sm text-gray-500">No expenses recorded</p>
           ) : topExpenseCategories.map(([cat, total]) => (
             <div key={cat} className="flex justify-between py-2 border-b border-gray-50 dark:border-gray-800">
               <span className="text-sm text-gray-700 dark:text-gray-300">{cat}</span>
