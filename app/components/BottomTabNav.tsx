@@ -114,21 +114,18 @@ export default function BottomTabNav({
 
   if (!isAuthed) return null
 
+  // Bottom-of-page offset is handled in app/globals.css — body gets a
+  // padding-bottom of 4rem on `<md` so every page's natural document
+  // flow ends 64 px above the floating bar. Putting the offset on body
+  // (rather than a sibling spacer rendered from this component) was
+  // necessary because <BottomTabNav> renders inside <AppNav>, which
+  // sits at the TOP of every page; a sibling spacer here would offset
+  // the AppNav header, not the page's bottom content (e.g. the DM
+  // composer in /messages/[id], which is at the bottom of a flex
+  // column further down the document).
+
   return (
     <>
-      {/* Spacer — kept in document flow at the same height as the bar so
-          page content (especially the last comment / last list item) is
-          never permanently hidden behind the fixed bar. md:hidden so the
-          desktop layout is unchanged. The exact height matches the bar's
-          h-16 (4rem / 64 px); add safe-area-inset-bottom on iPhones with
-          home-indicator notches so the visible portion of the bar stays
-          flush above the indicator. */}
-      <div
-        aria-hidden="true"
-        className="md:hidden h-16"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0)' }}
-      />
-
       <nav
         aria-label="Primary mobile navigation"
         className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800"

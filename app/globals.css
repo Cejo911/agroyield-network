@@ -80,3 +80,25 @@ textarea::placeholder {
     font-size: 16px;
   }
 }
+
+/* Bottom-tab nav offset.
+   <BottomTabNav> renders a fixed 4rem-tall bar at the bottom of the
+   viewport on <md. Without this padding, any content sitting at the
+   bottom of a page in normal document flow — most painfully, the DM
+   composer at /messages/[id] — gets covered.
+
+   Applying the offset to <body> rather than a sibling spacer inside
+   BottomTabNav itself means the offset works no matter where in the
+   document tree BottomTabNav is rendered. <BottomTabNav> currently
+   mounts inside <AppNav>, which sits at the TOP of every page; a
+   sibling spacer there would offset the header, not the page bottom.
+
+   `env(safe-area-inset-bottom)` adds the iOS home-indicator clearance
+   so the bar's tap area sits flush above the system gesture zone.
+
+   Applies to <md only — desktops never see the bar, so no offset. */
+@media (max-width: 767px) {
+  body {
+    padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+  }
+}
