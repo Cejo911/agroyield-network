@@ -1,7 +1,6 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import UserAvatar from '@/app/components/design/UserAvatar'
 
 const ROLES = [
@@ -307,28 +306,34 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
     setAvatarUploading(true)
     setMessage(null)
     try {
-      const supabase = createClient()
-      // Lowercase the extension so an iOS upload of `.JPG` doesn't
-      // create a per-extension-case file (`<uid>.JPG` and `<uid>.jpg`
-      // coexist as different objects, leaving the older one orphaned
-      // and the avatar_url stale).
-      const ext  = (file.name.split('.').pop() ?? 'jpg').toLowerCase()
-      const path = `${userId}.${ext}`
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(path, file, { upsert: true, contentType: file.type })
-      if (uploadError) throw uploadError
-      const { data } = supabase.storage.from('avatars').getPublicUrl(path)
-      const url = `${data.publicUrl}?t=${Date.now()}`
+      // Route through /api/profile/avatar instead of calling
+      // supabase.storage directly. Direct browser-side uploads were
+      // failing with "new row violates row-level security policy"
+      // even on a correctly-shaped path — the browser supabase
+      // client's JWT wasn't reaching storage, so auth.uid() resolved
+      // to NULL on the server and the policy denied. The endpoint
+      // reads the auth session from the SSR cookie (which works) and
+      // writes via the service-role admin client (which bypasses
+      // storage RLS by design). Same fix pattern as business-logos
+      // (#48 / #49).
+      const formData = new FormData()
+      formData.append('file', file)
+      const res = await fetch('/api/profile/avatar', {
+        method: 'POST',
+        body: formData,
+      })
+      const payload = await res.json().catch(() => ({} as { publicUrl?: string; error?: string }))
+      if (!res.ok) {
+        throw new Error(payload.error || `Upload failed (HTTP ${res.status})`)
+      }
+      // Cache-bust so a re-upload of the same path renders the new
+      // image instead of the browser's cached previous version.
+      const url = `${payload.publicUrl}?t=${Date.now()}`
       setForm(prev => ({ ...prev, avatar_url: url }))
       // Surface success so the user knows the form still needs to be
-      // submitted to persist the new avatar_url to profiles. Without
-      // this, a user who uploads then closes the tab loses the change.
+      // submitted to persist the new avatar_url to profiles.
       setMessage({ type: 'success', text: 'Photo uploaded. Click "Save changes" to apply.' })
     } catch (err: unknown) {
-      // Surface the actual storage error in the toast (was previously
-      // swallowed) so RLS denials / network errors / size-limit hits
-      // are diagnosable from the UI without having to open dev tools.
       const detail =
         err instanceof Error ? err.message
           : typeof err === 'object' && err !== null && 'message' in err
