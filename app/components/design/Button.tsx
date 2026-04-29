@@ -62,3 +62,61 @@ export function SecondaryLink({ href, children, size = 'md', className = '' }: L
     </Link>
   )
 }
+
+// ─── Native-button companions ───────────────────────────────────────────
+//
+// PrimaryLink / SecondaryLink wrap Next's <Link> for navigation actions.
+// PrimaryButton / SecondaryButton render a native <button> with the same
+// visual style for in-form actions: form submits, modal CTAs, toggle
+// triggers — anywhere we'd otherwise paste the same 80-char Tailwind
+// string. Audit cluster 9 surfaced ~30 such sites.
+//
+// Forwarding all native button props (incl. type, disabled, onClick,
+// aria-*, form, name, value) lets the primitive drop into any existing
+// site without losing semantics. `type` defaults to "button" — the
+// React/HTML default of "submit" inside a form is a long-standing
+// footgun that misfires forms when an action button isn't explicitly
+// typed. Form submits should still pass `type="submit"` explicitly so
+// the intent is visible at the call site.
+
+type ButtonProps = {
+  children: ReactNode
+  size?: Size
+  className?: string
+} & Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'className' | 'children'>
+
+export function PrimaryButton({
+  children,
+  size = 'md',
+  className = '',
+  type = 'button',
+  ...rest
+}: ButtonProps) {
+  return (
+    <button
+      type={type}
+      className={`${PRIMARY_BASE} ${SIZE_CLASS[size]} ${className}`.trim()}
+      {...rest}
+    >
+      {children}
+    </button>
+  )
+}
+
+export function SecondaryButton({
+  children,
+  size = 'md',
+  className = '',
+  type = 'button',
+  ...rest
+}: ButtonProps) {
+  return (
+    <button
+      type={type}
+      className={`${SECONDARY_BASE} ${SIZE_CLASS[size]} ${className}`.trim()}
+      {...rest}
+    >
+      {children}
+    </button>
+  )
+}
