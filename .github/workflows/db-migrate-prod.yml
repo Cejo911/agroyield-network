@@ -1,0 +1,135 @@
+# ============================================================================
+# Apply Supabase migrations to production
+#
+# Runs scripts/apply-migrations.sh which diffs supabase/migrations/*.sql
+# against the public._applied_migrations tracking table and applies any
+# pending files via psql.
+#
+# Trigger
+# -------
+#   • push to main when supabase/migrations/** changes
+#   • workflow_dispatch (manual) — for re-running after a failure or for
+#     forcing a dry-run preview without merging anything
+#
+# Manual approval
+# ---------------
+# The job runs in the `production-db` environment. That environment is
+# configured in GitHub UI to require Okoli's review before any step runs.
+# This is the deliberate human gate — on every run, the reviewer sees
+# which file(s) the script intends to apply (in the dry-run step's logs)
+# before approving the actual apply.
+#
+# Required GitHub secrets (scoped to the production-db environment)
+# -----------------------------------------------------------------
+#   DATABASE_URL   — Postgres connection string for the production
+#                    Supabase project. Use the *pooler* URL on port 6543
+#                    (e.g. postgres://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:6543/postgres),
+#                    NOT the direct DB connection. Pooler is the
+#                    documented path for non-interactive jobs.
+#
+# Failure behaviour
+# -----------------
+# If apply-migrations.sh exits non-zero:
+#   • exit 2 — content drift detected. The Action stops; investigate.
+#   • exit 3 — at least one file failed to apply. The Action stops at
+#              the failed file; subsequent files are NOT attempted.
+#              Fix the failing migration in a follow-up commit.
+# ============================================================================
+name: Apply Supabase migrations to production
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/**'
+      - 'scripts/apply-migrations.sh'
+      - '.github/workflows/db-migrate-prod.yml'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run only (list pending, do not apply)'
+        type: boolean
+        default: false
+
+# Single-flight: never run two instances against the same DB at once.
+concurrency:
+  group: db-migrate-prod
+  cancel-in-progress: false
+
+jobs:
+  preview:
+    name: Preview pending migrations
+    runs-on: ubuntu-latest
+    # No environment gating on the preview — we want the reviewer to see
+    # the diff BEFORE approving the apply step.
+    outputs:
+      pending_count: ${{ steps.diff.outputs.pending_count }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install psql client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends postgresql-client
+
+      - name: Dry-run diff
+        id: diff
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DRY_RUN: '1'
+        run: |
+          chmod +x scripts/apply-migrations.sh
+          # Dry-run prints the pending list; capture exit code separately
+          # so we can fail the job if drift was detected.
+          set +e
+          output="$(scripts/apply-migrations.sh 2>&1)"
+          rc=$?
+          set -e
+          echo "$output"
+          # Parse "N pending migration(s)" line for the output
+          pending_count="$(echo "$output" | grep -E '^[0-9]+ pending migration\(s\):' | awk '{print $1}' || echo 0)"
+          echo "pending_count=${pending_count:-0}" >> "$GITHUB_OUTPUT"
+          # Fail the preview if drift was detected (rc=2). Don't fail on
+          # rc=0 (no pending) or rc=3 (apply failed — can't happen in dry
+          # run).
+          if [[ $rc -eq 2 ]]; then
+            echo "::error::Content drift detected — see logs above."
+            exit 2
+          fi
+
+  apply:
+    name: Apply pending migrations
+    runs-on: ubuntu-latest
+    needs: preview
+    # Skip the apply if the preview reported zero pending OR if this is
+    # a manual dry-run invocation.
+    if: needs.preview.outputs.pending_count != '0' && inputs.dry_run != true
+    # ⚠️ Manual approval gate. Configure in GitHub UI:
+    #   Settings → Environments → New environment → 'production-db'
+    #   • Required reviewers: Okoli
+    #   • Wait timer: 0
+    #   • Deployment branches: main only
+    environment: production-db
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install psql client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends postgresql-client
+
+      - name: Apply pending migrations
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          APPLIED_BY: github_action
+        run: |
+          chmod +x scripts/apply-migrations.sh
+          scripts/apply-migrations.sh
+
+      - name: Post-apply verification
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          # Re-run the script in DRY_RUN mode — should report zero pending
+          # if everything landed cleanly. Acts as a self-test.
+          DRY_RUN=1 scripts/apply-migrations.sh
