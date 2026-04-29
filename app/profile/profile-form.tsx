@@ -308,17 +308,34 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
     setMessage(null)
     try {
       const supabase = createClient()
-      const ext  = file.name.split('.').pop() ?? 'jpg'
+      // Lowercase the extension so an iOS upload of `.JPG` doesn't
+      // create a per-extension-case file (`<uid>.JPG` and `<uid>.jpg`
+      // coexist as different objects, leaving the older one orphaned
+      // and the avatar_url stale).
+      const ext  = (file.name.split('.').pop() ?? 'jpg').toLowerCase()
       const path = `${userId}.${ext}`
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(path, file, { upsert: true })
+        .upload(path, file, { upsert: true, contentType: file.type })
       if (uploadError) throw uploadError
       const { data } = supabase.storage.from('avatars').getPublicUrl(path)
       const url = `${data.publicUrl}?t=${Date.now()}`
       setForm(prev => ({ ...prev, avatar_url: url }))
-    } catch (_err) {
-      setMessage({ type: 'error', text: 'Failed to upload photo. Please try again.' })
+      // Surface success so the user knows the form still needs to be
+      // submitted to persist the new avatar_url to profiles. Without
+      // this, a user who uploads then closes the tab loses the change.
+      setMessage({ type: 'success', text: 'Photo uploaded. Click "Save changes" to apply.' })
+    } catch (err: unknown) {
+      // Surface the actual storage error in the toast (was previously
+      // swallowed) so RLS denials / network errors / size-limit hits
+      // are diagnosable from the UI without having to open dev tools.
+      const detail =
+        err instanceof Error ? err.message
+          : typeof err === 'object' && err !== null && 'message' in err
+              ? String((err as { message: unknown }).message)
+              : 'unknown error'
+      console.error('Avatar upload failed:', err)
+      setMessage({ type: 'error', text: `Failed to upload photo — ${detail}` })
     } finally {
       setAvatarUploading(false)
     }
